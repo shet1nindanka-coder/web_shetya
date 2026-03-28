@@ -56,12 +56,6 @@ function validateUploadedMetadata(fileName: string, mimeType: string, size: numb
 }
 
 export async function POST(request: Request) {
-  const user = await tryGetCurrentUser();
-
-  if (!user || user.role !== UserRole.TEACHER) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
-
   const contentType = request.headers.get("content-type") ?? "";
 
   if (contentType.includes("application/json")) {
@@ -84,6 +78,14 @@ export async function POST(request: Request) {
         return NextResponse.json({ error: "Blob storage is not configured" }, { status: 400 });
       }
 
+      if (body.type === "blob.generate-client-token") {
+        const user = await tryGetCurrentUser();
+
+        if (!user || user.role !== UserRole.TEACHER) {
+          return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+        }
+      }
+
       try {
         const jsonResponse = await handleUpload({
           request,
@@ -91,8 +93,10 @@ export async function POST(request: Request) {
           onBeforeGenerateToken: async () => ({
             allowedContentTypes: Array.from(allowedUploadMimeTypes),
             maximumSizeInBytes: MAX_UPLOAD_SIZE,
-            addRandomSuffix: false
-          })
+            addRandomSuffix: false,
+            callbackUrl: request.url
+          }),
+          onUploadCompleted: async () => undefined
         });
 
         return NextResponse.json(jsonResponse);
@@ -103,6 +107,12 @@ export async function POST(request: Request) {
     }
 
     if (body?.action === "register-blob") {
+      const user = await tryGetCurrentUser();
+
+      if (!user || user.role !== UserRole.TEACHER) {
+        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      }
+
       const pathname = String(body.pathname ?? "").trim();
       const uploadedMimeType = String(body.contentType ?? "").trim();
       const originalName = String(body.originalName ?? "").trim();
@@ -152,6 +162,12 @@ export async function POST(request: Request) {
     }
 
     return NextResponse.json({ error: "Unsupported upload request" }, { status: 400 });
+  }
+
+  const user = await tryGetCurrentUser();
+
+  if (!user || user.role !== UserRole.TEACHER) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
   const formData = await request.formData();
