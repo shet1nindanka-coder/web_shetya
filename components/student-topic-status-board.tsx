@@ -28,7 +28,7 @@ type StudentNumberState = {
 
 type StudentNumberCardProps = {
   number: StudentNumberState;
-  onSelect: (homeworkNumberId: string, status: HomeworkNumberStatus) => void;
+  onSelect: (homeworkNumberId: string, status: HomeworkNumberStatus | null) => void;
 };
 
 function getStatusSaveErrorMessage(status: number) {
@@ -72,7 +72,7 @@ const StudentNumberCard = memo(function StudentNumberCard({ number, onSelect }: 
                 key={status}
                 type="button"
                 aria-pressed={isActive}
-                onClick={() => onSelect(number.id, status)}
+                onClick={() => onSelect(number.id, isActive ? null : status)}
                 className={cx(
                   "min-w-[190px] touch-manipulation rounded-[22px] border px-4 py-4 text-left text-sm transition-colors duration-75",
                   isActive
@@ -148,7 +148,7 @@ export function StudentTopicStatusBoard({
 
   const savingCount = numbers.filter((number) => number.isSaving).length;
 
-  const updateNumberStatus = useCallback(async (homeworkNumberId: string, nextStatus: HomeworkNumberStatus) => {
+  const updateNumberStatus = useCallback(async (homeworkNumberId: string, nextStatus: HomeworkNumberStatus | null) => {
     const currentNumber = numbersRef.current.find((number) => number.id === homeworkNumberId);
 
     if (!currentNumber || currentNumber.status === nextStatus) {
@@ -274,7 +274,7 @@ export function StudentTopicStatusBoard({
 
       <SectionCard
         title="Статусы номеров"
-        description="Выберите цвет для каждого номера: зеленый, желтый или красный. Статусы сохраняются автоматически и сразу отображаются в интерфейсе."
+        description="Выберите цвет для каждого номера: зеленый, желтый или красный. Повторный клик по активному цвету снимет статус, если номер был отмечен случайно."
       >
         <div className="mb-5 flex flex-wrap gap-2">
           {Object.values(HomeworkNumberStatus).map((status) => {

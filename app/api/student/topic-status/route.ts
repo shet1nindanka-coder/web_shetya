@@ -31,7 +31,7 @@ export async function POST(request: Request) {
     | {
         topicId?: string;
         homeworkNumberId?: string;
-        status?: HomeworkNumberStatus;
+        status?: HomeworkNumberStatus | null;
       }
     | null;
 
@@ -39,7 +39,12 @@ export async function POST(request: Request) {
   const homeworkNumberId = String(body?.homeworkNumberId ?? "").trim();
   const status = body?.status;
 
-  if (!topicId || !homeworkNumberId || !status || !allowedStatuses.includes(status)) {
+  if (
+    !topicId ||
+    !homeworkNumberId ||
+    status === undefined ||
+    (status !== null && !allowedStatuses.includes(status))
+  ) {
     return NextResponse.json({ error: "Некорректные данные для сохранения статуса." }, { status: 400 });
   }
 
@@ -57,22 +62,31 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Номер домашнего задания для этой темы не найден." }, { status: 404 });
   }
 
-  await prisma.studentTopicNumberStatus.upsert({
-    where: {
-      studentId_homeworkNumberId: {
+  if (status === null || status === undefined) {
+    await prisma.studentTopicNumberStatus.deleteMany({
+      where: {
         studentId: user.id,
         homeworkNumberId
       }
-    },
-    update: {
-      status
-    },
-    create: {
-      studentId: user.id,
-      homeworkNumberId,
-      status
-    }
-  });
+    });
+  } else {
+    await prisma.studentTopicNumberStatus.upsert({
+      where: {
+        studentId_homeworkNumberId: {
+          studentId: user.id,
+          homeworkNumberId
+        }
+      },
+      update: {
+        status
+      },
+      create: {
+        studentId: user.id,
+        homeworkNumberId,
+        status
+      }
+    });
+  }
 
   revalidateTopicRoutes(topicId);
 
