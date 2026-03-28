@@ -59,7 +59,7 @@ export async function POST(request: Request) {
   });
 
   if (!homeworkNumber) {
-    return NextResponse.json({ error: "Номер домашнего задания для этой темы не найден." }, { status: 404 });
+    return NextResponse.json({ error: "Номер задания для этой темы не найден." }, { status: 404 });
   }
 
   if (status === null || status === undefined) {

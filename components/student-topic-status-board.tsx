@@ -54,7 +54,7 @@ const StudentNumberCard = memo(function StudentNumberCard({ number, onSelect }: 
     <div className="rounded-[28px] border border-slate-200 bg-slate-50/80 p-5">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
         <div className="space-y-3">
-          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Домашнее задание</p>
+          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Задания</p>
           <div className="flex flex-wrap items-center gap-3">
             <h3 className="font-display text-2xl font-semibold text-slate-950">№ {number.number}</h3>
             <HomeworkStatusBadge status={number.status} />
@@ -251,7 +251,7 @@ export function StudentTopicStatusBoard({
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        <StatCard label="Номера" value={totalNumbers} hint="Всего номеров в домашнем задании этой темы." />
+        <StatCard label="Номера" value={totalNumbers} hint="Всего номеров в заданиях этой темы." />
         <StatCard label="Зеленые" value={summary.greenCount} hint="Решены сразу и правильно." />
         <StatCard label="Желтые" value={summary.yellowCount} hint="Исправлены после самопроверки." />
         <StatCard label="Красные" value={summary.redCount} hint="Нужна помощь преподавателя." />

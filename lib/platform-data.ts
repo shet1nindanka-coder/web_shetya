@@ -62,6 +62,7 @@ export async function getStudentTopicsOverview(studentId: string) {
 
   const totalNumbers = topicCards.reduce((sum, topic) => sum + topic.totalNumbers, 0);
   const totalMarked = topicCards.reduce((sum, topic) => sum + topic.markedCount, 0);
+  const totalSolved = topicCards.reduce((sum, topic) => sum + topic.greenCount + topic.yellowCount, 0);
 
   return {
     student,
@@ -73,7 +74,9 @@ export async function getStudentTopicsOverview(studentId: string) {
       totalRed: topicCards.reduce((sum, topic) => sum + topic.redCount, 0),
       totalNumbers,
       totalMarked,
-      markedPercent: completionPercent(totalMarked, totalNumbers)
+      markedPercent: completionPercent(totalMarked, totalNumbers),
+      totalSolved,
+      solvedPercent: completionPercent(totalSolved, totalNumbers)
     }
   };
 }

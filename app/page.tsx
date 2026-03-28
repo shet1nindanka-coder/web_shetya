@@ -60,7 +60,7 @@ export default async function HomePage() {
                 <p className="mt-3 text-2xl font-semibold text-slate-950">Файлы и встроенный просмотр</p>
               </div>
               <div className="rounded-[28px] border border-white/70 bg-white/85 p-5 shadow-glow">
-                <p className="text-sm font-semibold uppercase tracking-[0.2em] text-slate-500">Домашка</p>
+                <p className="text-sm font-semibold uppercase tracking-[0.2em] text-slate-500">Задания</p>
                 <p className="mt-3 text-2xl font-semibold text-slate-950">Цветные статусы по номерам</p>
               </div>
             </div>

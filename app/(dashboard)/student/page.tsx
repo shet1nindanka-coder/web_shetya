@@ -30,18 +30,18 @@ export default async function StudentPage() {
 
         <div className="rounded-[36px] border border-brand-100 bg-white/90 p-6 shadow-glow">
           <p className="text-sm font-semibold uppercase tracking-[0.2em] text-slate-500">Личный итог</p>
-          <p className="mt-4 text-3xl font-semibold text-slate-950">{data.stats.markedPercent}% номеров уже решены</p>
+          <p className="mt-4 text-3xl font-semibold text-slate-950">{data.stats.solvedPercent}% номеров уже решены</p>
           <p className="mt-3 text-sm leading-6 text-slate-600">
-            Это общий процент номеров, по которым у вас уже есть результат и выбранный статус в системе.
+            Здесь учитываются только номера со статусом зеленый или желтый. Красные показывают, где еще нужна помощь.
           </p>
           <div className="mt-5 space-y-2">
             <div className="flex items-center justify-between text-sm text-slate-600">
               <span>Решено номеров</span>
               <span className="font-semibold text-slate-950">
-                {data.stats.totalMarked} / {data.stats.totalNumbers}
+                {data.stats.totalSolved} / {data.stats.totalNumbers}
               </span>
             </div>
-            <ProgressBar value={data.stats.markedPercent} />
+            <ProgressBar value={data.stats.solvedPercent} />
           </div>
         </div>
       </section>
@@ -55,7 +55,7 @@ export default async function StudentPage() {
 
       <SectionCard
         title="Список тем"
-        description="Откройте тему, чтобы посмотреть файлы теории и домашнего задания, а также выставить статусы каждому номеру."
+        description="Откройте тему, чтобы посмотреть файлы теории и заданий, а также выставить статусы каждому номеру."
       >
         {data.topics.length === 0 ? (
           <div className="rounded-[28px] border border-dashed border-slate-200 bg-slate-50/60 px-5 py-10 text-center">

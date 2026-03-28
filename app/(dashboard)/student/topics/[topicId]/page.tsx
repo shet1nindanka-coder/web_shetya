@@ -45,8 +45,8 @@ export default async function StudentTopicPage({ params }: StudentTopicPageProps
           file={topic.theoryFile}
         />
         <FileResourceCard
-          title="Домашнее задание"
-          description="Домашка доступна в отдельном файле. При необходимости откройте или скачайте его."
+          title="Задания"
+          description="Задания доступны в отдельном файле. При необходимости откройте или скачайте его."
           file={topic.homeworkFile}
         />
       </div>

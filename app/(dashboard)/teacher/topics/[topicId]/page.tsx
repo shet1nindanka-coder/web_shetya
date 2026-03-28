@@ -53,7 +53,7 @@ export default async function TeacherTopicPage({ params }: TeacherTopicPageProps
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         <StatCard label="Ученики" value={data.stats.totalStudents} hint="Учеников видят эту тему в своих кабинетах." />
-        <StatCard label="Номера" value={data.stats.numbersPerStudent} hint="Номеров домашнего задания внутри темы." />
+        <StatCard label="Номера" value={data.stats.numbersPerStudent} hint="Номеров заданий внутри темы." />
         <StatCard label="Зеленые" value={data.stats.greenCount} hint="Все зеленые статусы по теме." />
         <StatCard label="Заполненность" value={`${data.stats.progressPercent}%`} hint="Насколько ученики отметили номера по теме." />
       </div>
@@ -89,7 +89,7 @@ export default async function TeacherTopicPage({ params }: TeacherTopicPageProps
             </label>
 
             <label className="block space-y-2 lg:col-span-2">
-              <span className="text-sm font-medium text-slate-700">Номера домашнего задания</span>
+              <span className="text-sm font-medium text-slate-700">Номера заданий</span>
               <input
                 type="text"
                 name="numbers"
@@ -97,6 +97,7 @@ export default async function TeacherTopicPage({ params }: TeacherTopicPageProps
                 className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none transition focus:border-brand-400 focus:bg-white"
                 required
               />
+              <p className="text-sm text-slate-500">Можно перечислять номера через запятую, пробел или указывать диапазон, например `1-5`.</p>
             </label>
           </div>
 
@@ -124,12 +125,12 @@ export default async function TeacherTopicPage({ params }: TeacherTopicPageProps
 
             <div className="space-y-4">
               <FileResourceCard
-                title="Домашнее задание"
-                description="Текущий файл домашнего задания по теме."
+                title="Задания"
+                description="Текущий файл заданий по теме."
                 file={data.topic.homeworkFile}
               />
               <label className="block space-y-2">
-                <span className="text-sm font-medium text-slate-700">Заменить файл домашнего задания</span>
+                <span className="text-sm font-medium text-slate-700">Заменить файл заданий</span>
                 <input
                   type="file"
                   name="homeworkFile"
@@ -139,7 +140,7 @@ export default async function TeacherTopicPage({ params }: TeacherTopicPageProps
               </label>
               <label className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700">
                 <input type="checkbox" name="removeHomeworkFile" className="h-4 w-4" />
-                Удалить текущий файл домашнего задания при сохранении
+                Удалить текущий файл заданий при сохранении
               </label>
             </div>
           </div>

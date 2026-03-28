@@ -105,14 +105,42 @@ export function completionPercent(done: number, total: number) {
 }
 
 export function parseNumbersInput(input: string) {
-  return Array.from(
-    new Set(
-      input
-        .split(/[,\s;]+/)
-        .map((value) => Number(value.trim()))
-        .filter((value) => Number.isInteger(value) && value > 0)
-    )
-  ).sort((left, right) => left - right);
+  const matches = input
+    .replace(/[–—−]/g, "-")
+    .match(/\d+\s*-\s*\d+|\d+/g);
+
+  if (!matches) {
+    return [];
+  }
+
+  const numbers = new Set<number>();
+
+  for (const match of matches) {
+    if (match.includes("-")) {
+      const [rawStart, rawEnd] = match.split("-").map((value) => Number(value.trim()));
+
+      if (!Number.isInteger(rawStart) || !Number.isInteger(rawEnd) || rawStart <= 0 || rawEnd <= 0) {
+        continue;
+      }
+
+      const start = Math.min(rawStart, rawEnd);
+      const end = Math.max(rawStart, rawEnd);
+
+      for (let current = start; current <= end; current += 1) {
+        numbers.add(current);
+      }
+
+      continue;
+    }
+
+    const value = Number(match.trim());
+
+    if (Number.isInteger(value) && value > 0) {
+      numbers.add(value);
+    }
+  }
+
+  return Array.from(numbers).sort((left, right) => left - right);
 }
 
 export function getFileExtension(fileName: string) {

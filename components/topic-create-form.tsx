@@ -390,7 +390,7 @@ export function TopicCreateForm({
           value={description}
           onChange={(event) => setDescription(event.target.value)}
           rows={4}
-          placeholder="Что нужно изучить в теории и на что обратить внимание в домашнем задании."
+          placeholder="Что нужно изучить в теории и на что обратить внимание в заданиях по теме."
           className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none transition focus:border-brand-400 focus:bg-white"
           required
         />
@@ -405,21 +405,22 @@ export function TopicCreateForm({
 
       <FileUploadField
         name="homeworkFile"
-        label="Файл домашнего задания"
+        label="Файл заданий"
         state={homeworkUpload}
         onFileSelect={(file) => handleUpload(file, homeworkUpload, setHomeworkUpload, homeworkAbortRef)}
       />
 
       <label className="block space-y-2 lg:col-span-2">
-        <span className="text-sm font-medium text-slate-700">Номера домашнего задания</span>
+        <span className="text-sm font-medium text-slate-700">Номера заданий</span>
         <input
           type="text"
           value={numbers}
           onChange={(event) => setNumbers(event.target.value)}
-          placeholder="12, 14, 18, 22"
+          placeholder="1-5, 8, 12-14"
           className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none transition focus:border-brand-400 focus:bg-white"
           required
         />
+        <p className="text-sm text-slate-500">Можно вводить через запятую, пробел или диапазоном через тире, например `1-5`.</p>
       </label>
 
       <div className="space-y-3 lg:col-span-2">
@@ -428,7 +429,7 @@ export function TopicCreateForm({
             ? "Дождитесь окончания загрузки файлов. Кнопка создания станет доступной автоматически."
             : isReadyToCreate
               ? "Оба файла загружены. Теперь можно создавать тему."
-              : "Сначала загрузите файл теории и файл домашнего задания."}
+              : "Сначала загрузите файл теории и файл заданий."}
         </div>
 
         {submitError ? (
