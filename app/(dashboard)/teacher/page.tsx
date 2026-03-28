@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { UserRole } from "@prisma/client";
 import { createStudentAction } from "@/actions/student";
+import { deleteTopicAction } from "@/actions/topic";
 import { Badge } from "@/components/badge";
 import { ProgressBar } from "@/components/progress-bar";
 import { SectionCard } from "@/components/section-card";
@@ -30,6 +31,14 @@ const teacherNotices = {
   save: {
     tone: "error",
     message: "Не удалось сохранить тему в базе данных. Проверьте подключение к PostgreSQL и логи сервера."
+  },
+  deleted: {
+    tone: "success",
+    message: "Тема успешно удалена."
+  },
+  delete: {
+    tone: "error",
+    message: "Не удалось удалить тему. Проверьте логи сервера и повторите попытку."
   },
   studentCreated: {
     tone: "success",
@@ -64,6 +73,8 @@ export default async function TeacherPage({ searchParams }: TeacherPageProps) {
   const noticeKey =
     created === "1"
       ? "created"
+      : resolvedSearchParams.deleted === "1"
+        ? "deleted"
       : error && error in teacherNotices
         ? (error as keyof typeof teacherNotices)
         : studentCreated === "1"
@@ -289,6 +300,15 @@ export default async function TeacherPage({ searchParams }: TeacherPageProps) {
                 >
                   Открыть и редактировать
                 </Link>
+                <form action={deleteTopicAction}>
+                  <input type="hidden" name="topicId" value={topic.id} />
+                  <button
+                    type="submit"
+                    className="inline-flex rounded-full border border-rose-200 bg-rose-50 px-5 py-3 text-sm font-semibold text-rose-700 transition hover:bg-rose-100"
+                  >
+                    Удалить
+                  </button>
+                </form>
               </div>
             </article>
           ))}

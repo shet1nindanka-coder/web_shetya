@@ -334,33 +334,41 @@ export async function deleteTopicAction(formData: FormData) {
   });
 
   if (!topic) {
-    return;
+    redirectTeacherWithStatus(new URLSearchParams({ error: "delete" }));
   }
 
-  await prisma.$transaction(async (tx) => {
-    await tx.topic.delete({
-      where: { id: topicId }
+  const existingTopic = topic!;
+
+  try {
+    await prisma.$transaction(async (tx) => {
+      await tx.topic.delete({
+        where: { id: topicId }
+      });
+
+      if (existingTopic.theoryFileId) {
+        await tx.storedFile.delete({
+          where: { id: existingTopic.theoryFileId }
+        });
+      }
+
+      if (existingTopic.homeworkFileId) {
+        await tx.storedFile.delete({
+          where: { id: existingTopic.homeworkFileId }
+        });
+      }
     });
-
-    if (topic.theoryFileId) {
-      await tx.storedFile.delete({
-        where: { id: topic.theoryFileId }
-      });
-    }
-
-    if (topic.homeworkFileId) {
-      await tx.storedFile.delete({
-        where: { id: topic.homeworkFileId }
-      });
-    }
-  });
+  } catch (error) {
+    console.error("Failed to delete topic.", error);
+    redirectTeacherWithStatus(new URLSearchParams({ error: "delete" }));
+  }
 
   await Promise.all([
-    removeStoredFile(topic.theoryFile?.storageKey),
-    removeStoredFile(topic.homeworkFile?.storageKey)
+    removeStoredFile(existingTopic.theoryFile?.storageKey),
+    removeStoredFile(existingTopic.homeworkFile?.storageKey)
   ]);
 
   revalidateTopicRoutes();
+  redirectTeacherWithStatus(new URLSearchParams({ deleted: "1" }));
 }
 
 export async function setStudentNumberStatusAction(formData: FormData) {
