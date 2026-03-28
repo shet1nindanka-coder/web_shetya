@@ -60,6 +60,9 @@ export async function getStudentTopicsOverview(studentId: string) {
     };
   });
 
+  const totalNumbers = topicCards.reduce((sum, topic) => sum + topic.totalNumbers, 0);
+  const totalMarked = topicCards.reduce((sum, topic) => sum + topic.markedCount, 0);
+
   return {
     student,
     topics: topicCards,
@@ -68,8 +71,9 @@ export async function getStudentTopicsOverview(studentId: string) {
       totalGreen: topicCards.reduce((sum, topic) => sum + topic.greenCount, 0),
       totalYellow: topicCards.reduce((sum, topic) => sum + topic.yellowCount, 0),
       totalRed: topicCards.reduce((sum, topic) => sum + topic.redCount, 0),
-      totalNumbers: topicCards.reduce((sum, topic) => sum + topic.totalNumbers, 0),
-      totalMarked: topicCards.reduce((sum, topic) => sum + topic.markedCount, 0)
+      totalNumbers,
+      totalMarked,
+      markedPercent: completionPercent(totalMarked, totalNumbers)
     }
   };
 }

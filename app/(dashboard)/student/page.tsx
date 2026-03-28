@@ -30,12 +30,19 @@ export default async function StudentPage() {
 
         <div className="rounded-[36px] border border-brand-100 bg-white/90 p-6 shadow-glow">
           <p className="text-sm font-semibold uppercase tracking-[0.2em] text-slate-500">Личный итог</p>
-          <p className="mt-4 text-3xl font-semibold text-slate-950">
-            {data.stats.totalMarked} из {data.stats.totalNumbers} номеров уже отмечены
-          </p>
+          <p className="mt-4 text-3xl font-semibold text-slate-950">{data.stats.markedPercent}% номеров уже решены</p>
           <p className="mt-3 text-sm leading-6 text-slate-600">
-            Зеленый — решено сразу, желтый — найдено и исправлено самостоятельно, красный — нужна помощь.
+            Это общий процент номеров, по которым у вас уже есть результат и выбранный статус в системе.
           </p>
+          <div className="mt-5 space-y-2">
+            <div className="flex items-center justify-between text-sm text-slate-600">
+              <span>Решено номеров</span>
+              <span className="font-semibold text-slate-950">
+                {data.stats.totalMarked} / {data.stats.totalNumbers}
+              </span>
+            </div>
+            <ProgressBar value={data.stats.markedPercent} />
+          </div>
         </div>
       </section>
 

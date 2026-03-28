@@ -1,4 +1,3 @@
-import path from "node:path";
 import { HomeworkNumberStatus, UserRole } from "@prisma/client";
 
 export const homeworkStatusMeta: Record<
@@ -117,7 +116,14 @@ export function parseNumbersInput(input: string) {
 }
 
 export function getFileExtension(fileName: string) {
-  return path.extname(fileName).toLowerCase();
+  const normalizedName = fileName.split("?")[0]?.split("#")[0] ?? fileName;
+  const extensionIndex = normalizedName.lastIndexOf(".");
+
+  if (extensionIndex <= 0) {
+    return "";
+  }
+
+  return normalizedName.slice(extensionIndex).toLowerCase();
 }
 
 export function isPdfMime(mimeType: string) {
