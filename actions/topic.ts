@@ -62,34 +62,58 @@ export async function createTopicAction(formData: FormData) {
   const title = String(formData.get("title") ?? "").trim();
   const description = String(formData.get("description") ?? "").trim();
   const numbers = parseNumbersInput(String(formData.get("numbers") ?? ""));
+  const theoryFileId = String(formData.get("theoryFileId") ?? "").trim();
+  const homeworkFileId = String(formData.get("homeworkFileId") ?? "").trim();
   const theoryFile = formData.get("theoryFile");
   const homeworkFile = formData.get("homeworkFile");
+  const usePreUploadedFiles = Boolean(theoryFileId && homeworkFileId);
 
   if (
     !title ||
     !description ||
     !numbers.length ||
-    !(theoryFile instanceof File) ||
-    theoryFile.size === 0 ||
-    !(homeworkFile instanceof File) ||
-    homeworkFile.size === 0
+    (!usePreUploadedFiles &&
+      (!(theoryFile instanceof File) ||
+        theoryFile.size === 0 ||
+        !(homeworkFile instanceof File) ||
+        homeworkFile.size === 0))
   ) {
     redirectTeacherWithStatus(new URLSearchParams({ error: "invalid" }));
   }
 
-  const validTheoryFile = theoryFile as File;
-  const validHomeworkFile = homeworkFile as File;
-
   let theoryUpload: Awaited<ReturnType<typeof saveUploadedFile>> | null = null;
   let homeworkUpload: Awaited<ReturnType<typeof saveUploadedFile>> | null = null;
+  let finalTheoryFileId = theoryFileId || null;
+  let finalHomeworkFileId = homeworkFileId || null;
 
-  try {
-    theoryUpload = await saveUploadedFile(validTheoryFile);
-    homeworkUpload = await saveUploadedFile(validHomeworkFile);
-  } catch (error) {
-    console.error("Failed to upload files while creating topic.", error);
-    await Promise.all([removeStoredFile(theoryUpload?.storageKey), removeStoredFile(homeworkUpload?.storageKey)]);
-    redirectTeacherWithStatus(new URLSearchParams({ error: "upload" }));
+  if (usePreUploadedFiles) {
+    const uploadedFiles = await prisma.storedFile.findMany({
+      where: {
+        id: { in: [theoryFileId, homeworkFileId] },
+        uploadedById: user.id
+      },
+      select: {
+        id: true
+      }
+    });
+
+    if (uploadedFiles.length !== 2) {
+      redirectTeacherWithStatus(new URLSearchParams({ error: "upload" }));
+    }
+  }
+
+  if (!usePreUploadedFiles) {
+    const validTheoryFile = theoryFile as File;
+    const validHomeworkFile = homeworkFile as File;
+
+    try {
+      theoryUpload = await saveUploadedFile(validTheoryFile);
+      homeworkUpload = await saveUploadedFile(validHomeworkFile);
+    } catch (error) {
+      console.error("Failed to upload files while creating topic.", error);
+      await Promise.all([removeStoredFile(theoryUpload?.storageKey), removeStoredFile(homeworkUpload?.storageKey)]);
+      redirectTeacherWithStatus(new URLSearchParams({ error: "upload" }));
+    }
   }
 
   try {
@@ -99,31 +123,35 @@ export async function createTopicAction(formData: FormData) {
         select: { displayOrder: true }
       });
 
-      const createdTheoryFile = theoryUpload
-        ? await tx.storedFile.create({
-            data: {
-              ...theoryUpload,
-              uploadedById: user.id
-            }
-          })
-        : null;
+      if (theoryUpload) {
+        const createdTheoryFile = await tx.storedFile.create({
+          data: {
+            ...theoryUpload,
+            uploadedById: user.id
+          }
+        });
 
-      const createdHomeworkFile = homeworkUpload
-        ? await tx.storedFile.create({
-            data: {
-              ...homeworkUpload,
-              uploadedById: user.id
-            }
-          })
-        : null;
+        finalTheoryFileId = createdTheoryFile.id;
+      }
+
+      if (homeworkUpload) {
+        const createdHomeworkFile = await tx.storedFile.create({
+          data: {
+            ...homeworkUpload,
+            uploadedById: user.id
+          }
+        });
+
+        finalHomeworkFileId = createdHomeworkFile.id;
+      }
 
       await tx.topic.create({
         data: {
           title,
           description,
           displayOrder: (lastTopic?.displayOrder ?? 0) + 1,
-          theoryFileId: createdTheoryFile?.id,
-          homeworkFileId: createdHomeworkFile?.id,
+          theoryFileId: finalTheoryFileId,
+          homeworkFileId: finalHomeworkFileId,
           homeworkNumbers: {
             create: numbers.map((number, index) => ({
               number,

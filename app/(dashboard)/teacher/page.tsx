@@ -4,6 +4,7 @@ import { createTopicAction } from "@/actions/topic";
 import { ProgressBar } from "@/components/progress-bar";
 import { SectionCard } from "@/components/section-card";
 import { StatCard } from "@/components/stat-card";
+import { TopicCreateForm } from "@/components/topic-create-form";
 import { requireUser } from "@/lib/auth";
 import { getTeacherTopicsOverview } from "@/lib/platform-data";
 
@@ -89,71 +90,7 @@ export default async function TeacherPage({ searchParams }: TeacherPageProps) {
         title="Создать новую тему"
         description="Добавьте тему, прикрепите файлы и укажите список номеров домашнего задания."
       >
-        <form action={createTopicAction} className="grid gap-4 lg:grid-cols-2" encType="multipart/form-data">
-          <label className="block space-y-2 lg:col-span-2">
-            <span className="text-sm font-medium text-slate-700">Название темы</span>
-            <input
-              type="text"
-              name="title"
-              placeholder="Например, Логарифмы и их свойства"
-              className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none transition focus:border-brand-400 focus:bg-white"
-              required
-            />
-          </label>
-
-          <label className="block space-y-2 lg:col-span-2">
-            <span className="text-sm font-medium text-slate-700">Описание</span>
-            <textarea
-              name="description"
-              rows={4}
-              placeholder="Что нужно изучить в теории и на что обратить внимание в домашнем задании."
-              className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none transition focus:border-brand-400 focus:bg-white"
-              required
-            />
-          </label>
-
-          <label className="block space-y-2">
-            <span className="text-sm font-medium text-slate-700">Файл теории</span>
-            <input
-              type="file"
-              name="theoryFile"
-              accept=".pdf,.docx,.png,.jpg,.jpeg"
-              className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700"
-              required
-            />
-          </label>
-
-          <label className="block space-y-2">
-            <span className="text-sm font-medium text-slate-700">Файл домашнего задания</span>
-            <input
-              type="file"
-              name="homeworkFile"
-              accept=".pdf,.docx,.png,.jpg,.jpeg"
-              className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700"
-              required
-            />
-          </label>
-
-          <label className="block space-y-2 lg:col-span-2">
-            <span className="text-sm font-medium text-slate-700">Номера домашнего задания</span>
-            <input
-              type="text"
-              name="numbers"
-              placeholder="12, 14, 18, 22"
-              className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none transition focus:border-brand-400 focus:bg-white"
-              required
-            />
-          </label>
-
-          <div className="lg:col-span-2">
-            <button
-              type="submit"
-              className="rounded-2xl bg-slate-950 px-5 py-3 text-sm font-semibold text-white transition hover:bg-brand-700"
-            >
-              Создать тему
-            </button>
-          </div>
-        </form>
+        <TopicCreateForm action={createTopicAction} />
       </SectionCard>
 
       <SectionCard
