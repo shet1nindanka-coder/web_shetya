@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 import { promises as fs } from "node:fs";
 import path from "node:path";
 import { del, get, put } from "@vercel/blob";
+import { getSafeUploadFileName } from "@/lib/upload-file-name";
 import {
   allowedUploadExtensions,
   allowedUploadMimeTypes,
@@ -39,10 +40,7 @@ export function getBlobAccessMode(): BlobAccessMode {
 }
 
 function createStorageFileName(fileName: string) {
-  const extension = getFileExtension(fileName);
-  const cleanedBaseName = sanitizeFileName(path.basename(fileName, extension)) || "file";
-
-  return `${Date.now()}-${randomUUID()}-${cleanedBaseName}${extension}`;
+  return `${Date.now()}-${randomUUID()}-${getSafeUploadFileName(fileName)}`;
 }
 
 function createBlobPathname(fileName: string) {
@@ -94,6 +92,38 @@ export function getStorageRoot() {
 
 export async function ensureStorageRoot() {
   await fs.mkdir(getStorageRoot(), { recursive: true });
+}
+
+function buildBlobPathCandidates(pathname: string) {
+  const candidates = new Set<string>();
+  const normalizedValue = pathname.trim();
+
+  if (normalizedValue) {
+    candidates.add(normalizedValue);
+  }
+
+  try {
+    candidates.add(encodeURI(normalizedValue));
+  } catch {
+    // Ignore malformed URI candidates.
+  }
+
+  for (const form of ["NFC", "NFD", "NFKC", "NFKD"] as const) {
+    const nextValue = normalizedValue.normalize(form);
+    if (!nextValue) {
+      continue;
+    }
+
+    candidates.add(nextValue);
+
+    try {
+      candidates.add(encodeURI(nextValue));
+    } catch {
+      // Ignore malformed URI candidates.
+    }
+  }
+
+  return Array.from(candidates);
 }
 
 function validateUploadedFile(file: File) {
@@ -177,7 +207,12 @@ export async function removeStoredFile(storageKey: string | null | undefined) {
   const parsed = parseStorageKey(storageKey);
 
   if (parsed.backend === "blob") {
-    await del(parsed.value).catch(() => undefined);
+    const candidates = buildBlobPathCandidates(parsed.value);
+
+    for (const candidate of candidates) {
+      await del(candidate).catch(() => undefined);
+    }
+
     return;
   }
 
@@ -194,19 +229,23 @@ export async function readStoredFile(storageKey: string): Promise<StoredFilePayl
   const parsed = parseStorageKey(storageKey);
 
   if (parsed.backend === "blob") {
-    const blobResponse = await get(parsed.value, {
-      access: getBlobAccessMode(),
-      useCache: false
-    }).catch(() => null);
+    for (const candidate of buildBlobPathCandidates(parsed.value)) {
+      const blobResponse = await get(candidate, {
+        access: getBlobAccessMode(),
+        useCache: false
+      }).catch(() => null);
 
-    if (!blobResponse || blobResponse.statusCode !== 200 || !blobResponse.stream || blobResponse.blob.size == null) {
-      return null;
+      if (!blobResponse || blobResponse.statusCode !== 200 || !blobResponse.stream || blobResponse.blob.size == null) {
+        continue;
+      }
+
+      return {
+        body: blobResponse.stream,
+        size: blobResponse.blob.size
+      };
     }
 
-    return {
-      body: blobResponse.stream,
-      size: blobResponse.blob.size
-    };
+    return null;
   }
 
   try {

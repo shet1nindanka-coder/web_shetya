@@ -4,6 +4,7 @@ import { upload as uploadToBlob } from "@vercel/blob/client";
 import { useRef, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { ProgressBar } from "@/components/progress-bar";
+import { getSafeUploadFileName } from "@/lib/upload-file-name";
 
 type UploadMode = "local" | "blob";
 type BlobAccessMode = "private" | "public";
@@ -79,13 +80,7 @@ function getBlobRegistrationErrorMessage(status: number) {
 }
 
 function createBlobPathname(fileName: string) {
-  const extensionIndex = fileName.lastIndexOf(".");
-  const extension = extensionIndex >= 0 ? fileName.slice(extensionIndex).toLowerCase() : "";
-  const baseName = extensionIndex >= 0 ? fileName.slice(0, extensionIndex) : fileName;
-  const cleanedBaseName =
-    baseName.normalize("NFKC").replace(/[^\p{L}\p{N}._-]+/gu, "-").replace(/-+/g, "-").replace(/^-|-$/g, "") || "file";
-
-  return `uploads/${Date.now()}-${crypto.randomUUID()}-${cleanedBaseName}${extension}`;
+  return `uploads/${Date.now()}-${crypto.randomUUID()}-${getSafeUploadFileName(fileName)}`;
 }
 
 function FileUploadField({
