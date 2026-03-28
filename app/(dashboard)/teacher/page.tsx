@@ -33,6 +33,7 @@ const teacherNotices = {
 export default async function TeacherPage({ searchParams }: TeacherPageProps) {
   await requireUser(UserRole.TEACHER);
   const data = await getTeacherTopicsOverview();
+  const uploadMode = process.env.BLOB_READ_WRITE_TOKEN?.trim() ? "blob" : "local";
   const resolvedSearchParams = (await searchParams) ?? {};
   const created = typeof resolvedSearchParams.created === "string" ? resolvedSearchParams.created : undefined;
   const error = typeof resolvedSearchParams.error === "string" ? resolvedSearchParams.error : undefined;
@@ -89,7 +90,7 @@ export default async function TeacherPage({ searchParams }: TeacherPageProps) {
         title="Создать новую тему"
         description="Добавьте тему, прикрепите файлы и укажите список номеров домашнего задания."
       >
-        <TopicCreateForm />
+        <TopicCreateForm uploadMode={uploadMode} />
       </SectionCard>
 
       <SectionCard

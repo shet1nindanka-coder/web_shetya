@@ -1,8 +1,11 @@
 "use client";
 
+import { upload as uploadToBlob } from "@vercel/blob/client";
 import { useRef, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { ProgressBar } from "@/components/progress-bar";
+
+type UploadMode = "local" | "blob";
 
 type UploadedFile = {
   id: string;
@@ -62,6 +65,28 @@ function getCreateErrorMessage(status: number) {
   return "Не удалось создать тему. Проверьте подключение к базе данных и повторите попытку.";
 }
 
+function getBlobRegistrationErrorMessage(status: number) {
+  if (status === 401) {
+    return "Сессия истекла. Обновите страницу и войдите заново.";
+  }
+
+  if (status === 400) {
+    return "Файл не прошёл валидацию. Проверьте формат и размер.";
+  }
+
+  return "Не удалось завершить загрузку файла. Попробуйте ещё раз.";
+}
+
+function createBlobPathname(fileName: string) {
+  const extensionIndex = fileName.lastIndexOf(".");
+  const extension = extensionIndex >= 0 ? fileName.slice(extensionIndex).toLowerCase() : "";
+  const baseName = extensionIndex >= 0 ? fileName.slice(0, extensionIndex) : fileName;
+  const cleanedBaseName =
+    baseName.normalize("NFKC").replace(/[^\p{L}\p{N}._-]+/gu, "-").replace(/-+/g, "-").replace(/^-|-$/g, "") || "file";
+
+  return `uploads/${Date.now()}-${crypto.randomUUID()}-${cleanedBaseName}${extension}`;
+}
+
 function FileUploadField({
   name,
   label,
@@ -119,7 +144,7 @@ function FileUploadField({
   );
 }
 
-export function TopicCreateForm() {
+export function TopicCreateForm({ uploadMode }: { uploadMode: UploadMode }) {
   const router = useRouter();
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -128,19 +153,105 @@ export function TopicCreateForm() {
   const [homeworkUpload, setHomeworkUpload] = useState<UploadState>(initialUploadState);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
-  const theoryRequestRef = useRef<XMLHttpRequest | null>(null);
-  const homeworkRequestRef = useRef<XMLHttpRequest | null>(null);
+  const theoryAbortRef = useRef<(() => void) | null>(null);
+  const homeworkAbortRef = useRef<(() => void) | null>(null);
 
   const handleUpload = (
     nextFile: File | null,
     currentState: UploadState,
     setState: (value: UploadState) => void,
-    requestRef: { current: XMLHttpRequest | null }
+    abortRef: { current: (() => void) | null }
   ) => {
-    requestRef.current?.abort();
+    abortRef.current?.();
+    abortRef.current = null;
 
     if (!nextFile) {
       setState(initialUploadState);
+      return;
+    }
+
+    setState({
+      status: "uploading",
+      progress: 0,
+      file: null,
+      error: null
+    });
+
+    if (uploadMode === "blob") {
+      const controller = new AbortController();
+      abortRef.current = () => controller.abort();
+
+      void (async () => {
+        try {
+          const blob = await uploadToBlob(createBlobPathname(nextFile.name), nextFile, {
+            access: "private",
+            handleUploadUrl: "/api/teacher/uploads",
+            contentType: nextFile.type || undefined,
+            multipart: nextFile.size >= 5 * 1024 * 1024,
+            abortSignal: controller.signal,
+            onUploadProgress: ({ percentage }) => {
+              setState({
+                status: "uploading",
+                progress: Math.round(percentage),
+                file: null,
+                error: null
+              });
+            }
+          });
+
+          const registerResponse = await fetch("/api/teacher/uploads", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+              action: "register-blob",
+              pathname: blob.pathname,
+              contentType: blob.contentType,
+              originalName: nextFile.name,
+              size: nextFile.size,
+              previousFileId: currentState.file?.id ?? null
+            })
+          });
+
+          const registerResult = (await registerResponse.json().catch(() => null)) as
+            | { file?: UploadedFile; error?: string }
+            | null;
+
+          if (registerResponse.ok && registerResult?.file) {
+            setState({
+              status: "uploaded",
+              progress: 100,
+              file: registerResult.file,
+              error: null
+            });
+            return;
+          }
+
+          setState({
+            status: "error",
+            progress: 0,
+            file: null,
+            error: registerResult?.error || getBlobRegistrationErrorMessage(registerResponse.status)
+          });
+        } catch (error) {
+          if (controller.signal.aborted) {
+            setState(initialUploadState);
+            return;
+          }
+
+          console.error("Blob upload failed in topic create form.", error);
+          setState({
+            status: "error",
+            progress: 0,
+            file: null,
+            error: "Не удалось загрузить файл в storage. Проверьте BLOB_READ_WRITE_TOKEN и повторите попытку."
+          });
+        } finally {
+          abortRef.current = null;
+        }
+      })();
+
       return;
     }
 
@@ -152,17 +263,9 @@ export function TopicCreateForm() {
     }
 
     const request = new XMLHttpRequest();
-    requestRef.current = request;
-
-    setState({
-      status: "uploading",
-      progress: 0,
-      file: null,
-      error: null
-    });
-
     request.open("POST", "/api/teacher/uploads");
     request.responseType = "json";
+    abortRef.current = () => request.abort();
 
     request.upload.onprogress = (event) => {
       if (!event.lengthComputable) {
@@ -296,14 +399,14 @@ export function TopicCreateForm() {
         name="theoryFile"
         label="Файл теории"
         state={theoryUpload}
-        onFileSelect={(file) => handleUpload(file, theoryUpload, setTheoryUpload, theoryRequestRef)}
+        onFileSelect={(file) => handleUpload(file, theoryUpload, setTheoryUpload, theoryAbortRef)}
       />
 
       <FileUploadField
         name="homeworkFile"
         label="Файл домашнего задания"
         state={homeworkUpload}
-        onFileSelect={(file) => handleUpload(file, homeworkUpload, setHomeworkUpload, homeworkRequestRef)}
+        onFileSelect={(file) => handleUpload(file, homeworkUpload, setHomeworkUpload, homeworkAbortRef)}
       />
 
       <label className="block space-y-2 lg:col-span-2">

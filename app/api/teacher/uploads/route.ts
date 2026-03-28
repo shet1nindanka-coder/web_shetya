@@ -1,10 +1,13 @@
+import { handleUpload, type HandleUploadBody } from "@vercel/blob/client";
 import { UserRole } from "@prisma/client";
 import { NextResponse } from "next/server";
 import { tryGetCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { removeStoredFile, saveUploadedFile } from "@/lib/storage";
+import { allowedUploadExtensions, allowedUploadMimeTypes, getFileExtension } from "@/lib/utils";
 
 export const runtime = "nodejs";
+const MAX_UPLOAD_SIZE = 15 * 1024 * 1024;
 
 async function deleteOwnedStoredFileIfUnused(fileId: string | null | undefined, userId: string) {
   if (!fileId) {
@@ -36,11 +39,119 @@ async function deleteOwnedStoredFileIfUnused(fileId: string | null | undefined, 
   await removeStoredFile(file.storageKey);
 }
 
+function validateUploadedMetadata(fileName: string, mimeType: string, size: number) {
+  const extension = getFileExtension(fileName);
+
+  if (!allowedUploadExtensions.includes(extension)) {
+    throw new Error("Поддерживаются только PDF, DOCX, PNG и JPG.");
+  }
+
+  if (!allowedUploadMimeTypes.has(mimeType)) {
+    throw new Error("Неподдерживаемый тип файла.");
+  }
+
+  if (size > MAX_UPLOAD_SIZE) {
+    throw new Error("Файл слишком большой. Максимальный размер — 15 МБ.");
+  }
+}
+
 export async function POST(request: Request) {
   const user = await tryGetCurrentUser();
 
   if (!user || user.role !== UserRole.TEACHER) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const contentType = request.headers.get("content-type") ?? "";
+
+  if (contentType.includes("application/json")) {
+    const body = (await request.json().catch(() => null)) as
+      | (HandleUploadBody & {
+          action?: never;
+        })
+      | {
+          action?: string;
+          pathname?: string;
+          contentType?: string;
+          originalName?: string;
+          size?: number;
+          previousFileId?: string | null;
+        }
+      | null;
+
+    if (body && "type" in body && (body.type === "blob.generate-client-token" || body.type === "blob.upload-completed")) {
+      if (!process.env.BLOB_READ_WRITE_TOKEN?.trim()) {
+        return NextResponse.json({ error: "Blob storage is not configured" }, { status: 400 });
+      }
+
+      try {
+        const jsonResponse = await handleUpload({
+          request,
+          body,
+          onBeforeGenerateToken: async () => ({
+            allowedContentTypes: Array.from(allowedUploadMimeTypes),
+            maximumSizeInBytes: MAX_UPLOAD_SIZE,
+            addRandomSuffix: false
+          })
+        });
+
+        return NextResponse.json(jsonResponse);
+      } catch (error) {
+        console.error("Failed to generate Vercel Blob upload token.", error);
+        return NextResponse.json({ error: "Blob upload token generation failed" }, { status: 500 });
+      }
+    }
+
+    if (body?.action === "register-blob") {
+      const pathname = String(body.pathname ?? "").trim();
+      const uploadedMimeType = String(body.contentType ?? "").trim();
+      const originalName = String(body.originalName ?? "").trim();
+      const size = Number(body.size ?? 0);
+      const previousFileId = String(body.previousFileId ?? "").trim();
+
+      if (!pathname || !uploadedMimeType || !originalName || !Number.isFinite(size) || size <= 0) {
+        return NextResponse.json({ error: "Blob metadata is incomplete" }, { status: 400 });
+      }
+
+      try {
+        validateUploadedMetadata(originalName, uploadedMimeType, size);
+
+        const storedFile = await prisma.storedFile.create({
+          data: {
+            originalName,
+            storageKey: `blob:${pathname}`,
+            mimeType: uploadedMimeType,
+            size,
+            uploadedById: user.id
+          }
+        });
+
+        if (previousFileId && previousFileId !== storedFile.id) {
+          await deleteOwnedStoredFileIfUnused(previousFileId, user.id);
+        }
+
+        return NextResponse.json({
+          file: {
+            id: storedFile.id,
+            originalName: storedFile.originalName,
+            mimeType: storedFile.mimeType,
+            size: storedFile.size,
+            uploadedAt: storedFile.uploadedAt.toISOString()
+          }
+        });
+      } catch (error) {
+        console.error("Failed to register Vercel Blob upload in database.", error);
+
+        return NextResponse.json(
+          {
+            error: error instanceof Error ? error.message : "Blob registration failed"
+          },
+          { status: 400 }
+        );
+      }
+    }
+
+    return NextResponse.json({ error: "Unsupported upload request" }, { status: 400 });
   }
 
   const formData = await request.formData();
