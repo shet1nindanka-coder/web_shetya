@@ -16,6 +16,7 @@ const BLOB_STORAGE_PREFIX = "blob:";
 const BLOB_UPLOADS_PREFIX = "uploads";
 
 type StorageBackend = "local" | "blob";
+export type BlobAccessMode = "private" | "public";
 
 type StoredUpload = {
   originalName: string;
@@ -31,6 +32,10 @@ type StoredFilePayload = {
 
 function getStorageBackend(): StorageBackend {
   return process.env.BLOB_READ_WRITE_TOKEN?.trim() ? "blob" : "local";
+}
+
+export function getBlobAccessMode(): BlobAccessMode {
+  return process.env.BLOB_ACCESS === "public" ? "public" : "private";
 }
 
 function createStorageFileName(fileName: string) {
@@ -131,7 +136,7 @@ async function saveToLocalStorage(body: Buffer | File, fileName: string, mimeTyp
 async function saveToBlobStorage(body: Buffer | File, fileName: string, mimeType: string, size: number): Promise<StoredUpload> {
   const pathname = createBlobPathname(fileName);
   const uploadedBlob = await put(pathname, body, {
-    access: "private",
+    access: getBlobAccessMode(),
     addRandomSuffix: false,
     contentType: mimeType
   });
@@ -190,7 +195,7 @@ export async function readStoredFile(storageKey: string): Promise<StoredFilePayl
 
   if (parsed.backend === "blob") {
     const blobResponse = await get(parsed.value, {
-      access: "private",
+      access: getBlobAccessMode(),
       useCache: false
     }).catch(() => null);
 

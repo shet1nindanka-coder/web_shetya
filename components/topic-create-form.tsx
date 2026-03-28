@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { ProgressBar } from "@/components/progress-bar";
 
 type UploadMode = "local" | "blob";
+type BlobAccessMode = "private" | "public";
 
 type UploadedFile = {
   id: string;
@@ -144,7 +145,13 @@ function FileUploadField({
   );
 }
 
-export function TopicCreateForm({ uploadMode }: { uploadMode: UploadMode }) {
+export function TopicCreateForm({
+  uploadMode,
+  blobAccess
+}: {
+  uploadMode: UploadMode;
+  blobAccess: BlobAccessMode;
+}) {
   const router = useRouter();
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -184,7 +191,7 @@ export function TopicCreateForm({ uploadMode }: { uploadMode: UploadMode }) {
       void (async () => {
         try {
           const blob = await uploadToBlob(createBlobPathname(nextFile.name), nextFile, {
-            access: "private",
+            access: blobAccess,
             handleUploadUrl: "/api/teacher/uploads",
             contentType: nextFile.type || undefined,
             abortSignal: controller.signal,
