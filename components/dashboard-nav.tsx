@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
 import { UserRole } from "@prisma/client";
 import { logoutAction } from "@/actions/auth";
 
@@ -14,24 +13,12 @@ type DashboardNavProps = {
 };
 
 const navigation = {
-  [UserRole.STUDENT]: [
-    { href: "/dashboard", label: "Обзор" },
-    { href: "/student", label: "Кабинет ученика" }
-  ],
+  [UserRole.STUDENT]: [],
   [UserRole.TEACHER]: []
 };
 
-function cx(...values: Array<string | false | null | undefined>) {
-  return values.filter(Boolean).join(" ");
-}
-
 export function DashboardNav({ user }: DashboardNavProps) {
-  const pathname = usePathname();
-  const items = navigation[user.role].map((item) => ({
-    ...item,
-    isActive:
-      item.href === "/dashboard" ? pathname === item.href : pathname === item.href || pathname.startsWith(`${item.href}/`)
-  }));
+  const items = navigation[user.role];
 
   return (
     <header className="sticky top-0 z-20 border-b border-white/60 bg-[rgba(246,251,255,0.82)] backdrop-blur-xl">
@@ -46,26 +33,7 @@ export function DashboardNav({ user }: DashboardNavProps) {
               <p className="text-sm text-slate-500">Учебная платформа для репетитора</p>
             </div>
           </Link>
-          {items.length > 0 ? (
-            <nav className="flex flex-wrap gap-2">
-              {items.map((item) => (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  className={cx(
-                    "rounded-full border px-4 py-2 text-sm font-medium transition",
-                    item.isActive
-                      ? "border-brand-200 bg-brand-50 text-brand-700 shadow-sm"
-                      : "border-slate-200 bg-white text-slate-700 hover:border-brand-300 hover:text-brand-700"
-                  )}
-                >
-                  {item.label}
-                </Link>
-              ))}
-            </nav>
-          ) : (
-            <p className="text-sm text-slate-500">Навигация преподавателя доступна во вкладках ниже.</p>
-          )}
+          {items.length > 0 ? <nav className="flex flex-wrap gap-2" /> : null}
         </div>
 
         <div className="flex flex-col items-start gap-3 rounded-[24px] border border-white/80 bg-white/85 px-5 py-4 shadow-sm sm:flex-row sm:items-center sm:justify-between">
