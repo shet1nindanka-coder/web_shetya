@@ -1,0 +1,99 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum UserRole {
+  TEACHER
+  STUDENT
+}
+
+enum HomeworkNumberStatus {
+  GREEN
+  YELLOW
+  RED
+}
+
+model User {
+  id             String                    @id @default(cuid())
+  name           String
+  email          String                    @unique
+  passwordHash   String
+  role           UserRole
+  createdAt      DateTime                  @default(now())
+  updatedAt      DateTime                  @updatedAt
+  sessions       Session[]
+  uploadedFiles  StoredFile[]              @relation("UploadedFiles")
+  numberStatuses StudentTopicNumberStatus[]
+}
+
+model Session {
+  id        String   @id @default(cuid())
+  tokenHash String   @unique
+  userId    String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model StoredFile {
+  id               String   @id @default(cuid())
+  originalName     String
+  storageKey       String   @unique
+  mimeType         String
+  size             Int
+  uploadedAt       DateTime @default(now())
+  uploadedById     String
+  uploadedBy       User     @relation("UploadedFiles", fields: [uploadedById], references: [id], onDelete: Restrict)
+  theoryForTopics  Topic[]  @relation("TheoryFile")
+  homeworkForTopics Topic[] @relation("HomeworkFile")
+}
+
+model Topic {
+  id             String              @id @default(cuid())
+  title          String
+  description    String
+  displayOrder   Int                 @default(0)
+  theoryFileId   String?
+  homeworkFileId String?
+  createdAt      DateTime            @default(now())
+  updatedAt      DateTime            @updatedAt
+  theoryFile     StoredFile?         @relation("TheoryFile", fields: [theoryFileId], references: [id], onDelete: SetNull)
+  homeworkFile   StoredFile?         @relation("HomeworkFile", fields: [homeworkFileId], references: [id], onDelete: SetNull)
+  homeworkNumbers TopicHomeworkNumber[]
+
+  @@index([displayOrder])
+}
+
+model TopicHomeworkNumber {
+  id           String                    @id @default(cuid())
+  topicId      String
+  number       Int
+  displayOrder Int                       @default(0)
+  topic        Topic                     @relation(fields: [topicId], references: [id], onDelete: Cascade)
+  statuses     StudentTopicNumberStatus[]
+
+  @@unique([topicId, number])
+  @@index([topicId, displayOrder])
+}
+
+model StudentTopicNumberStatus {
+  id               String               @id @default(cuid())
+  studentId        String
+  homeworkNumberId String
+  status           HomeworkNumberStatus
+  createdAt        DateTime             @default(now())
+  updatedAt        DateTime             @updatedAt
+  student          User                 @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  homeworkNumber   TopicHomeworkNumber  @relation(fields: [homeworkNumberId], references: [id], onDelete: Cascade)
+
+  @@unique([studentId, homeworkNumberId])
+  @@index([studentId, status])
+  @@index([homeworkNumberId])
+}
