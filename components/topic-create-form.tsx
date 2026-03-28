@@ -187,7 +187,6 @@ export function TopicCreateForm({ uploadMode }: { uploadMode: UploadMode }) {
             access: "private",
             handleUploadUrl: "/api/teacher/uploads",
             contentType: nextFile.type || undefined,
-            multipart: nextFile.size >= 5 * 1024 * 1024,
             abortSignal: controller.signal,
             onUploadProgress: ({ percentage }) => {
               setState({

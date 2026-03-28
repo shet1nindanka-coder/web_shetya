@@ -93,10 +93,8 @@ export async function POST(request: Request) {
           onBeforeGenerateToken: async () => ({
             allowedContentTypes: Array.from(allowedUploadMimeTypes),
             maximumSizeInBytes: MAX_UPLOAD_SIZE,
-            addRandomSuffix: false,
-            callbackUrl: request.url
-          }),
-          onUploadCompleted: async () => undefined
+            addRandomSuffix: false
+          })
         });
 
         return NextResponse.json(jsonResponse);
