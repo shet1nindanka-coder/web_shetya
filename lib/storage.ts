@@ -39,6 +39,17 @@ export function getBlobAccessMode(): BlobAccessMode {
   return process.env.BLOB_ACCESS === "public" ? "public" : "private";
 }
 
+function getBlobStoreId() {
+  const token = process.env.BLOB_READ_WRITE_TOKEN?.trim();
+
+  if (!token) {
+    return null;
+  }
+
+  const [, , , storeId = null] = token.split("_");
+  return storeId;
+}
+
 function createStorageFileName(fileName: string) {
   return `${Date.now()}-${randomUUID()}-${getSafeUploadFileName(fileName)}`;
 }
@@ -158,6 +169,33 @@ async function resolveBlobPathname(pathname: string) {
   } catch {
     return null;
   }
+}
+
+export async function getPublicBlobUrl(storageKey: string, download = false) {
+  if (getBlobAccessMode() !== "public") {
+    return null;
+  }
+
+  const parsed = parseStorageKey(storageKey);
+
+  if (parsed.backend !== "blob") {
+    return null;
+  }
+
+  const storeId = getBlobStoreId();
+
+  if (!storeId) {
+    return null;
+  }
+
+  const resolvedPathname = (await resolveBlobPathname(parsed.value)) ?? parsed.value;
+  const url = new URL(`https://${storeId}.public.blob.vercel-storage.com/${resolvedPathname}`);
+
+  if (download) {
+    url.searchParams.set("download", "1");
+  }
+
+  return url.toString();
 }
 
 function validateUploadedFile(file: File) {

@@ -1,6 +1,6 @@
 import { tryGetCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { readStoredFile } from "@/lib/storage";
+import { getBlobAccessMode, getPublicBlobUrl, readStoredFile } from "@/lib/storage";
 
 type FileRouteProps = {
   params: Promise<{
@@ -21,13 +21,31 @@ export async function GET(request: Request, { params }: FileRouteProps) {
   });
 
   if (!file) {
+    console.error("Stored file record not found.", {
+      fileId,
+      hasBlobToken: Boolean(process.env.BLOB_READ_WRITE_TOKEN?.trim()),
+      blobAccess: getBlobAccessMode()
+    });
     return new Response("Not found", { status: 404 });
   }
 
   const download = new URL(request.url).searchParams.get("download") === "1";
+  const publicBlobUrl = await getPublicBlobUrl(file.storageKey, download);
+
+  if (publicBlobUrl) {
+    return Response.redirect(publicBlobUrl, 302);
+  }
+
   const storedFile = await readStoredFile(file.storageKey);
 
   if (!storedFile) {
+    console.error("Stored file payload not found.", {
+      fileId,
+      storageKey: file.storageKey,
+      hasBlobToken: Boolean(process.env.BLOB_READ_WRITE_TOKEN?.trim()),
+      blobAccess: getBlobAccessMode(),
+      download
+    });
     return new Response("Not found", { status: 404 });
   }
 
