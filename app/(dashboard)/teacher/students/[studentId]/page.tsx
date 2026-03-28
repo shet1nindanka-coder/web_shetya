@@ -24,8 +24,8 @@ export default async function TeacherStudentPage({ params }: TeacherStudentPageP
     <div className="space-y-8">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <Link href="/teacher" className="text-sm font-semibold text-brand-700 transition hover:text-brand-900">
-            ← Ко всем темам и ученикам
+          <Link href="/teacher/students" className="text-sm font-semibold text-brand-700 transition hover:text-brand-900">
+            ← Ко всем ученикам
           </Link>
           <h1 className="font-display mt-3 text-4xl font-semibold text-slate-950">{data.student.name}</h1>
           <p className="mt-3 max-w-3xl text-base leading-7 text-slate-600">

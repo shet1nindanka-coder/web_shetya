@@ -11,6 +11,8 @@ function revalidateTopicRoutes(topicId?: string) {
   revalidatePath("/dashboard");
   revalidatePath("/student");
   revalidatePath("/teacher");
+  revalidatePath("/teacher/topics");
+  revalidatePath("/teacher/students");
 
   if (topicId) {
     revalidatePath(`/student/topics/${topicId}`);
@@ -99,7 +101,7 @@ export async function POST(request: Request) {
     revalidateTopicRoutes(topic.id);
 
     return NextResponse.json({
-      redirectTo: "/teacher?created=1"
+      redirectTo: "/teacher/topics?created=1"
     });
   } catch (error) {
     console.error("Failed to create topic from API route.", error);

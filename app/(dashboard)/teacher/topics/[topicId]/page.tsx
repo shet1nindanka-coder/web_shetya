@@ -1,8 +1,8 @@
 import Link from "next/link";
 import { UserRole } from "@prisma/client";
-import { deleteTopicAction, updateTopicAction } from "@/actions/topic";
+import { updateTopicAction } from "@/actions/topic";
 import { Badge } from "@/components/badge";
-import { ConfirmSubmitButton } from "@/components/confirm-submit-button";
+import { DeleteTopicDialog } from "@/components/delete-topic-dialog";
 import { FileResourceCard } from "@/components/file-resource-card";
 import { HomeworkStatusBadge } from "@/components/homework-status-badge";
 import { ProgressBar } from "@/components/progress-bar";
@@ -27,7 +27,7 @@ export default async function TeacherTopicPage({ params }: TeacherTopicPageProps
     <div className="space-y-8">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
-          <Link href="/teacher" className="text-sm font-semibold text-brand-700 transition hover:text-brand-900">
+          <Link href="/teacher/topics" className="text-sm font-semibold text-brand-700 transition hover:text-brand-900">
             ← Ко всем темам
           </Link>
           <h1 className="font-display mt-3 text-4xl font-semibold text-slate-950">{data.topic.title}</h1>
@@ -41,15 +41,12 @@ export default async function TeacherTopicPage({ params }: TeacherTopicPageProps
           </div>
         </div>
 
-        <form action={deleteTopicAction}>
-          <input type="hidden" name="topicId" value={data.topic.id} />
-          <ConfirmSubmitButton
-            message={`Удалить тему «${data.topic.title}»? Это действие нельзя отменить.`}
-            className="rounded-full border border-rose-200 bg-rose-50 px-5 py-3 text-sm font-semibold text-rose-700 transition hover:bg-rose-100"
-          >
-            Удалить тему
-          </ConfirmSubmitButton>
-        </form>
+        <DeleteTopicDialog
+          topicId={data.topic.id}
+          topicTitle={data.topic.title}
+          triggerLabel="Удалить тему"
+          triggerClassName="rounded-full border border-rose-200 bg-rose-50 px-5 py-3 text-sm font-semibold text-rose-700 transition hover:bg-rose-100"
+        />
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">

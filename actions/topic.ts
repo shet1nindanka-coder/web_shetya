@@ -18,6 +18,8 @@ function revalidateTopicRoutes(topicId?: string) {
   revalidatePath("/dashboard");
   revalidatePath("/student");
   revalidatePath("/teacher");
+  revalidatePath("/teacher/topics");
+  revalidatePath("/teacher/students");
 
   if (topicId) {
     revalidatePath(`/student/topics/${topicId}`);
@@ -25,9 +27,9 @@ function revalidateTopicRoutes(topicId?: string) {
   }
 }
 
-function redirectTeacherWithStatus(params: URLSearchParams) {
+function redirectTeacherTopicsWithStatus(params: URLSearchParams) {
   const query = params.toString();
-  redirect(query ? `/teacher?${query}` : "/teacher");
+  redirect(query ? `/teacher/topics?${query}` : "/teacher/topics");
 }
 
 async function deleteStoredFileRecordIfUnused(fileId: string | null | undefined) {
@@ -78,7 +80,7 @@ export async function createTopicAction(formData: FormData) {
         !(homeworkFile instanceof File) ||
         homeworkFile.size === 0))
   ) {
-    redirectTeacherWithStatus(new URLSearchParams({ error: "invalid" }));
+    redirectTeacherTopicsWithStatus(new URLSearchParams({ error: "invalid" }));
   }
 
   let theoryUpload: Awaited<ReturnType<typeof saveUploadedFile>> | null = null;
@@ -98,7 +100,7 @@ export async function createTopicAction(formData: FormData) {
     });
 
     if (uploadedFiles.length !== 2) {
-      redirectTeacherWithStatus(new URLSearchParams({ error: "upload" }));
+      redirectTeacherTopicsWithStatus(new URLSearchParams({ error: "upload" }));
     }
   }
 
@@ -112,7 +114,7 @@ export async function createTopicAction(formData: FormData) {
     } catch (error) {
       console.error("Failed to upload files while creating topic.", error);
       await Promise.all([removeStoredFile(theoryUpload?.storageKey), removeStoredFile(homeworkUpload?.storageKey)]);
-      redirectTeacherWithStatus(new URLSearchParams({ error: "upload" }));
+      redirectTeacherTopicsWithStatus(new URLSearchParams({ error: "upload" }));
     }
   }
 
@@ -168,11 +170,11 @@ export async function createTopicAction(formData: FormData) {
       removeStoredFile(homeworkUpload?.storageKey)
     ]);
 
-    redirectTeacherWithStatus(new URLSearchParams({ error: "save" }));
+    redirectTeacherTopicsWithStatus(new URLSearchParams({ error: "save" }));
   }
 
   revalidateTopicRoutes();
-  redirectTeacherWithStatus(new URLSearchParams({ created: "1" }));
+  redirectTeacherTopicsWithStatus(new URLSearchParams({ created: "1" }));
 }
 
 export async function updateTopicAction(formData: FormData) {
@@ -334,7 +336,7 @@ export async function deleteTopicAction(formData: FormData) {
   });
 
   if (!topic) {
-    redirectTeacherWithStatus(new URLSearchParams({ error: "delete" }));
+    redirectTeacherTopicsWithStatus(new URLSearchParams({ error: "delete" }));
   }
 
   const existingTopic = topic!;
@@ -359,7 +361,7 @@ export async function deleteTopicAction(formData: FormData) {
     });
   } catch (error) {
     console.error("Failed to delete topic.", error);
-    redirectTeacherWithStatus(new URLSearchParams({ error: "delete" }));
+    redirectTeacherTopicsWithStatus(new URLSearchParams({ error: "delete" }));
   }
 
   await Promise.all([
@@ -368,7 +370,7 @@ export async function deleteTopicAction(formData: FormData) {
   ]);
 
   revalidateTopicRoutes();
-  redirectTeacherWithStatus(new URLSearchParams({ deleted: "1" }));
+  redirectTeacherTopicsWithStatus(new URLSearchParams({ deleted: "1" }));
 }
 
 export async function setStudentNumberStatusAction(formData: FormData) {

@@ -9,7 +9,7 @@ import { prisma } from "@/lib/prisma";
 
 function redirectTeacherWithStudentStatus(params: URLSearchParams) {
   const query = params.toString();
-  redirect(query ? `/teacher?${query}` : "/teacher");
+  redirect(query ? `/teacher/students?${query}` : "/teacher/students");
 }
 
 export async function createStudentAction(formData: FormData) {
@@ -54,5 +54,6 @@ export async function createStudentAction(formData: FormData) {
 
   revalidatePath("/dashboard");
   revalidatePath("/teacher");
+  revalidatePath("/teacher/students");
   redirectTeacherWithStudentStatus(new URLSearchParams({ studentCreated: "1" }));
 }
