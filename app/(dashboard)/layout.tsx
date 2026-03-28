@@ -10,9 +10,9 @@ export default async function DashboardLayout({
   const user = await requireUser();
 
   return (
-    <div className="min-h-screen">
+    <div className="soft-grid min-h-screen">
       <DashboardNav user={user} />
-      <main className="mx-auto w-full max-w-7xl px-4 py-8 sm:px-6 lg:px-8">{children}</main>
+      <main className="content-shell mx-auto w-full max-w-7xl px-4 py-8 sm:px-6 lg:px-8">{children}</main>
     </div>
   );
 }

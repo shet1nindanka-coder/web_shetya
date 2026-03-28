@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "TutorFlow MVP",
+  title: "TutorFlow",
   description: "Платформа для репетитора с общими темами, файлами и индивидуальным прогрессом учеников."
 };
 

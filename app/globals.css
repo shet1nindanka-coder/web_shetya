@@ -20,16 +20,24 @@ body {
   margin: 0;
   min-height: 100vh;
   background:
-    radial-gradient(circle at top left, rgba(26, 126, 240, 0.18), transparent 34%),
-    radial-gradient(circle at 78% 4%, rgba(255, 207, 102, 0.18), transparent 22%),
-    linear-gradient(180deg, #f6fbff 0%, #eef5ff 48%, #f7f2ea 100%);
+    radial-gradient(circle at 6% 0%, rgba(26, 126, 240, 0.18), transparent 30%),
+    radial-gradient(circle at 100% 0%, rgba(255, 207, 102, 0.16), transparent 22%),
+    radial-gradient(circle at 50% 100%, rgba(115, 220, 185, 0.12), transparent 28%),
+    linear-gradient(180deg, #f8fbff 0%, #edf4ff 48%, #f7f3ec 100%);
   color: #0f172a;
   font-family: var(--font-body), "Segoe UI", sans-serif;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 a {
   color: inherit;
   text-decoration: none;
+}
+
+::selection {
+  background: rgba(26, 126, 240, 0.18);
 }
 
 button,
@@ -62,4 +70,20 @@ textarea {
 .content-shell {
   position: relative;
   z-index: 1;
+}
+
+.page-header-panel {
+  position: relative;
+  overflow: hidden;
+}
+
+.page-header-panel::after {
+  content: "";
+  position: absolute;
+  inset: auto -12% -35% auto;
+  height: 220px;
+  width: 220px;
+  border-radius: 999px;
+  background: radial-gradient(circle, rgba(255, 207, 102, 0.24), transparent 70%);
+  pointer-events: none;
 }

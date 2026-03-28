@@ -1,8 +1,9 @@
+"use client";
+
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { UserRole } from "@prisma/client";
 import { logoutAction } from "@/actions/auth";
-import { Badge } from "@/components/badge";
-import { cx } from "@/lib/utils";
 
 type DashboardNavProps = {
   user: {
@@ -23,7 +24,18 @@ const navigation = {
   ]
 };
 
+function cx(...values: Array<string | false | null | undefined>) {
+  return values.filter(Boolean).join(" ");
+}
+
 export function DashboardNav({ user }: DashboardNavProps) {
+  const pathname = usePathname();
+  const items = navigation[user.role].map((item) => ({
+    ...item,
+    isActive:
+      item.href === "/dashboard" ? pathname === item.href : pathname === item.href || pathname.startsWith(`${item.href}/`)
+  }));
+
   return (
     <header className="sticky top-0 z-20 border-b border-white/60 bg-[rgba(246,251,255,0.82)] backdrop-blur-xl">
       <div className="mx-auto flex w-full max-w-7xl flex-col gap-4 px-4 py-4 sm:px-6 lg:flex-row lg:items-center lg:justify-between lg:px-8">
@@ -33,17 +45,20 @@ export function DashboardNav({ user }: DashboardNavProps) {
               T
             </span>
             <div>
-              <p className="font-display text-lg font-semibold leading-none">TutorFlow MVP</p>
+              <p className="font-display text-lg font-semibold leading-none">TutorFlow</p>
               <p className="text-sm text-slate-500">Учебная платформа для репетитора</p>
             </div>
           </Link>
           <nav className="flex flex-wrap gap-2">
-            {navigation[user.role].map((item) => (
+            {items.map((item) => (
               <Link
                 key={item.href}
                 href={item.href}
                 className={cx(
-                  "rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-brand-300 hover:text-brand-700"
+                  "rounded-full border px-4 py-2 text-sm font-medium transition",
+                  item.isActive
+                    ? "border-brand-200 bg-brand-50 text-brand-700 shadow-sm"
+                    : "border-slate-200 bg-white text-slate-700 hover:border-brand-300 hover:text-brand-700"
                 )}
               >
                 {item.label}
@@ -52,15 +67,15 @@ export function DashboardNav({ user }: DashboardNavProps) {
           </nav>
         </div>
 
-        <div className="flex flex-col items-start gap-3 rounded-[24px] border border-white/80 bg-white/80 px-5 py-4 shadow-sm sm:flex-row sm:items-center">
-          <div>
+        <div className="flex flex-col items-start gap-3 rounded-[24px] border border-white/80 bg-white/85 px-5 py-4 shadow-sm sm:flex-row sm:items-center sm:justify-between">
+          <div className="min-w-0">
             <div className="mb-2 flex items-center gap-2">
               <p className="font-semibold text-slate-900">{user.name}</p>
-              <Badge className="border-brand-200 bg-brand-50 text-brand-700">
+              <span className="inline-flex items-center rounded-full border border-brand-200 bg-brand-50 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-brand-700">
                 {user.role === UserRole.TEACHER ? "Преподаватель" : "Ученик"}
-              </Badge>
+              </span>
             </div>
-            <p className="text-sm text-slate-500">{user.email}</p>
+            <p className="truncate text-sm text-slate-500">{user.email}</p>
           </div>
           <form action={logoutAction}>
             <button

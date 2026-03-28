@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { HomeworkNumberStatus, UserRole } from "@prisma/client";
 import { setStudentNumberStatusAction } from "@/actions/topic";
+import { Badge } from "@/components/badge";
 import { FileResourceCard } from "@/components/file-resource-card";
 import { HomeworkStatusBadge } from "@/components/homework-status-badge";
 import { ProgressBar } from "@/components/progress-bar";
@@ -30,6 +31,11 @@ export default async function StudentTopicPage({ params }: StudentTopicPageProps
           </Link>
           <h1 className="font-display mt-3 text-4xl font-semibold text-slate-950">{topic.title}</h1>
           <p className="mt-3 max-w-3xl text-base leading-7 text-slate-600">{topic.description}</p>
+          <div className="mt-5 flex flex-wrap gap-2">
+            <Badge className="border-slate-200 bg-white text-slate-700">Номеров {topic.totalNumbers}</Badge>
+            <Badge className="border-slate-200 bg-white text-slate-700">Отмечено {topic.markedCount}</Badge>
+            <Badge className="border-slate-200 bg-white text-slate-700">Прогресс {topic.progressPercent}%</Badge>
+          </div>
         </div>
       </div>
 
@@ -72,6 +78,21 @@ export default async function StudentTopicPage({ params }: StudentTopicPageProps
         title="Статусы номеров"
         description="Выберите цвет для каждого номера: зеленый, желтый или красный. Статусы сохраняются и доступны преподавателю."
       >
+        <div className="mb-5 flex flex-wrap gap-2">
+          {Object.values(HomeworkNumberStatus).map((status) => {
+            const meta = homeworkStatusMeta[status];
+
+            return (
+              <div
+                key={status}
+                className={cx("rounded-full border px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em]", meta.subtleClassName)}
+              >
+                {meta.shortLabel}
+              </div>
+            );
+          })}
+        </div>
+
         <div className="space-y-4">
           {topic.numbers.map((number) => (
             <form

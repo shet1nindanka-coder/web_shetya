@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { UserRole } from "@prisma/client";
 import { deleteTopicAction, updateTopicAction } from "@/actions/topic";
+import { Badge } from "@/components/badge";
 import { FileResourceCard } from "@/components/file-resource-card";
 import { HomeworkStatusBadge } from "@/components/homework-status-badge";
 import { ProgressBar } from "@/components/progress-bar";
@@ -30,6 +31,13 @@ export default async function TeacherTopicPage({ params }: TeacherTopicPageProps
           </Link>
           <h1 className="font-display mt-3 text-4xl font-semibold text-slate-950">{data.topic.title}</h1>
           <p className="mt-3 max-w-3xl text-base leading-7 text-slate-600">{data.topic.description}</p>
+          <div className="mt-5 flex flex-wrap gap-2">
+            <Badge className="border-slate-200 bg-white text-slate-700">Учеников {data.stats.totalStudents}</Badge>
+            <Badge className="border-slate-200 bg-white text-slate-700">Номеров {data.stats.numbersPerStudent}</Badge>
+            <Badge className="border-slate-200 bg-white text-slate-700">
+              Заполненность {data.stats.progressPercent}%
+            </Badge>
+          </div>
         </div>
 
         <form action={deleteTopicAction}>
@@ -149,6 +157,14 @@ export default async function TeacherTopicPage({ params }: TeacherTopicPageProps
         title="Прогресс учеников по теме"
         description="Для каждого ученика видны статусы всех номеров и общий прогресс по этой теме."
       >
+        {data.students.length === 0 ? (
+          <div className="rounded-[28px] border border-dashed border-slate-200 bg-slate-50/60 px-5 py-10 text-center">
+            <p className="font-display text-2xl font-semibold text-slate-950">Учеников пока нет</p>
+            <p className="mx-auto mt-3 max-w-2xl text-sm leading-6 text-slate-600">
+              После добавления учеников в систему здесь появится их индивидуальный прогресс по теме.
+            </p>
+          </div>
+        ) : (
         <div className="space-y-4">
           {data.students.map((student) => (
             <article key={student.id} className="rounded-[28px] border border-slate-200 bg-slate-50/80 p-5">
@@ -196,6 +212,7 @@ export default async function TeacherTopicPage({ params }: TeacherTopicPageProps
             </article>
           ))}
         </div>
+        )}
       </SectionCard>
     </div>
   );

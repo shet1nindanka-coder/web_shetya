@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { UserRole } from "@prisma/client";
+import { Badge } from "@/components/badge";
 import { SectionCard } from "@/components/section-card";
 import { StatCard } from "@/components/stat-card";
 import { requireUser } from "@/lib/auth";
@@ -13,8 +14,8 @@ export default async function DashboardPage() {
 
     return (
       <div className="space-y-8">
-        <section className="rounded-[36px] border border-white/70 bg-slate-950 px-6 py-8 text-white shadow-glow">
-          <p className="text-sm font-semibold uppercase tracking-[0.28em] text-brand-200">Общий обзор</p>
+        <section className="page-header-panel rounded-[36px] border border-white/70 bg-slate-950 px-6 py-8 text-white shadow-glow">
+          <Badge className="border-brand-300/40 bg-white/10 text-brand-100">Рабочая область</Badge>
           <h1 className="font-display mt-4 text-4xl font-semibold">Платформа готова к управлению темами и файлами</h1>
           <p className="mt-4 max-w-3xl text-base leading-7 text-slate-300">
             Темы общие для всех учеников, а прогресс по номерам хранится отдельно для каждого пользователя. В кабинете
@@ -45,8 +46,8 @@ export default async function DashboardPage() {
 
   return (
     <div className="space-y-8">
-      <section className="rounded-[36px] border border-white/70 bg-slate-950 px-6 py-8 text-white shadow-glow">
-        <p className="text-sm font-semibold uppercase tracking-[0.28em] text-brand-200">Общий обзор</p>
+      <section className="page-header-panel rounded-[36px] border border-white/70 bg-slate-950 px-6 py-8 text-white shadow-glow">
+        <Badge className="border-brand-300/40 bg-white/10 text-brand-100">Личный кабинет</Badge>
         <h1 className="font-display mt-4 text-4xl font-semibold">Все темы доступны из одного личного кабинета</h1>
         <p className="mt-4 max-w-3xl text-base leading-7 text-slate-300">
           Откройте нужную тему, просмотрите теорию и домашнее задание, а затем выставьте цветной статус каждому номеру.

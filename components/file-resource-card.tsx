@@ -18,7 +18,7 @@ type FileResourceCardProps = {
 
 export function FileResourceCard({ title, description, file }: FileResourceCardProps) {
   return (
-    <article className="rounded-[28px] border border-slate-200 bg-slate-50/80 p-5">
+    <article className="rounded-[28px] border border-slate-200 bg-slate-50/80 p-5 shadow-[0_12px_35px_rgba(15,23,42,0.06)]">
       <div className="flex flex-col gap-4 border-b border-slate-200 pb-5">
         <div className="space-y-2">
           <p className="text-sm font-semibold uppercase tracking-[0.24em] text-slate-500">{title}</p>
@@ -61,7 +61,7 @@ export function FileResourceCard({ title, description, file }: FileResourceCardP
           </div>
 
           {isPdfMime(file.mimeType) ? (
-            <div className="overflow-hidden rounded-[24px] border border-slate-200 bg-white">
+            <div className="overflow-hidden rounded-[24px] border border-slate-200 bg-white shadow-inner">
               <iframe
                 src={`/files/${file.id}`}
                 title={file.originalName}
@@ -71,7 +71,7 @@ export function FileResourceCard({ title, description, file }: FileResourceCardP
           ) : null}
 
           {!isPdfMime(file.mimeType) && isImageMime(file.mimeType) ? (
-            <div className="overflow-hidden rounded-[24px] border border-slate-200 bg-white p-2">
+            <div className="overflow-hidden rounded-[24px] border border-slate-200 bg-white p-2 shadow-inner">
               <Image
                 src={`/files/${file.id}`}
                 alt={file.originalName}

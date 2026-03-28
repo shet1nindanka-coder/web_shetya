@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { UserRole } from "@prisma/client";
+import { Badge } from "@/components/badge";
 import { ProgressBar } from "@/components/progress-bar";
 import { SectionCard } from "@/components/section-card";
 import { StatCard } from "@/components/stat-card";
@@ -13,13 +14,18 @@ export default async function StudentPage() {
   return (
     <div className="space-y-8">
       <section className="grid gap-6 lg:grid-cols-[1.15fr_0.85fr]">
-        <div className="rounded-[36px] border border-white/70 bg-slate-950 px-6 py-8 text-white shadow-glow">
-          <p className="text-sm font-semibold uppercase tracking-[0.28em] text-brand-200">Кабинет ученика</p>
+        <div className="page-header-panel rounded-[36px] border border-white/70 bg-slate-950 px-6 py-8 text-white shadow-glow">
+          <Badge className="border-brand-300/40 bg-white/10 text-brand-100">Кабинет ученика</Badge>
           <h1 className="font-display mt-4 text-4xl font-semibold">Все темы и личный прогресс по каждой из них</h1>
           <p className="mt-4 max-w-2xl text-base leading-7 text-slate-300">
             Темы общие для всех учеников, но статусы по номерам сохраняются индивидуально. Откройте нужную тему и
             отметьте, как у вас идут домашние номера.
           </p>
+          <div className="mt-6 flex flex-wrap gap-2">
+            <Badge className="border-white/15 bg-white/10 text-slate-100">Личный прогресс</Badge>
+            <Badge className="border-white/15 bg-white/10 text-slate-100">Файлы по теме</Badge>
+            <Badge className="border-white/15 bg-white/10 text-slate-100">Цветные статусы</Badge>
+          </div>
         </div>
 
         <div className="rounded-[36px] border border-brand-100 bg-white/90 p-6 shadow-glow">
@@ -44,9 +50,17 @@ export default async function StudentPage() {
         title="Список тем"
         description="Откройте тему, чтобы посмотреть файлы теории и домашнего задания, а также выставить статусы каждому номеру."
       >
+        {data.topics.length === 0 ? (
+          <div className="rounded-[28px] border border-dashed border-slate-200 bg-slate-50/60 px-5 py-10 text-center">
+            <p className="font-display text-2xl font-semibold text-slate-950">Темы пока не добавлены</p>
+            <p className="mx-auto mt-3 max-w-2xl text-sm leading-6 text-slate-600">
+              Как только преподаватель создаст первую тему, она появится здесь вместе с файлами и номерами.
+            </p>
+          </div>
+        ) : (
         <div className="grid gap-4 xl:grid-cols-2">
           {data.topics.map((topic) => (
-            <article key={topic.id} className="rounded-[28px] border border-slate-200 bg-slate-50/80 p-5">
+            <article key={topic.id} className="rounded-[28px] border border-slate-200 bg-slate-50/80 p-5 shadow-[0_12px_35px_rgba(15,23,42,0.06)]">
               <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                 <div className="space-y-3">
                   <div>
@@ -56,6 +70,14 @@ export default async function StudentPage() {
                     <h2 className="font-display mt-2 text-2xl font-semibold text-slate-950">{topic.title}</h2>
                   </div>
                   <p className="text-sm leading-6 text-slate-600">{topic.description}</p>
+                  <div className="flex flex-wrap gap-2">
+                    <Badge className="border-slate-200 bg-white text-slate-700">
+                      Отмечено {topic.markedCount}/{topic.totalNumbers}
+                    </Badge>
+                    <Badge className="border-slate-200 bg-white text-slate-700">
+                      Прогресс {topic.progressPercent}%
+                    </Badge>
+                  </div>
                 </div>
                 <div className="rounded-[24px] border border-white bg-white px-4 py-3 text-sm text-slate-600">
                   Файлы:{" "}
@@ -99,6 +121,7 @@ export default async function StudentPage() {
             </article>
           ))}
         </div>
+        )}
       </SectionCard>
     </div>
   );
