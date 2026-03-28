@@ -229,6 +229,21 @@ git push -u origin main
 
 Если репозиторий на GitHub уже создан через интерфейс, просто используйте его URL в `git remote add origin`.
 
+## Vercel
+
+Для Vercel в проекте уже включён запуск `prisma generate` во время `postinstall` и `build`, чтобы Prisma Client не ломался из-за кэша зависимостей.
+
+Для рабочего деплоя на Vercel обязательно задайте:
+
+- `DATABASE_URL` от внешней PostgreSQL-базы
+- `SESSION_TTL_DAYS=30`
+- `STORAGE_DIR` только для локальной разработки
+
+Важно:
+
+- текущий локальный `storage/uploads` не подходит как production storage для Vercel
+- для продакшена лучше заменить его на Vercel Blob, S3, Supabase Storage или Cloudflare R2
+
 ## Тестовые аккаунты
 
 После `npm run db:seed` доступны:
