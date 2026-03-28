@@ -18,10 +18,7 @@ const navigation = {
     { href: "/dashboard", label: "Обзор" },
     { href: "/student", label: "Кабинет ученика" }
   ],
-  [UserRole.TEACHER]: [
-    { href: "/dashboard", label: "Обзор" },
-    { href: "/teacher", label: "Кабинет преподавателя" }
-  ]
+  [UserRole.TEACHER]: []
 };
 
 function cx(...values: Array<string | false | null | undefined>) {
@@ -49,22 +46,26 @@ export function DashboardNav({ user }: DashboardNavProps) {
               <p className="text-sm text-slate-500">Учебная платформа для репетитора</p>
             </div>
           </Link>
-          <nav className="flex flex-wrap gap-2">
-            {items.map((item) => (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={cx(
-                  "rounded-full border px-4 py-2 text-sm font-medium transition",
-                  item.isActive
-                    ? "border-brand-200 bg-brand-50 text-brand-700 shadow-sm"
-                    : "border-slate-200 bg-white text-slate-700 hover:border-brand-300 hover:text-brand-700"
-                )}
-              >
-                {item.label}
-              </Link>
-            ))}
-          </nav>
+          {items.length > 0 ? (
+            <nav className="flex flex-wrap gap-2">
+              {items.map((item) => (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className={cx(
+                    "rounded-full border px-4 py-2 text-sm font-medium transition",
+                    item.isActive
+                      ? "border-brand-200 bg-brand-50 text-brand-700 shadow-sm"
+                      : "border-slate-200 bg-white text-slate-700 hover:border-brand-300 hover:text-brand-700"
+                  )}
+                >
+                  {item.label}
+                </Link>
+              ))}
+            </nav>
+          ) : (
+            <p className="text-sm text-slate-500">Навигация преподавателя доступна во вкладках ниже.</p>
+          )}
         </div>
 
         <div className="flex flex-col items-start gap-3 rounded-[24px] border border-white/80 bg-white/85 px-5 py-4 shadow-sm sm:flex-row sm:items-center sm:justify-between">
