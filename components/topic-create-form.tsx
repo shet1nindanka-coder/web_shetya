@@ -1,12 +1,8 @@
 "use client";
 
-import { useRef, useState } from "react";
-import { useFormStatus } from "react-dom";
+import { useRef, useState, type FormEvent } from "react";
+import { useRouter } from "next/navigation";
 import { ProgressBar } from "@/components/progress-bar";
-
-type TopicCreateFormProps = {
-  action: (formData: FormData) => void | Promise<void>;
-};
 
 type UploadedFile = {
   id: string;
@@ -42,20 +38,6 @@ function formatUploadFileSize(size: number) {
   return `${(size / (1024 * 1024)).toFixed(1)} МБ`;
 }
 
-function CreateTopicSubmitButton({ disabled }: { disabled: boolean }) {
-  const { pending } = useFormStatus();
-
-  return (
-    <button
-      type="submit"
-      disabled={disabled || pending}
-      className="rounded-2xl bg-slate-950 px-5 py-3 text-sm font-semibold text-white transition hover:bg-brand-700 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-600"
-    >
-      {pending ? "Создаем тему..." : "Создать тему"}
-    </button>
-  );
-}
-
 function getUploadErrorMessage(request: XMLHttpRequest) {
   if (request.status === 401) {
     return "Сессия истекла. Обновите страницу и войдите заново.";
@@ -66,6 +48,18 @@ function getUploadErrorMessage(request: XMLHttpRequest) {
   }
 
   return "Не удалось загрузить файл. Попробуйте ещё раз.";
+}
+
+function getCreateErrorMessage(status: number) {
+  if (status === 401) {
+    return "Сессия истекла. Обновите страницу и войдите заново.";
+  }
+
+  if (status === 400) {
+    return "Проверьте форму: название, описание, оба файла и список номеров обязательны.";
+  }
+
+  return "Не удалось создать тему. Проверьте подключение к базе данных и повторите попытку.";
 }
 
 function FileUploadField({
@@ -125,9 +119,15 @@ function FileUploadField({
   );
 }
 
-export function TopicCreateForm({ action }: TopicCreateFormProps) {
+export function TopicCreateForm() {
+  const router = useRouter();
+  const [title, setTitle] = useState("");
+  const [description, setDescription] = useState("");
+  const [numbers, setNumbers] = useState("");
   const [theoryUpload, setTheoryUpload] = useState<UploadState>(initialUploadState);
   const [homeworkUpload, setHomeworkUpload] = useState<UploadState>(initialUploadState);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
   const theoryRequestRef = useRef<XMLHttpRequest | null>(null);
   const homeworkRequestRef = useRef<XMLHttpRequest | null>(null);
 
@@ -220,17 +220,60 @@ export function TopicCreateForm({ action }: TopicCreateFormProps) {
     homeworkUpload.status === "uploaded" &&
     Boolean(theoryUpload.file?.id) &&
     Boolean(homeworkUpload.file?.id);
+  const hasRequiredFields = Boolean(title.trim() && description.trim() && numbers.trim());
+  const isSubmitDisabled = !isReadyToCreate || isUploading || isSubmitting || !hasRequiredFields;
+
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+
+    if (isSubmitDisabled) {
+      return;
+    }
+
+    setIsSubmitting(true);
+    setSubmitError(null);
+
+    try {
+      const response = await fetch("/api/teacher/topics", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          title,
+          description,
+          numbers,
+          theoryFileId: theoryUpload.file?.id,
+          homeworkFileId: homeworkUpload.file?.id
+        })
+      });
+
+      const result = (await response.json().catch(() => null)) as
+        | { redirectTo?: string; error?: string }
+        | null;
+
+      if (response.ok && result?.redirectTo) {
+        router.push(result.redirectTo);
+        router.refresh();
+        return;
+      }
+
+      setSubmitError(result?.error || getCreateErrorMessage(response.status));
+    } catch {
+      setSubmitError("Сеть прервалась во время создания темы. Попробуйте ещё раз.");
+    } finally {
+      setIsSubmitting(false);
+    }
+  }
 
   return (
-    <form action={action} className="grid gap-4 lg:grid-cols-2">
-      <input type="hidden" name="theoryFileId" value={theoryUpload.file?.id ?? ""} />
-      <input type="hidden" name="homeworkFileId" value={homeworkUpload.file?.id ?? ""} />
-
+    <form onSubmit={handleSubmit} className="grid gap-4 lg:grid-cols-2">
       <label className="block space-y-2 lg:col-span-2">
         <span className="text-sm font-medium text-slate-700">Название темы</span>
         <input
           type="text"
-          name="title"
+          value={title}
+          onChange={(event) => setTitle(event.target.value)}
           placeholder="Например, Логарифмы и их свойства"
           className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none transition focus:border-brand-400 focus:bg-white"
           required
@@ -240,7 +283,8 @@ export function TopicCreateForm({ action }: TopicCreateFormProps) {
       <label className="block space-y-2 lg:col-span-2">
         <span className="text-sm font-medium text-slate-700">Описание</span>
         <textarea
-          name="description"
+          value={description}
+          onChange={(event) => setDescription(event.target.value)}
           rows={4}
           placeholder="Что нужно изучить в теории и на что обратить внимание в домашнем задании."
           className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none transition focus:border-brand-400 focus:bg-white"
@@ -266,7 +310,8 @@ export function TopicCreateForm({ action }: TopicCreateFormProps) {
         <span className="text-sm font-medium text-slate-700">Номера домашнего задания</span>
         <input
           type="text"
-          name="numbers"
+          value={numbers}
+          onChange={(event) => setNumbers(event.target.value)}
           placeholder="12, 14, 18, 22"
           className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none transition focus:border-brand-400 focus:bg-white"
           required
@@ -282,7 +327,19 @@ export function TopicCreateForm({ action }: TopicCreateFormProps) {
               : "Сначала загрузите файл теории и файл домашнего задания."}
         </div>
 
-        <CreateTopicSubmitButton disabled={!isReadyToCreate} />
+        {submitError ? (
+          <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-4 text-sm font-medium text-rose-900">
+            {submitError}
+          </div>
+        ) : null}
+
+        <button
+          type="submit"
+          disabled={isSubmitDisabled}
+          className="rounded-2xl bg-slate-950 px-5 py-3 text-sm font-semibold text-white transition hover:bg-brand-700 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-600"
+        >
+          {isSubmitting ? "Создаем тему..." : "Создать тему"}
+        </button>
       </div>
     </form>
   );

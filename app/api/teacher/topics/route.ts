@@ -1,0 +1,114 @@
+import { UserRole } from "@prisma/client";
+import { revalidatePath } from "next/cache";
+import { NextResponse } from "next/server";
+import { tryGetCurrentUser } from "@/lib/auth";
+import { prisma } from "@/lib/prisma";
+import { parseNumbersInput } from "@/lib/utils";
+
+export const runtime = "nodejs";
+
+function revalidateTopicRoutes(topicId?: string) {
+  revalidatePath("/dashboard");
+  revalidatePath("/student");
+  revalidatePath("/teacher");
+
+  if (topicId) {
+    revalidatePath(`/student/topics/${topicId}`);
+    revalidatePath(`/teacher/topics/${topicId}`);
+  }
+}
+
+export async function POST(request: Request) {
+  const user = await tryGetCurrentUser();
+
+  if (!user || user.role !== UserRole.TEACHER) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const body = (await request.json().catch(() => null)) as
+    | {
+        title?: string;
+        description?: string;
+        numbers?: string;
+        theoryFileId?: string;
+        homeworkFileId?: string;
+      }
+    | null;
+
+  const title = String(body?.title ?? "").trim();
+  const description = String(body?.description ?? "").trim();
+  const numbers = parseNumbersInput(String(body?.numbers ?? ""));
+  const theoryFileId = String(body?.theoryFileId ?? "").trim();
+  const homeworkFileId = String(body?.homeworkFileId ?? "").trim();
+
+  if (!title || !description || !numbers.length || !theoryFileId || !homeworkFileId) {
+    return NextResponse.json(
+      {
+        error: "Проверьте форму: название, описание, оба файла и список номеров обязательны."
+      },
+      { status: 400 }
+    );
+  }
+
+  const uploadedFiles = await prisma.storedFile.findMany({
+    where: {
+      id: { in: [theoryFileId, homeworkFileId] },
+      uploadedById: user.id
+    },
+    select: {
+      id: true
+    }
+  });
+
+  if (uploadedFiles.length !== 2) {
+    return NextResponse.json(
+      {
+        error: "Файлы не найдены или уже недоступны. Загрузите их заново."
+      },
+      { status: 400 }
+    );
+  }
+
+  try {
+    const topic = await prisma.$transaction(async (tx) => {
+      const lastTopic = await tx.topic.findFirst({
+        orderBy: { displayOrder: "desc" },
+        select: { displayOrder: true }
+      });
+
+      return tx.topic.create({
+        data: {
+          title,
+          description,
+          displayOrder: (lastTopic?.displayOrder ?? 0) + 1,
+          theoryFileId,
+          homeworkFileId,
+          homeworkNumbers: {
+            create: numbers.map((number, index) => ({
+              number,
+              displayOrder: index + 1
+            }))
+          }
+        },
+        select: {
+          id: true
+        }
+      });
+    });
+
+    revalidateTopicRoutes(topic.id);
+
+    return NextResponse.json({
+      redirectTo: "/teacher?created=1"
+    });
+  } catch (error) {
+    console.error("Failed to create topic from API route.", error);
+
+    return NextResponse.json(
+      {
+        error: "Не удалось сохранить тему в базе данных. Проверьте подключение к PostgreSQL."
+      },
+      { status: 500 }
+    );
+  }
+}

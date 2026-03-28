@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { UserRole } from "@prisma/client";
-import { createTopicAction } from "@/actions/topic";
 import { ProgressBar } from "@/components/progress-bar";
 import { SectionCard } from "@/components/section-card";
 import { StatCard } from "@/components/stat-card";
@@ -90,7 +89,7 @@ export default async function TeacherPage({ searchParams }: TeacherPageProps) {
         title="Создать новую тему"
         description="Добавьте тему, прикрепите файлы и укажите список номеров домашнего задания."
       >
-        <TopicCreateForm action={createTopicAction} />
+        <TopicCreateForm />
       </SectionCard>
 
       <SectionCard
