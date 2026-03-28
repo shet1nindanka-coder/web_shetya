@@ -7,12 +7,56 @@ import { StatCard } from "@/components/stat-card";
 import { requireUser } from "@/lib/auth";
 import { getTeacherTopicsOverview } from "@/lib/platform-data";
 
-export default async function TeacherPage() {
+type TeacherPageProps = {
+  searchParams?: Promise<Record<string, string | string[] | undefined>>;
+};
+
+const teacherNotices = {
+  created: {
+    tone: "success",
+    message: "Новая тема успешно создана."
+  },
+  invalid: {
+    tone: "error",
+    message: "Проверьте форму: название, описание, файлы и список номеров обязательны."
+  },
+  upload: {
+    tone: "error",
+    message: "Не удалось загрузить файлы. Если сайт работает на Vercel, проверьте BLOB_READ_WRITE_TOKEN."
+  },
+  save: {
+    tone: "error",
+    message: "Не удалось сохранить тему в базе данных. Проверьте подключение к PostgreSQL и логи сервера."
+  }
+} as const;
+
+export default async function TeacherPage({ searchParams }: TeacherPageProps) {
   await requireUser(UserRole.TEACHER);
   const data = await getTeacherTopicsOverview();
+  const resolvedSearchParams = (await searchParams) ?? {};
+  const created = typeof resolvedSearchParams.created === "string" ? resolvedSearchParams.created : undefined;
+  const error = typeof resolvedSearchParams.error === "string" ? resolvedSearchParams.error : undefined;
+  const notice =
+    created === "1"
+      ? teacherNotices.created
+      : error && error in teacherNotices
+        ? teacherNotices[error as keyof typeof teacherNotices]
+        : null;
 
   return (
     <div className="space-y-8">
+      {notice ? (
+        <div
+          className={
+            notice.tone === "success"
+              ? "rounded-[28px] border border-emerald-200 bg-emerald-50 px-5 py-4 text-sm font-medium text-emerald-900"
+              : "rounded-[28px] border border-rose-200 bg-rose-50 px-5 py-4 text-sm font-medium text-rose-900"
+          }
+        >
+          {notice.message}
+        </div>
+      ) : null}
+
       <section className="grid gap-6 lg:grid-cols-[1.15fr_0.85fr]">
         <div className="rounded-[36px] border border-white/70 bg-slate-950 px-6 py-8 text-white shadow-glow">
           <p className="text-sm font-semibold uppercase tracking-[0.28em] text-brand-200">Кабинет преподавателя</p>

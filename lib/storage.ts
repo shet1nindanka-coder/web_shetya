@@ -80,6 +80,10 @@ export function getStorageRoot() {
     return path.resolve(process.cwd(), configuredPath);
   }
 
+  if (process.env.NODE_ENV === "production") {
+    return path.join("/tmp", "uploads");
+  }
+
   return path.join(process.cwd(), "storage", "uploads");
 }
 

@@ -2,6 +2,7 @@
 
 import { HomeworkNumberStatus, UserRole } from "@prisma/client";
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/auth";
 import { removeStoredFile, saveUploadedFile } from "@/lib/storage";
@@ -22,6 +23,11 @@ function revalidateTopicRoutes(topicId?: string) {
     revalidatePath(`/student/topics/${topicId}`);
     revalidatePath(`/teacher/topics/${topicId}`);
   }
+}
+
+function redirectTeacherWithStatus(params: URLSearchParams) {
+  const query = params.toString();
+  redirect(query ? `/teacher?${query}` : "/teacher");
 }
 
 async function deleteStoredFileRecordIfUnused(fileId: string | null | undefined) {
@@ -68,18 +74,22 @@ export async function createTopicAction(formData: FormData) {
     !(homeworkFile instanceof File) ||
     homeworkFile.size === 0
   ) {
-    return;
+    redirectTeacherWithStatus(new URLSearchParams({ error: "invalid" }));
   }
+
+  const validTheoryFile = theoryFile as File;
+  const validHomeworkFile = homeworkFile as File;
 
   let theoryUpload: Awaited<ReturnType<typeof saveUploadedFile>> | null = null;
   let homeworkUpload: Awaited<ReturnType<typeof saveUploadedFile>> | null = null;
 
   try {
-    theoryUpload = await saveUploadedFile(theoryFile);
-    homeworkUpload = await saveUploadedFile(homeworkFile);
+    theoryUpload = await saveUploadedFile(validTheoryFile);
+    homeworkUpload = await saveUploadedFile(validHomeworkFile);
   } catch (error) {
+    console.error("Failed to upload files while creating topic.", error);
     await Promise.all([removeStoredFile(theoryUpload?.storageKey), removeStoredFile(homeworkUpload?.storageKey)]);
-    throw error;
+    redirectTeacherWithStatus(new URLSearchParams({ error: "upload" }));
   }
 
   try {
@@ -124,15 +134,17 @@ export async function createTopicAction(formData: FormData) {
       });
     });
   } catch (error) {
+    console.error("Failed to create topic in database.", error);
     await Promise.all([
       removeStoredFile(theoryUpload?.storageKey),
       removeStoredFile(homeworkUpload?.storageKey)
     ]);
 
-    throw error;
+    redirectTeacherWithStatus(new URLSearchParams({ error: "save" }));
   }
 
   revalidateTopicRoutes();
+  redirectTeacherWithStatus(new URLSearchParams({ created: "1" }));
 }
 
 export async function updateTopicAction(formData: FormData) {
