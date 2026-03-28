@@ -1,7 +1,6 @@
-import { promises as fs } from "node:fs";
 import { tryGetCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { getStoredFileAbsolutePath } from "@/lib/storage";
+import { readStoredFile } from "@/lib/storage";
 
 type FileRouteProps = {
   params: Promise<{
@@ -25,23 +24,26 @@ export async function GET(request: Request, { params }: FileRouteProps) {
     return new Response("Not found", { status: 404 });
   }
 
-  const absolutePath = getStoredFileAbsolutePath(file.storageKey);
   const download = new URL(request.url).searchParams.get("download") === "1";
+  const storedFile = await readStoredFile(file.storageKey);
 
-  try {
-    const buffer = await fs.readFile(absolutePath);
-    const dispositionType = download ? "attachment" : "inline";
-
-    return new Response(buffer, {
-      headers: {
-        "Content-Type": file.mimeType,
-        "Content-Length": String(buffer.byteLength),
-        "Content-Disposition": `${dispositionType}; filename*=UTF-8''${encodeURIComponent(file.originalName)}`,
-        "Cache-Control": "private, no-cache, no-store, max-age=0, must-revalidate",
-        "X-Content-Type-Options": "nosniff"
-      }
-    });
-  } catch {
+  if (!storedFile) {
     return new Response("Not found", { status: 404 });
   }
+
+  const dispositionType = download ? "attachment" : "inline";
+  const responseBody =
+    storedFile.body instanceof ReadableStream
+      ? storedFile.body
+      : new Uint8Array(storedFile.body).buffer;
+
+  return new Response(responseBody, {
+    headers: {
+      "Content-Type": file.mimeType,
+      "Content-Length": String(storedFile.size),
+      "Content-Disposition": `${dispositionType}; filename*=UTF-8''${encodeURIComponent(file.originalName)}`,
+      "Cache-Control": "private, no-cache, no-store, max-age=0, must-revalidate",
+      "X-Content-Type-Options": "nosniff"
+    }
+  });
 }

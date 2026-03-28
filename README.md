@@ -61,7 +61,8 @@ Full-stack платформа для репетитора на `Next.js`, `TypeS
 
 Что происходит с файлами:
 
-- физически файлы сохраняются в локальный storage-каталог `STORAGE_DIR`
+- локально файлы сохраняются в каталог `STORAGE_DIR`
+- при наличии `BLOB_READ_WRITE_TOKEN` файлы автоматически сохраняются в `Vercel Blob`
 - метаданные файла хранятся в PostgreSQL
 - доступ к файлам идёт через защищённый route handler `/files/[fileId]`
 - PDF отображается встроенно через `iframe`
@@ -163,6 +164,8 @@ DATABASE_URL="postgresql://postgres:postgres@127.0.0.1:5433/tutor_mvp?schema=pub
 # Local PostgreSQL example:
 # DATABASE_URL="postgresql://YOUR_PG_USER@127.0.0.1:5432/tutor_mvp?schema=public"
 SESSION_TTL_DAYS=30
+# Optional for Vercel Blob in production. When set, files are stored in Blob instead of local disk.
+# BLOB_READ_WRITE_TOKEN="vercel_blob_rw_..."
 STORAGE_DIR="./storage/uploads"
 ```
 
@@ -237,12 +240,12 @@ git push -u origin main
 
 - `DATABASE_URL` от внешней PostgreSQL-базы
 - `SESSION_TTL_DAYS=30`
-- `STORAGE_DIR` только для локальной разработки
+- `BLOB_READ_WRITE_TOKEN` от подключённого `Vercel Blob`
 
 Важно:
 
-- текущий локальный `storage/uploads` не подходит как production storage для Vercel
-- для продакшена лучше заменить его на Vercel Blob, S3, Supabase Storage или Cloudflare R2
+- локальный `storage/uploads` используется только как fallback для локальной разработки
+- на Vercel загрузка и выдача файлов должны идти через `Vercel Blob`
 
 ## Тестовые аккаунты
 

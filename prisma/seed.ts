@@ -1,7 +1,7 @@
 import { promises as fs } from "node:fs";
 import { HomeworkNumberStatus, PrismaClient, UserRole } from "@prisma/client";
 import { hashPassword } from "../lib/password";
-import { ensureStorageRoot, getStorageRoot, saveBufferToStorage } from "../lib/storage";
+import { ensureStorageRoot, getStorageRoot, removeStoredFile, saveBufferToStorage } from "../lib/storage";
 
 const prisma = new PrismaClient();
 
@@ -74,6 +74,12 @@ async function createPdfFileRecord(
 }
 
 async function main() {
+  const existingFiles = await prisma.storedFile.findMany({
+    select: {
+      storageKey: true
+    }
+  });
+
   await prisma.session.deleteMany();
   await prisma.studentTopicNumberStatus.deleteMany();
   await prisma.topicHomeworkNumber.deleteMany();
@@ -81,7 +87,8 @@ async function main() {
   await prisma.storedFile.deleteMany();
   await prisma.user.deleteMany();
 
-  await fs.rm(getStorageRoot(), { recursive: true, force: true });
+  await Promise.all(existingFiles.map((file) => removeStoredFile(file.storageKey)));
+  await fs.rm(getStorageRoot(), { recursive: true, force: true }).catch(() => undefined);
   await ensureStorageRoot();
 
   const teacherPassword = await hashPassword("teacher123");
