@@ -3,6 +3,7 @@ import { UserRole } from "@prisma/client";
 import { createStudentAction } from "@/actions/student";
 import { deleteTopicAction } from "@/actions/topic";
 import { Badge } from "@/components/badge";
+import { ConfirmSubmitButton } from "@/components/confirm-submit-button";
 import { ProgressBar } from "@/components/progress-bar";
 import { SectionCard } from "@/components/section-card";
 import { StatCard } from "@/components/stat-card";
@@ -214,6 +215,14 @@ export default async function TeacherPage({ searchParams }: TeacherPageProps) {
                     <p className="font-semibold text-slate-950">{student.name}</p>
                     <p className="mt-2 text-sm text-slate-500">Логин</p>
                     <p className="text-sm font-medium text-slate-700">{student.email}</p>
+                    <div className="mt-4">
+                      <Link
+                        href={`/teacher/students/${student.id}`}
+                        className="inline-flex rounded-full border border-slate-200 bg-slate-50 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-brand-300 hover:text-brand-700"
+                      >
+                        Смотреть прогресс
+                      </Link>
+                    </div>
                   </article>
                 ))}
               </div>
@@ -302,12 +311,12 @@ export default async function TeacherPage({ searchParams }: TeacherPageProps) {
                 </Link>
                 <form action={deleteTopicAction}>
                   <input type="hidden" name="topicId" value={topic.id} />
-                  <button
-                    type="submit"
+                  <ConfirmSubmitButton
+                    message={`Удалить тему «${topic.title}»? Это действие нельзя отменить.`}
                     className="inline-flex rounded-full border border-rose-200 bg-rose-50 px-5 py-3 text-sm font-semibold text-rose-700 transition hover:bg-rose-100"
                   >
                     Удалить
-                  </button>
+                  </ConfirmSubmitButton>
                 </form>
               </div>
             </article>

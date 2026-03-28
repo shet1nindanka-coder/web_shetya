@@ -250,6 +250,86 @@ export async function getTeacherTopicDetail(topicId: string) {
   };
 }
 
+export async function getTeacherStudentDetail(studentId: string) {
+  const [student, topics] = await Promise.all([
+    prisma.user.findFirstOrThrow({
+      where: {
+        id: studentId,
+        role: UserRole.STUDENT
+      },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        createdAt: true
+      }
+    }),
+    prisma.topic.findMany({
+      include: {
+        theoryFile: true,
+        homeworkFile: true,
+        homeworkNumbers: {
+          orderBy: { displayOrder: "asc" },
+          include: {
+            statuses: {
+              where: { studentId },
+              select: {
+                id: true,
+                status: true,
+                updatedAt: true
+              }
+            }
+          }
+        }
+      },
+      orderBy: [{ displayOrder: "asc" }, { createdAt: "asc" }]
+    })
+  ]);
+
+  const topicCards = topics.map((topic) => {
+    const numbers = topic.homeworkNumbers.map((number) => ({
+      ...number,
+      studentStatus: number.statuses[0] ?? null
+    }));
+    const summary = buildProgress(
+      numbers.map((number) => number.studentStatus?.status ?? null),
+      numbers.length
+    );
+    const solvedCount = summary.greenCount + summary.yellowCount;
+
+    return {
+      ...topic,
+      numbers,
+      solvedCount,
+      solvedPercent: completionPercent(solvedCount, summary.totalNumbers),
+      ...summary
+    };
+  });
+
+  const totalNumbers = topicCards.reduce((sum, topic) => sum + topic.totalNumbers, 0);
+  const totalMarked = topicCards.reduce((sum, topic) => sum + topic.markedCount, 0);
+  const totalGreen = topicCards.reduce((sum, topic) => sum + topic.greenCount, 0);
+  const totalYellow = topicCards.reduce((sum, topic) => sum + topic.yellowCount, 0);
+  const totalRed = topicCards.reduce((sum, topic) => sum + topic.redCount, 0);
+  const totalSolved = totalGreen + totalYellow;
+
+  return {
+    student,
+    topics: topicCards,
+    stats: {
+      totalTopics: topicCards.length,
+      totalNumbers,
+      totalMarked,
+      totalSolved,
+      totalGreen,
+      totalYellow,
+      totalRed,
+      markedPercent: completionPercent(totalMarked, totalNumbers),
+      solvedPercent: completionPercent(totalSolved, totalNumbers)
+    }
+  };
+}
+
 export async function getDashboardSummary(userId: string, role: UserRole) {
   if (role === UserRole.TEACHER) {
     return getTeacherTopicsOverview();

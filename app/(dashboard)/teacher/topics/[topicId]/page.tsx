@@ -2,6 +2,7 @@ import Link from "next/link";
 import { UserRole } from "@prisma/client";
 import { deleteTopicAction, updateTopicAction } from "@/actions/topic";
 import { Badge } from "@/components/badge";
+import { ConfirmSubmitButton } from "@/components/confirm-submit-button";
 import { FileResourceCard } from "@/components/file-resource-card";
 import { HomeworkStatusBadge } from "@/components/homework-status-badge";
 import { ProgressBar } from "@/components/progress-bar";
@@ -42,12 +43,12 @@ export default async function TeacherTopicPage({ params }: TeacherTopicPageProps
 
         <form action={deleteTopicAction}>
           <input type="hidden" name="topicId" value={data.topic.id} />
-          <button
-            type="submit"
+          <ConfirmSubmitButton
+            message={`Удалить тему «${data.topic.title}»? Это действие нельзя отменить.`}
             className="rounded-full border border-rose-200 bg-rose-50 px-5 py-3 text-sm font-semibold text-rose-700 transition hover:bg-rose-100"
           >
             Удалить тему
-          </button>
+          </ConfirmSubmitButton>
         </form>
       </div>
 
@@ -174,6 +175,12 @@ export default async function TeacherTopicPage({ params }: TeacherTopicPageProps
                   <div>
                     <h2 className="font-display text-2xl font-semibold text-slate-950">{student.name}</h2>
                     <p className="mt-2 text-sm text-slate-500">{student.email}</p>
+                    <Link
+                      href={`/teacher/students/${student.id}`}
+                      className="mt-3 inline-flex rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-brand-300 hover:text-brand-700"
+                    >
+                      Смотреть успехи ученика
+                    </Link>
                   </div>
                   <div className="grid gap-3 sm:grid-cols-3">
                     <div className="rounded-2xl bg-white px-4 py-3">
