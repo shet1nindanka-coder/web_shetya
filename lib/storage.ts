@@ -1,7 +1,7 @@
 import { randomUUID } from "node:crypto";
 import { promises as fs } from "node:fs";
 import path from "node:path";
-import { del, get, put } from "@vercel/blob";
+import { del, get, list, put } from "@vercel/blob";
 import { getSafeUploadFileName } from "@/lib/upload-file-name";
 import {
   allowedUploadExtensions,
@@ -126,6 +126,40 @@ function buildBlobPathCandidates(pathname: string) {
   return Array.from(candidates);
 }
 
+function getBlobLookupPrefix(pathname: string) {
+  const match = pathname.match(/^(uploads\/\d+-[0-9a-fA-F-]{36}-)/);
+  return match?.[1] ?? null;
+}
+
+async function resolveBlobPathname(pathname: string) {
+  const prefix = getBlobLookupPrefix(pathname);
+
+  if (!prefix) {
+    return null;
+  }
+
+  try {
+    const result = await list({
+      prefix,
+      limit: 10
+    });
+
+    const exactMatch = result.blobs.find((blob) => blob.pathname === pathname);
+
+    if (exactMatch) {
+      return exactMatch.pathname;
+    }
+
+    if (result.blobs.length === 1) {
+      return result.blobs[0]?.pathname ?? null;
+    }
+
+    return result.blobs[0]?.pathname ?? null;
+  } catch {
+    return null;
+  }
+}
+
 function validateUploadedFile(file: File) {
   const extension = getFileExtension(file.name);
   const fallbackMimeType = getMimeTypeFromExtension(extension);
@@ -229,7 +263,14 @@ export async function readStoredFile(storageKey: string): Promise<StoredFilePayl
   const parsed = parseStorageKey(storageKey);
 
   if (parsed.backend === "blob") {
-    for (const candidate of buildBlobPathCandidates(parsed.value)) {
+    const candidates = new Set(buildBlobPathCandidates(parsed.value));
+    const resolvedPathname = await resolveBlobPathname(parsed.value);
+
+    if (resolvedPathname) {
+      candidates.add(resolvedPathname);
+    }
+
+    for (const candidate of candidates) {
       const blobResponse = await get(candidate, {
         access: getBlobAccessMode(),
         useCache: false
