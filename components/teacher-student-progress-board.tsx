@@ -84,6 +84,36 @@ function inputToIso(value: string) {
   return date.toISOString();
 }
 
+function buildHomeworkGroups(
+  numbers: Array<{
+    studentStatus: {
+      deadlineAt: string | null;
+    } | null;
+  }>
+) {
+  const grouped = new Map<string, number>();
+
+  for (const number of numbers) {
+    const deadlineAt = number.studentStatus?.deadlineAt;
+
+    if (!deadlineAt) {
+      continue;
+    }
+
+    grouped.set(deadlineAt, (grouped.get(deadlineAt) ?? 0) + 1);
+  }
+
+  return Array.from(grouped.entries())
+    .sort((left, right) => new Date(left[0]).getTime() - new Date(right[0]).getTime())
+    .map(([deadlineAt, count], index) => ({
+      id: deadlineAt,
+      label: `ДЗ ${index + 1}`,
+      deadlineAt,
+      deadlineLabel: formatDeadlineLabel(deadlineAt),
+      count
+    }));
+}
+
 export function TeacherStudentProgressBoard({
   studentId,
   notesEnabled,
@@ -582,6 +612,8 @@ export function TeacherStudentProgressBoard({
       {topics.map((topic) => {
         const isCompleted = topic.totalNumbers > 0 && topic.solvedCount === topic.totalNumbers;
         const selectedCount = topic.numbers.filter((number) => number.selectedForBulk).length;
+        const homeworkGroups = buildHomeworkGroups(topic.numbers);
+        const homeworkLabelByDeadline = new Map(homeworkGroups.map((group) => [group.id, group]));
 
         return (
           <article key={topic.id} className="rounded-[28px] border border-slate-200 bg-slate-50/80 p-5">
@@ -602,6 +634,9 @@ export function TeacherStudentProgressBoard({
                     Отмечено {topic.markedCount}/{topic.totalNumbers}
                   </Badge>
                   <Badge className="border-slate-200 bg-white text-slate-700">Красные {topic.redCount}</Badge>
+                  {homeworkGroups.length > 0 ? (
+                    <Badge className="border-slate-200 bg-white text-slate-700">Выдано ДЗ {homeworkGroups.length}</Badge>
+                  ) : null}
                   {isCompleted ? (
                     <Badge className="border-emerald-200 bg-emerald-50 text-emerald-700">Тема завершена</Badge>
                   ) : null}
@@ -630,9 +665,9 @@ export function TeacherStudentProgressBoard({
             <div className="mt-5 rounded-[24px] border border-slate-200 bg-white px-4 py-4">
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <div>
-                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">Общий дедлайн</p>
+                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">Выдать ДЗ</p>
                   <p className="mt-2 text-sm leading-6 text-slate-600">
-                    Выберите несколько номеров ниже и назначьте им один общий срок.
+                    Выберите несколько номеров ниже и выдайте их как одно ДЗ с общим дедлайном.
                   </p>
                 </div>
                 <Badge className="border-slate-200 bg-slate-50 text-slate-700">Выбрано {selectedCount}</Badge>
@@ -652,7 +687,7 @@ export function TeacherStudentProgressBoard({
                   onClick={() => void applyBulkDeadline(topic.id)}
                   className="ui-pressable rounded-full bg-slate-950 px-5 py-3 text-sm font-semibold text-white transition hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-50"
                 >
-                  {topic.isSavingBulk ? "Сохраняем..." : "Применить к выбранным"}
+                  {topic.isSavingBulk ? "Выдаем..." : "Выдать ДЗ"}
                 </button>
                 <button
                   type="button"
@@ -663,6 +698,20 @@ export function TeacherStudentProgressBoard({
                   Снять выбор
                 </button>
               </div>
+
+              {homeworkGroups.length > 0 ? (
+                <div className="mt-4 rounded-[20px] border border-slate-200 bg-slate-50/70 px-3 py-3">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">Выданные ДЗ</p>
+                  <div className="mt-3 flex flex-wrap gap-2">
+                    {homeworkGroups.map((group) => (
+                      <Badge key={group.id} className="border-slate-200 bg-white text-slate-700">
+                        {group.label} · {group.count}
+                        {group.deadlineLabel ? ` · ${group.deadlineLabel}` : ""}
+                      </Badge>
+                    ))}
+                  </div>
+                </div>
+              ) : null}
             </div>
 
             {isCompleted ? (
@@ -700,6 +749,11 @@ export function TeacherStudentProgressBoard({
                           </div>
                           <div className="mt-3 flex items-center justify-between gap-3">
                             <p className="text-lg font-semibold text-slate-950">№ {number.number}</p>
+                            {number.studentStatus?.deadlineAt ? (
+                              <Badge className="border-brand-200 bg-brand-50 text-brand-700">
+                                {homeworkLabelByDeadline.get(number.studentStatus.deadlineAt)?.label ?? "ДЗ"}
+                              </Badge>
+                            ) : null}
                           </div>
                           {number.studentStatus?.note ? (
                             <div className="mt-3 rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2">
@@ -757,6 +811,11 @@ export function TeacherStudentProgressBoard({
                       </div>
                       <div className="mt-3 flex items-center justify-between gap-3">
                         <p className="text-lg font-semibold text-slate-950">№ {number.number}</p>
+                        {number.studentStatus?.deadlineAt ? (
+                          <Badge className="border-brand-200 bg-brand-50 text-brand-700">
+                            {homeworkLabelByDeadline.get(number.studentStatus.deadlineAt)?.label ?? "ДЗ"}
+                          </Badge>
+                        ) : null}
                       </div>
                       {number.studentStatus?.note ? (
                         <div className="mt-3 rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2">

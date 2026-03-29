@@ -48,20 +48,21 @@ type StudentNumberCardProps = {
 type StudentNumberListProps = {
   numbers: StudentNumberState[];
   notesEnabled: boolean;
+  homeworkGroupsByDeadline: Map<string, HomeworkGroup>;
   onSelect: (homeworkNumberId: string, status: HomeworkNumberStatus | null) => void;
   onNoteChange: (homeworkNumberId: string, value: string) => void;
   onNoteBlur: (homeworkNumberId: string) => void;
 };
 
-type NumberFilterId =
-  | "all"
-  | "unmarked"
-  | "green"
-  | "yellow"
-  | "red"
-  | "deadline"
-  | "notes"
-  | "answers";
+type HomeworkFilterId = "all" | "without-homework" | string;
+
+type HomeworkGroup = {
+  id: string;
+  label: string;
+  deadlineAt: string;
+  deadlineLabel: string | null;
+  count: number;
+};
 
 function getStatusSaveErrorMessage(status: number) {
   if (status === 401) {
@@ -119,47 +120,6 @@ const VIRTUALIZATION_THRESHOLD = 12;
 const VIRTUAL_OVERSCAN_PX = 960;
 const VIRTUAL_ITEM_GAP = 16;
 
-const filterMeta: Record<
-  NumberFilterId,
-  {
-    label: string;
-    predicate: (number: StudentNumberState) => boolean;
-  }
-> = {
-  all: {
-    label: "Все",
-    predicate: () => true
-  },
-  unmarked: {
-    label: "Не отмечены",
-    predicate: (number) => number.status === null
-  },
-  green: {
-    label: "Зеленые",
-    predicate: (number) => number.status === HomeworkNumberStatus.GREEN
-  },
-  yellow: {
-    label: "Желтые",
-    predicate: (number) => number.status === HomeworkNumberStatus.YELLOW
-  },
-  red: {
-    label: "Красные",
-    predicate: (number) => number.status === HomeworkNumberStatus.RED
-  },
-  deadline: {
-    label: "С дедлайном",
-    predicate: (number) => Boolean(number.deadlineAt)
-  },
-  notes: {
-    label: "С заметкой",
-    predicate: (number) => number.note.trim().length > 0
-  },
-  answers: {
-    label: "С ответом",
-    predicate: (number) => Boolean(number.answerLatex)
-  }
-};
-
 function estimateStudentNumberCardHeight(number: StudentNumberState, notesEnabled: boolean) {
   let height = 172;
 
@@ -200,10 +160,13 @@ function findStartIndex(offsets: number[], scrollOffset: number) {
 const StudentNumberCard = memo(function StudentNumberCard({
   number,
   notesEnabled,
+  homeworkGroup,
   onSelect,
   onNoteChange,
   onNoteBlur
-}: StudentNumberCardProps) {
+}: StudentNumberCardProps & {
+  homeworkGroup: HomeworkGroup | null;
+}) {
   const [isAnswerVisible, setIsAnswerVisible] = useState(false);
   const isSaving = number.isSavingStatus || number.isSavingNote;
 
@@ -215,6 +178,12 @@ const StudentNumberCard = memo(function StudentNumberCard({
           <div className="flex flex-wrap items-center gap-3">
             <h3 className="font-display text-2xl font-semibold text-slate-950">№ {number.number}</h3>
             <HomeworkStatusBadge status={number.status} />
+            {homeworkGroup ? (
+              <Badge className="border-brand-200 bg-brand-50 text-brand-700">
+                {homeworkGroup.label}
+                {homeworkGroup.deadlineLabel ? ` · ${homeworkGroup.deadlineLabel}` : ""}
+              </Badge>
+            ) : null}
             {isSaving ? <span className="text-xs font-medium text-slate-500">Сохраняем...</span> : null}
           </div>
         </div>
@@ -320,19 +289,22 @@ const StudentNumberCard = memo(function StudentNumberCard({
   );
 }, (previousProps, nextProps) =>
   previousProps.notesEnabled === nextProps.notesEnabled &&
-  previousProps.number === nextProps.number
+  previousProps.number === nextProps.number &&
+  previousProps.homeworkGroup === nextProps.homeworkGroup
 );
 
 const StudentNumberRow = memo(function StudentNumberRow({
   number,
   top,
   notesEnabled,
+  homeworkGroup,
   onSelect,
   onNoteChange,
   onNoteBlur,
   onHeightChange
 }: StudentNumberCardProps & {
   top: number;
+  homeworkGroup: HomeworkGroup | null;
   onHeightChange: (homeworkNumberId: string, height: number) => void;
 }) {
   const rowRef = useRef<HTMLDivElement | null>(null);
@@ -372,6 +344,7 @@ const StudentNumberRow = memo(function StudentNumberRow({
       <StudentNumberCard
         number={number}
         notesEnabled={notesEnabled}
+        homeworkGroup={homeworkGroup}
         onSelect={onSelect}
         onNoteChange={onNoteChange}
         onNoteBlur={onNoteBlur}
@@ -381,12 +354,14 @@ const StudentNumberRow = memo(function StudentNumberRow({
 }, (previousProps, nextProps) =>
   previousProps.top === nextProps.top &&
   previousProps.notesEnabled === nextProps.notesEnabled &&
-  previousProps.number === nextProps.number
+  previousProps.number === nextProps.number &&
+  previousProps.homeworkGroup === nextProps.homeworkGroup
 );
 
 function StudentNumberList({
   numbers,
   notesEnabled,
+  homeworkGroupsByDeadline,
   onSelect,
   onNoteChange,
   onNoteBlur
@@ -507,6 +482,7 @@ function StudentNumberList({
             key={number.id}
             number={number}
             notesEnabled={notesEnabled}
+            homeworkGroup={number.deadlineAt ? (homeworkGroupsByDeadline.get(number.deadlineAt) ?? null) : null}
             onSelect={onSelect}
             onNoteChange={onNoteChange}
             onNoteBlur={onNoteBlur}
@@ -544,6 +520,7 @@ function StudentNumberList({
                 number={number}
                 top={item.start}
                 notesEnabled={notesEnabled}
+                homeworkGroup={number.deadlineAt ? (homeworkGroupsByDeadline.get(number.deadlineAt) ?? null) : null}
                 onSelect={onSelect}
                 onNoteChange={onNoteChange}
                 onNoteBlur={onNoteBlur}
@@ -576,7 +553,7 @@ export function StudentTopicStatusBoard({
   );
   const numbersRef = useRef<StudentNumberState[]>(initialState);
   const [numbers, setNumbers] = useState<StudentNumberState[]>(initialState);
-  const [activeFilter, setActiveFilter] = useState<NumberFilterId>("all");
+  const [activeFilter, setActiveFilter] = useState<HomeworkFilterId>("all");
   const [saveError, setSaveError] = useState<string | null>(null);
   const statusRequestVersionRef = useRef<Record<string, number>>({});
   const noteRequestVersionRef = useRef<Record<string, number>>({});
@@ -650,31 +627,59 @@ export function StudentTopicStatusBoard({
     () => numbers.filter((number) => Boolean(number.answerLatex)).length,
     [numbers]
   );
-  const availableFilters = useMemo(
-    () =>
-      (Object.keys(filterMeta) as NumberFilterId[]).filter((filterId) => {
-        if (filterId === "notes" && !notesEnabled) {
-          return false;
-        }
+  const homeworkGroups = useMemo<HomeworkGroup[]>(() => {
+    const grouped = new Map<string, StudentNumberState[]>();
 
-        if (filterId === "deadline" && !deadlinesEnabled) {
-          return false;
-        }
+    for (const number of numbers) {
+      if (!number.deadlineAt) {
+        continue;
+      }
 
-        if (filterId === "answers" && answersCount === 0) {
-          return false;
-        }
+      const current = grouped.get(number.deadlineAt) ?? [];
+      current.push(number);
+      grouped.set(number.deadlineAt, current);
+    }
 
-        return true;
-      }),
-    [answersCount, deadlinesEnabled, notesEnabled]
+    return Array.from(grouped.entries())
+      .sort((left, right) => new Date(left[0]).getTime() - new Date(right[0]).getTime())
+      .map(([deadlineAt, groupedNumbers], index) => ({
+        id: deadlineAt,
+        label: `ДЗ ${index + 1}`,
+        deadlineAt,
+        deadlineLabel: formatDeadlineLabel(deadlineAt),
+        count: groupedNumbers.length
+      }));
+  }, [numbers]);
+  const homeworkGroupsByDeadline = useMemo(
+    () => new Map(homeworkGroups.map((group) => [group.id, group])),
+    [homeworkGroups]
+  );
+  const numbersWithoutHomeworkCount = useMemo(
+    () => numbers.filter((number) => !number.deadlineAt).length,
+    [numbers]
   );
   const filteredNumbers = useMemo(() => {
-    const filter = filterMeta[activeFilter] ?? filterMeta.all;
+    if (activeFilter === "all") {
+      return numbers;
+    }
 
-    return numbers.filter(filter.predicate);
+    if (activeFilter === "without-homework") {
+      return numbers.filter((number) => !number.deadlineAt);
+    }
+
+    return numbers.filter((number) => number.deadlineAt === activeFilter);
   }, [activeFilter, numbers]);
   const isTopicCompleted = totalNumbers > 0 && summary.solvedCount === totalNumbers;
+
+  useEffect(() => {
+    if (activeFilter === "all" || activeFilter === "without-homework") {
+      return;
+    }
+
+    if (!homeworkGroupsByDeadline.has(activeFilter)) {
+      setActiveFilter("all");
+    }
+  }, [activeFilter, homeworkGroupsByDeadline]);
 
   const updateNumberStatus = useCallback(async (homeworkNumberId: string, nextStatus: HomeworkNumberStatus | null) => {
     const currentNumber = numbersRef.current.find((number) => number.id === homeworkNumberId);
@@ -932,6 +937,7 @@ export function StudentTopicStatusBoard({
         {deadlinesEnabled ? (
           <Badge className="border-slate-200 bg-white text-slate-700">Дедлайнов {deadlinesCount}</Badge>
         ) : null}
+        {homeworkGroups.length > 0 ? <Badge className="border-slate-200 bg-white text-slate-700">ДЗ {homeworkGroups.length}</Badge> : null}
         {notesEnabled ? <Badge className="border-slate-200 bg-white text-slate-700">Заметок {notesCount}</Badge> : null}
         {answersCount > 0 ? <Badge className="border-slate-200 bg-white text-slate-700">Ответов {answersCount}</Badge> : null}
         {savingCount > 0 ? (
@@ -998,38 +1004,83 @@ export function StudentTopicStatusBoard({
           </div>
         ) : null}
 
-        <div className="mb-5 space-y-3">
-          <div className="flex flex-wrap gap-2">
-            {availableFilters.map((filterId) => {
-              const count = numbers.filter(filterMeta[filterId].predicate).length;
-              const isActive = activeFilter === filterId;
+        {deadlinesEnabled && homeworkGroups.length > 0 ? (
+          <div className="mb-5 space-y-3">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">Фильтр по выданному ДЗ</p>
+              <p className="mt-2 text-sm leading-6 text-slate-500">
+                Выберите конкретное ДЗ, чтобы увидеть только номера из этого назначения.
+              </p>
+            </div>
 
-              return (
+            <div className="flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={() => setActiveFilter("all")}
+                data-active={activeFilter === "all"}
+                className={cx(
+                  "ui-pressable rounded-full border px-4 py-2 text-sm font-medium transition",
+                  activeFilter === "all"
+                    ? "border-brand-200 bg-[linear-gradient(180deg,rgba(239,246,255,1),rgba(219,234,254,0.92))] text-brand-700 shadow-[0_12px_24px_rgba(59,130,246,0.14)]"
+                    : "border-slate-200 bg-white text-slate-700 hover:border-brand-300 hover:text-brand-700"
+                )}
+              >
+                Все номера
+                <span className="ml-2 rounded-full bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-500">
+                  {numbers.length}
+                </span>
+              </button>
+
+              {numbersWithoutHomeworkCount > 0 ? (
                 <button
-                  key={filterId}
                   type="button"
-                  onClick={() => setActiveFilter(filterId)}
-                  data-active={isActive}
+                  onClick={() => setActiveFilter("without-homework")}
+                  data-active={activeFilter === "without-homework"}
                   className={cx(
                     "ui-pressable rounded-full border px-4 py-2 text-sm font-medium transition",
-                    isActive
+                    activeFilter === "without-homework"
                       ? "border-brand-200 bg-[linear-gradient(180deg,rgba(239,246,255,1),rgba(219,234,254,0.92))] text-brand-700 shadow-[0_12px_24px_rgba(59,130,246,0.14)]"
                       : "border-slate-200 bg-white text-slate-700 hover:border-brand-300 hover:text-brand-700"
                   )}
                 >
-                  <span>{filterMeta[filterId].label}</span>
+                  Без ДЗ
                   <span className="ml-2 rounded-full bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-500">
-                    {count}
+                    {numbersWithoutHomeworkCount}
                   </span>
                 </button>
-              );
-            })}
-          </div>
+              ) : null}
 
-          <p className="text-sm leading-6 text-slate-500">
-            Показано {filteredNumbers.length} из {numbers.length} номеров.
-          </p>
-        </div>
+              {homeworkGroups.map((group) => {
+                const isActive = activeFilter === group.id;
+
+                return (
+                  <button
+                    key={group.id}
+                    type="button"
+                    onClick={() => setActiveFilter(group.id)}
+                    data-active={isActive}
+                    className={cx(
+                      "ui-pressable rounded-full border px-4 py-2 text-sm font-medium transition",
+                      isActive
+                        ? "border-brand-200 bg-[linear-gradient(180deg,rgba(239,246,255,1),rgba(219,234,254,0.92))] text-brand-700 shadow-[0_12px_24px_rgba(59,130,246,0.14)]"
+                        : "border-slate-200 bg-white text-slate-700 hover:border-brand-300 hover:text-brand-700"
+                    )}
+                  >
+                    {group.label}
+                    <span className="ml-2 rounded-full bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-500">
+                      {group.count}
+                    </span>
+                    {group.deadlineLabel ? <span className="ml-2 text-xs text-slate-500">{group.deadlineLabel}</span> : null}
+                  </button>
+                );
+              })}
+            </div>
+
+            <p className="text-sm leading-6 text-slate-500">
+              Показано {filteredNumbers.length} из {numbers.length} номеров.
+            </p>
+          </div>
+        ) : null}
 
         {isTopicCompleted ? (
           <details className="rounded-[24px] border border-emerald-200 bg-emerald-50/70">
@@ -1050,6 +1101,7 @@ export function StudentTopicStatusBoard({
                 <StudentNumberList
                   numbers={filteredNumbers}
                   notesEnabled={notesEnabled}
+                  homeworkGroupsByDeadline={homeworkGroupsByDeadline}
                   onSelect={updateNumberStatus}
                   onNoteChange={updateNumberNote}
                   onNoteBlur={flushNumberNote}
@@ -1067,6 +1119,7 @@ export function StudentTopicStatusBoard({
               <StudentNumberList
                 numbers={filteredNumbers}
                 notesEnabled={notesEnabled}
+                homeworkGroupsByDeadline={homeworkGroupsByDeadline}
                 onSelect={updateNumberStatus}
                 onNoteChange={updateNumberNote}
                 onNoteBlur={flushNumberNote}
