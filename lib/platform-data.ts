@@ -261,7 +261,12 @@ async function getTeacherTopicsOverviewUncached() {
         homeworkNumbers: {
           orderBy: { displayOrder: "asc" },
           include: {
-            statuses: true
+            statuses: {
+              select: {
+                studentId: true,
+                status: true
+              }
+            }
           }
         }
       },
