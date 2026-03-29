@@ -109,7 +109,7 @@ const StudentNumberCard = memo(function StudentNumberCard({
   const isSaving = number.isSavingStatus || number.isSavingNote;
 
   return (
-    <div className="ui-fade-slide ui-surface rounded-[28px] border border-slate-200 bg-slate-50/80 p-5">
+    <div className="student-number-card ui-surface rounded-[28px] border border-slate-200 bg-slate-50/80 p-5">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
         <div className="space-y-3">
           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Задания</p>
@@ -198,14 +198,13 @@ const StudentNumberCard = memo(function StudentNumberCard({
             className="ui-pressable group mt-3 block w-full overflow-hidden rounded-[20px] border border-slate-200 bg-slate-50 text-left"
           >
             <div className="relative overflow-hidden rounded-[20px] bg-white">
-              <div
-                className={cx(
-                  "px-4 py-4 transition duration-300",
-                  !isAnswerVisible && "select-none blur-sm scale-[1.01]"
-                )}
-              >
-                <LatexAnswerPreview value={number.answerLatex} />
-              </div>
+              {isAnswerVisible ? (
+                <div className="px-4 py-4">
+                  <LatexAnswerPreview value={number.answerLatex} />
+                </div>
+              ) : (
+                <div className="student-answer-placeholder min-h-[108px] bg-[linear-gradient(135deg,rgba(241,245,249,0.92),rgba(226,232,240,0.72))]" />
+              )}
 
               {!isAnswerVisible ? (
                 <div className="absolute inset-0 flex items-center justify-center bg-slate-950/10 px-4 text-center">
@@ -220,7 +219,10 @@ const StudentNumberCard = memo(function StudentNumberCard({
       ) : null}
     </div>
   );
-});
+}, (previousProps, nextProps) =>
+  previousProps.notesEnabled === nextProps.notesEnabled &&
+  previousProps.number === nextProps.number
+);
 
 export function StudentTopicStatusBoard({
   topicId,
@@ -298,7 +300,14 @@ export function StudentTopicStatusBoard({
     };
   }, [numbers, totalNumbers]);
 
-  const savingCount = numbers.filter((number) => number.isSavingStatus || number.isSavingNote).length;
+  const savingCount = useMemo(
+    () => numbers.filter((number) => number.isSavingStatus || number.isSavingNote).length,
+    [numbers]
+  );
+  const deadlinesCount = useMemo(
+    () => numbers.filter((number) => Boolean(number.deadlineAt)).length,
+    [numbers]
+  );
   const isTopicCompleted = totalNumbers > 0 && summary.solvedCount === totalNumbers;
 
   const updateNumberStatus = useCallback(async (homeworkNumberId: string, nextStatus: HomeworkNumberStatus | null) => {
@@ -555,9 +564,7 @@ export function StudentTopicStatusBoard({
         </Badge>
         <Badge className="border-slate-200 bg-white text-slate-700">Прогресс {summary.progressPercent}%</Badge>
         {deadlinesEnabled ? (
-          <Badge className="border-slate-200 bg-white text-slate-700">
-            Дедлайнов {numbers.filter((number) => Boolean(number.deadlineAt)).length}
-          </Badge>
+          <Badge className="border-slate-200 bg-white text-slate-700">Дедлайнов {deadlinesCount}</Badge>
         ) : null}
         {savingCount > 0 ? (
           <Badge className="border-brand-200 bg-brand-50 text-brand-700">Сохраняем: {savingCount}</Badge>
@@ -638,7 +645,7 @@ export function StudentTopicStatusBoard({
             </summary>
 
             <div className="border-t border-emerald-100 px-4 py-4">
-              <div className="space-y-4">
+              <div className="student-number-list space-y-4">
                 {numbers.map((number) => (
                   <StudentNumberCard
                     key={number.id}
@@ -653,7 +660,7 @@ export function StudentTopicStatusBoard({
             </div>
           </details>
         ) : (
-          <div className="space-y-4">
+          <div className="student-number-list space-y-4">
             {numbers.map((number) => (
               <StudentNumberCard
                 key={number.id}
