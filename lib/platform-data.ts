@@ -286,101 +286,27 @@ export async function getTeacherTopicsOverview(): Promise<
 }
 
 async function getTeacherTopicDetailUncached(topicId: string) {
-  const buildTeacherTopicDetailQuery = (includeNote: boolean) =>
-    prisma.topic.findUniqueOrThrow({
-      where: { id: topicId },
-      include: {
-        theoryFile: true,
-        homeworkFile: true,
-        homeworkNumbers: {
-          orderBy: { displayOrder: "asc" },
-          include: {
-            answerFile: true,
-            statuses: {
-              select: includeNote
-                ? {
-                    id: true,
-                    studentId: true,
-                    status: true,
-                    note: true,
-                    updatedAt: true
-                  }
-                : {
-                    id: true,
-                    studentId: true,
-                    status: true,
-                    updatedAt: true
-                  }
-            }
-          }
+  const topic = await prisma.topic.findUniqueOrThrow({
+    where: { id: topicId },
+    include: {
+      theoryFile: true,
+      homeworkFile: true,
+      homeworkNumbers: {
+        orderBy: { displayOrder: "asc" },
+        include: {
+          answerFile: true
         }
       }
-    });
-
-  const studentsPromise = prisma.user.findMany({
-    where: { role: UserRole.STUDENT },
-    orderBy: { name: "asc" },
-    select: {
-      id: true,
-      name: true,
-      email: true
     }
   });
-
-  let notesEnabled = true;
-  let topic: Awaited<ReturnType<typeof buildTeacherTopicDetailQuery>>;
-  const students = await studentsPromise;
-
-  try {
-    topic = await buildTeacherTopicDetailQuery(true);
-  } catch (error) {
-    if (!isMissingStudentNotesColumnError(error)) {
-      throw error;
-    }
-
-    notesEnabled = false;
-    topic = await buildTeacherTopicDetailQuery(false);
-  }
-
-  const statusLookup = new Map(
-    topic.homeworkNumbers.flatMap((number) =>
-      number.statuses.map((status) => [`${status.studentId}:${number.id}`, status] as const)
-    )
-  );
-
-  const studentProgress = students.map((student) => {
-    const numbers = topic.homeworkNumbers.map((number) => {
-      const status = statusLookup.get(`${student.id}:${number.id}`) ?? null;
-
-      return {
-        id: number.id,
-        number: number.number,
-        status: status?.status ?? null,
-        note: notesEnabled ? (status as { note?: string | null } | null)?.note?.trim() ?? "" : "",
-        updatedAt: status?.updatedAt ?? null
-      };
-    });
-
-    return {
-      ...student,
-      numbers,
-      ...buildProgress(
-        numbers.map((number) => number.status),
-        numbers.length
-      )
-    };
-  });
-
-  const overallStatuses = studentProgress.flatMap((student) => student.numbers.map((number) => number.status));
 
   return {
     topic,
-    notesEnabled,
-    students: studentProgress,
     stats: {
-      totalStudents: students.length,
-      numbersPerStudent: topic.homeworkNumbers.length,
-      ...buildProgress(overallStatuses, topic.homeworkNumbers.length * students.length)
+      totalNumbers: topic.homeworkNumbers.length,
+      theoryAttached: Boolean(topic.theoryFile),
+      homeworkAttached: Boolean(topic.homeworkFile),
+      answersCount: topic.homeworkNumbers.filter((number) => Boolean(number.answerLatex?.trim())).length
     }
   };
 }

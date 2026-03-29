@@ -4,8 +4,6 @@ import { updateTopicAction } from "@/actions/topic";
 import { Badge } from "@/components/badge";
 import { DeleteTopicDialog } from "@/components/delete-topic-dialog";
 import { FileResourceCard } from "@/components/file-resource-card";
-import { HomeworkStatusBadge } from "@/components/homework-status-badge";
-import { ProgressBar } from "@/components/progress-bar";
 import { SectionCard } from "@/components/section-card";
 import { StatCard } from "@/components/stat-card";
 import { TopicAnswerManager } from "@/components/topic-answer-manager";
@@ -34,10 +32,9 @@ export default async function TeacherTopicPage({ params }: TeacherTopicPageProps
           <h1 className="font-display mt-3 text-4xl font-semibold text-slate-950">{data.topic.title}</h1>
           <p className="mt-3 max-w-3xl text-base leading-7 text-slate-600">{data.topic.description}</p>
           <div className="mt-5 flex flex-wrap gap-2">
-            <Badge className="border-slate-200 bg-white text-slate-700">Учеников {data.stats.totalStudents}</Badge>
-            <Badge className="border-slate-200 bg-white text-slate-700">Номеров {data.stats.numbersPerStudent}</Badge>
+            <Badge className="border-slate-200 bg-white text-slate-700">Номеров {data.stats.totalNumbers}</Badge>
             <Badge className="border-slate-200 bg-white text-slate-700">
-              Заполненность {data.stats.progressPercent}%
+              Ответов {data.stats.answersCount}/{data.stats.totalNumbers}
             </Badge>
           </div>
         </div>
@@ -51,10 +48,22 @@ export default async function TeacherTopicPage({ params }: TeacherTopicPageProps
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        <StatCard label="Ученики" value={data.stats.totalStudents} hint="Учеников видят эту тему в своих кабинетах." />
-        <StatCard label="Номера" value={data.stats.numbersPerStudent} hint="Номеров заданий внутри темы." />
-        <StatCard label="Зеленые" value={data.stats.greenCount} hint="Все зеленые статусы по теме." />
-        <StatCard label="Заполненность" value={`${data.stats.progressPercent}%`} hint="Насколько ученики отметили номера по теме." />
+        <StatCard label="Номера" value={data.stats.totalNumbers} hint="Номеров заданий внутри темы." />
+        <StatCard
+          label="Файл теории"
+          value={data.stats.theoryAttached ? "Есть" : "Нет"}
+          hint="Прикреплен ли файл теории к этой теме."
+        />
+        <StatCard
+          label="Файл заданий"
+          value={data.stats.homeworkAttached ? "Есть" : "Нет"}
+          hint="Прикреплен ли файл заданий к этой теме."
+        />
+        <StatCard
+          label="Ответы"
+          value={`${data.stats.answersCount}/${data.stats.totalNumbers}`}
+          hint="Сколько номеров уже снабжены ответами."
+        />
       </div>
 
       <SectionCard
@@ -96,7 +105,9 @@ export default async function TeacherTopicPage({ params }: TeacherTopicPageProps
                 className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none transition focus:border-brand-400 focus:bg-white"
                 required
               />
-              <p className="text-sm text-slate-500">Можно перечислять номера через запятую, пробел или указывать диапазон, например `1-5`.</p>
+              <p className="text-sm text-slate-500">
+                Можно перечислять номера через запятую, пробел или указывать диапазон, например `1-5`.
+              </p>
             </label>
           </div>
 
@@ -165,87 +176,6 @@ export default async function TeacherTopicPage({ params }: TeacherTopicPageProps
             answerLatex: number.answerLatex
           }))}
         />
-      </SectionCard>
-
-      <SectionCard
-        title="Прогресс учеников по теме"
-        description="Для каждого ученика видны статусы всех номеров, заметки к задачам и общий прогресс по этой теме."
-      >
-        {!data.notesEnabled ? (
-          <div className="rounded-[24px] border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
-            Заметки учеников пока недоступны в этой среде. После обновления базы данных они автоматически появятся в карточках номеров.
-          </div>
-        ) : null}
-        {data.students.length === 0 ? (
-          <div className="rounded-[28px] border border-dashed border-slate-200 bg-slate-50/60 px-5 py-10 text-center">
-            <p className="font-display text-2xl font-semibold text-slate-950">Учеников пока нет</p>
-            <p className="mx-auto mt-3 max-w-2xl text-sm leading-6 text-slate-600">
-              После добавления учеников в систему здесь появится их индивидуальный прогресс по теме.
-            </p>
-          </div>
-        ) : (
-        <div className="space-y-4">
-          {data.students.map((student) => (
-            <article key={student.id} className="ui-fade-slide ui-surface rounded-[28px] border border-slate-200 bg-slate-50/80 p-5">
-              <div className="flex flex-col gap-5 xl:flex-row xl:items-start xl:justify-between">
-                <div className="space-y-3">
-                  <div>
-                    <h2 className="font-display text-2xl font-semibold text-slate-950">{student.name}</h2>
-                    <p className="mt-2 text-sm text-slate-500">{student.email}</p>
-                    <Link
-                      href={`/teacher/students/${student.id}`}
-                      className="ui-pressable mt-3 inline-flex rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-brand-300 hover:text-brand-700"
-                    >
-                      Смотреть успехи ученика
-                    </Link>
-                  </div>
-                  <div className="grid gap-3 sm:grid-cols-3">
-                    <div className="rounded-2xl bg-white px-4 py-3">
-                      <p className="text-xs uppercase tracking-[0.18em] text-slate-400">Зеленые</p>
-                      <p className="mt-2 text-2xl font-semibold text-emerald-700">{student.greenCount}</p>
-                    </div>
-                    <div className="rounded-2xl bg-white px-4 py-3">
-                      <p className="text-xs uppercase tracking-[0.18em] text-slate-400">Желтые</p>
-                      <p className="mt-2 text-2xl font-semibold text-amber-700">{student.yellowCount}</p>
-                    </div>
-                    <div className="rounded-2xl bg-white px-4 py-3">
-                      <p className="text-xs uppercase tracking-[0.18em] text-slate-400">Красные</p>
-                      <p className="mt-2 text-2xl font-semibold text-rose-700">{student.redCount}</p>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="w-full max-w-md space-y-3 rounded-[24px] border border-white bg-white p-4">
-                  <div className="flex items-center justify-between text-sm text-slate-600">
-                    <span>Заполненность статусов</span>
-                    <span className="font-semibold text-slate-950">{student.progressPercent}%</span>
-                  </div>
-                  <ProgressBar value={student.progressPercent} />
-                </div>
-              </div>
-
-              <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-                {student.numbers.map((number) => (
-                  <div key={number.id} className="rounded-[24px] border border-white bg-white px-4 py-4">
-                    <div className="flex items-center justify-between gap-3">
-                      <p className="text-lg font-semibold text-slate-950">№ {number.number}</p>
-                      <HomeworkStatusBadge status={number.status} />
-                    </div>
-                    {number.note ? (
-                      <div className="mt-3 rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2">
-                        <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">
-                          Заметка ученика
-                        </p>
-                        <p className="mt-2 text-sm leading-6 text-slate-700">{number.note}</p>
-                      </div>
-                    ) : null}
-                  </div>
-                ))}
-              </div>
-            </article>
-          ))}
-        </div>
-        )}
       </SectionCard>
     </div>
   );

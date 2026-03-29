@@ -79,8 +79,8 @@ export default async function TeacherTopicsPage({ searchParams }: TeacherTopicsP
           <Badge className="border-brand-300/40 bg-white/10 text-brand-100">Темы и материалы</Badge>
           <h1 className="font-display mt-4 text-4xl font-semibold">Общие темы, файлы и номера для всех учеников</h1>
           <p className="mt-4 max-w-2xl text-base leading-7 text-slate-300">
-            Создавайте темы, прикрепляйте файлы и редактируйте номера. У каждой темы один общий набор материалов, а
-            статусы по номерам у учеников остаются индивидуальными.
+            Создавайте темы, прикрепляйте файлы и редактируйте номера. Здесь собраны только материалы курса и
+            инструменты для работы с ними.
           </p>
           <div className="mt-6 flex flex-wrap gap-2">
             <Badge className="border-white/15 bg-white/10 text-slate-100">Общие материалы</Badge>
@@ -95,7 +95,7 @@ export default async function TeacherTopicsPage({ searchParams }: TeacherTopicsP
             {data.stats.totalTopics} тем и {data.stats.totalNumbers} номеров
           </p>
           <p className="mt-3 text-sm leading-6 text-slate-600">
-            Откройте тему, чтобы поменять описание, файлы, номера и посмотреть матрицу статусов по каждому ученику.
+            Откройте тему, чтобы поменять описание, файлы, номера и ответы к заданиям.
           </p>
         </div>
       </section>
@@ -104,7 +104,7 @@ export default async function TeacherTopicsPage({ searchParams }: TeacherTopicsP
         <StatCard label="Темы" value={data.stats.totalTopics} hint="Все общие темы платформы." />
         <StatCard label="Файлы" value={data.stats.totalFiles} hint="Файлы теории и заданий внутри тем." />
         <StatCard label="Номера" value={data.stats.totalNumbers} hint="Все номера по всем созданным темам." />
-        <StatCard label="Статусы" value={data.stats.totalMarked} hint="Все отмеченные ученические статусы." />
+        <StatCard label="Черновики" value={data.topics.length - data.topics.filter((topic) => topic.theoryFile && topic.homeworkFile).length} hint="Темы, где еще не прикреплены оба файла." />
       </div>
 
       <SectionCard
@@ -116,7 +116,7 @@ export default async function TeacherTopicsPage({ searchParams }: TeacherTopicsP
 
       <SectionCard
         title="Все темы"
-        description="Темы общие для всех учеников. Здесь можно открыть тему, отредактировать файлы и посмотреть матрицу статусов."
+        description="Темы общие для всех учеников. Здесь можно открыть тему, отредактировать файлы, номера и ответы."
       >
         {data.topics.length === 0 ? (
           <div className="rounded-[28px] border border-dashed border-slate-200 bg-slate-50/60 px-5 py-10 text-center">
@@ -133,18 +133,14 @@ export default async function TeacherTopicsPage({ searchParams }: TeacherTopicsP
                   <div className="space-y-3">
                     <div>
                       <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
-                        Учеников: {topic.totalStudents} · Номеров: {topic.totalNumbers}
+                        Номеров: {topic.totalNumbers}
                       </p>
                       <h2 className="font-display mt-2 text-2xl font-semibold text-slate-950">{topic.title}</h2>
                     </div>
                     <p className="text-sm leading-6 text-slate-600">{topic.description}</p>
                     <div className="flex flex-wrap gap-2">
-                      <Badge className="border-slate-200 bg-white text-slate-700">
-                        Активны {topic.studentsWithActivity}/{topic.totalStudents}
-                      </Badge>
-                      <Badge className="border-slate-200 bg-white text-slate-700">
-                        Слотов {topic.totalSlots}
-                      </Badge>
+                      <Badge className="border-slate-200 bg-white text-slate-700">Теория {topic.theoryFile ? "есть" : "нет"}</Badge>
+                      <Badge className="border-slate-200 bg-white text-slate-700">Задания {topic.homeworkFile ? "есть" : "нет"}</Badge>
                     </div>
                   </div>
                   <div className="rounded-[24px] border border-white bg-white px-4 py-3 text-sm text-slate-600">
@@ -155,27 +151,14 @@ export default async function TeacherTopicsPage({ searchParams }: TeacherTopicsP
                   </div>
                 </div>
 
-                <div className="mt-5 grid gap-3 sm:grid-cols-3">
-                  <div className="rounded-2xl bg-white px-4 py-3">
-                    <p className="text-xs uppercase tracking-[0.18em] text-slate-400">Зеленые</p>
-                    <p className="mt-2 text-2xl font-semibold text-emerald-700">{topic.greenCount}</p>
-                  </div>
-                  <div className="rounded-2xl bg-white px-4 py-3">
-                    <p className="text-xs uppercase tracking-[0.18em] text-slate-400">Желтые</p>
-                    <p className="mt-2 text-2xl font-semibold text-amber-700">{topic.yellowCount}</p>
-                  </div>
-                  <div className="rounded-2xl bg-white px-4 py-3">
-                    <p className="text-xs uppercase tracking-[0.18em] text-slate-400">Красные</p>
-                    <p className="mt-2 text-2xl font-semibold text-rose-700">{topic.redCount}</p>
-                  </div>
-                </div>
-
                 <div className="mt-5 space-y-2">
                   <div className="flex items-center justify-between text-sm text-slate-600">
-                    <span>Заполненность статусов</span>
-                    <span className="font-semibold text-slate-950">{topic.progressPercent}%</span>
+                    <span>Готовность файлов</span>
+                    <span className="font-semibold text-slate-950">
+                      {(topic.theoryFile ? 1 : 0) + (topic.homeworkFile ? 1 : 0)} / 2
+                    </span>
                   </div>
-                  <ProgressBar value={topic.progressPercent} />
+                  <ProgressBar value={((topic.theoryFile ? 1 : 0) + (topic.homeworkFile ? 1 : 0)) * 50} />
                 </div>
 
                 <div className="mt-5 flex flex-wrap gap-3">
