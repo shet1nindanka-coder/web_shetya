@@ -112,6 +112,16 @@ textarea {
   }
 }
 
+@keyframes ui-shimmer {
+  from {
+    background-position: 200% 0;
+  }
+
+  to {
+    background-position: -200% 0;
+  }
+}
+
 .ui-fade-slide {
   animation: ui-fade-slide 0.52s cubic-bezier(0.2, 0.8, 0.2, 1) both;
 }
@@ -130,9 +140,9 @@ textarea {
 }
 
 .ui-surface:hover {
-  transform: translateY(-4px);
+  transform: translateY(-2px);
   border-color: rgba(96, 165, 250, 0.28);
-  box-shadow: 0 20px 48px rgba(15, 23, 42, 0.12);
+  box-shadow: 0 16px 38px rgba(15, 23, 42, 0.1);
 }
 
 .ui-pressable {
@@ -210,6 +220,14 @@ textarea {
   will-change: width;
 }
 
+.ui-skeleton {
+  position: relative;
+  overflow: hidden;
+  background: linear-gradient(90deg, rgba(226, 232, 240, 0.7) 20%, rgba(255, 255, 255, 0.96) 50%, rgba(226, 232, 240, 0.7) 80%);
+  background-size: 200% 100%;
+  animation: ui-shimmer 1.35s linear infinite;
+}
+
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;
@@ -222,8 +240,10 @@ textarea {
 
   .ui-surface,
   .ui-pressable,
-  .ui-progress-fill {
+  .ui-progress-fill,
+  .ui-skeleton {
     transition: none !important;
+    animation: none !important;
   }
 
   .ui-surface:hover,
