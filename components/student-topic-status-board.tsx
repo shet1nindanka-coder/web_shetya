@@ -969,24 +969,24 @@ export function StudentTopicStatusBoard({
               </p>
             </div>
 
-            <div className="ui-tab-shell ui-tab-strip -mx-1 flex gap-2 rounded-[22px] px-2 py-2 sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0 sm:py-0 sm:shadow-none sm:backdrop-blur-0">
+            <div className="space-y-2 sm:flex sm:flex-wrap sm:gap-2 sm:space-y-0">
               <button
                 type="button"
-                  onClick={() => {
-                    startTransition(() => {
-                      setActiveFilter("all");
-                    });
-                  }}
+                onClick={() => {
+                  startTransition(() => {
+                    setActiveFilter("all");
+                  });
+                }}
                 data-active={activeFilter === "all"}
                 className={cx(
-                  "ui-pressable shrink-0 rounded-full border px-4 py-2 text-sm font-medium transition",
+                  "ui-pressable flex w-full items-center justify-between gap-3 rounded-[18px] border px-4 py-3 text-left text-sm font-medium transition sm:w-auto sm:shrink-0 sm:rounded-full sm:py-2",
                   activeFilter === "all"
                     ? "border-brand-200 bg-[linear-gradient(180deg,rgba(239,246,255,1),rgba(219,234,254,0.92))] text-brand-700 shadow-[0_12px_24px_rgba(59,130,246,0.14)]"
                     : "border-slate-200 bg-white text-slate-700 hover:border-brand-300 hover:text-brand-700"
                 )}
               >
-                Все номера
-                <span className="ml-2 rounded-full bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-500">
+                <span>Все номера</span>
+                <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-500">
                   {numbers.length}
                 </span>
               </button>
@@ -994,21 +994,21 @@ export function StudentTopicStatusBoard({
               {hasIssuedHomeworkGroups && numbersWithoutHomeworkCount > 0 ? (
                 <button
                   type="button"
-                    onClick={() => {
-                      startTransition(() => {
-                        setActiveFilter("without-homework");
-                      });
-                    }}
+                  onClick={() => {
+                    startTransition(() => {
+                      setActiveFilter("without-homework");
+                    });
+                  }}
                   data-active={activeFilter === "without-homework"}
                   className={cx(
-                    "ui-pressable shrink-0 rounded-full border px-4 py-2 text-sm font-medium transition",
+                    "ui-pressable flex w-full items-center justify-between gap-3 rounded-[18px] border px-4 py-3 text-left text-sm font-medium transition sm:w-auto sm:shrink-0 sm:rounded-full sm:py-2",
                     activeFilter === "without-homework"
                       ? "border-brand-200 bg-[linear-gradient(180deg,rgba(239,246,255,1),rgba(219,234,254,0.92))] text-brand-700 shadow-[0_12px_24px_rgba(59,130,246,0.14)]"
                       : "border-slate-200 bg-white text-slate-700 hover:border-brand-300 hover:text-brand-700"
                   )}
                 >
-                  Без ДЗ
-                  <span className="ml-2 rounded-full bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-500">
+                  <span>Без ДЗ</span>
+                  <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-500">
                     {numbersWithoutHomeworkCount}
                   </span>
                 </button>
@@ -1029,7 +1029,7 @@ export function StudentTopicStatusBoard({
                     }}
                     data-active={isActive}
                     className={cx(
-                      "ui-pressable shrink-0 rounded-full border px-4 py-2 text-sm font-medium transition",
+                      "ui-pressable w-full rounded-[18px] border px-4 py-3 text-left text-sm font-medium transition sm:w-auto sm:shrink-0 sm:rounded-full sm:py-2",
                       isActive && isCompleted
                         ? "border-emerald-200 bg-emerald-50 text-emerald-700 shadow-[0_12px_24px_rgba(16,185,129,0.14)]"
                         : isActive
@@ -1039,12 +1039,21 @@ export function StudentTopicStatusBoard({
                         : "border-slate-200 bg-white text-slate-700 hover:border-brand-300 hover:text-brand-700"
                     )}
                   >
-                    {isCompleted ? <span className="mr-2">✓</span> : null}
-                    {group.label}
-                    <span className="ml-2 rounded-full bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-500">
-                      {group.solvedCount}/{group.count}
-                    </span>
-                    {group.deadlineLabel ? <span className="ml-2 text-xs text-slate-500">{group.deadlineLabel}</span> : null}
+                    <div className="flex items-center justify-between gap-3">
+                      <span className="flex items-center gap-2">
+                        {isCompleted ? <span>✓</span> : null}
+                        <span>{group.label}</span>
+                      </span>
+                      <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-500">
+                        {group.solvedCount}/{group.count}
+                      </span>
+                    </div>
+                    {group.deadlineLabel ? (
+                      <span className="mt-1.5 block text-xs text-slate-500 sm:hidden">{group.deadlineLabel}</span>
+                    ) : null}
+                    {group.deadlineLabel ? (
+                      <span className="ml-2 hidden text-xs text-slate-500 sm:inline">{group.deadlineLabel}</span>
+                    ) : null}
                   </button>
                 );
               })}
