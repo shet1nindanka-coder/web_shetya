@@ -444,6 +444,17 @@ function StudentNumberList({
     };
   }, [shouldVirtualize]);
 
+  useEffect(() => {
+    const element = scrollRef.current;
+
+    if (!element) {
+      return;
+    }
+
+    element.scrollTop = 0;
+    setScrollTop(0);
+  }, [numbers]);
+
   const metrics = useMemo(() => {
     let offset = 0;
 
@@ -501,24 +512,6 @@ function StudentNumberList({
     });
   }, []);
 
-  if (!shouldVirtualize) {
-    return (
-      <div className="student-number-list space-y-4">
-        {numbers.map((number) => (
-          <StudentNumberCard
-            key={number.id}
-            number={number}
-            notesEnabled={notesEnabled}
-            homeworkGroup={number.deadlineAt ? (homeworkGroupsByDeadline.get(number.deadlineAt) ?? null) : null}
-            onSelect={onSelect}
-            onNoteChange={onNoteChange}
-            onNoteBlur={onNoteBlur}
-          />
-        ))}
-      </div>
-    );
-  }
-
   return (
     <div className="student-virtual-shell rounded-[28px] border border-slate-200 bg-slate-50/45 p-3">
       <div
@@ -528,34 +521,50 @@ function StudentNumberList({
           maxHeight: "72vh"
         }}
       >
-        <div
-          style={{
-            height: metrics.totalHeight,
-            position: "relative"
-          }}
-        >
-          {visibleItems.map((item) => {
-            const number = numbersById.get(item.id);
+        {shouldVirtualize ? (
+          <div
+            style={{
+              height: metrics.totalHeight,
+              position: "relative"
+            }}
+          >
+            {visibleItems.map((item) => {
+              const number = numbersById.get(item.id);
 
-            if (!number) {
-              return null;
-            }
+              if (!number) {
+                return null;
+              }
 
-            return (
-              <StudentNumberRow
+              return (
+                <StudentNumberRow
+                  key={number.id}
+                  number={number}
+                  top={item.start}
+                  notesEnabled={notesEnabled}
+                  homeworkGroup={number.deadlineAt ? (homeworkGroupsByDeadline.get(number.deadlineAt) ?? null) : null}
+                  onSelect={onSelect}
+                  onNoteChange={onNoteChange}
+                  onNoteBlur={onNoteBlur}
+                  onHeightChange={handleHeightChange}
+                />
+              );
+            })}
+          </div>
+        ) : (
+          <div className="student-number-list space-y-4">
+            {numbers.map((number) => (
+              <StudentNumberCard
                 key={number.id}
                 number={number}
-                top={item.start}
                 notesEnabled={notesEnabled}
                 homeworkGroup={number.deadlineAt ? (homeworkGroupsByDeadline.get(number.deadlineAt) ?? null) : null}
                 onSelect={onSelect}
                 onNoteChange={onNoteChange}
                 onNoteBlur={onNoteBlur}
-                onHeightChange={handleHeightChange}
               />
-            );
-          })}
-        </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   );
