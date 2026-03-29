@@ -14,9 +14,17 @@ type FileResourceCardProps = {
   title: string;
   description: string;
   file: FileResource | null;
+  previewSize?: "default" | "expanded";
 };
 
-export function FileResourceCard({ title, description, file }: FileResourceCardProps) {
+export function FileResourceCard({
+  title,
+  description,
+  file,
+  previewSize = "default"
+}: FileResourceCardProps) {
+  const isExpanded = previewSize === "expanded";
+
   return (
     <article className="ui-fade-slide ui-surface rounded-[28px] border border-slate-200 bg-slate-50/80 p-5 shadow-[0_12px_35px_rgba(15,23,42,0.06)]">
       <div className="flex flex-col gap-4 border-b border-slate-200 pb-5">
@@ -65,7 +73,7 @@ export function FileResourceCard({ title, description, file }: FileResourceCardP
               <iframe
                 src={`/files/${file.id}`}
                 title={file.originalName}
-                className="h-[420px] w-full"
+                className={isExpanded ? "h-[620px] w-full lg:h-[760px]" : "h-[420px] w-full"}
               />
             </div>
           ) : null}
@@ -78,7 +86,11 @@ export function FileResourceCard({ title, description, file }: FileResourceCardP
                 width={1200}
                 height={900}
                 unoptimized
-                className="max-h-[420px] h-auto w-full rounded-[18px] object-contain"
+                className={
+                  isExpanded
+                    ? "max-h-[620px] h-auto w-full rounded-[18px] object-contain lg:max-h-[760px]"
+                    : "max-h-[420px] h-auto w-full rounded-[18px] object-contain"
+                }
               />
             </div>
           ) : null}
