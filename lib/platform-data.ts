@@ -4,6 +4,12 @@ import { PLATFORM_DATA_TAGS } from "@/lib/platform-data-cache";
 import { prisma } from "@/lib/prisma";
 import { completionPercent, getStatusCounts } from "@/lib/utils";
 
+const topicDataCapabilitiesHint = {
+  notesEnabled: true,
+  deadlinesEnabled: true,
+  answerLatexEnabled: true
+};
+
 function buildProgress(statuses: Array<HomeworkNumberStatus | null | undefined>, totalNumbers: number) {
   const counts = getStatusCounts(statuses);
   const markedCount = counts.GREEN + counts.YELLOW + counts.RED;
@@ -55,14 +61,16 @@ async function resolveTopicDataCapabilities<T>(
     deadlinesEnabled: boolean;
     answerLatexEnabled: boolean;
   } = {
-    notesEnabled: true,
-    deadlinesEnabled: true,
-    answerLatexEnabled: true
+    ...topicDataCapabilitiesHint
   };
 
   while (true) {
     try {
       const result = await queryBuilder(capabilities);
+
+      topicDataCapabilitiesHint.notesEnabled = capabilities.notesEnabled;
+      topicDataCapabilitiesHint.deadlinesEnabled = capabilities.deadlinesEnabled;
+      topicDataCapabilitiesHint.answerLatexEnabled = capabilities.answerLatexEnabled;
 
       return {
         ...capabilities,
@@ -93,6 +101,9 @@ async function resolveTopicDataCapabilities<T>(
       }
 
       capabilities = nextCapabilities;
+      topicDataCapabilitiesHint.notesEnabled = nextCapabilities.notesEnabled;
+      topicDataCapabilitiesHint.deadlinesEnabled = nextCapabilities.deadlinesEnabled;
+      topicDataCapabilitiesHint.answerLatexEnabled = nextCapabilities.answerLatexEnabled;
     }
   }
 }
@@ -103,9 +114,15 @@ async function getStudentTopicsOverviewUncached(studentId: string) {
       where: { id: studentId }
     }),
     prisma.topic.findMany({
-      include: {
-        theoryFile: true,
-        homeworkFile: true,
+      select: {
+        id: true,
+        title: true,
+        description: true,
+        displayOrder: true,
+        theoryFileId: true,
+        homeworkFileId: true,
+        createdAt: true,
+        updatedAt: true,
         homeworkNumbers: {
           orderBy: { displayOrder: "asc" },
           select: {
@@ -139,6 +156,8 @@ async function getStudentTopicsOverviewUncached(studentId: string) {
 
     return {
       ...topic,
+      theoryFile: topic.theoryFileId ? { id: topic.theoryFileId } : null,
+      homeworkFile: topic.homeworkFileId ? { id: topic.homeworkFileId } : null,
       numbers,
       ...summary
     };
@@ -235,8 +254,8 @@ export async function getStudentTopicsOverview(
 
       return {
         ...topic,
-        theoryFile: null,
-        homeworkFile: null,
+        theoryFile: topic.theoryFileId ? { id: topic.theoryFileId } : null,
+        homeworkFile: topic.homeworkFileId ? { id: topic.homeworkFileId } : null,
         numbers,
         ...summary
       };
@@ -277,8 +296,24 @@ async function getStudentTopicDetailUncached(studentId: string, topicId: string)
     prisma.topic.findUniqueOrThrow({
       where: { id: topicId },
       include: {
-        theoryFile: true,
-        homeworkFile: true,
+        theoryFile: {
+          select: {
+            id: true,
+            originalName: true,
+            mimeType: true,
+            size: true,
+            uploadedAt: true
+          }
+        },
+        homeworkFile: {
+          select: {
+            id: true,
+            originalName: true,
+            mimeType: true,
+            size: true,
+            uploadedAt: true
+          }
+        },
         homeworkNumbers: {
           orderBy: { displayOrder: "asc" },
           select: {
@@ -553,8 +588,24 @@ async function getTeacherTopicDetailUncached(topicId: string) {
     prisma.topic.findUniqueOrThrow({
       where: { id: topicId },
       include: {
-        theoryFile: true,
-        homeworkFile: true,
+        theoryFile: {
+          select: {
+            id: true,
+            originalName: true,
+            mimeType: true,
+            size: true,
+            uploadedAt: true
+          }
+        },
+        homeworkFile: {
+          select: {
+            id: true,
+            originalName: true,
+            mimeType: true,
+            size: true,
+            uploadedAt: true
+          }
+        },
         homeworkNumbers: {
           orderBy: { displayOrder: "asc" },
           select: {
