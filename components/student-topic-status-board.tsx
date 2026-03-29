@@ -7,7 +7,6 @@ import { HomeworkStatusBadge } from "@/components/homework-status-badge";
 import { LatexAnswerPreview } from "@/components/latex-answer-preview";
 import { ProgressBar } from "@/components/progress-bar";
 import { SectionCard } from "@/components/section-card";
-import { StatCard } from "@/components/stat-card";
 import { completionPercent, cx, getStatusCounts, homeworkStatusMeta } from "@/lib/utils";
 
 type StudentTopicStatusBoardProps = {
@@ -633,22 +632,6 @@ export function StudentTopicStatusBoard({
     };
   }, [numbers, totalNumbers]);
 
-  const savingCount = useMemo(
-    () => numbers.filter((number) => number.isSavingStatus || number.isSavingNote).length,
-    [numbers]
-  );
-  const deadlinesCount = useMemo(
-    () => numbers.filter((number) => Boolean(number.deadlineAt)).length,
-    [numbers]
-  );
-  const notesCount = useMemo(
-    () => numbers.filter((number) => number.note.trim().length > 0).length,
-    [numbers]
-  );
-  const answersCount = useMemo(
-    () => numbers.filter((number) => Boolean(number.answerLatex)).length,
-    [numbers]
-  );
   const homeworkGroups = useMemo<HomeworkGroup[]>(() => {
     const grouped = new Map<string, StudentNumberState[]>();
 
@@ -959,50 +942,6 @@ export function StudentTopicStatusBoard({
 
   return (
     <div className="space-y-8">
-      <div className="flex flex-wrap gap-2">
-        <Badge className="border-slate-200 bg-white text-slate-700">Номеров {totalNumbers}</Badge>
-        <Badge className="border-slate-200 bg-white text-slate-700">
-          Отмечено {summary.markedCount} из {totalNumbers}
-        </Badge>
-        <Badge className="border-slate-200 bg-white text-slate-700">Прогресс {summary.progressPercent}%</Badge>
-        {deadlinesEnabled ? (
-          <Badge className="border-slate-200 bg-white text-slate-700">Дедлайнов {deadlinesCount}</Badge>
-        ) : null}
-        {homeworkGroups.length > 0 ? <Badge className="border-slate-200 bg-white text-slate-700">ДЗ {homeworkGroups.length}</Badge> : null}
-        {notesEnabled ? <Badge className="border-slate-200 bg-white text-slate-700">Заметок {notesCount}</Badge> : null}
-        {answersCount > 0 ? <Badge className="border-slate-200 bg-white text-slate-700">Ответов {answersCount}</Badge> : null}
-        {savingCount > 0 ? (
-          <Badge className="border-brand-200 bg-brand-50 text-brand-700">Сохраняем: {savingCount}</Badge>
-        ) : null}
-      </div>
-
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        <StatCard label="Номера" value={totalNumbers} hint="Всего номеров в заданиях этой темы." />
-        <StatCard label="Зеленые" value={summary.greenCount} hint="Решены сразу и правильно." />
-        <StatCard label="Желтые" value={summary.yellowCount} hint="Исправлены после самопроверки." />
-        <StatCard label="Красные" value={summary.redCount} hint="Нужна помощь преподавателя." />
-      </div>
-
-      <SectionCard
-        title="Общий прогресс по теме"
-        description="Чем больше номеров вы отметили, тем точнее преподаватель видит ваш текущий уровень по теме."
-      >
-        <div className="space-y-3">
-          <div className="flex items-center justify-between text-sm text-slate-600">
-            <span>Отмечено номеров</span>
-            <span className="font-semibold text-slate-950">
-              {summary.markedCount} / {totalNumbers}
-            </span>
-          </div>
-          <ProgressBar value={summary.progressPercent} />
-        </div>
-        {deadlinesEnabled && numbers.some((number) => number.deadlineAt) ? (
-          <p className="mt-4 text-sm leading-6 text-slate-600">
-            Дедлайны по выданным заданиям указаны в названиях фильтров ДЗ выше.
-          </p>
-        ) : null}
-      </SectionCard>
-
       <SectionCard
         title="Статусы номеров"
         description={
@@ -1167,6 +1106,26 @@ export function StudentTopicStatusBoard({
             )}
           </>
         )}
+      </SectionCard>
+
+      <SectionCard
+        title="Общий прогресс по теме"
+        description="Чем больше номеров вы отметили, тем точнее преподаватель видит ваш текущий уровень по теме."
+      >
+        <div className="space-y-3">
+          <div className="flex items-center justify-between text-sm text-slate-600">
+            <span>Отмечено номеров</span>
+            <span className="font-semibold text-slate-950">
+              {summary.markedCount} / {totalNumbers}
+            </span>
+          </div>
+          <ProgressBar value={summary.progressPercent} />
+        </div>
+        {deadlinesEnabled && numbers.some((number) => number.deadlineAt) ? (
+          <p className="mt-4 text-sm leading-6 text-slate-600">
+            Дедлайны по выданным заданиям указаны в названиях фильтров ДЗ выше.
+          </p>
+        ) : null}
       </SectionCard>
     </div>
   );
