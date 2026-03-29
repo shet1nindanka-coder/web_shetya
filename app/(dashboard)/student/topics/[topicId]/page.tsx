@@ -31,7 +31,8 @@ export default async function StudentTopicPage({ params }: StudentTopicPageProps
       <StudentTopicStatusBoard
         topicId={topic.id}
         totalNumbers={topic.totalNumbers}
-        initialNumbers={topic.numbers.map((number) => ({
+        notesEnabled={topic.notesEnabled}
+        initialNumbers={topic.numbers.map((number: (typeof topic.numbers)[number]) => ({
           id: number.id,
           number: number.number,
           status: number.studentStatus?.status ?? null,

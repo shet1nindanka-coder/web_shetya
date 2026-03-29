@@ -13,6 +13,7 @@ import { completionPercent, cx, getStatusCounts, homeworkStatusMeta } from "@/li
 type StudentTopicStatusBoardProps = {
   topicId: string;
   totalNumbers: number;
+  notesEnabled: boolean;
   initialNumbers: Array<{
     id: string;
     number: number;
@@ -35,6 +36,7 @@ type StudentNumberState = {
 
 type StudentNumberCardProps = {
   number: StudentNumberState;
+  notesEnabled: boolean;
   onSelect: (homeworkNumberId: string, status: HomeworkNumberStatus | null) => void;
   onNoteChange: (homeworkNumberId: string, value: string) => void;
   onNoteBlur: (homeworkNumberId: string) => void;
@@ -76,6 +78,7 @@ const statusOptions = [HomeworkNumberStatus.GREEN, HomeworkNumberStatus.YELLOW, 
 
 const StudentNumberCard = memo(function StudentNumberCard({
   number,
+  notesEnabled,
   onSelect,
   onNoteChange,
   onNoteBlur
@@ -121,22 +124,24 @@ const StudentNumberCard = memo(function StudentNumberCard({
         </div>
       </div>
 
-      <div className="mt-4 rounded-[24px] border border-slate-200 bg-white px-4 py-4">
-        <div className="flex items-center justify-between gap-3">
-          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Личная заметка</p>
-          <span className="text-xs text-slate-400">{number.note.length}/240</span>
+      {notesEnabled ? (
+        <div className="mt-4 rounded-[24px] border border-slate-200 bg-white px-4 py-4">
+          <div className="flex items-center justify-between gap-3">
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Личная заметка</p>
+            <span className="text-xs text-slate-400">{number.note.length}/240</span>
+          </div>
+          <textarea
+            rows={2}
+            maxLength={240}
+            value={number.note}
+            onChange={(event) => onNoteChange(number.id, event.target.value)}
+            onBlur={() => onNoteBlur(number.id)}
+            placeholder="Короткая заметка к этому номеру"
+            className="mt-3 min-h-[72px] w-full resize-none rounded-2xl border border-slate-200 bg-slate-50 px-3 py-3 text-sm text-slate-700 outline-none transition focus:border-brand-400 focus:bg-white"
+          />
+          <p className="mt-2 text-xs leading-5 text-slate-500">Сохранится автоматически и останется у вас в теме.</p>
         </div>
-        <textarea
-          rows={2}
-          maxLength={240}
-          value={number.note}
-          onChange={(event) => onNoteChange(number.id, event.target.value)}
-          onBlur={() => onNoteBlur(number.id)}
-          placeholder="Короткая заметка к этому номеру"
-          className="mt-3 min-h-[72px] w-full resize-none rounded-2xl border border-slate-200 bg-slate-50 px-3 py-3 text-sm text-slate-700 outline-none transition focus:border-brand-400 focus:bg-white"
-        />
-        <p className="mt-2 text-xs leading-5 text-slate-500">Сохранится автоматически и останется у вас в теме.</p>
-      </div>
+      ) : null}
 
       {number.answerLatex ? (
         <div className="mt-4 rounded-[24px] border border-slate-200 bg-white p-3">
@@ -189,6 +194,7 @@ const StudentNumberCard = memo(function StudentNumberCard({
 export function StudentTopicStatusBoard({
   topicId,
   totalNumbers,
+  notesEnabled,
   initialNumbers
 }: StudentTopicStatusBoardProps) {
   const initialState = useMemo<StudentNumberState[]>(
@@ -542,7 +548,11 @@ export function StudentTopicStatusBoard({
 
       <SectionCard
         title="Статусы номеров"
-        description="Выберите цвет для каждого номера: зеленый, желтый или красный. Ниже можно оставить короткую личную заметку, которая сохранится автоматически."
+        description={
+          notesEnabled
+            ? "Выберите цвет для каждого номера: зеленый, желтый или красный. Ниже можно оставить короткую личную заметку, которая сохранится автоматически."
+            : "Выберите цвет для каждого номера: зеленый, желтый или красный. Повторный клик по активному цвету снимет статус."
+        }
       >
         <div className="mb-5 flex flex-wrap gap-2">
           {Object.values(HomeworkNumberStatus).map((status) => {
@@ -573,6 +583,7 @@ export function StudentTopicStatusBoard({
             <StudentNumberCard
               key={number.id}
               number={number}
+              notesEnabled={notesEnabled}
               onSelect={updateNumberStatus}
               onNoteChange={updateNumberNote}
               onNoteBlur={flushNumberNote}

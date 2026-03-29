@@ -1,5 +1,5 @@
 import { unstable_cache } from "next/cache";
-import { HomeworkNumberStatus, UserRole } from "@prisma/client";
+import { HomeworkNumberStatus, Prisma, UserRole } from "@prisma/client";
 import { PLATFORM_DATA_TAGS } from "@/lib/platform-data-cache";
 import { prisma } from "@/lib/prisma";
 import { completionPercent, getStatusCounts } from "@/lib/utils";
@@ -16,6 +16,15 @@ function buildProgress(statuses: Array<HomeworkNumberStatus | null | undefined>,
     totalNumbers,
     progressPercent: completionPercent(markedCount, totalNumbers)
   };
+}
+
+function isMissingStudentNotesColumnError(error: unknown) {
+  return (
+    error instanceof Prisma.PrismaClientKnownRequestError &&
+    error.code === "P2022" &&
+    error.message.includes("StudentTopicNumberStatus") &&
+    error.message.includes("note")
+  );
 }
 
 async function getStudentTopicsOverviewUncached(studentId: string) {
@@ -35,7 +44,6 @@ async function getStudentTopicsOverviewUncached(studentId: string) {
               select: {
                 id: true,
                 status: true,
-                note: true,
                 updatedAt: true
               }
             }
@@ -92,37 +100,65 @@ const getStudentTopicsOverviewCached = unstable_cache(
   }
 );
 
-export async function getStudentTopicsOverview(studentId: string) {
+export async function getStudentTopicsOverview(
+  studentId: string
+): Promise<Awaited<ReturnType<typeof getStudentTopicsOverviewUncached>>> {
   return getStudentTopicsOverviewCached(studentId);
 }
 
 async function getStudentTopicDetailUncached(studentId: string, topicId: string) {
-  const topic = await prisma.topic.findUniqueOrThrow({
-    where: { id: topicId },
-    include: {
-      theoryFile: true,
-      homeworkFile: true,
-      homeworkNumbers: {
-        orderBy: { displayOrder: "asc" },
-        include: {
-          answerFile: true,
-          statuses: {
-            where: { studentId },
-            select: {
-              id: true,
-              status: true,
-              note: true,
-              updatedAt: true
+  const buildStudentTopicDetailQuery = (includeNote: boolean) =>
+    prisma.topic.findUniqueOrThrow({
+      where: { id: topicId },
+      include: {
+        theoryFile: true,
+        homeworkFile: true,
+        homeworkNumbers: {
+          orderBy: { displayOrder: "asc" },
+          include: {
+            answerFile: true,
+            statuses: {
+              where: { studentId },
+              select: includeNote
+                ? {
+                    id: true,
+                    status: true,
+                    note: true,
+                    updatedAt: true
+                  }
+                : {
+                    id: true,
+                    status: true,
+                    updatedAt: true
+                  }
             }
           }
         }
       }
-    }
   });
+
+  let notesEnabled = true;
+  let topic: Awaited<ReturnType<typeof buildStudentTopicDetailQuery>>;
+
+  try {
+    topic = await buildStudentTopicDetailQuery(true);
+  } catch (error) {
+    if (!isMissingStudentNotesColumnError(error)) {
+      throw error;
+    }
+
+    notesEnabled = false;
+    topic = await buildStudentTopicDetailQuery(false);
+  }
 
   const numbers = topic.homeworkNumbers.map((number) => ({
     ...number,
-    studentStatus: number.statuses[0] ?? null
+    studentStatus: number.statuses[0]
+      ? {
+          ...number.statuses[0],
+          note: notesEnabled ? (number.statuses[0] as { note?: string | null }).note ?? "" : ""
+        }
+      : null
   }));
   const progress = buildProgress(
     numbers.map((number) => number.studentStatus?.status ?? null),
@@ -132,6 +168,7 @@ async function getStudentTopicDetailUncached(studentId: string, topicId: string)
   return {
     ...topic,
     numbers,
+    notesEnabled,
     ...progress
   };
 }
@@ -144,7 +181,10 @@ const getStudentTopicDetailCached = unstable_cache(
   }
 );
 
-export async function getStudentTopicDetail(studentId: string, topicId: string) {
+export async function getStudentTopicDetail(
+  studentId: string,
+  topicId: string
+): Promise<Awaited<ReturnType<typeof getStudentTopicDetailUncached>>> {
   return getStudentTopicDetailCached(studentId, topicId);
 }
 
@@ -239,7 +279,9 @@ const getTeacherTopicsOverviewCached = unstable_cache(
   }
 );
 
-export async function getTeacherTopicsOverview() {
+export async function getTeacherTopicsOverview(): Promise<
+  Awaited<ReturnType<typeof getTeacherTopicsOverviewUncached>>
+> {
   return getTeacherTopicsOverviewCached();
 }
 
@@ -319,7 +361,9 @@ const getTeacherTopicDetailCached = unstable_cache(
   }
 );
 
-export async function getTeacherTopicDetail(topicId: string) {
+export async function getTeacherTopicDetail(
+  topicId: string
+): Promise<Awaited<ReturnType<typeof getTeacherTopicDetailUncached>>> {
   return getTeacherTopicDetailCached(topicId);
 }
 
@@ -349,7 +393,6 @@ async function getTeacherStudentDetailUncached(studentId: string) {
               select: {
                 id: true,
                 status: true,
-                note: true,
                 updatedAt: true
               }
             }
@@ -412,7 +455,9 @@ const getTeacherStudentDetailCached = unstable_cache(
   }
 );
 
-export async function getTeacherStudentDetail(studentId: string) {
+export async function getTeacherStudentDetail(
+  studentId: string
+): Promise<Awaited<ReturnType<typeof getTeacherStudentDetailUncached>>> {
   return getTeacherStudentDetailCached(studentId);
 }
 

@@ -1,4 +1,4 @@
-import { HomeworkNumberStatus, UserRole } from "@prisma/client";
+import { HomeworkNumberStatus, Prisma, UserRole } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { NextResponse } from "next/server";
 import { tryGetCurrentUser } from "@/lib/auth";
@@ -12,6 +12,15 @@ const allowedStatuses = [
   HomeworkNumberStatus.YELLOW,
   HomeworkNumberStatus.RED
 ] as const;
+
+function isMissingStudentNotesColumnError(error: unknown) {
+  return (
+    error instanceof Prisma.PrismaClientKnownRequestError &&
+    error.code === "P2022" &&
+    error.message.includes("StudentTopicNumberStatus") &&
+    error.message.includes("note")
+  );
+}
 
 function revalidateTopicRoutes(topicId: string) {
   revalidateAllPlatformData();
@@ -68,22 +77,80 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Номер задания для этой темы не найден." }, { status: 404 });
   }
 
-  const existingStatus = await prisma.studentTopicNumberStatus.findUnique({
-    where: {
-      studentId_homeworkNumberId: {
-        studentId: user.id,
-        homeworkNumberId
+  let notesEnabled = noteProvided;
+  let existingStatus:
+    | {
+        id: string;
+        status: HomeworkNumberStatus | null;
+        note?: string | null;
       }
-    },
-    select: {
-      id: true,
-      status: true,
-      note: true
+    | null;
+
+  if (noteProvided) {
+    try {
+      existingStatus = await prisma.studentTopicNumberStatus.findUnique({
+        where: {
+          studentId_homeworkNumberId: {
+            studentId: user.id,
+            homeworkNumberId
+          }
+        },
+        select: {
+          id: true,
+          status: true,
+          note: true
+        }
+      });
+    } catch (error) {
+      if (!isMissingStudentNotesColumnError(error)) {
+        throw error;
+      }
+
+      notesEnabled = false;
+      existingStatus = await prisma.studentTopicNumberStatus.findUnique({
+        where: {
+          studentId_homeworkNumberId: {
+            studentId: user.id,
+            homeworkNumberId
+          }
+        },
+        select: {
+          id: true,
+          status: true
+        }
+      });
     }
-  });
+  } else {
+    existingStatus = await prisma.studentTopicNumberStatus.findUnique({
+      where: {
+        studentId_homeworkNumberId: {
+          studentId: user.id,
+          homeworkNumberId
+        }
+      },
+      select: {
+        id: true,
+        status: true
+      }
+    });
+  }
 
   const nextStatus = statusProvided ? status ?? null : existingStatus?.status ?? null;
-  const nextNote = noteProvided ? (note || null) : existingStatus?.note ?? null;
+  const nextNote = notesEnabled
+    ? noteProvided
+      ? note || null
+      : existingStatus?.note ?? null
+    : null;
+
+  if (!notesEnabled && noteProvided && !statusProvided) {
+    revalidateTopicRoutes(topicId);
+    return NextResponse.json({
+      ok: true,
+      status: nextStatus,
+      note: "",
+      notesEnabled: false
+    });
+  }
 
   if (!nextStatus && !nextNote) {
     if (existingStatus) {
@@ -105,14 +172,12 @@ export async function POST(request: Request) {
         }
       },
       update: {
-        status: nextStatus,
-        note: nextNote
+        ...(notesEnabled ? { status: nextStatus, note: nextNote } : { status: nextStatus })
       },
       create: {
         studentId: user.id,
         homeworkNumberId,
-        status: nextStatus,
-        note: nextNote
+        ...(notesEnabled ? { status: nextStatus, note: nextNote } : { status: nextStatus })
       }
     });
   }
@@ -122,6 +187,7 @@ export async function POST(request: Request) {
   return NextResponse.json({
     ok: true,
     status: nextStatus,
-    note: nextNote ?? ""
+    note: nextNote ?? "",
+    notesEnabled
   });
 }
