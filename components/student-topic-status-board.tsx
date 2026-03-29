@@ -188,7 +188,6 @@ const StudentNumberCard = memo(function StudentNumberCard({
     <div className="student-number-card rounded-[22px] border border-slate-200 bg-slate-50/70 p-3.5 sm:rounded-[24px] sm:p-4">
       <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
         <div className="space-y-2">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">Задания</p>
           <div className="flex flex-wrap items-center gap-3">
             <h3 className="font-display text-[1.9rem] font-semibold text-slate-950">№ {number.number}</h3>
             <HomeworkStatusBadge status={number.status} />
@@ -229,8 +228,7 @@ const StudentNumberCard = memo(function StudentNumberCard({
         <div className="mt-3 rounded-[18px] border border-slate-200 bg-white px-3.5 py-3 sm:rounded-[20px] sm:px-4">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
-              <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">Личная заметка</p>
-              <p className="mt-1.5 text-sm leading-5 text-slate-500">
+              <p className="text-sm leading-5 text-slate-500">
                 {notePreview ? "Есть сохраненная заметка." : "Можно оставить короткую заметку."}
               </p>
             </div>
@@ -271,8 +269,7 @@ const StudentNumberCard = memo(function StudentNumberCard({
         <div className="mt-3 rounded-[18px] border border-slate-200 bg-white p-3 sm:rounded-[20px]">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
-              <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">Ответ к номеру</p>
-              <p className="mt-1.5 text-sm leading-5 text-slate-500">Открывается только по вашему клику.</p>
+              <p className="text-sm leading-5 text-slate-500">Ответ откроется только по вашему клику.</p>
             </div>
             <button
               type="button"
@@ -961,7 +958,7 @@ export function StudentTopicStatusBoard({
         {hasHomeworkFilters ? (
           <div className="mb-5 space-y-3">
             <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">Фильтр по выданному ДЗ</p>
+              <p className="text-sm font-medium text-slate-500">Фильтры</p>
               <p className="mt-2 text-sm leading-6 text-slate-500">
                 {hasIssuedHomeworkGroups
                   ? "Выберите конкретное ДЗ, чтобы увидеть только номера из этого назначения."

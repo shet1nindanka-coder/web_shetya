@@ -168,13 +168,12 @@ const TeacherNumberCard = memo(function TeacherNumberCard({
       </div>
       {number.studentStatus?.note ? (
         <div className="mt-3 rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">Заметка ученика</p>
-          <p className="mt-2 text-sm leading-6 text-slate-700">{number.studentStatus.note}</p>
+          <p className="text-sm leading-6 text-slate-700">{number.studentStatus.note}</p>
         </div>
       ) : null}
       <div className="mt-3 rounded-2xl border border-slate-200 bg-slate-50 px-3 py-3">
         <div className="flex items-center justify-between gap-3">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">Дедлайн</p>
+          <p className="text-sm font-medium text-slate-500">Дедлайн</p>
           {number.isSavingDeadline ? <span className="text-xs text-slate-400">Сохраняем...</span> : null}
         </div>
         <input
@@ -249,18 +248,18 @@ const TeacherTopicCard = memo(function TeacherTopicCard({
       <div className="flex flex-col gap-5 xl:flex-row xl:items-start xl:justify-between">
         <div className="space-y-3">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Номеров: {topic.totalNumbers}</p>
-            <h2 className="font-display mt-2 text-2xl font-semibold text-slate-950">{topic.title}</h2>
+            <h2 className="font-display text-2xl font-semibold text-slate-950">{topic.title}</h2>
+            <p className="mt-2 text-sm text-slate-500">{topic.totalNumbers} номеров</p>
           </div>
           <p className="max-w-3xl text-sm leading-6 text-slate-600">{topic.description}</p>
-          <div className="flex flex-wrap gap-2">
-            <Badge className="border-slate-200 bg-white text-slate-700">Решено {topic.solvedCount}/{topic.totalNumbers}</Badge>
-            <Badge className="border-slate-200 bg-white text-slate-700">Отмечено {topic.markedCount}/{topic.totalNumbers}</Badge>
-            <Badge className="border-slate-200 bg-white text-slate-700">Красные {topic.redCount}</Badge>
+          <div className="flex flex-wrap gap-x-5 gap-y-2 text-sm text-slate-600">
+            <span>Решено: <span className="font-semibold text-slate-950">{topic.solvedCount}/{topic.totalNumbers}</span></span>
+            <span>Отмечено: <span className="font-semibold text-slate-950">{topic.markedCount}/{topic.totalNumbers}</span></span>
+            <span>Красные: <span className="font-semibold text-rose-700">{topic.redCount}</span></span>
             {homeworkGroups.length > 0 ? (
-              <Badge className="border-slate-200 bg-white text-slate-700">Выдано ДЗ {homeworkGroups.length}</Badge>
+              <span>ДЗ: <span className="font-semibold text-slate-950">{homeworkGroups.length}</span></span>
             ) : null}
-            {isCompleted ? <Badge className="border-emerald-200 bg-emerald-50 text-emerald-700">Тема завершена</Badge> : null}
+            {isCompleted ? <span className="font-medium text-emerald-700">Тема завершена</span> : null}
           </div>
         </div>
 
@@ -286,10 +285,10 @@ const TeacherTopicCard = memo(function TeacherTopicCard({
       <div className="mt-5 rounded-[24px] border border-slate-200 bg-white px-4 py-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">Выдать ДЗ</p>
+            <p className="text-sm font-medium text-slate-500">Выдать ДЗ</p>
             <p className="mt-2 text-sm leading-6 text-slate-600">Выберите несколько номеров ниже и выдайте их как одно ДЗ с общим дедлайном.</p>
           </div>
-          <Badge className="border-slate-200 bg-slate-50 text-slate-700">Выбрано {selectedCount}</Badge>
+          <span className="text-sm text-slate-500">Выбрано: <span className="font-semibold text-slate-950">{selectedCount}</span></span>
         </div>
 
         <div className="mt-4 flex flex-col gap-3 lg:flex-row lg:items-center">
@@ -320,7 +319,7 @@ const TeacherTopicCard = memo(function TeacherTopicCard({
 
         {homeworkGroups.length > 0 ? (
           <div className="mt-4 rounded-[20px] border border-slate-200 bg-slate-50/70 px-3 py-3">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">Выданные ДЗ</p>
+            <p className="text-sm font-medium text-slate-500">Выданные ДЗ</p>
             <div className="mt-3 flex flex-wrap gap-2">
               {homeworkGroups.map((group) => (
                 <Badge key={group.id} className="border-slate-200 bg-white text-slate-700">

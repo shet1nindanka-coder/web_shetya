@@ -19,7 +19,7 @@ export function StatCard({ label, value, hint, accent, className }: StatCardProp
     >
       <div className="flex items-start justify-between gap-4">
         <div className="space-y-1.5">
-          <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-slate-400">{label}</p>
+          <p className="text-sm font-medium text-slate-500">{label}</p>
           <p className="font-display text-[1.6rem] font-semibold leading-none text-slate-950 sm:text-[1.75rem] lg:text-[1.9rem]">
             {value}
           </p>

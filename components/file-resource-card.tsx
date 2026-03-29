@@ -1,5 +1,4 @@
 import Image from "next/image";
-import { Badge } from "@/components/badge";
 import { formatDateTime, formatFileSize, isImageMime, isOfficeMime, isPdfMime } from "@/lib/utils";
 
 type FileResource = {
@@ -29,7 +28,7 @@ export function FileResourceCard({
     <article className="ui-fade-slide ui-surface rounded-[22px] border border-slate-200/80 bg-white/94 p-4 shadow-[0_12px_28px_rgba(15,23,42,0.05)] sm:rounded-[24px] sm:p-5 lg:rounded-[26px]">
       <div className="flex flex-col gap-4 border-b border-slate-200/80 pb-5">
         <div className="space-y-1.5">
-          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">{title}</p>
+          <p className="text-sm font-medium text-slate-500">{title}</p>
           <h3 className="font-display text-[1.35rem] font-semibold text-slate-950 sm:text-[1.45rem] lg:text-[1.6rem]">
             {file ? file.originalName : "Файл не загружен"}
           </h3>
@@ -37,12 +36,10 @@ export function FileResourceCard({
         </div>
 
         {file ? (
-          <div className="flex flex-wrap items-center gap-2">
-            <Badge className="border-slate-200 bg-slate-50 text-slate-600">{formatFileSize(file.size)}</Badge>
-            <Badge className="border-slate-200 bg-slate-50 text-slate-600">
-              Загружен {formatDateTime(file.uploadedAt)}
-            </Badge>
-            <Badge className="border-slate-200 bg-slate-50 text-slate-600">{file.mimeType}</Badge>
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-slate-500">
+            <span>{formatFileSize(file.size)}</span>
+            <span>Загружен {formatDateTime(file.uploadedAt)}</span>
+            <span>{file.mimeType}</span>
           </div>
         ) : null}
       </div>

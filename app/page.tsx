@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { Badge } from "@/components/badge";
 import { tryGetCurrentUser } from "@/lib/auth";
 import { roleHome } from "@/lib/utils";
 
@@ -60,8 +59,6 @@ export default async function HomePage() {
 
           <div className="relative grid gap-8 lg:grid-cols-[1.08fr_0.92fr] lg:items-center">
             <div className="space-y-6">
-              <Badge className="border-brand-200 bg-brand-50 text-brand-700">Учёба и прогресс в одном месте</Badge>
-
               <div className="space-y-4">
                 <h1 className="font-display max-w-4xl text-4xl font-semibold leading-[0.98] tracking-[-0.04em] text-slate-950 sm:text-5xl lg:text-[4.8rem]">
                   Темы, задания и результаты без лишнего хаоса
@@ -89,8 +86,7 @@ export default async function HomePage() {
             </div>
 
             <div className="ui-fade-slide ui-surface rounded-[34px] border border-slate-950 bg-slate-950 p-6 text-white shadow-[0_24px_60px_rgba(15,23,42,0.2)]">
-              <p className="text-xs font-semibold uppercase tracking-[0.24em] text-brand-200">Что внутри</p>
-              <h2 className="font-display mt-4 text-3xl font-semibold">Один понятный контур работы</h2>
+              <h2 className="font-display text-3xl font-semibold">Один понятный контур работы</h2>
 
               <div className="mt-6 space-y-3">
                 <div className="rounded-[24px] border border-white/10 bg-white/10 px-4 py-4">
@@ -122,16 +118,14 @@ export default async function HomePage() {
               key={card.title}
               className="ui-fade-slide ui-surface rounded-[32px] border border-white/80 bg-white/88 p-6 shadow-[0_20px_50px_rgba(15,23,42,0.08)]"
             >
-              <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-400">{card.title}</p>
-              <h2 className="font-display mt-4 text-3xl font-semibold leading-tight text-slate-950">{card.title}</h2>
-              <p className="mt-4 text-base leading-7 text-slate-600">{card.description}</p>
+              <h2 className="font-display text-3xl font-semibold leading-tight text-slate-950">{card.title}</h2>
+              <p className="mt-3 text-base leading-7 text-slate-600">{card.description}</p>
             </article>
           ))}
         </section>
 
         <section className="mt-8 rounded-[34px] border border-white/80 bg-white/90 px-6 py-8 text-center shadow-[0_20px_50px_rgba(15,23,42,0.08)]">
-          <Badge className="border-slate-200 bg-white text-slate-700">Готово к работе</Badge>
-          <h2 className="font-display mt-4 text-4xl font-semibold text-slate-950">Войдите и откройте свой кабинет</h2>
+          <h2 className="font-display text-4xl font-semibold text-slate-950">Войдите и откройте свой кабинет</h2>
           <p className="mx-auto mt-4 max-w-2xl text-base leading-7 text-slate-600">
             Преподаватель ведёт темы и учеников, а ученик видит свои материалы и собственный прогресс по заданиям.
           </p>

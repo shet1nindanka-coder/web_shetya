@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { UserRole } from "@prisma/client";
-import { Badge } from "@/components/badge";
 import { DeleteTopicDialog } from "@/components/delete-topic-dialog";
 import { ProgressBar } from "@/components/progress-bar";
 import { SectionCard } from "@/components/section-card";
@@ -76,21 +75,15 @@ export default async function TeacherTopicsPage({ searchParams }: TeacherTopicsP
 
       <section className="grid gap-6 lg:grid-cols-[1.15fr_0.85fr]">
         <div className="page-header-panel rounded-[28px] border border-white/70 bg-slate-950 px-5 py-6 text-white shadow-glow sm:rounded-[36px] sm:px-6 sm:py-8">
-          <Badge className="border-brand-300/40 bg-white/10 text-brand-100">Темы и материалы</Badge>
-          <h1 className="font-display mt-4 text-3xl font-semibold sm:text-4xl">Общие темы, файлы и номера для всех учеников</h1>
+          <h1 className="font-display text-3xl font-semibold sm:text-4xl">Общие темы, файлы и номера для всех учеников</h1>
           <p className="mt-4 max-w-2xl text-sm leading-6 text-slate-300 sm:text-base sm:leading-7">
             Создавайте темы, прикрепляйте файлы и редактируйте номера. Здесь собраны только материалы курса и
             инструменты для работы с ними.
           </p>
-          <div className="mt-6 flex flex-wrap gap-2">
-            <Badge className="border-white/15 bg-white/10 text-slate-100">Общие материалы</Badge>
-            <Badge className="border-white/15 bg-white/10 text-slate-100">Диапазоны `1-5`</Badge>
-            <Badge className="border-white/15 bg-white/10 text-slate-100">Редактирование и удаление</Badge>
-          </div>
         </div>
 
         <div className="rounded-[28px] border border-brand-100 bg-white/90 p-5 shadow-glow sm:rounded-[36px] sm:p-6">
-          <p className="text-sm font-semibold uppercase tracking-[0.2em] text-slate-500">Всего на вкладке тем</p>
+          <p className="text-sm font-medium text-slate-500">Всего на вкладке тем</p>
           <p className="mt-4 text-2xl font-semibold text-slate-950 sm:text-3xl">
             {data.stats.totalTopics} тем и {data.stats.totalNumbers} номеров
           </p>
@@ -132,23 +125,19 @@ export default async function TeacherTopicsPage({ searchParams }: TeacherTopicsP
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                   <div className="space-y-3">
                     <div>
-                      <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
-                        Номеров: {topic.totalNumbers}
-                      </p>
-                      <h2 className="font-display mt-2 text-[1.55rem] font-semibold text-slate-950 sm:text-2xl">{topic.title}</h2>
+                      <h2 className="font-display text-[1.55rem] font-semibold text-slate-950 sm:text-2xl">{topic.title}</h2>
+                      <p className="mt-2 text-sm text-slate-500">{topic.totalNumbers} номеров</p>
                     </div>
                     <p className="text-sm leading-6 text-slate-600">{topic.description}</p>
-                    <div className="flex flex-wrap gap-2">
-                      <Badge className="border-slate-200 bg-white text-slate-700">Теория {topic.theoryFile ? "есть" : "нет"}</Badge>
-                      <Badge className="border-slate-200 bg-white text-slate-700">Задания {topic.homeworkFile ? "есть" : "нет"}</Badge>
-                    </div>
+                    <p className="text-sm text-slate-500">
+                      Теория: <span className="font-medium text-slate-950">{topic.theoryFile ? "есть" : "нет"}</span>
+                      {" · "}
+                      Задания: <span className="font-medium text-slate-950">{topic.homeworkFile ? "есть" : "нет"}</span>
+                    </p>
                   </div>
-                  <div className="rounded-[20px] border border-white bg-white px-4 py-3 text-sm text-slate-600 sm:rounded-[24px]">
-                    Файлы:{" "}
-                    <span className="font-semibold text-slate-950">
-                      {(topic.theoryFile ? 1 : 0) + (topic.homeworkFile ? 1 : 0)} / 2
-                    </span>
-                  </div>
+                  <p className="text-sm text-slate-500">
+                    Файлов: <span className="font-semibold text-slate-950">{(topic.theoryFile ? 1 : 0) + (topic.homeworkFile ? 1 : 0)} / 2</span>
+                  </p>
                 </div>
 
                 <div className="mt-5 space-y-2">

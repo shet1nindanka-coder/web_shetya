@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { UserRole } from "@prisma/client";
 import { Badge } from "@/components/badge";
-import { HomeworkStatusBadge } from "@/components/homework-status-badge";
 import { ProgressBar } from "@/components/progress-bar";
 import { SectionCard } from "@/components/section-card";
 import { StatCard } from "@/components/stat-card";
@@ -32,15 +31,13 @@ export default async function TeacherStudentPage({ params }: TeacherStudentPageP
           <p className="mt-3 max-w-3xl text-base leading-7 text-slate-600">
             Логин: {data.student.email}. Здесь собран прогресс ученика по всем темам, включая цвета по каждому номеру и личные заметки.
           </p>
-          <div className="mt-5 flex flex-wrap gap-2">
-            <Badge className="border-slate-200 bg-white text-slate-700">Тем {data.stats.totalTopics}</Badge>
-            <Badge className="border-slate-200 bg-white text-slate-700">
-              Решено {data.stats.totalSolved}/{data.stats.totalNumbers}
-            </Badge>
-            <Badge className="border-slate-200 bg-white text-slate-700">
-              Отмечено {data.stats.totalMarked}/{data.stats.totalNumbers}
-            </Badge>
-          </div>
+          <p className="mt-5 text-sm text-slate-500">
+            Тем: <span className="font-semibold text-slate-950">{data.stats.totalTopics}</span>
+            {" · "}
+            Решено: <span className="font-semibold text-slate-950">{data.stats.totalSolved}/{data.stats.totalNumbers}</span>
+            {" · "}
+            Отмечено: <span className="font-semibold text-slate-950">{data.stats.totalMarked}/{data.stats.totalNumbers}</span>
+          </p>
         </div>
 
         <div className="rounded-[24px] border border-slate-200 bg-white px-5 py-4 text-sm text-slate-600">

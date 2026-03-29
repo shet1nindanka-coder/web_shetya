@@ -1,6 +1,5 @@
 import { UserRole } from "@prisma/client";
 import { updatePasswordAction, updateProfileInfoAction } from "@/actions/profile";
-import { Badge } from "@/components/badge";
 import { SectionCard } from "@/components/section-card";
 import { formatDate } from "@/lib/utils";
 
@@ -107,39 +106,31 @@ export function AccountSettingsView({ user, notice }: AccountSettingsViewProps) 
 
       <section className="grid gap-6 lg:grid-cols-[1.15fr_0.85fr]">
         <div className="page-header-panel rounded-[36px] border border-white/70 bg-slate-950 px-6 py-8 text-white shadow-glow">
-          <Badge className="border-brand-300/40 bg-white/10 text-brand-100">Личный кабинет</Badge>
-          <h1 className="font-display mt-4 text-4xl font-semibold">
-            Управляйте своими данными и безопасностью аккаунта
-          </h1>
+          <h1 className="font-display text-4xl font-semibold">Личный кабинет</h1>
           <p className="mt-4 max-w-2xl text-base leading-7 text-slate-300">
             Здесь можно обновить имя профиля и сменить пароль. Логин для входа остается фиксированным и не меняется
             из кабинета.
           </p>
-          <div className="mt-6 flex flex-wrap gap-2">
-            <Badge className="border-white/15 bg-white/10 text-slate-100">{roleLabel}</Badge>
-            <Badge className="border-white/15 bg-white/10 text-slate-100">Личная информация</Badge>
-            <Badge className="border-white/15 bg-white/10 text-slate-100">Смена пароля</Badge>
-          </div>
         </div>
 
         <div className="rounded-[36px] border border-brand-100 bg-white/90 p-6 shadow-glow">
-          <p className="text-sm font-semibold uppercase tracking-[0.2em] text-slate-500">Сейчас в профиле</p>
+          <p className="text-sm font-medium text-slate-500">Сейчас в профиле</p>
           <div className="mt-5 space-y-4">
             <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">Имя</p>
+              <p className="text-sm text-slate-500">Имя</p>
               <p className="mt-2 text-xl font-semibold text-slate-950">{user.name}</p>
             </div>
             <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">Логин</p>
+              <p className="text-sm text-slate-500">Логин</p>
               <p className="mt-2 break-all text-sm font-medium text-slate-700">{user.email}</p>
             </div>
             <div className="grid gap-4 sm:grid-cols-2">
               <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">Роль</p>
+                <p className="text-sm text-slate-500">Роль</p>
                 <p className="mt-2 text-sm font-semibold text-slate-950">{roleLabel}</p>
               </div>
               <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">На платформе с</p>
+                <p className="text-sm text-slate-500">На платформе с</p>
                 <p className="mt-2 text-sm font-semibold text-slate-950">{formatDate(user.createdAt)}</p>
               </div>
             </div>

@@ -17,8 +17,7 @@ export function LoginForm({ error }: LoginFormProps) {
         <span className="mb-4 flex h-12 w-12 items-center justify-center rounded-[18px] bg-slate-950 text-base font-semibold text-white shadow-[0_10px_24px_rgba(15,23,42,0.14)]">
           T
         </span>
-        <p className="text-xs font-semibold uppercase tracking-[0.24em] text-slate-400">TutorFlow</p>
-        <h1 className="font-display mt-3 text-4xl font-semibold leading-tight text-slate-950">Вход</h1>
+        <h1 className="font-display text-4xl font-semibold leading-tight text-slate-950">Вход</h1>
       </div>
 
       <form action={loginAction} className="space-y-4">

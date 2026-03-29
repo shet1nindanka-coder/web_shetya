@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { UserRole } from "@prisma/client";
 import { createStudentAction } from "@/actions/student";
-import { Badge } from "@/components/badge";
 import { SectionCard } from "@/components/section-card";
 import { StatCard } from "@/components/stat-card";
 import { requireUser } from "@/lib/auth";
@@ -66,21 +65,15 @@ export default async function TeacherStudentsPage({ searchParams }: TeacherStude
 
       <section className="grid gap-6 lg:grid-cols-[1.15fr_0.85fr]">
         <div className="page-header-panel rounded-[28px] border border-white/70 bg-slate-950 px-5 py-6 text-white shadow-glow sm:rounded-[36px] sm:px-6 sm:py-8">
-          <Badge className="border-brand-300/40 bg-white/10 text-brand-100">Ученики</Badge>
-          <h1 className="font-display mt-4 text-3xl font-semibold sm:text-4xl">Учётные записи и индивидуальные успехи учеников</h1>
+          <h1 className="font-display text-3xl font-semibold sm:text-4xl">Учётные записи и индивидуальные успехи учеников</h1>
           <p className="mt-4 max-w-2xl text-sm leading-6 text-slate-300 sm:text-base sm:leading-7">
             Создавайте новые аккаунты учеников и переходите в их персональные карточки, чтобы смотреть прогресс по
             всем темам и видеть цвета по каждому номеру.
           </p>
-          <div className="mt-6 flex flex-wrap gap-2">
-            <Badge className="border-white/15 bg-white/10 text-slate-100">Логин и пароль</Badge>
-            <Badge className="border-white/15 bg-white/10 text-slate-100">Прогресс по всем темам</Badge>
-            <Badge className="border-white/15 bg-white/10 text-slate-100">Индивидуальные статусы</Badge>
-          </div>
         </div>
 
         <div className="rounded-[28px] border border-brand-100 bg-white/90 p-5 shadow-glow sm:rounded-[36px] sm:p-6">
-          <p className="text-sm font-semibold uppercase tracking-[0.2em] text-slate-500">Всего в системе</p>
+          <p className="text-sm font-medium text-slate-500">Всего в системе</p>
           <p className="mt-4 text-2xl font-semibold text-slate-950 sm:text-3xl">
             {data.stats.totalStudents} учеников и {data.stats.totalTopics} общих тем
           </p>
@@ -104,7 +97,6 @@ export default async function TeacherStudentsPage({ searchParams }: TeacherStude
         <div className="grid gap-6 xl:grid-cols-[0.88fr_1.12fr]">
           <form action={createStudentAction} className="space-y-4 rounded-[24px] border border-slate-200 bg-slate-50/80 p-4 sm:rounded-[28px] sm:p-5">
             <div className="space-y-2">
-              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Новый ученик</p>
               <h3 className="font-display text-[1.55rem] font-semibold text-slate-950 sm:text-2xl">Создать доступ ученику</h3>
               <p className="text-sm leading-6 text-slate-600">
                 Логин используется для входа. Для удобства можно использовать e-mail в качестве логина.
@@ -156,12 +148,11 @@ export default async function TeacherStudentsPage({ searchParams }: TeacherStude
           <div className="ui-fade-slide ui-surface rounded-[24px] border border-slate-200 bg-slate-50/80 p-4 sm:rounded-[28px] sm:p-5">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Текущие ученики</p>
+                <p className="text-sm font-medium text-slate-500">Текущие ученики</p>
                 <h3 className="font-display mt-2 text-[1.55rem] font-semibold text-slate-950 sm:text-2xl">
                   {data.students.length} аккаунтов ученика
                 </h3>
               </div>
-              <Badge className="border-slate-200 bg-white text-slate-700">Роль STUDENT</Badge>
             </div>
 
             {data.students.length === 0 ? (
