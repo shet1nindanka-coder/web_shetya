@@ -45,6 +45,14 @@ type StudentNumberCardProps = {
   onNoteBlur: (homeworkNumberId: string) => void;
 };
 
+type StudentNumberListProps = {
+  numbers: StudentNumberState[];
+  notesEnabled: boolean;
+  onSelect: (homeworkNumberId: string, status: HomeworkNumberStatus | null) => void;
+  onNoteChange: (homeworkNumberId: string, value: string) => void;
+  onNoteBlur: (homeworkNumberId: string) => void;
+};
+
 function getStatusSaveErrorMessage(status: number) {
   if (status === 401) {
     return "Сессия истекла. Обновите страницу и войдите заново.";
@@ -97,6 +105,46 @@ function formatDeadlineLabel(value: string | null) {
 }
 
 const statusOptions = [HomeworkNumberStatus.GREEN, HomeworkNumberStatus.YELLOW, HomeworkNumberStatus.RED] as const;
+const VIRTUALIZATION_THRESHOLD = 12;
+const VIRTUAL_OVERSCAN_PX = 960;
+const VIRTUAL_ITEM_GAP = 16;
+
+function estimateStudentNumberCardHeight(number: StudentNumberState, notesEnabled: boolean) {
+  let height = 172;
+
+  if (notesEnabled) {
+    height += 146;
+  }
+
+  if (number.deadlineAt) {
+    height += 88;
+  }
+
+  if (number.answerLatex) {
+    height += 170;
+  }
+
+  return height;
+}
+
+function findStartIndex(offsets: number[], scrollOffset: number) {
+  let low = 0;
+  let high = offsets.length - 1;
+  let result = 0;
+
+  while (low <= high) {
+    const mid = Math.floor((low + high) / 2);
+
+    if (offsets[mid] <= scrollOffset) {
+      result = mid;
+      low = mid + 1;
+    } else {
+      high = mid - 1;
+    }
+  }
+
+  return result;
+}
 
 const StudentNumberCard = memo(function StudentNumberCard({
   number,
@@ -223,6 +271,240 @@ const StudentNumberCard = memo(function StudentNumberCard({
   previousProps.notesEnabled === nextProps.notesEnabled &&
   previousProps.number === nextProps.number
 );
+
+const StudentNumberRow = memo(function StudentNumberRow({
+  number,
+  top,
+  notesEnabled,
+  onSelect,
+  onNoteChange,
+  onNoteBlur,
+  onHeightChange
+}: StudentNumberCardProps & {
+  top: number;
+  onHeightChange: (homeworkNumberId: string, height: number) => void;
+}) {
+  const rowRef = useRef<HTMLDivElement | null>(null);
+
+  useEffect(() => {
+    const node = rowRef.current;
+
+    if (!node) {
+      return;
+    }
+
+    const updateHeight = () => {
+      onHeightChange(number.id, Math.ceil(node.getBoundingClientRect().height));
+    };
+
+    updateHeight();
+
+    const resizeObserver = new ResizeObserver(() => {
+      updateHeight();
+    });
+
+    resizeObserver.observe(node);
+
+    return () => {
+      resizeObserver.disconnect();
+    };
+  }, [number.id, number, onHeightChange]);
+
+  return (
+    <div
+      ref={rowRef}
+      className="absolute left-0 right-0"
+      style={{
+        transform: `translateY(${top}px)`
+      }}
+    >
+      <StudentNumberCard
+        number={number}
+        notesEnabled={notesEnabled}
+        onSelect={onSelect}
+        onNoteChange={onNoteChange}
+        onNoteBlur={onNoteBlur}
+      />
+    </div>
+  );
+}, (previousProps, nextProps) =>
+  previousProps.top === nextProps.top &&
+  previousProps.notesEnabled === nextProps.notesEnabled &&
+  previousProps.number === nextProps.number
+);
+
+function StudentNumberList({
+  numbers,
+  notesEnabled,
+  onSelect,
+  onNoteChange,
+  onNoteBlur
+}: StudentNumberListProps) {
+  const shouldVirtualize = numbers.length > VIRTUALIZATION_THRESHOLD;
+  const scrollRef = useRef<HTMLDivElement | null>(null);
+  const [scrollTop, setScrollTop] = useState(0);
+  const [viewportHeight, setViewportHeight] = useState(720);
+  const [measuredHeights, setMeasuredHeights] = useState<Record<string, number>>({});
+
+  useEffect(() => {
+    const activeIds = new Set(numbers.map((number) => number.id));
+
+    setMeasuredHeights((current) => {
+      const nextEntries = Object.entries(current).filter(([key]) => activeIds.has(key));
+
+      if (nextEntries.length === Object.keys(current).length) {
+        return current;
+      }
+
+      return Object.fromEntries(nextEntries);
+    });
+  }, [numbers]);
+
+  useEffect(() => {
+    if (!shouldVirtualize) {
+      return;
+    }
+
+    const element = scrollRef.current;
+
+    if (!element) {
+      return;
+    }
+
+    const syncMetrics = () => {
+      setScrollTop(element.scrollTop);
+      setViewportHeight(element.clientHeight);
+    };
+
+    syncMetrics();
+    element.addEventListener("scroll", syncMetrics, { passive: true });
+
+    const resizeObserver = new ResizeObserver(() => {
+      syncMetrics();
+    });
+
+    resizeObserver.observe(element);
+
+    return () => {
+      element.removeEventListener("scroll", syncMetrics);
+      resizeObserver.disconnect();
+    };
+  }, [shouldVirtualize]);
+
+  const metrics = useMemo(() => {
+    let offset = 0;
+
+    const items = numbers.map((number) => {
+      const size = measuredHeights[number.id] ?? estimateStudentNumberCardHeight(number, notesEnabled);
+      const item = {
+        id: number.id,
+        size,
+        start: offset
+      };
+
+      offset += size + VIRTUAL_ITEM_GAP;
+
+      return item;
+    });
+
+    return {
+      items,
+      totalHeight: Math.max(0, offset - VIRTUAL_ITEM_GAP)
+    };
+  }, [measuredHeights, notesEnabled, numbers]);
+
+  const numbersById = useMemo(() => new Map(numbers.map((number) => [number.id, number])), [numbers]);
+
+  const visibleItems = useMemo(() => {
+    if (!shouldVirtualize) {
+      return metrics.items;
+    }
+
+    const startOffset = Math.max(0, scrollTop - VIRTUAL_OVERSCAN_PX);
+    const endOffset = scrollTop + viewportHeight + VIRTUAL_OVERSCAN_PX;
+    const starts = metrics.items.map((item) => item.start);
+    const startIndex = findStartIndex(starts, startOffset);
+    let endIndex = startIndex;
+
+    while (endIndex < metrics.items.length && metrics.items[endIndex]!.start < endOffset) {
+      endIndex += 1;
+    }
+
+    return metrics.items.slice(startIndex, Math.min(metrics.items.length, endIndex + 1));
+  }, [metrics.items, scrollTop, shouldVirtualize, viewportHeight]);
+
+  const handleHeightChange = useCallback((homeworkNumberId: string, nextHeight: number) => {
+    setMeasuredHeights((current) => {
+      const previousHeight = current[homeworkNumberId];
+
+      if (!nextHeight || previousHeight === nextHeight || Math.abs((previousHeight ?? 0) - nextHeight) < 2) {
+        return current;
+      }
+
+      return {
+        ...current,
+        [homeworkNumberId]: nextHeight
+      };
+    });
+  }, []);
+
+  if (!shouldVirtualize) {
+    return (
+      <div className="student-number-list space-y-4">
+        {numbers.map((number) => (
+          <StudentNumberCard
+            key={number.id}
+            number={number}
+            notesEnabled={notesEnabled}
+            onSelect={onSelect}
+            onNoteChange={onNoteChange}
+            onNoteBlur={onNoteBlur}
+          />
+        ))}
+      </div>
+    );
+  }
+
+  return (
+    <div className="student-virtual-shell rounded-[28px] border border-slate-200 bg-slate-50/45 p-3">
+      <div
+        ref={scrollRef}
+        className="student-virtual-scroll rounded-[22px]"
+        style={{
+          maxHeight: "72vh"
+        }}
+      >
+        <div
+          style={{
+            height: metrics.totalHeight,
+            position: "relative"
+          }}
+        >
+          {visibleItems.map((item) => {
+            const number = numbersById.get(item.id);
+
+            if (!number) {
+              return null;
+            }
+
+            return (
+              <StudentNumberRow
+                key={number.id}
+                number={number}
+                top={item.start}
+                notesEnabled={notesEnabled}
+                onSelect={onSelect}
+                onNoteChange={onNoteChange}
+                onNoteBlur={onNoteBlur}
+                onHeightChange={handleHeightChange}
+              />
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+}
 
 export function StudentTopicStatusBoard({
   topicId,
@@ -645,33 +927,23 @@ export function StudentTopicStatusBoard({
             </summary>
 
             <div className="border-t border-emerald-100 px-4 py-4">
-              <div className="student-number-list space-y-4">
-                {numbers.map((number) => (
-                  <StudentNumberCard
-                    key={number.id}
-                    number={number}
-                    notesEnabled={notesEnabled}
-                    onSelect={updateNumberStatus}
-                    onNoteChange={updateNumberNote}
-                    onNoteBlur={flushNumberNote}
-                  />
-                ))}
-              </div>
-            </div>
-          </details>
-        ) : (
-          <div className="student-number-list space-y-4">
-            {numbers.map((number) => (
-              <StudentNumberCard
-                key={number.id}
-                number={number}
+              <StudentNumberList
+                numbers={numbers}
                 notesEnabled={notesEnabled}
                 onSelect={updateNumberStatus}
                 onNoteChange={updateNumberNote}
                 onNoteBlur={flushNumberNote}
               />
-            ))}
-          </div>
+            </div>
+          </details>
+        ) : (
+          <StudentNumberList
+            numbers={numbers}
+            notesEnabled={notesEnabled}
+            onSelect={updateNumberStatus}
+            onNoteChange={updateNumberNote}
+            onNoteBlur={flushNumberNote}
+          />
         )}
       </SectionCard>
     </div>

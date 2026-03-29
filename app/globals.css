@@ -258,6 +258,30 @@ textarea {
   contain-intrinsic-size: 900px;
 }
 
+.student-virtual-shell {
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.85);
+}
+
+.student-virtual-scroll {
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding-right: 6px;
+}
+
+.student-virtual-scroll::-webkit-scrollbar {
+  width: 10px;
+}
+
+.student-virtual-scroll::-webkit-scrollbar-thumb {
+  border-radius: 999px;
+  border: 2px solid rgba(248, 250, 252, 0.95);
+  background: rgba(148, 163, 184, 0.42);
+}
+
+.student-virtual-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
 .student-number-card {
   content-visibility: auto;
   contain: layout paint style;
