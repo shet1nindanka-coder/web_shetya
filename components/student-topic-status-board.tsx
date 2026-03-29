@@ -124,18 +124,14 @@ const VIRTUAL_OVERSCAN_PX = 360;
 const VIRTUAL_ITEM_GAP = 16;
 
 function estimateStudentNumberCardHeight(number: StudentNumberState, notesEnabled: boolean) {
-  let height = 172;
+  let height = 148;
 
   if (notesEnabled) {
-    height += 92;
-  }
-
-  if (number.deadlineAt) {
-    height += 88;
+    height += 76;
   }
 
   if (number.answerLatex) {
-    height += 84;
+    height += 72;
   }
 
   return height;
@@ -190,12 +186,12 @@ const StudentNumberCard = memo(function StudentNumberCard({
   const notePreview = getNotePreview(number.note);
 
   return (
-    <div className="student-number-card rounded-[28px] border border-slate-200 bg-slate-50/80 p-5">
-      <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-        <div className="space-y-3">
-          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Задания</p>
+    <div className="student-number-card rounded-[24px] border border-slate-200 bg-slate-50/70 p-4">
+      <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+        <div className="space-y-2">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">Задания</p>
           <div className="flex flex-wrap items-center gap-3">
-            <h3 className="font-display text-2xl font-semibold text-slate-950">№ {number.number}</h3>
+            <h3 className="font-display text-[1.9rem] font-semibold text-slate-950">№ {number.number}</h3>
             <HomeworkStatusBadge status={number.status} />
             {homeworkGroup ? (
               <Badge className="border-brand-200 bg-brand-50 text-brand-700">{homeworkGroup.label}</Badge>
@@ -216,14 +212,14 @@ const StudentNumberCard = memo(function StudentNumberCard({
                 aria-pressed={isActive}
                 onClick={() => onSelect(number.id, isActive ? null : status)}
                 className={cx(
-                  "ui-pressable min-w-[190px] touch-manipulation rounded-[22px] border px-4 py-4 text-left text-sm transition-colors duration-75",
+                  "ui-pressable min-w-[160px] touch-manipulation rounded-[18px] border px-4 py-3 text-left text-[13px] transition-colors duration-75",
                   isActive
                     ? meta.cardClassName
                     : "border-slate-200 bg-white text-slate-700 hover:border-brand-300 hover:bg-brand-50"
                 )}
               >
                 <p className="font-semibold">{meta.shortLabel}</p>
-                <p className="mt-2 leading-6">{meta.label}</p>
+                <p className="mt-1.5 leading-5">{meta.label}</p>
               </button>
             );
           })}
@@ -231,18 +227,18 @@ const StudentNumberCard = memo(function StudentNumberCard({
       </div>
 
       {notesEnabled ? (
-        <div className="mt-4 rounded-[24px] border border-slate-200 bg-white px-4 py-4">
+        <div className="mt-3 rounded-[20px] border border-slate-200 bg-white px-4 py-3">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Личная заметка</p>
-              <p className="mt-2 text-sm leading-6 text-slate-600">
-                {notePreview ? "Заметка уже есть. Откройте блок, чтобы посмотреть или изменить ее." : "Откройте блок, если хотите оставить заметку к этому номеру."}
+              <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">Личная заметка</p>
+              <p className="mt-1.5 text-sm leading-5 text-slate-500">
+                {notePreview ? "Есть сохраненная заметка." : "Можно оставить короткую заметку."}
               </p>
             </div>
             <button
               type="button"
               onClick={() => setIsNoteOpen((current) => !current)}
-              className="ui-pressable rounded-full border border-slate-200 bg-slate-50 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-brand-300 hover:text-brand-700"
+              className="ui-pressable rounded-full border border-slate-200 bg-slate-50 px-3.5 py-2 text-sm font-semibold text-slate-700 transition hover:border-brand-300 hover:text-brand-700"
             >
               {isNoteOpen ? "Скрыть заметку" : notePreview ? "Открыть заметку" : "Добавить заметку"}
             </button>
@@ -250,7 +246,7 @@ const StudentNumberCard = memo(function StudentNumberCard({
 
           {isNoteOpen ? (
             <>
-              <div className="mt-3 flex items-center justify-between gap-3">
+              <div className="mt-2.5 flex items-center justify-between gap-3">
                 <span className="text-xs text-slate-400">{number.note.length}/240</span>
               </div>
               <textarea
@@ -260,12 +256,12 @@ const StudentNumberCard = memo(function StudentNumberCard({
                 onChange={(event) => onNoteChange(number.id, event.target.value)}
                 onBlur={() => onNoteBlur(number.id)}
                 placeholder="Короткая заметка к этому номеру"
-                className="mt-3 min-h-[72px] w-full resize-none rounded-2xl border border-slate-200 bg-slate-50 px-3 py-3 text-sm text-slate-700 outline-none transition focus:border-brand-400 focus:bg-white"
+                className="mt-2.5 min-h-[68px] w-full resize-none rounded-2xl border border-slate-200 bg-slate-50 px-3 py-3 text-sm text-slate-700 outline-none transition focus:border-brand-400 focus:bg-white"
               />
-              <p className="mt-2 text-xs leading-5 text-slate-500">Сохранится автоматически и останется у вас в теме.</p>
+              <p className="mt-1.5 text-xs leading-5 text-slate-400">Сохранится автоматически.</p>
             </>
           ) : notePreview ? (
-            <div className="mt-3 rounded-2xl border border-slate-200 bg-slate-50 px-3 py-3 text-sm leading-6 text-slate-700">
+            <div className="mt-2.5 rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm leading-5 text-slate-700">
               {notePreview}
             </div>
           ) : null}
@@ -273,31 +269,29 @@ const StudentNumberCard = memo(function StudentNumberCard({
       ) : null}
 
       {number.answerLatex ? (
-        <div className="mt-4 rounded-[24px] border border-slate-200 bg-white p-3">
+        <div className="mt-3 rounded-[20px] border border-slate-200 bg-white p-3">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Ответ к номеру</p>
-              <p className="mt-2 text-sm leading-6 text-slate-600">
-                Откройте блок только когда захотите посмотреть ответ преподавателя.
-              </p>
+              <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">Ответ к номеру</p>
+              <p className="mt-1.5 text-sm leading-5 text-slate-500">Открывается только по вашему клику.</p>
             </div>
             <button
               type="button"
               onClick={() => setIsAnswerVisible((current) => !current)}
-              className="ui-pressable rounded-full border border-slate-200 bg-slate-50 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-brand-300 hover:text-brand-700"
+              className="ui-pressable rounded-full border border-slate-200 bg-slate-50 px-3.5 py-2 text-sm font-semibold text-slate-700 transition hover:border-brand-300 hover:text-brand-700"
             >
               {isAnswerVisible ? "Скрыть ответ" : "Открыть ответ"}
             </button>
           </div>
 
           {isAnswerVisible ? (
-            <div className="mt-3 overflow-hidden rounded-[20px] border border-slate-200 bg-white">
-              <div className="px-4 py-4">
+            <div className="mt-2.5 overflow-hidden rounded-[18px] border border-slate-200 bg-white">
+              <div className="px-4 py-3.5">
                 <LatexAnswerPreview value={number.answerLatex} />
               </div>
             </div>
           ) : (
-            <div className="mt-3 rounded-[20px] border border-dashed border-slate-200 bg-slate-50 px-4 py-4 text-sm leading-6 text-slate-500">
+            <div className="mt-2.5 rounded-[18px] border border-dashed border-slate-200 bg-slate-50 px-4 py-3 text-sm leading-5 text-slate-500">
               Ответ скрыт, пока вы его не откроете.
             </div>
           )}

@@ -312,8 +312,8 @@ textarea {
 .student-number-card {
   content-visibility: auto;
   contain: layout paint style;
-  contain-intrinsic-size: 360px;
-  box-shadow: 0 10px 24px rgba(15, 23, 42, 0.04);
+  contain-intrinsic-size: 300px;
+  box-shadow: 0 8px 20px rgba(15, 23, 42, 0.035);
   transition:
     border-color 180ms ease,
     background-color 180ms ease;
