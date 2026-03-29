@@ -53,6 +53,16 @@ type StudentNumberListProps = {
   onNoteBlur: (homeworkNumberId: string) => void;
 };
 
+type NumberFilterId =
+  | "all"
+  | "unmarked"
+  | "green"
+  | "yellow"
+  | "red"
+  | "deadline"
+  | "notes"
+  | "answers";
+
 function getStatusSaveErrorMessage(status: number) {
   if (status === 401) {
     return "Сессия истекла. Обновите страницу и войдите заново.";
@@ -108,6 +118,47 @@ const statusOptions = [HomeworkNumberStatus.GREEN, HomeworkNumberStatus.YELLOW, 
 const VIRTUALIZATION_THRESHOLD = 12;
 const VIRTUAL_OVERSCAN_PX = 960;
 const VIRTUAL_ITEM_GAP = 16;
+
+const filterMeta: Record<
+  NumberFilterId,
+  {
+    label: string;
+    predicate: (number: StudentNumberState) => boolean;
+  }
+> = {
+  all: {
+    label: "Все",
+    predicate: () => true
+  },
+  unmarked: {
+    label: "Не отмечены",
+    predicate: (number) => number.status === null
+  },
+  green: {
+    label: "Зеленые",
+    predicate: (number) => number.status === HomeworkNumberStatus.GREEN
+  },
+  yellow: {
+    label: "Желтые",
+    predicate: (number) => number.status === HomeworkNumberStatus.YELLOW
+  },
+  red: {
+    label: "Красные",
+    predicate: (number) => number.status === HomeworkNumberStatus.RED
+  },
+  deadline: {
+    label: "С дедлайном",
+    predicate: (number) => Boolean(number.deadlineAt)
+  },
+  notes: {
+    label: "С заметкой",
+    predicate: (number) => number.note.trim().length > 0
+  },
+  answers: {
+    label: "С ответом",
+    predicate: (number) => Boolean(number.answerLatex)
+  }
+};
 
 function estimateStudentNumberCardHeight(number: StudentNumberState, notesEnabled: boolean) {
   let height = 172;
@@ -525,6 +576,7 @@ export function StudentTopicStatusBoard({
   );
   const numbersRef = useRef<StudentNumberState[]>(initialState);
   const [numbers, setNumbers] = useState<StudentNumberState[]>(initialState);
+  const [activeFilter, setActiveFilter] = useState<NumberFilterId>("all");
   const [saveError, setSaveError] = useState<string | null>(null);
   const statusRequestVersionRef = useRef<Record<string, number>>({});
   const noteRequestVersionRef = useRef<Record<string, number>>({});
@@ -590,6 +642,38 @@ export function StudentTopicStatusBoard({
     () => numbers.filter((number) => Boolean(number.deadlineAt)).length,
     [numbers]
   );
+  const notesCount = useMemo(
+    () => numbers.filter((number) => number.note.trim().length > 0).length,
+    [numbers]
+  );
+  const answersCount = useMemo(
+    () => numbers.filter((number) => Boolean(number.answerLatex)).length,
+    [numbers]
+  );
+  const availableFilters = useMemo(
+    () =>
+      (Object.keys(filterMeta) as NumberFilterId[]).filter((filterId) => {
+        if (filterId === "notes" && !notesEnabled) {
+          return false;
+        }
+
+        if (filterId === "deadline" && !deadlinesEnabled) {
+          return false;
+        }
+
+        if (filterId === "answers" && answersCount === 0) {
+          return false;
+        }
+
+        return true;
+      }),
+    [answersCount, deadlinesEnabled, notesEnabled]
+  );
+  const filteredNumbers = useMemo(() => {
+    const filter = filterMeta[activeFilter] ?? filterMeta.all;
+
+    return numbers.filter(filter.predicate);
+  }, [activeFilter, numbers]);
   const isTopicCompleted = totalNumbers > 0 && summary.solvedCount === totalNumbers;
 
   const updateNumberStatus = useCallback(async (homeworkNumberId: string, nextStatus: HomeworkNumberStatus | null) => {
@@ -848,6 +932,8 @@ export function StudentTopicStatusBoard({
         {deadlinesEnabled ? (
           <Badge className="border-slate-200 bg-white text-slate-700">Дедлайнов {deadlinesCount}</Badge>
         ) : null}
+        {notesEnabled ? <Badge className="border-slate-200 bg-white text-slate-700">Заметок {notesCount}</Badge> : null}
+        {answersCount > 0 ? <Badge className="border-slate-200 bg-white text-slate-700">Ответов {answersCount}</Badge> : null}
         {savingCount > 0 ? (
           <Badge className="border-brand-200 bg-brand-50 text-brand-700">Сохраняем: {savingCount}</Badge>
         ) : null}
@@ -912,6 +998,39 @@ export function StudentTopicStatusBoard({
           </div>
         ) : null}
 
+        <div className="mb-5 space-y-3">
+          <div className="flex flex-wrap gap-2">
+            {availableFilters.map((filterId) => {
+              const count = numbers.filter(filterMeta[filterId].predicate).length;
+              const isActive = activeFilter === filterId;
+
+              return (
+                <button
+                  key={filterId}
+                  type="button"
+                  onClick={() => setActiveFilter(filterId)}
+                  data-active={isActive}
+                  className={cx(
+                    "ui-pressable rounded-full border px-4 py-2 text-sm font-medium transition",
+                    isActive
+                      ? "border-brand-200 bg-[linear-gradient(180deg,rgba(239,246,255,1),rgba(219,234,254,0.92))] text-brand-700 shadow-[0_12px_24px_rgba(59,130,246,0.14)]"
+                      : "border-slate-200 bg-white text-slate-700 hover:border-brand-300 hover:text-brand-700"
+                  )}
+                >
+                  <span>{filterMeta[filterId].label}</span>
+                  <span className="ml-2 rounded-full bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-500">
+                    {count}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+
+          <p className="text-sm leading-6 text-slate-500">
+            Показано {filteredNumbers.length} из {numbers.length} номеров.
+          </p>
+        </div>
+
         {isTopicCompleted ? (
           <details className="rounded-[24px] border border-emerald-200 bg-emerald-50/70">
             <summary className="ui-pressable flex cursor-pointer list-none items-center justify-between gap-4 px-4 py-4 [&::-webkit-details-marker]:hidden">
@@ -927,23 +1046,40 @@ export function StudentTopicStatusBoard({
             </summary>
 
             <div className="border-t border-emerald-100 px-4 py-4">
+              {filteredNumbers.length > 0 ? (
+                <StudentNumberList
+                  numbers={filteredNumbers}
+                  notesEnabled={notesEnabled}
+                  onSelect={updateNumberStatus}
+                  onNoteChange={updateNumberNote}
+                  onNoteBlur={flushNumberNote}
+                />
+              ) : (
+                <div className="rounded-[22px] border border-dashed border-emerald-200 bg-white/70 px-4 py-8 text-center text-sm text-emerald-900">
+                  По выбранному фильтру здесь пока ничего нет.
+                </div>
+              )}
+            </div>
+          </details>
+        ) : (
+          <>
+            {filteredNumbers.length > 0 ? (
               <StudentNumberList
-                numbers={numbers}
+                numbers={filteredNumbers}
                 notesEnabled={notesEnabled}
                 onSelect={updateNumberStatus}
                 onNoteChange={updateNumberNote}
                 onNoteBlur={flushNumberNote}
               />
-            </div>
-          </details>
-        ) : (
-          <StudentNumberList
-            numbers={numbers}
-            notesEnabled={notesEnabled}
-            onSelect={updateNumberStatus}
-            onNoteChange={updateNumberNote}
-            onNoteBlur={flushNumberNote}
-          />
+            ) : (
+              <div className="rounded-[24px] border border-dashed border-slate-200 bg-slate-50/70 px-4 py-10 text-center">
+                <p className="font-display text-2xl font-semibold text-slate-950">Ничего не найдено</p>
+                <p className="mt-2 text-sm leading-6 text-slate-600">
+                  По выбранному фильтру пока нет номеров. Попробуйте переключиться на другой.
+                </p>
+              </div>
+            )}
+          </>
         )}
       </SectionCard>
     </div>
