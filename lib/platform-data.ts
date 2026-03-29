@@ -27,34 +27,33 @@ function isMissingStudentStatusColumnError(error: unknown, column: "note" | "dea
   );
 }
 
-async function resolveStudentStatusCapabilities<T>(
-  queryBuilder: (capabilities: { notesEnabled: boolean; deadlinesEnabled: boolean }) => Promise<T>
+function isMissingHomeworkNumberColumnError(error: unknown, column: "answerLatex") {
+  return (
+    error instanceof Prisma.PrismaClientKnownRequestError &&
+    error.code === "P2022" &&
+    error.message.includes("TopicHomeworkNumber") &&
+    error.message.includes(column)
+  );
+}
+
+async function resolveTopicDataCapabilities<T>(
+  queryBuilder: (capabilities: {
+    notesEnabled: boolean;
+    deadlinesEnabled: boolean;
+    answerLatexEnabled: boolean;
+  }) => Promise<T>
 ) {
-  let capabilities = {
+  let capabilities: {
+    notesEnabled: boolean;
+    deadlinesEnabled: boolean;
+    answerLatexEnabled: boolean;
+  } = {
     notesEnabled: true,
-    deadlinesEnabled: true
+    deadlinesEnabled: true,
+    answerLatexEnabled: true
   };
 
-  try {
-    const result = await queryBuilder(capabilities);
-
-    return {
-      ...capabilities,
-      result
-    };
-  } catch (error) {
-    const noteMissing = isMissingStudentStatusColumnError(error, "note");
-    const deadlineMissing = isMissingStudentStatusColumnError(error, "deadlineAt");
-
-    if (!noteMissing && !deadlineMissing) {
-      throw error;
-    }
-
-    capabilities = {
-      notesEnabled: !noteMissing,
-      deadlinesEnabled: !deadlineMissing
-    };
-
+  while (true) {
     try {
       const result = await queryBuilder(capabilities);
 
@@ -62,25 +61,31 @@ async function resolveStudentStatusCapabilities<T>(
         ...capabilities,
         result
       };
-    } catch (secondError) {
-      const noteMissingAgain = isMissingStudentStatusColumnError(secondError, "note");
-      const deadlineMissingAgain = isMissingStudentStatusColumnError(secondError, "deadlineAt");
+    } catch (error) {
+      const noteMissing = isMissingStudentStatusColumnError(error, "note");
+      const deadlineMissing = isMissingStudentStatusColumnError(error, "deadlineAt");
+      const answerLatexMissing = isMissingHomeworkNumberColumnError(error, "answerLatex");
 
-      if (!noteMissingAgain && !deadlineMissingAgain) {
-        throw secondError;
+      if (!noteMissing && !deadlineMissing && !answerLatexMissing) {
+        throw error;
       }
 
-      capabilities = {
-        notesEnabled: capabilities.notesEnabled && !noteMissingAgain,
-        deadlinesEnabled: capabilities.deadlinesEnabled && !deadlineMissingAgain
+      const nextCapabilities = {
+        notesEnabled: capabilities.notesEnabled && !noteMissing,
+        deadlinesEnabled: capabilities.deadlinesEnabled && !deadlineMissing,
+        answerLatexEnabled: capabilities.answerLatexEnabled && !answerLatexMissing
       };
 
-      const result = await queryBuilder(capabilities);
+      const didChange =
+        nextCapabilities.notesEnabled !== capabilities.notesEnabled ||
+        nextCapabilities.deadlinesEnabled !== capabilities.deadlinesEnabled ||
+        nextCapabilities.answerLatexEnabled !== capabilities.answerLatexEnabled;
 
-      return {
-        ...capabilities,
-        result
-      };
+      if (!didChange) {
+        throw error;
+      }
+
+      capabilities = nextCapabilities;
     }
   }
 }
@@ -96,7 +101,10 @@ async function getStudentTopicsOverviewUncached(studentId: string) {
         homeworkFile: true,
         homeworkNumbers: {
           orderBy: { displayOrder: "asc" },
-          include: {
+          select: {
+            id: true,
+            number: true,
+            displayOrder: true,
             statuses: {
               where: { studentId },
               select: {
@@ -167,10 +175,12 @@ export async function getStudentTopicsOverview(
 async function getStudentTopicDetailUncached(studentId: string, topicId: string) {
   const buildStudentTopicDetailQuery = ({
     notesEnabled,
-    deadlinesEnabled
+    deadlinesEnabled,
+    answerLatexEnabled
   }: {
     notesEnabled: boolean;
     deadlinesEnabled: boolean;
+    answerLatexEnabled: boolean;
   }) =>
     prisma.topic.findUniqueOrThrow({
       where: { id: topicId },
@@ -179,8 +189,11 @@ async function getStudentTopicDetailUncached(studentId: string, topicId: string)
         homeworkFile: true,
         homeworkNumbers: {
           orderBy: { displayOrder: "asc" },
-          include: {
-            answerFile: true,
+          select: {
+            id: true,
+            number: true,
+            displayOrder: true,
+            ...(answerLatexEnabled ? { answerLatex: true } : {}),
             statuses: {
               where: { studentId },
               select: {
@@ -199,8 +212,9 @@ async function getStudentTopicDetailUncached(studentId: string, topicId: string)
   const {
     result: topic,
     notesEnabled,
-    deadlinesEnabled
-  } = await resolveStudentStatusCapabilities(buildStudentTopicDetailQuery);
+    deadlinesEnabled,
+    answerLatexEnabled
+  } = await resolveTopicDataCapabilities(buildStudentTopicDetailQuery);
 
   const numbers = topic.homeworkNumbers.map((number) => ({
     ...number,
@@ -212,7 +226,8 @@ async function getStudentTopicDetailUncached(studentId: string, topicId: string)
             ? (number.statuses[0] as { deadlineAt?: Date | null }).deadlineAt ?? null
             : null
         }
-      : null
+      : null,
+    answerLatex: answerLatexEnabled ? (number as { answerLatex?: string | null }).answerLatex ?? null : null
   }));
   const progress = buildProgress(
     numbers.map((number) => number.studentStatus?.status ?? null),
@@ -224,6 +239,7 @@ async function getStudentTopicDetailUncached(studentId: string, topicId: string)
     numbers,
     notesEnabled,
     deadlinesEnabled,
+    answerLatexEnabled,
     ...progress
   };
 }
@@ -260,7 +276,10 @@ async function getTeacherTopicsOverviewUncached() {
         homeworkFile: true,
         homeworkNumbers: {
           orderBy: { displayOrder: "asc" },
-          include: {
+          select: {
+            id: true,
+            number: true,
+            displayOrder: true,
             statuses: {
               select: {
                 studentId: true,
@@ -346,27 +365,47 @@ export async function getTeacherTopicsOverview(): Promise<
 }
 
 async function getTeacherTopicDetailUncached(topicId: string) {
-  const topic = await prisma.topic.findUniqueOrThrow({
-    where: { id: topicId },
-    include: {
-      theoryFile: true,
-      homeworkFile: true,
-      homeworkNumbers: {
-        orderBy: { displayOrder: "asc" },
-        include: {
-          answerFile: true
+  const buildTeacherTopicDetailQuery = ({
+    answerLatexEnabled
+  }: {
+    notesEnabled: boolean;
+    deadlinesEnabled: boolean;
+    answerLatexEnabled: boolean;
+  }) =>
+    prisma.topic.findUniqueOrThrow({
+      where: { id: topicId },
+      include: {
+        theoryFile: true,
+        homeworkFile: true,
+        homeworkNumbers: {
+          orderBy: { displayOrder: "asc" },
+          select: {
+            id: true,
+            number: true,
+            displayOrder: true,
+            ...(answerLatexEnabled ? { answerLatex: true } : {})
+          }
         }
       }
-    }
-  });
+    });
+
+  const { result: topic, answerLatexEnabled } = await resolveTopicDataCapabilities(buildTeacherTopicDetailQuery);
+
+  const normalizedTopic = {
+    ...topic,
+    homeworkNumbers: topic.homeworkNumbers.map((number) => ({
+      ...number,
+      answerLatex: answerLatexEnabled ? (number as { answerLatex?: string | null }).answerLatex ?? null : null
+    }))
+  };
 
   return {
-    topic,
+    topic: normalizedTopic,
     stats: {
-      totalNumbers: topic.homeworkNumbers.length,
-      theoryAttached: Boolean(topic.theoryFile),
-      homeworkAttached: Boolean(topic.homeworkFile),
-      answersCount: topic.homeworkNumbers.filter((number) => Boolean(number.answerLatex?.trim())).length
+      totalNumbers: normalizedTopic.homeworkNumbers.length,
+      theoryAttached: Boolean(normalizedTopic.theoryFile),
+      homeworkAttached: Boolean(normalizedTopic.homeworkFile),
+      answersCount: normalizedTopic.homeworkNumbers.filter((number) => Boolean(number.answerLatex?.trim())).length
     }
   };
 }
@@ -388,10 +427,12 @@ export async function getTeacherTopicDetail(
 async function getTeacherStudentDetailUncached(studentId: string) {
   const buildTeacherStudentTopicsQuery = ({
     notesEnabled,
-    deadlinesEnabled
+    deadlinesEnabled,
+    answerLatexEnabled
   }: {
     notesEnabled: boolean;
     deadlinesEnabled: boolean;
+    answerLatexEnabled: boolean;
   }) =>
     prisma.topic.findMany({
       include: {
@@ -399,7 +440,10 @@ async function getTeacherStudentDetailUncached(studentId: string) {
         homeworkFile: true,
         homeworkNumbers: {
           orderBy: { displayOrder: "asc" },
-          include: {
+          select: {
+            id: true,
+            number: true,
+            displayOrder: true,
             statuses: {
               where: { studentId },
               select: {
@@ -434,7 +478,7 @@ async function getTeacherStudentDetailUncached(studentId: string) {
     result: topics,
     notesEnabled,
     deadlinesEnabled
-  } = await resolveStudentStatusCapabilities(buildTeacherStudentTopicsQuery);
+  } = await resolveTopicDataCapabilities(buildTeacherStudentTopicsQuery);
 
   const topicCards = topics.map((topic) => {
     const numbers = topic.homeworkNumbers.map((number) => ({

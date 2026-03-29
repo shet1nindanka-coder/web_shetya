@@ -8,7 +8,7 @@ import { StatCard } from "@/components/stat-card";
 import { TeacherStudentProgressBoard } from "@/components/teacher-student-progress-board";
 import { requireUser } from "@/lib/auth";
 import { getTeacherStudentDetail } from "@/lib/platform-data";
-import { formatDate } from "@/lib/utils";
+import { formatDate, toIsoDateTimeString } from "@/lib/utils";
 
 type TeacherStudentPageProps = {
   params: Promise<{
@@ -127,7 +127,7 @@ export default async function TeacherStudentPage({ params }: TeacherStudentPageP
                   ? {
                       status: number.studentStatus.status,
                       note: number.studentStatus.note,
-                      deadlineAt: number.studentStatus.deadlineAt?.toISOString() ?? null
+                      deadlineAt: toIsoDateTimeString(number.studentStatus.deadlineAt ?? null)
                     }
                   : null
               }))

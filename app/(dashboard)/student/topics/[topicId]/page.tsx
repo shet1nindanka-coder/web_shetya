@@ -5,6 +5,7 @@ import { StudentTopicStatusBoard } from "@/components/student-topic-status-board
 import { StudentTopicTabs } from "@/components/student-topic-tabs";
 import { requireUser } from "@/lib/auth";
 import { getStudentTopicDetail } from "@/lib/platform-data";
+import { toIsoDateTimeString } from "@/lib/utils";
 
 type StudentTopicPageProps = {
   params: Promise<{
@@ -43,7 +44,7 @@ export default async function StudentTopicPage({ params }: StudentTopicPageProps
               number: number.number,
               status: number.studentStatus?.status ?? null,
               note: number.studentStatus?.note ?? "",
-              deadlineAt: number.studentStatus?.deadlineAt?.toISOString() ?? null,
+              deadlineAt: toIsoDateTimeString(number.studentStatus?.deadlineAt ?? null),
               answerLatex: number.answerLatex
             }))}
           />

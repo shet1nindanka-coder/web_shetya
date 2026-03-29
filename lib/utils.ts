@@ -84,6 +84,20 @@ export function formatDateTime(value?: Date | string | null) {
   }).format(date);
 }
 
+export function toIsoDateTimeString(value?: Date | string | null) {
+  if (!value) {
+    return null;
+  }
+
+  const date = value instanceof Date ? value : new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return null;
+  }
+
+  return date.toISOString();
+}
+
 export function formatFileSize(size: number) {
   if (size < 1024) {
     return `${size} Б`;
