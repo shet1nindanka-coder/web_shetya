@@ -75,9 +75,6 @@ export default async function StudentTopicsPage() {
                       ) : null}
                     </div>
                   </div>
-                  <p className="text-sm text-slate-500">
-                    Файлов: <span className="font-semibold text-slate-950">{(topic.theoryFile ? 1 : 0) + (topic.homeworkFile ? 1 : 0)} / 2</span>
-                  </p>
                 </div>
 
                 <div className="mt-5 flex flex-wrap gap-x-5 gap-y-2 text-sm text-slate-600">

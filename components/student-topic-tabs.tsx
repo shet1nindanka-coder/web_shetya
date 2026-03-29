@@ -1,7 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { cx } from "@/lib/utils";
 
 type StudentTopicTabId = "numbers" | "theory" | "homework";
@@ -17,7 +17,6 @@ type StudentTopicTabsProps = {
 const tabMeta: Array<{
   id: StudentTopicTabId;
   label: string;
-  emptyLabel?: string;
 }> = [
   {
     id: "numbers",
@@ -25,33 +24,22 @@ const tabMeta: Array<{
   },
   {
     id: "theory",
-    label: "Теория",
-    emptyLabel: "Нет файла"
+    label: "Теория"
   },
   {
     id: "homework",
-    label: "Задания",
-    emptyLabel: "Нет файла"
+    label: "Задания"
   }
 ];
 
 export function StudentTopicTabs({
-  hasTheoryFile,
-  hasHomeworkFile,
+  hasTheoryFile: _hasTheoryFile,
+  hasHomeworkFile: _hasHomeworkFile,
   numbersContent,
   theoryContent,
   homeworkContent
 }: StudentTopicTabsProps) {
   const [activeTab, setActiveTab] = useState<StudentTopicTabId>("numbers");
-
-  const availability = useMemo(
-    () => ({
-      numbers: true,
-      theory: hasTheoryFile,
-      homework: hasHomeworkFile
-    }),
-    [hasHomeworkFile, hasTheoryFile]
-  );
 
   const contentByTab: Record<StudentTopicTabId, ReactNode> = {
     numbers: numbersContent,
@@ -64,7 +52,6 @@ export function StudentTopicTabs({
       <nav className="ui-fade-slide ui-tab-shell ui-tab-strip flex gap-2 rounded-[24px] p-2 sm:flex-wrap sm:overflow-visible sm:rounded-[28px] sm:p-2.5">
         {tabMeta.map((tab) => {
           const isActive = activeTab === tab.id;
-          const isAvailable = availability[tab.id];
 
           return (
             <button
@@ -75,16 +62,6 @@ export function StudentTopicTabs({
               className={cx("ui-pressable ui-tab shrink-0 rounded-full px-4 py-2.5 text-sm font-medium sm:px-5")}
             >
               <span>{tab.label}</span>
-              {tab.id !== "numbers" ? (
-                <span
-                  className={cx(
-                    "ml-2 rounded-full px-2 py-0.5 text-[10px] font-semibold",
-                    isAvailable ? "bg-slate-100 text-slate-600" : "bg-slate-100 text-slate-400"
-                  )}
-                >
-                  {isAvailable ? "Есть" : tab.emptyLabel}
-                </span>
-              ) : null}
             </button>
           );
         })}

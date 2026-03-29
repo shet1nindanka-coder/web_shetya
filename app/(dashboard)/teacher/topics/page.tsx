@@ -1,7 +1,6 @@
 import Link from "next/link";
 import { UserRole } from "@prisma/client";
 import { DeleteTopicDialog } from "@/components/delete-topic-dialog";
-import { ProgressBar } from "@/components/progress-bar";
 import { SectionCard } from "@/components/section-card";
 import { StatCard } from "@/components/stat-card";
 import { TopicCreateForm } from "@/components/topic-create-form";
@@ -93,11 +92,10 @@ export default async function TeacherTopicsPage({ searchParams }: TeacherTopicsP
         </div>
       </section>
 
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
         <StatCard label="Темы" value={data.stats.totalTopics} hint="Все общие темы платформы." />
         <StatCard label="Файлы" value={data.stats.totalFiles} hint="Файлы теории и заданий внутри тем." />
         <StatCard label="Номера" value={data.stats.totalNumbers} hint="Все номера по всем созданным темам." />
-        <StatCard label="Черновики" value={data.topics.length - data.topics.filter((topic) => topic.theoryFile && topic.homeworkFile).length} hint="Темы, где еще не прикреплены оба файла." />
       </div>
 
       <SectionCard
@@ -129,25 +127,7 @@ export default async function TeacherTopicsPage({ searchParams }: TeacherTopicsP
                       <p className="mt-2 text-sm text-slate-500">{topic.totalNumbers} номеров</p>
                     </div>
                     <p className="text-sm leading-6 text-slate-600">{topic.description}</p>
-                    <p className="text-sm text-slate-500">
-                      Теория: <span className="font-medium text-slate-950">{topic.theoryFile ? "есть" : "нет"}</span>
-                      {" · "}
-                      Задания: <span className="font-medium text-slate-950">{topic.homeworkFile ? "есть" : "нет"}</span>
-                    </p>
                   </div>
-                  <p className="text-sm text-slate-500">
-                    Файлов: <span className="font-semibold text-slate-950">{(topic.theoryFile ? 1 : 0) + (topic.homeworkFile ? 1 : 0)} / 2</span>
-                  </p>
-                </div>
-
-                <div className="mt-5 space-y-2">
-                  <div className="flex items-center justify-between text-sm text-slate-600">
-                    <span>Готовность файлов</span>
-                    <span className="font-semibold text-slate-950">
-                      {(topic.theoryFile ? 1 : 0) + (topic.homeworkFile ? 1 : 0)} / 2
-                    </span>
-                  </div>
-                  <ProgressBar value={((topic.theoryFile ? 1 : 0) + (topic.homeworkFile ? 1 : 0)) * 50} />
                 </div>
 
                 <div className="mt-5 flex flex-wrap gap-3">
