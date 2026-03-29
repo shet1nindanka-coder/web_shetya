@@ -36,6 +36,13 @@ function isMissingHomeworkNumberColumnError(error: unknown, column: "answerLatex
   );
 }
 
+function isRecoverablePlatformDataError(error: unknown) {
+  return (
+    error instanceof Prisma.PrismaClientKnownRequestError &&
+    (error.code === "P2021" || error.code === "P2022")
+  );
+}
+
 async function resolveTopicDataCapabilities<T>(
   queryBuilder: (capabilities: {
     notesEnabled: boolean;
@@ -169,7 +176,92 @@ const getStudentTopicsOverviewCached = unstable_cache(
 export async function getStudentTopicsOverview(
   studentId: string
 ): Promise<Awaited<ReturnType<typeof getStudentTopicsOverviewUncached>>> {
-  return getStudentTopicsOverviewCached(studentId);
+  try {
+    return await getStudentTopicsOverviewCached(studentId);
+  } catch (error) {
+    if (!isRecoverablePlatformDataError(error)) {
+      throw error;
+    }
+
+    console.error("Falling back to minimal student topics overview due to Prisma schema mismatch.", {
+      studentId,
+      error
+    });
+
+    const [student, topics] = await Promise.all([
+      prisma.user.findUniqueOrThrow({
+        where: { id: studentId }
+      }),
+      prisma.topic.findMany({
+        select: {
+          id: true,
+          title: true,
+          description: true,
+          displayOrder: true,
+          theoryFileId: true,
+          homeworkFileId: true,
+          createdAt: true,
+          updatedAt: true,
+          homeworkNumbers: {
+            orderBy: { displayOrder: "asc" },
+            select: {
+              id: true,
+              number: true,
+              displayOrder: true,
+              statuses: {
+                where: { studentId },
+                select: {
+                  id: true,
+                  status: true,
+                  updatedAt: true
+                }
+              }
+            }
+          }
+        },
+        orderBy: [{ displayOrder: "asc" }, { createdAt: "asc" }]
+      })
+    ]);
+
+    const topicCards = topics.map((topic) => {
+      const numbers = topic.homeworkNumbers.map((number) => ({
+        ...number,
+        studentStatus: number.statuses[0] ?? null
+      }));
+      const summary = buildProgress(
+        numbers.map((number) => number.studentStatus?.status ?? null),
+        numbers.length
+      );
+
+      return {
+        ...topic,
+        theoryFile: null,
+        homeworkFile: null,
+        numbers,
+        ...summary
+      };
+    });
+
+    const totalNumbers = topicCards.reduce((sum, topic) => sum + topic.totalNumbers, 0);
+    const totalMarked = topicCards.reduce((sum, topic) => sum + topic.markedCount, 0);
+    const totalSolved = topicCards.reduce((sum, topic) => sum + topic.greenCount + topic.yellowCount, 0);
+
+    return {
+      student,
+      topics: topicCards,
+      stats: {
+        totalTopics: topicCards.length,
+        totalGreen: topicCards.reduce((sum, topic) => sum + topic.greenCount, 0),
+        totalYellow: topicCards.reduce((sum, topic) => sum + topic.yellowCount, 0),
+        totalRed: topicCards.reduce((sum, topic) => sum + topic.redCount, 0),
+        totalNumbers,
+        totalMarked,
+        markedPercent: completionPercent(totalMarked, totalNumbers),
+        totalSolved,
+        solvedPercent: completionPercent(totalSolved, totalNumbers)
+      }
+    };
+  }
 }
 
 async function getStudentTopicDetailUncached(studentId: string, topicId: string) {
@@ -256,7 +348,93 @@ export async function getStudentTopicDetail(
   studentId: string,
   topicId: string
 ): Promise<Awaited<ReturnType<typeof getStudentTopicDetailUncached>>> {
-  return getStudentTopicDetailCached(studentId, topicId);
+  try {
+    return await getStudentTopicDetailCached(studentId, topicId);
+  } catch (error) {
+    if (!isRecoverablePlatformDataError(error)) {
+      throw error;
+    }
+
+    console.error("Falling back to minimal student topic detail due to Prisma schema mismatch.", {
+      studentId,
+      topicId,
+      error
+    });
+
+    const topic = await prisma.topic.findUniqueOrThrow({
+      where: { id: topicId },
+      select: {
+        id: true,
+        title: true,
+        description: true,
+        displayOrder: true,
+        theoryFileId: true,
+        homeworkFileId: true,
+        createdAt: true,
+        updatedAt: true,
+        homeworkNumbers: {
+          orderBy: { displayOrder: "asc" },
+          select: {
+            id: true,
+            number: true,
+            displayOrder: true,
+            statuses: {
+              where: { studentId },
+              select: {
+                id: true,
+                status: true,
+                updatedAt: true
+              }
+            }
+          }
+        }
+      }
+    });
+
+    const normalizedHomeworkNumbers = topic.homeworkNumbers.map((number) => {
+      const normalizedStatuses = number.statuses.map((status) => ({
+        ...status,
+        note: null,
+        deadlineAt: null
+      }));
+
+      return {
+        ...number,
+        statuses: normalizedStatuses,
+        answerLatex: null
+      };
+    });
+
+    const numbers = normalizedHomeworkNumbers.map((number) => {
+      return {
+        ...number,
+        studentStatus: number.statuses[0]
+          ? {
+              ...number.statuses[0],
+              note: "",
+              deadlineAt: null
+            }
+          : null,
+        answerLatex: null
+      };
+    });
+    const progress = buildProgress(
+      numbers.map((number) => number.studentStatus?.status ?? null),
+      numbers.length
+    );
+
+    return {
+      ...topic,
+      theoryFile: null,
+      homeworkFile: null,
+      homeworkNumbers: normalizedHomeworkNumbers,
+      numbers,
+      notesEnabled: false,
+      deadlinesEnabled: false,
+      answerLatexEnabled: false,
+      ...progress
+    };
+  }
 }
 
 async function getTeacherTopicsOverviewUncached() {
