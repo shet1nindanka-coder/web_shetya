@@ -63,6 +63,8 @@ type HomeworkGroup = {
   deadlineAt: string;
   deadlineLabel: string | null;
   count: number;
+  solvedCount: number;
+  isCompleted: boolean;
 };
 
 function getStatusSaveErrorMessage(status: number) {
@@ -668,13 +670,21 @@ export function StudentTopicStatusBoard({
 
     return Array.from(grouped.entries())
       .sort((left, right) => new Date(left[0]).getTime() - new Date(right[0]).getTime())
-      .map(([deadlineAt, groupedNumbers], index) => ({
-        id: deadlineAt,
-        label: `ДЗ ${index + 1}`,
-        deadlineAt,
-        deadlineLabel: formatDeadlineLabel(deadlineAt),
-        count: groupedNumbers.length
-      }));
+      .map(([deadlineAt, groupedNumbers], index) => {
+        const solvedCount = groupedNumbers.filter(
+          (number) => number.status === HomeworkNumberStatus.GREEN || number.status === HomeworkNumberStatus.YELLOW
+        ).length;
+
+        return {
+          id: deadlineAt,
+          label: `ДЗ ${index + 1}`,
+          deadlineAt,
+          deadlineLabel: formatDeadlineLabel(deadlineAt),
+          count: groupedNumbers.length,
+          solvedCount,
+          isCompleted: groupedNumbers.length > 0 && solvedCount === groupedNumbers.length
+        };
+      });
   }, [numbers]);
   const homeworkGroupsByDeadline = useMemo(
     () => new Map(homeworkGroups.map((group) => [group.id, group])),
@@ -1087,6 +1097,7 @@ export function StudentTopicStatusBoard({
 
               {homeworkGroups.map((group) => {
                 const isActive = activeFilter === group.id;
+                const isCompleted = group.isCompleted;
 
                 return (
                   <button
@@ -1100,14 +1111,19 @@ export function StudentTopicStatusBoard({
                     data-active={isActive}
                     className={cx(
                       "ui-pressable rounded-full border px-4 py-2 text-sm font-medium transition",
-                      isActive
+                      isActive && isCompleted
+                        ? "border-emerald-200 bg-emerald-50 text-emerald-700 shadow-[0_12px_24px_rgba(16,185,129,0.14)]"
+                        : isActive
                         ? "border-brand-200 bg-[linear-gradient(180deg,rgba(239,246,255,1),rgba(219,234,254,0.92))] text-brand-700 shadow-[0_12px_24px_rgba(59,130,246,0.14)]"
+                        : isCompleted
+                        ? "border-emerald-200 bg-white text-emerald-700 hover:border-emerald-300 hover:bg-emerald-50"
                         : "border-slate-200 bg-white text-slate-700 hover:border-brand-300 hover:text-brand-700"
                     )}
                   >
+                    {isCompleted ? <span className="mr-2">✓</span> : null}
                     {group.label}
                     <span className="ml-2 rounded-full bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-500">
-                      {group.count}
+                      {group.solvedCount}/{group.count}
                     </span>
                     {group.deadlineLabel ? <span className="ml-2 text-xs text-slate-500">{group.deadlineLabel}</span> : null}
                   </button>
