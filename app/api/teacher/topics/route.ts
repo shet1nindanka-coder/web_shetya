@@ -2,12 +2,14 @@ import { UserRole } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { NextResponse } from "next/server";
 import { tryGetCurrentUser } from "@/lib/auth";
+import { revalidateAllPlatformData } from "@/lib/platform-data-cache";
 import { prisma } from "@/lib/prisma";
 import { parseNumbersInput } from "@/lib/utils";
 
 export const runtime = "nodejs";
 
 function revalidateTopicRoutes(topicId?: string) {
+  revalidateAllPlatformData();
   revalidatePath("/dashboard");
   revalidatePath("/student");
   revalidatePath("/teacher");

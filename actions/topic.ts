@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/auth";
+import { revalidateAllPlatformData } from "@/lib/platform-data-cache";
 import { deleteStoredFileRecordIfUnused } from "@/lib/stored-files";
 import { removeStoredFile, saveUploadedFile } from "@/lib/storage";
 import { parseNumbersInput } from "@/lib/utils";
@@ -16,6 +17,7 @@ const numberStatuses: HomeworkNumberStatus[] = [
 ];
 
 function revalidateTopicRoutes(topicId?: string) {
+  revalidateAllPlatformData();
   revalidatePath("/dashboard");
   revalidatePath("/student");
   revalidatePath("/teacher");

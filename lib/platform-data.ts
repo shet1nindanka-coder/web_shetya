@@ -1,4 +1,6 @@
+import { unstable_cache } from "next/cache";
 import { HomeworkNumberStatus, UserRole } from "@prisma/client";
+import { PLATFORM_DATA_TAGS } from "@/lib/platform-data-cache";
 import { prisma } from "@/lib/prisma";
 import { completionPercent, getStatusCounts } from "@/lib/utils";
 
@@ -16,7 +18,7 @@ function buildProgress(statuses: Array<HomeworkNumberStatus | null | undefined>,
   };
 }
 
-export async function getStudentTopicsOverview(studentId: string) {
+async function getStudentTopicsOverviewUncached(studentId: string) {
   const [student, topics] = await Promise.all([
     prisma.user.findUniqueOrThrow({
       where: { id: studentId }
@@ -82,7 +84,19 @@ export async function getStudentTopicsOverview(studentId: string) {
   };
 }
 
-export async function getStudentTopicDetail(studentId: string, topicId: string) {
+const getStudentTopicsOverviewCached = unstable_cache(
+  getStudentTopicsOverviewUncached,
+  ["student-topics-overview"],
+  {
+    tags: [PLATFORM_DATA_TAGS.studentTopics]
+  }
+);
+
+export async function getStudentTopicsOverview(studentId: string) {
+  return getStudentTopicsOverviewCached(studentId);
+}
+
+async function getStudentTopicDetailUncached(studentId: string, topicId: string) {
   const topic = await prisma.topic.findUniqueOrThrow({
     where: { id: topicId },
     include: {
@@ -122,7 +136,19 @@ export async function getStudentTopicDetail(studentId: string, topicId: string) 
   };
 }
 
-export async function getTeacherTopicsOverview() {
+const getStudentTopicDetailCached = unstable_cache(
+  getStudentTopicDetailUncached,
+  ["student-topic-detail"],
+  {
+    tags: [PLATFORM_DATA_TAGS.studentTopics]
+  }
+);
+
+export async function getStudentTopicDetail(studentId: string, topicId: string) {
+  return getStudentTopicDetailCached(studentId, topicId);
+}
+
+async function getTeacherTopicsOverviewUncached() {
   const [students, topics, totalFiles] = await Promise.all([
     prisma.user.findMany({
       where: { role: UserRole.STUDENT },
@@ -205,7 +231,19 @@ export async function getTeacherTopicsOverview() {
   };
 }
 
-export async function getTeacherTopicDetail(topicId: string) {
+const getTeacherTopicsOverviewCached = unstable_cache(
+  getTeacherTopicsOverviewUncached,
+  ["teacher-topics-overview"],
+  {
+    tags: [PLATFORM_DATA_TAGS.teacherTopics, PLATFORM_DATA_TAGS.teacherStudents]
+  }
+);
+
+export async function getTeacherTopicsOverview() {
+  return getTeacherTopicsOverviewCached();
+}
+
+async function getTeacherTopicDetailUncached(topicId: string) {
   const [topic, students] = await Promise.all([
     prisma.topic.findUniqueOrThrow({
       where: { id: topicId },
@@ -273,7 +311,19 @@ export async function getTeacherTopicDetail(topicId: string) {
   };
 }
 
-export async function getTeacherStudentDetail(studentId: string) {
+const getTeacherTopicDetailCached = unstable_cache(
+  getTeacherTopicDetailUncached,
+  ["teacher-topic-detail"],
+  {
+    tags: [PLATFORM_DATA_TAGS.teacherTopics, PLATFORM_DATA_TAGS.teacherStudents]
+  }
+);
+
+export async function getTeacherTopicDetail(topicId: string) {
+  return getTeacherTopicDetailCached(topicId);
+}
+
+async function getTeacherStudentDetailUncached(studentId: string) {
   const [student, topics] = await Promise.all([
     prisma.user.findFirstOrThrow({
       where: {
@@ -352,6 +402,18 @@ export async function getTeacherStudentDetail(studentId: string) {
       solvedPercent: completionPercent(totalSolved, totalNumbers)
     }
   };
+}
+
+const getTeacherStudentDetailCached = unstable_cache(
+  getTeacherStudentDetailUncached,
+  ["teacher-student-detail"],
+  {
+    tags: [PLATFORM_DATA_TAGS.teacherTopics, PLATFORM_DATA_TAGS.teacherStudents]
+  }
+);
+
+export async function getTeacherStudentDetail(studentId: string) {
+  return getTeacherStudentDetailCached(studentId);
 }
 
 export async function getDashboardSummary(userId: string, role: UserRole) {

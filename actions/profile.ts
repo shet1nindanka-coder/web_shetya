@@ -4,6 +4,7 @@ import { UserRole } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireUser } from "@/lib/auth";
+import { revalidateAllPlatformData } from "@/lib/platform-data-cache";
 import { hashPassword, verifyPassword } from "@/lib/password";
 import { prisma } from "@/lib/prisma";
 import { roleHome } from "@/lib/utils";
@@ -15,6 +16,7 @@ function redirectAccountWithStatus(role: UserRole, params: URLSearchParams) {
 }
 
 function revalidateAccountRoutes(role: UserRole) {
+  revalidateAllPlatformData();
   const homePath = roleHome(role);
 
   revalidatePath("/dashboard");

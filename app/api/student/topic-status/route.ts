@@ -2,6 +2,7 @@ import { HomeworkNumberStatus, UserRole } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { NextResponse } from "next/server";
 import { tryGetCurrentUser } from "@/lib/auth";
+import { revalidateAllPlatformData } from "@/lib/platform-data-cache";
 import { prisma } from "@/lib/prisma";
 
 export const runtime = "nodejs";
@@ -13,6 +14,7 @@ const allowedStatuses = [
 ] as const;
 
 function revalidateTopicRoutes(topicId: string) {
+  revalidateAllPlatformData();
   revalidatePath("/dashboard");
   revalidatePath("/student");
   revalidatePath(`/student/topics/${topicId}`);

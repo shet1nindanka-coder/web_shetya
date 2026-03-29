@@ -4,6 +4,7 @@ import { UserRole } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireUser } from "@/lib/auth";
+import { revalidateTeacherStudentsData, revalidateTeacherTopicsData } from "@/lib/platform-data-cache";
 import { hashPassword } from "@/lib/password";
 import { prisma } from "@/lib/prisma";
 
@@ -52,6 +53,8 @@ export async function createStudentAction(formData: FormData) {
     redirectTeacherWithStudentStatus(new URLSearchParams({ studentError: "save" }));
   }
 
+  revalidateTeacherStudentsData();
+  revalidateTeacherTopicsData();
   revalidatePath("/dashboard");
   revalidatePath("/teacher");
   revalidatePath("/teacher/students");
