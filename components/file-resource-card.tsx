@@ -26,11 +26,13 @@ export function FileResourceCard({
   const isExpanded = previewSize === "expanded";
 
   return (
-    <article className="ui-fade-slide ui-surface rounded-[26px] border border-slate-200/80 bg-white/94 p-5 shadow-[0_12px_28px_rgba(15,23,42,0.05)]">
+    <article className="ui-fade-slide ui-surface rounded-[22px] border border-slate-200/80 bg-white/94 p-4 shadow-[0_12px_28px_rgba(15,23,42,0.05)] sm:rounded-[24px] sm:p-5 lg:rounded-[26px]">
       <div className="flex flex-col gap-4 border-b border-slate-200/80 pb-5">
         <div className="space-y-1.5">
           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">{title}</p>
-          <h3 className="font-display text-[1.6rem] font-semibold text-slate-950">{file ? file.originalName : "Файл не загружен"}</h3>
+          <h3 className="font-display text-[1.35rem] font-semibold text-slate-950 sm:text-[1.45rem] lg:text-[1.6rem]">
+            {file ? file.originalName : "Файл не загружен"}
+          </h3>
           <p className="text-sm leading-6 text-slate-500">{description}</p>
         </div>
 
@@ -56,13 +58,13 @@ export function FileResourceCard({
               href={`/files/${file.id}`}
               target="_blank"
               rel="noreferrer"
-              className="ui-pressable rounded-full bg-slate-950 px-4 py-2 text-sm font-semibold text-white transition"
+              className="ui-pressable inline-flex w-full justify-center rounded-full bg-slate-950 px-4 py-2 text-sm font-semibold text-white transition sm:w-auto"
             >
               Открыть в браузере
             </a>
             <a
               href={`/files/${file.id}?download=1`}
-              className="ui-pressable rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition"
+              className="ui-pressable inline-flex w-full justify-center rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition sm:w-auto"
             >
               Скачать файл
             </a>
@@ -73,7 +75,7 @@ export function FileResourceCard({
               <iframe
                 src={`/files/${file.id}`}
                 title={file.originalName}
-                className={isExpanded ? "h-[620px] w-full lg:h-[760px]" : "h-[420px] w-full"}
+                className={isExpanded ? "h-[380px] w-full sm:h-[520px] lg:h-[760px]" : "h-[300px] w-full sm:h-[380px] lg:h-[420px]"}
               />
             </div>
           ) : null}
@@ -88,8 +90,8 @@ export function FileResourceCard({
                 unoptimized
                 className={
                   isExpanded
-                    ? "max-h-[620px] h-auto w-full rounded-[18px] object-contain lg:max-h-[760px]"
-                    : "max-h-[420px] h-auto w-full rounded-[18px] object-contain"
+                    ? "max-h-[380px] h-auto w-full rounded-[18px] object-contain sm:max-h-[520px] lg:max-h-[760px]"
+                    : "max-h-[300px] h-auto w-full rounded-[18px] object-contain sm:max-h-[380px] lg:max-h-[420px]"
                 }
               />
             </div>

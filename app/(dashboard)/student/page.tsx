@@ -17,10 +17,10 @@ export default async function StudentPage() {
   return (
     <div className="space-y-8">
       <section className="grid gap-6 lg:grid-cols-[1.15fr_0.85fr]">
-        <div className="page-header-panel rounded-[36px] border border-white/70 bg-slate-950 px-6 py-8 text-white shadow-glow">
+        <div className="page-header-panel rounded-[28px] border border-white/70 bg-slate-950 px-5 py-6 text-white shadow-glow sm:rounded-[36px] sm:px-6 sm:py-8">
           <Badge className="border-brand-300/40 bg-white/10 text-brand-100">Обзор ученика</Badge>
-          <h1 className="font-display mt-4 text-4xl font-semibold">Ваш прогресс, темы и полезная инфа по ЕГЭ</h1>
-          <p className="mt-4 max-w-2xl text-base leading-7 text-slate-300">
+          <h1 className="font-display mt-4 text-3xl font-semibold sm:text-4xl">Ваш прогресс, темы и полезная инфа по ЕГЭ</h1>
+          <p className="mt-4 max-w-2xl text-sm leading-6 text-slate-300 sm:text-base sm:leading-7">
             Здесь собрана личная картина по темам. Для работы с заданиями переходите на вкладку тем, а на вкладке
             общей информации можно быстро посмотреть перевод первичных баллов и разбалловку номеров.
           </p>
@@ -31,9 +31,9 @@ export default async function StudentPage() {
           </div>
         </div>
 
-        <div className="rounded-[36px] border border-brand-100 bg-white/90 p-6 shadow-glow">
+        <div className="rounded-[28px] border border-brand-100 bg-white/90 p-5 shadow-glow sm:rounded-[36px] sm:p-6">
           <p className="text-sm font-semibold uppercase tracking-[0.2em] text-slate-500">Личный итог</p>
-          <p className="mt-4 text-3xl font-semibold text-slate-950">{data.stats.solvedPercent}% номеров уже решены</p>
+          <p className="mt-4 text-2xl font-semibold text-slate-950 sm:text-3xl">{data.stats.solvedPercent}% номеров уже решены</p>
           <p className="mt-3 text-sm leading-6 text-slate-600">
             Здесь учитываются только номера со статусом зеленый или желтый. Красные показывают, где еще нужна помощь.
           </p>

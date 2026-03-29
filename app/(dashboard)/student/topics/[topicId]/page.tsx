@@ -25,8 +25,8 @@ export default async function StudentTopicPage({ params }: StudentTopicPageProps
           <Link href="/student/topics" className="text-sm font-semibold text-brand-700 transition hover:text-brand-900">
             ← Ко всем темам
           </Link>
-          <h1 className="font-display mt-3 text-4xl font-semibold text-slate-950">{topic.title}</h1>
-          <p className="mt-3 max-w-3xl text-base leading-7 text-slate-600">{topic.description}</p>
+          <h1 className="font-display mt-3 text-3xl font-semibold text-slate-950 sm:text-4xl">{topic.title}</h1>
+          <p className="mt-3 max-w-3xl text-sm leading-6 text-slate-600 sm:text-base sm:leading-7">{topic.description}</p>
         </div>
       </div>
 

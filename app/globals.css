@@ -251,6 +251,18 @@ textarea {
   backdrop-filter: blur(14px);
 }
 
+.ui-tab-strip {
+  overflow-x: auto;
+  flex-wrap: nowrap;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  scroll-snap-type: x proximity;
+}
+
+.ui-tab-strip::-webkit-scrollbar {
+  display: none;
+}
+
 .ui-tab {
   border: 1px solid rgba(226, 232, 240, 0.95);
   background: rgba(255, 255, 255, 0.92);
@@ -394,5 +406,14 @@ textarea {
   .ui-pressable[data-active="true"] {
     transform: none !important;
     box-shadow: none !important;
+  }
+}
+
+@media (max-width: 640px) {
+  .ui-tab-strip {
+    margin-left: -4px;
+    margin-right: -4px;
+    padding-left: 4px;
+    padding-right: 4px;
   }
 }

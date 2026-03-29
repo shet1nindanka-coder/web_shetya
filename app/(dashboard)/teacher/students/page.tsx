@@ -65,10 +65,10 @@ export default async function TeacherStudentsPage({ searchParams }: TeacherStude
       ) : null}
 
       <section className="grid gap-6 lg:grid-cols-[1.15fr_0.85fr]">
-        <div className="page-header-panel rounded-[36px] border border-white/70 bg-slate-950 px-6 py-8 text-white shadow-glow">
+        <div className="page-header-panel rounded-[28px] border border-white/70 bg-slate-950 px-5 py-6 text-white shadow-glow sm:rounded-[36px] sm:px-6 sm:py-8">
           <Badge className="border-brand-300/40 bg-white/10 text-brand-100">Ученики</Badge>
-          <h1 className="font-display mt-4 text-4xl font-semibold">Учётные записи и индивидуальные успехи учеников</h1>
-          <p className="mt-4 max-w-2xl text-base leading-7 text-slate-300">
+          <h1 className="font-display mt-4 text-3xl font-semibold sm:text-4xl">Учётные записи и индивидуальные успехи учеников</h1>
+          <p className="mt-4 max-w-2xl text-sm leading-6 text-slate-300 sm:text-base sm:leading-7">
             Создавайте новые аккаунты учеников и переходите в их персональные карточки, чтобы смотреть прогресс по
             всем темам и видеть цвета по каждому номеру.
           </p>
@@ -79,9 +79,9 @@ export default async function TeacherStudentsPage({ searchParams }: TeacherStude
           </div>
         </div>
 
-        <div className="rounded-[36px] border border-brand-100 bg-white/90 p-6 shadow-glow">
+        <div className="rounded-[28px] border border-brand-100 bg-white/90 p-5 shadow-glow sm:rounded-[36px] sm:p-6">
           <p className="text-sm font-semibold uppercase tracking-[0.2em] text-slate-500">Всего в системе</p>
-          <p className="mt-4 text-3xl font-semibold text-slate-950">
+          <p className="mt-4 text-2xl font-semibold text-slate-950 sm:text-3xl">
             {data.stats.totalStudents} учеников и {data.stats.totalTopics} общих тем
           </p>
           <p className="mt-3 text-sm leading-6 text-slate-600">
@@ -102,10 +102,10 @@ export default async function TeacherStudentsPage({ searchParams }: TeacherStude
         description="Задайте имя, логин и пароль. После создания ученик сразу сможет войти в систему."
       >
         <div className="grid gap-6 xl:grid-cols-[0.88fr_1.12fr]">
-          <form action={createStudentAction} className="space-y-4 rounded-[28px] border border-slate-200 bg-slate-50/80 p-5">
+          <form action={createStudentAction} className="space-y-4 rounded-[24px] border border-slate-200 bg-slate-50/80 p-4 sm:rounded-[28px] sm:p-5">
             <div className="space-y-2">
               <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Новый ученик</p>
-              <h3 className="font-display text-2xl font-semibold text-slate-950">Создать доступ ученику</h3>
+              <h3 className="font-display text-[1.55rem] font-semibold text-slate-950 sm:text-2xl">Создать доступ ученику</h3>
               <p className="text-sm leading-6 text-slate-600">
                 Логин используется для входа. Для удобства можно использовать e-mail в качестве логина.
               </p>
@@ -117,7 +117,7 @@ export default async function TeacherStudentsPage({ searchParams }: TeacherStude
                 type="text"
                 name="name"
                 placeholder="Например, Мария Смирнова"
-                className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-slate-950 outline-none transition focus:-translate-y-[1px] focus:border-brand-400 focus:bg-white"
+              className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-slate-950 outline-none transition focus:border-brand-400 focus:bg-white"
                 required
               />
             </label>
@@ -128,7 +128,7 @@ export default async function TeacherStudentsPage({ searchParams }: TeacherStude
                 type="text"
                 name="login"
                 placeholder="maria@example.com"
-                className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-slate-950 outline-none transition focus:-translate-y-[1px] focus:border-brand-400 focus:bg-white"
+              className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-slate-950 outline-none transition focus:border-brand-400 focus:bg-white"
                 required
               />
             </label>
@@ -147,17 +147,17 @@ export default async function TeacherStudentsPage({ searchParams }: TeacherStude
 
             <button
               type="submit"
-              className="ui-pressable rounded-2xl bg-slate-950 px-5 py-3 text-sm font-semibold text-white transition hover:bg-brand-700"
+              className="ui-pressable w-full rounded-2xl bg-slate-950 px-5 py-3 text-sm font-semibold text-white transition hover:bg-brand-700 sm:w-auto"
             >
               Добавить ученика
             </button>
           </form>
 
-          <div className="ui-fade-slide ui-surface rounded-[28px] border border-slate-200 bg-slate-50/80 p-5">
+          <div className="ui-fade-slide ui-surface rounded-[24px] border border-slate-200 bg-slate-50/80 p-4 sm:rounded-[28px] sm:p-5">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
                 <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Текущие ученики</p>
-                <h3 className="font-display mt-2 text-2xl font-semibold text-slate-950">
+                <h3 className="font-display mt-2 text-[1.55rem] font-semibold text-slate-950 sm:text-2xl">
                   {data.students.length} аккаунтов ученика
                 </h3>
               </div>
@@ -178,7 +178,7 @@ export default async function TeacherStudentsPage({ searchParams }: TeacherStude
                     <div className="mt-4">
                       <Link
                         href={`/teacher/students/${student.id}`}
-                        className="ui-pressable inline-flex rounded-full border border-slate-200 bg-slate-50 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-brand-300 hover:text-brand-700"
+                        className="ui-pressable inline-flex w-full justify-center rounded-full border border-slate-200 bg-slate-50 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-brand-300 hover:text-brand-700 sm:w-auto"
                       >
                         Смотреть прогресс
                       </Link>

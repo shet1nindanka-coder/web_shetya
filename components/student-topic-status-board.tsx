@@ -186,7 +186,7 @@ const StudentNumberCard = memo(function StudentNumberCard({
   const notePreview = getNotePreview(number.note);
 
   return (
-    <div className="student-number-card rounded-[24px] border border-slate-200 bg-slate-50/70 p-4">
+    <div className="student-number-card rounded-[22px] border border-slate-200 bg-slate-50/70 p-3.5 sm:rounded-[24px] sm:p-4">
       <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
         <div className="space-y-2">
           <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">Задания</p>
@@ -212,7 +212,7 @@ const StudentNumberCard = memo(function StudentNumberCard({
                 aria-pressed={isActive}
                 onClick={() => onSelect(number.id, isActive ? null : status)}
                 className={cx(
-                  "ui-pressable min-w-[160px] touch-manipulation rounded-[18px] border px-4 py-3 text-left text-[13px] transition-colors duration-75",
+                  "ui-pressable w-full touch-manipulation rounded-[18px] border px-4 py-3 text-left text-[13px] transition-colors duration-75 sm:min-w-[160px]",
                   isActive
                     ? meta.cardClassName
                     : "border-slate-200 bg-white text-slate-700 hover:border-brand-300 hover:bg-brand-50"
@@ -227,7 +227,7 @@ const StudentNumberCard = memo(function StudentNumberCard({
       </div>
 
       {notesEnabled ? (
-        <div className="mt-3 rounded-[20px] border border-slate-200 bg-white px-4 py-3">
+        <div className="mt-3 rounded-[18px] border border-slate-200 bg-white px-3.5 py-3 sm:rounded-[20px] sm:px-4">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
               <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">Личная заметка</p>
@@ -238,7 +238,7 @@ const StudentNumberCard = memo(function StudentNumberCard({
             <button
               type="button"
               onClick={() => setIsNoteOpen((current) => !current)}
-              className="ui-pressable rounded-full border border-slate-200 bg-slate-50 px-3.5 py-2 text-sm font-semibold text-slate-700 transition hover:border-brand-300 hover:text-brand-700"
+              className="ui-pressable w-full rounded-full border border-slate-200 bg-slate-50 px-3.5 py-2 text-sm font-semibold text-slate-700 transition hover:border-brand-300 hover:text-brand-700 sm:w-auto"
             >
               {isNoteOpen ? "Скрыть заметку" : notePreview ? "Открыть заметку" : "Добавить заметку"}
             </button>
@@ -269,7 +269,7 @@ const StudentNumberCard = memo(function StudentNumberCard({
       ) : null}
 
       {number.answerLatex ? (
-        <div className="mt-3 rounded-[20px] border border-slate-200 bg-white p-3">
+        <div className="mt-3 rounded-[18px] border border-slate-200 bg-white p-3 sm:rounded-[20px]">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
               <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">Ответ к номеру</p>
@@ -278,7 +278,7 @@ const StudentNumberCard = memo(function StudentNumberCard({
             <button
               type="button"
               onClick={() => setIsAnswerVisible((current) => !current)}
-              className="ui-pressable rounded-full border border-slate-200 bg-slate-50 px-3.5 py-2 text-sm font-semibold text-slate-700 transition hover:border-brand-300 hover:text-brand-700"
+              className="ui-pressable w-full rounded-full border border-slate-200 bg-slate-50 px-3.5 py-2 text-sm font-semibold text-slate-700 transition hover:border-brand-300 hover:text-brand-700 sm:w-auto"
             >
               {isAnswerVisible ? "Скрыть ответ" : "Открыть ответ"}
             </button>
