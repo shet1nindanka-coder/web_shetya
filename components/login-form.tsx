@@ -12,13 +12,15 @@ type LoginFormProps = {
 
 export function LoginForm({ error }: LoginFormProps) {
   return (
-    <div className="ui-fade-slide w-full max-w-md rounded-[36px] border border-white/75 bg-white/92 p-8 shadow-[0_24px_70px_rgba(15,23,42,0.12)] backdrop-blur">
+    <div className="ui-fade-slide relative w-full max-w-md overflow-hidden rounded-[38px] border border-white/80 bg-[linear-gradient(180deg,rgba(255,255,255,0.97),rgba(248,250,252,0.93))] p-8 shadow-[0_24px_70px_rgba(15,23,42,0.12)] backdrop-blur">
+      <div className="pointer-events-none absolute -right-10 top-0 h-32 w-32 rounded-full bg-brand-100/50 blur-3xl" />
       <div className="mb-8 flex flex-col items-center text-center">
-        <span className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-950 text-lg font-semibold text-white shadow-lg shadow-slate-950/15">
+        <span className="mb-4 flex h-14 w-14 items-center justify-center rounded-[20px] bg-[linear-gradient(135deg,#0f172a,#1d4ed8)] text-lg font-semibold text-white shadow-[0_16px_34px_rgba(29,78,216,0.22)]">
           T
         </span>
         <p className="text-sm font-semibold uppercase tracking-[0.3em] text-brand-600">TutorFlow</p>
         <h1 className="font-display mt-3 text-4xl font-semibold leading-tight text-slate-950">Вход в аккаунт</h1>
+        <p className="mt-3 max-w-sm text-sm leading-6 text-slate-600">Откройте свой кабинет и продолжайте работу с темами, файлами и прогрессом.</p>
       </div>
 
       <form action={loginAction} className="space-y-4">

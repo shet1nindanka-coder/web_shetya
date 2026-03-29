@@ -4,7 +4,7 @@ type ProgressBarProps = {
 
 export function ProgressBar({ value }: ProgressBarProps) {
   return (
-    <div className="h-2.5 overflow-hidden rounded-full bg-slate-200">
+    <div className="h-3 overflow-hidden rounded-full border border-white/70 bg-slate-200/90 shadow-inner">
       <div
         className="ui-progress-fill h-full rounded-full bg-gradient-to-r from-brand-500 via-brand-400 to-accent-mint"
         style={{ width: `${Math.min(100, Math.max(0, value))}%` }}

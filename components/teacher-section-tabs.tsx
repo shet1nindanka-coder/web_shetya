@@ -35,7 +35,7 @@ export function TeacherSectionTabs() {
   }, [router]);
 
   return (
-    <nav className="ui-fade-slide mb-8 flex flex-wrap gap-2 rounded-[28px] border border-white/70 bg-white/85 p-3 shadow-sm backdrop-blur">
+    <nav className="ui-fade-slide mb-8 flex flex-wrap gap-2 rounded-[32px] border border-white/80 bg-[linear-gradient(180deg,rgba(255,255,255,0.94),rgba(248,250,252,0.88))] p-3 shadow-[0_14px_34px_rgba(15,23,42,0.06)] backdrop-blur">
       {items.map((item) => {
         const isActive = item.match(pathname);
 
@@ -46,11 +46,12 @@ export function TeacherSectionTabs() {
             prefetch
             onMouseEnter={() => router.prefetch(item.href)}
             onFocus={() => router.prefetch(item.href)}
+            data-active={isActive}
             className={cx(
-              "ui-pressable rounded-full border px-4 py-2 text-sm font-medium transition",
+              "ui-pressable rounded-full border px-5 py-2.5 text-sm font-medium transition",
               isActive
-                ? "border-brand-200 bg-brand-50 text-brand-700 shadow-sm"
-                : "border-slate-200 bg-white text-slate-700 hover:border-brand-300 hover:text-brand-700"
+                ? "border-brand-200 bg-[linear-gradient(180deg,rgba(239,246,255,1),rgba(219,234,254,0.92))] text-brand-700 shadow-[0_12px_24px_rgba(59,130,246,0.14)]"
+                : "border-slate-200/90 bg-white/92 text-slate-700 hover:border-brand-300 hover:text-brand-700"
             )}
           >
             {item.label}

@@ -26,8 +26,9 @@ export function FileResourceCard({
   const isExpanded = previewSize === "expanded";
 
   return (
-    <article className="ui-fade-slide ui-surface rounded-[28px] border border-slate-200 bg-slate-50/80 p-5 shadow-[0_12px_35px_rgba(15,23,42,0.06)]">
-      <div className="flex flex-col gap-4 border-b border-slate-200 pb-5">
+    <article className="ui-fade-slide ui-surface relative overflow-hidden rounded-[30px] border border-slate-200/70 bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(248,250,252,0.92))] p-5 shadow-[0_16px_38px_rgba(15,23,42,0.07)]">
+      <div className="pointer-events-none absolute -right-8 top-0 h-28 w-28 rounded-full bg-brand-100/45 blur-3xl" />
+      <div className="flex flex-col gap-4 border-b border-slate-200/80 pb-5">
         <div className="space-y-2">
           <p className="text-sm font-semibold uppercase tracking-[0.24em] text-slate-500">{title}</p>
           <h3 className="font-display text-2xl font-semibold text-slate-950">{file ? file.originalName : "Файл не загружен"}</h3>
@@ -46,7 +47,7 @@ export function FileResourceCard({
       </div>
 
       {!file ? (
-        <div className="mt-5 rounded-[24px] border border-dashed border-slate-200 bg-white px-4 py-6 text-sm leading-6 text-slate-500">
+        <div className="mt-5 rounded-[24px] border border-dashed border-slate-200 bg-white/92 px-4 py-6 text-sm leading-6 text-slate-500">
           Преподаватель ещё не прикрепил файл для этого блока.
         </div>
       ) : (
