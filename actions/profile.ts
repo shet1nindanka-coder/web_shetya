@@ -34,26 +34,9 @@ function revalidateAccountRoutes(role: UserRole) {
 export async function updateProfileInfoAction(formData: FormData) {
   const user = await requireUser();
   const name = String(formData.get("name") ?? "").trim();
-  const login = String(formData.get("login") ?? "").trim().toLowerCase();
 
-  if (!name || !login) {
+  if (!name) {
     redirectAccountWithStatus(user.role, new URLSearchParams({ infoError: "invalid" }));
-  }
-
-  const existingUser = await prisma.user.findFirst({
-    where: {
-      email: login,
-      NOT: {
-        id: user.id
-      }
-    },
-    select: {
-      id: true
-    }
-  });
-
-  if (existingUser) {
-    redirectAccountWithStatus(user.role, new URLSearchParams({ infoError: "exists" }));
   }
 
   try {
@@ -62,8 +45,7 @@ export async function updateProfileInfoAction(formData: FormData) {
         id: user.id
       },
       data: {
-        name,
-        email: login
+        name
       }
     });
   } catch (error) {

@@ -1,60 +1,27 @@
 "use client";
 
-import Image from "next/image";
-import { upload as uploadToBlob } from "@vercel/blob/client";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Badge } from "@/components/badge";
-import { ProgressBar } from "@/components/progress-bar";
-import { getSafeUploadFileName } from "@/lib/upload-file-name";
-import { cx, formatFileSize } from "@/lib/utils";
-
-type UploadMode = "local" | "blob";
-type BlobAccessMode = "private" | "public";
-
-type AnswerFile = {
-  id: string;
-  originalName: string;
-  mimeType: string;
-  size: number;
-  uploadedAt: string;
-};
+import { LatexAnswerPreview } from "@/components/latex-answer-preview";
 
 type NumberAnswerCard = {
   id: string;
   number: number;
-  answerFile: AnswerFile | null;
-  uploadStatus: "idle" | "uploading" | "error";
-  progress: number;
+  savedAnswerLatex: string | null;
+  draftAnswerLatex: string;
+  isSaving: boolean;
   error: string | null;
   isDeleting: boolean;
 };
 
 type TopicAnswerManagerProps = {
-  uploadMode: UploadMode;
-  blobAccess: BlobAccessMode;
   topicId: string;
   numbers: Array<{
     id: string;
     number: number;
-    answerFile: AnswerFile | null;
+    answerLatex: string | null;
   }>;
 };
-
-function createBlobPathname(fileName: string) {
-  return `uploads/${Date.now()}-${crypto.randomUUID()}-${getSafeUploadFileName(fileName)}`;
-}
-
-function getRegisterErrorMessage(status: number) {
-  if (status === 401) {
-    return "Сессия истекла. Обновите страницу и войдите заново.";
-  }
-
-  if (status === 400) {
-    return "Файл не прошел валидацию. Для ответа подходят только PNG и JPG.";
-  }
-
-  return "Не удалось завершить загрузку файла.";
-}
 
 function getAttachErrorMessage(status: number) {
   if (status === 401) {
@@ -84,13 +51,15 @@ function getDeleteErrorMessage(status: number) {
   return "Не удалось удалить ответ.";
 }
 
-export function TopicAnswerManager({ uploadMode, blobAccess, topicId, numbers }: TopicAnswerManagerProps) {
+export function TopicAnswerManager({ topicId, numbers }: TopicAnswerManagerProps) {
   const initialState = useMemo<NumberAnswerCard[]>(
     () =>
       numbers.map((number) => ({
-        ...number,
-        uploadStatus: "idle",
-        progress: 0,
+        id: number.id,
+        number: number.number,
+        savedAnswerLatex: number.answerLatex,
+        draftAnswerLatex: number.answerLatex ?? "",
+        isSaving: false,
         error: null,
         isDeleting: false
       })),
@@ -113,7 +82,7 @@ export function TopicAnswerManager({ uploadMode, blobAccess, topicId, numbers }:
   }, [initialState]);
 
   const attachUploadedAnswer = useCallback(
-    async (homeworkNumberId: string, fileId: string) => {
+    async (homeworkNumberId: string, answerLatex: string) => {
       const response = await fetch("/api/teacher/number-answers", {
         method: "POST",
         headers: {
@@ -121,50 +90,31 @@ export function TopicAnswerManager({ uploadMode, blobAccess, topicId, numbers }:
         },
         body: JSON.stringify({
           homeworkNumberId,
-          fileId
+          answerLatex
         })
       });
 
-      const result = (await response.json().catch(() => null)) as
-        | {
-            answerFile?: AnswerFile;
-            error?: string;
-          }
-        | null;
+      const result = (await response.json().catch(() => null)) as { answerLatex?: string; error?: string } | null;
 
-      if (!response.ok || !result?.answerFile) {
+      if (!response.ok || !result?.answerLatex) {
         throw new Error(result?.error || getAttachErrorMessage(response.status));
       }
 
-      return result.answerFile;
+      return result.answerLatex;
     },
     []
   );
 
-  const handleFileSelect = useCallback(
-    async (homeworkNumberId: string, nextFile: File | null) => {
-      if (!nextFile) {
+  const saveAnswer = useCallback(
+    async (homeworkNumberId: string) => {
+      const currentItem = numbersRef.current.find((item) => item.id === homeworkNumberId);
+      const nextAnswerLatex = currentItem?.draftAnswerLatex.trim() ?? "";
+
+      if (!currentItem || !nextAnswerLatex) {
         return;
       }
 
-      const allowedMimeTypes = new Set(["image/png", "image/jpeg"]);
-      const normalizedName = nextFile.name.toLowerCase();
-      const isAllowedExtension =
-        normalizedName.endsWith(".png") || normalizedName.endsWith(".jpg") || normalizedName.endsWith(".jpeg");
-
-      if ((!nextFile.type || !allowedMimeTypes.has(nextFile.type)) && !isAllowedExtension) {
-        updateItems((current) =>
-          current.map((item) =>
-            item.id === homeworkNumberId
-              ? {
-                  ...item,
-                  uploadStatus: "error",
-                  error: "Для ответа подходят только изображения PNG и JPG.",
-                  progress: 0
-                }
-              : item
-          )
-        );
+      if (currentItem.savedAnswerLatex?.trim() === nextAnswerLatex) {
         return;
       }
 
@@ -173,8 +123,7 @@ export function TopicAnswerManager({ uploadMode, blobAccess, topicId, numbers }:
           item.id === homeworkNumberId
             ? {
                 ...item,
-                uploadStatus: "uploading",
-                progress: 0,
+                isSaving: true,
                 error: null
               }
             : item
@@ -182,145 +131,38 @@ export function TopicAnswerManager({ uploadMode, blobAccess, topicId, numbers }:
       );
 
       try {
-        let uploadedFileId = "";
-
-        if (uploadMode === "blob") {
-          const blob = await uploadToBlob(createBlobPathname(nextFile.name), nextFile, {
-            access: blobAccess,
-            handleUploadUrl: "/api/teacher/uploads",
-            contentType: nextFile.type || undefined,
-            onUploadProgress: ({ percentage }) => {
-              updateItems((current) =>
-                current.map((item) =>
-                  item.id === homeworkNumberId
-                    ? {
-                        ...item,
-                        uploadStatus: "uploading",
-                        progress: Math.round(percentage),
-                        error: null
-                      }
-                    : item
-                )
-              );
-            }
-          });
-
-          const registerResponse = await fetch("/api/teacher/uploads", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json"
-            },
-            body: JSON.stringify({
-              action: "register-blob",
-              pathname: blob.pathname,
-              contentType: blob.contentType,
-              originalName: nextFile.name,
-              size: nextFile.size
-            })
-          });
-
-          const registerResult = (await registerResponse.json().catch(() => null)) as
-            | {
-                file?: AnswerFile;
-                error?: string;
-              }
-            | null;
-
-          if (!registerResponse.ok || !registerResult?.file) {
-            throw new Error(registerResult?.error || getRegisterErrorMessage(registerResponse.status));
-          }
-
-          uploadedFileId = registerResult.file.id;
-        } else {
-          const response = await new Promise<Response>((resolve, reject) => {
-            const xhr = new XMLHttpRequest();
-            const formData = new FormData();
-
-            formData.append("file", nextFile);
-            xhr.open("POST", "/api/teacher/uploads");
-
-            xhr.upload.onprogress = (event) => {
-              if (!event.lengthComputable) {
-                return;
-              }
-
-              updateItems((current) =>
-                current.map((item) =>
-                  item.id === homeworkNumberId
-                    ? {
-                        ...item,
-                        uploadStatus: "uploading",
-                        progress: Math.round((event.loaded / event.total) * 100),
-                        error: null
-                      }
-                    : item
-                )
-              );
-            };
-
-            xhr.onload = () => {
-              resolve(
-                new Response(xhr.responseText, {
-                  status: xhr.status,
-                  statusText: xhr.statusText
-                })
-              );
-            };
-
-            xhr.onerror = () => {
-              reject(new Error("Сеть прервалась во время загрузки изображения."));
-            };
-
-            xhr.send(formData);
-          });
-
-          const localResult = (await response.json().catch(() => null)) as
-            | {
-                file?: AnswerFile;
-                error?: string;
-              }
-            | null;
-
-          if (!response.ok || !localResult?.file) {
-            throw new Error(localResult?.error || getRegisterErrorMessage(response.status));
-          }
-
-          uploadedFileId = localResult.file.id;
-        }
-
-        const answerFile = await attachUploadedAnswer(homeworkNumberId, uploadedFileId);
+        const answerLatex = await attachUploadedAnswer(homeworkNumberId, nextAnswerLatex);
 
         updateItems((current) =>
           current.map((item) =>
             item.id === homeworkNumberId
               ? {
-                  ...item,
-                  answerFile,
-                  uploadStatus: "idle",
-                  progress: 0,
-                  error: null
-                }
-              : item
+                ...item,
+                savedAnswerLatex: answerLatex,
+                draftAnswerLatex: answerLatex,
+                isSaving: false,
+                error: null
+              }
+            : item
           )
         );
       } catch (error) {
-        console.error("Failed to upload answer for homework number.", { topicId, homeworkNumberId, error });
+        console.error("Failed to save LaTeX answer for homework number.", { topicId, homeworkNumberId, error });
 
         updateItems((current) =>
           current.map((item) =>
             item.id === homeworkNumberId
               ? {
-                  ...item,
-                  uploadStatus: "error",
-                  progress: 0,
-                  error: error instanceof Error ? error.message : "Не удалось загрузить ответ."
-                }
-              : item
+                ...item,
+                isSaving: false,
+                error: error instanceof Error ? error.message : "Не удалось сохранить ответ."
+              }
+            : item
           )
         );
       }
     },
-    [attachUploadedAnswer, blobAccess, topicId, updateItems, uploadMode]
+    [attachUploadedAnswer, topicId, updateItems]
   );
 
   const removeAnswer = useCallback(
@@ -358,11 +200,12 @@ export function TopicAnswerManager({ uploadMode, blobAccess, topicId, numbers }:
           current.map((item) =>
             item.id === homeworkNumberId
               ? {
-                  ...item,
-                  answerFile: null,
-                  isDeleting: false,
-                  error: null
-                }
+                ...item,
+                savedAnswerLatex: null,
+                draftAnswerLatex: "",
+                isDeleting: false,
+                error: null
+              }
               : item
           )
         );
@@ -392,35 +235,53 @@ export function TopicAnswerManager({ uploadMode, blobAccess, topicId, numbers }:
         >
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
-              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Ответ к заданию</p>
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">LaTeX-ответ к заданию</p>
               <h3 className="font-display mt-2 text-2xl font-semibold text-slate-950">№ {item.number}</h3>
             </div>
             <Badge
-              className={cx(
-                "border-slate-200 bg-white text-slate-700",
-                item.answerFile && "border-emerald-200 bg-emerald-50 text-emerald-700"
-              )}
+              className={
+                item.savedAnswerLatex
+                  ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+                  : "border-slate-200 bg-white text-slate-700"
+              }
             >
-              {item.answerFile ? "Ответ загружен" : "Ответа пока нет"}
+              {item.savedAnswerLatex ? "Ответ сохранен" : "Ответа пока нет"}
             </Badge>
           </div>
 
           <div className="mt-4 space-y-4">
-            {item.answerFile ? (
-              <div className="rounded-[24px] border border-slate-200 bg-white p-3">
-                <div className="flex flex-wrap items-center gap-2">
-                  <Badge className="border-slate-200 bg-slate-50 text-slate-700">{item.answerFile.originalName}</Badge>
-                  <Badge className="border-slate-200 bg-slate-50 text-slate-700">{formatFileSize(item.answerFile.size)}</Badge>
-                </div>
-                <div className="mt-3 overflow-hidden rounded-[20px] border border-slate-200 bg-slate-50">
-                  <Image
-                    src={`/files/${item.answerFile.id}`}
-                    alt={`Ответ к номеру ${item.number}`}
-                    width={1200}
-                    height={900}
-                    unoptimized
-                    className="max-h-[280px] h-auto w-full object-contain"
-                  />
+            <label className="block space-y-2">
+              <span className="text-sm font-medium text-slate-700">Введите ответ в формате LaTeX</span>
+              <textarea
+                rows={7}
+                value={item.draftAnswerLatex}
+                onChange={(event) =>
+                  updateItems((current) =>
+                    current.map((currentItem) =>
+                      currentItem.id === item.id
+                        ? {
+                            ...currentItem,
+                            draftAnswerLatex: event.target.value,
+                            error: null
+                          }
+                        : currentItem
+                    )
+                  )
+                }
+                placeholder={"Например:\n$$x = \\frac{-b \\pm \\sqrt{D}}{2a}$$\n\nИли с текстом:\nПодставим в формулу: $D=b^2-4ac$"}
+                className="min-h-[180px] w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-950 outline-none transition focus:border-brand-400 focus:bg-white"
+                disabled={item.isSaving || item.isDeleting}
+              />
+              <p className="text-sm leading-6 text-slate-500">
+                Поддерживаются inline-формулы через <code>$...$</code> и отдельные блоки через <code>$$...$$</code>.
+              </p>
+            </label>
+
+            {item.draftAnswerLatex.trim() ? (
+              <div className="rounded-[24px] border border-slate-200 bg-white p-4">
+                <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Предпросмотр</p>
+                <div className="mt-3">
+                  <LatexAnswerPreview value={item.draftAnswerLatex} />
                 </div>
               </div>
             ) : (
@@ -429,49 +290,33 @@ export function TopicAnswerManager({ uploadMode, blobAccess, topicId, numbers }:
               </div>
             )}
 
-            <label className="block space-y-2">
-              <span className="text-sm font-medium text-slate-700">Загрузить или заменить ответ</span>
-              <input
-                type="file"
-                accept=".png,.jpg,.jpeg,image/png,image/jpeg"
-                onChange={(event) => {
-                  void handleFileSelect(item.id, event.target.files?.[0] ?? null);
-                  event.currentTarget.value = "";
-                }}
-                disabled={item.uploadStatus === "uploading" || item.isDeleting}
-                className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700"
-              />
-              <p className="text-sm leading-6 text-slate-500">
-                Поддерживаются только изображения PNG и JPG, чтобы ученик видел ответ как spoiler.
-              </p>
-            </label>
-
-            {item.uploadStatus === "uploading" ? (
-              <div className="space-y-2 rounded-2xl border border-brand-100 bg-brand-50/70 px-4 py-4">
-                <div className="flex items-center justify-between text-sm text-slate-700">
-                  <span>Загрузка ответа...</span>
-                  <span className="font-semibold">{item.progress}%</span>
-                </div>
-                <ProgressBar value={item.progress} />
-              </div>
-            ) : null}
-
             {item.error ? (
               <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-4 text-sm font-medium text-rose-900">
                 {item.error}
               </div>
             ) : null}
 
-            {item.answerFile ? (
+            <div className="flex flex-wrap gap-3">
               <button
                 type="button"
-                onClick={() => void removeAnswer(item.id)}
-                disabled={item.isDeleting || item.uploadStatus === "uploading"}
-                className="rounded-full border border-rose-200 bg-rose-50 px-4 py-2 text-sm font-semibold text-rose-700 transition hover:bg-rose-100 disabled:cursor-not-allowed disabled:opacity-60"
+                onClick={() => void saveAnswer(item.id)}
+                disabled={item.isSaving || item.isDeleting || !item.draftAnswerLatex.trim()}
+                className="rounded-full bg-slate-950 px-4 py-2 text-sm font-semibold text-white transition hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-60"
               >
-                {item.isDeleting ? "Удаляем..." : "Удалить ответ"}
+                {item.isSaving ? "Сохраняем..." : "Сохранить ответ"}
               </button>
-            ) : null}
+
+              {item.savedAnswerLatex ? (
+                <button
+                  type="button"
+                  onClick={() => void removeAnswer(item.id)}
+                  disabled={item.isDeleting || item.isSaving}
+                  className="rounded-full border border-rose-200 bg-rose-50 px-4 py-2 text-sm font-semibold text-rose-700 transition hover:bg-rose-100 disabled:cursor-not-allowed disabled:opacity-60"
+                >
+                  {item.isDeleting ? "Удаляем..." : "Удалить ответ"}
+                </button>
+              ) : null}
+            </div>
           </div>
         </article>
       ))}

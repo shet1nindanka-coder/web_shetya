@@ -30,11 +30,7 @@ const accountNotices = {
   },
   infoInvalid: {
     tone: "error",
-    message: "Укажите имя и логин для входа."
-  },
-  infoExists: {
-    tone: "error",
-    message: "Такой логин уже используется другим пользователем."
+    message: "Укажите имя для профиля."
   },
   infoSave: {
     tone: "error",
@@ -74,21 +70,19 @@ export function resolveAccountNotice(searchParams: ResolvedSearchParams) {
       ? "infoUpdated"
       : infoError === "invalid"
         ? "infoInvalid"
-        : infoError === "exists"
-          ? "infoExists"
-          : infoError === "save"
-            ? "infoSave"
-            : passwordUpdated === "1"
-              ? "passwordUpdated"
-              : passwordError === "invalid"
-                ? "passwordInvalid"
-                : passwordError === "mismatch"
-                  ? "passwordMismatch"
-                  : passwordError === "current"
-                    ? "passwordCurrent"
-                    : passwordError === "save"
-                      ? "passwordSave"
-                      : null;
+        : infoError === "save"
+          ? "infoSave"
+          : passwordUpdated === "1"
+            ? "passwordUpdated"
+            : passwordError === "invalid"
+              ? "passwordInvalid"
+              : passwordError === "mismatch"
+                ? "passwordMismatch"
+                : passwordError === "current"
+                  ? "passwordCurrent"
+                  : passwordError === "save"
+                    ? "passwordSave"
+                    : null;
 
   return noticeKey ? accountNotices[noticeKey] : null;
 }
@@ -118,8 +112,8 @@ export function AccountSettingsView({ user, notice }: AccountSettingsViewProps) 
             Управляйте своими данными и безопасностью аккаунта
           </h1>
           <p className="mt-4 max-w-2xl text-base leading-7 text-slate-300">
-            Здесь можно обновить имя и логин для входа, а также сменить пароль. Изменения сразу отразятся в вашем
-            кабинете.
+            Здесь можно обновить имя профиля и сменить пароль. Логин для входа остается фиксированным и не меняется
+            из кабинета.
           </p>
           <div className="mt-6 flex flex-wrap gap-2">
             <Badge className="border-white/15 bg-white/10 text-slate-100">{roleLabel}</Badge>
@@ -155,7 +149,7 @@ export function AccountSettingsView({ user, notice }: AccountSettingsViewProps) 
 
       <SectionCard
         title="Личная информация"
-        description="Обновите имя и логин для входа. Логин должен быть уникальным в системе."
+        description="Здесь можно изменить только имя профиля. Логин для входа остается неизменным."
       >
         <form action={updateProfileInfoAction} className="grid gap-4 lg:grid-cols-2">
           <label className="block space-y-2">
@@ -170,17 +164,10 @@ export function AccountSettingsView({ user, notice }: AccountSettingsViewProps) 
             />
           </label>
 
-          <label className="block space-y-2">
+          <div className="space-y-2">
             <span className="text-sm font-medium text-slate-700">Логин для входа</span>
-            <input
-              type="text"
-              name="login"
-              defaultValue={user.email}
-              placeholder="Например, teacher@example.com"
-              className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-950 outline-none transition focus:border-brand-400 focus:bg-white"
-              required
-            />
-          </label>
+            <div className="rounded-2xl border border-slate-200 bg-slate-100 px-4 py-3 text-slate-600">{user.email}</div>
+          </div>
 
           <div className="lg:col-span-2 flex flex-wrap items-center gap-3">
             <button

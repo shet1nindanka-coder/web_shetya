@@ -4,7 +4,6 @@ import { NextResponse } from "next/server";
 import { tryGetCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { deleteStoredFileRecordIfUnused } from "@/lib/stored-files";
-import { isImageMime } from "@/lib/utils";
 
 export const runtime = "nodejs";
 
@@ -27,56 +26,36 @@ export async function POST(request: Request) {
   const body = (await request.json().catch(() => null)) as
     | {
         homeworkNumberId?: string;
-        fileId?: string;
+        answerLatex?: string;
       }
     | null;
 
   const homeworkNumberId = String(body?.homeworkNumberId ?? "").trim();
-  const fileId = String(body?.fileId ?? "").trim();
+  const answerLatex = String(body?.answerLatex ?? "").trim();
 
-  if (!homeworkNumberId || !fileId) {
-    return NextResponse.json({ error: "Номер и файл ответа обязательны." }, { status: 400 });
+  if (!homeworkNumberId || !answerLatex) {
+    return NextResponse.json({ error: "Введите LaTeX-ответ для номера." }, { status: 400 });
   }
 
-  const [homeworkNumber, storedFile] = await Promise.all([
-    prisma.topicHomeworkNumber.findUnique({
-      where: { id: homeworkNumberId },
-      select: {
-        id: true,
-        topicId: true,
-        answerFileId: true
-      }
-    }),
-    prisma.storedFile.findUnique({
-      where: { id: fileId },
-      select: {
-        id: true,
-        originalName: true,
-        mimeType: true,
-        size: true,
-        uploadedAt: true,
-        uploadedById: true
-      }
-    })
-  ]);
+  const homeworkNumber = await prisma.topicHomeworkNumber.findUnique({
+    where: { id: homeworkNumberId },
+    select: {
+      id: true,
+      topicId: true,
+      answerFileId: true
+    }
+  });
 
   if (!homeworkNumber) {
     return NextResponse.json({ error: "Номер не найден." }, { status: 404 });
-  }
-
-  if (!storedFile || storedFile.uploadedById !== user.id) {
-    return NextResponse.json({ error: "Файл ответа не найден." }, { status: 400 });
-  }
-
-  if (!isImageMime(storedFile.mimeType)) {
-    return NextResponse.json({ error: "Для ответа можно использовать только PNG или JPG." }, { status: 400 });
   }
 
   try {
     await prisma.topicHomeworkNumber.update({
       where: { id: homeworkNumberId },
       data: {
-        answerFileId: fileId
+        answerLatex,
+        answerFileId: null
       }
     });
   } catch (error) {
@@ -84,20 +63,14 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Не удалось сохранить ответ к номеру." }, { status: 500 });
   }
 
-  if (homeworkNumber.answerFileId && homeworkNumber.answerFileId !== fileId) {
+  if (homeworkNumber.answerFileId) {
     await deleteStoredFileRecordIfUnused(homeworkNumber.answerFileId);
   }
 
   revalidateTopicRoutes(homeworkNumber.topicId);
 
   return NextResponse.json({
-    answerFile: {
-      id: storedFile.id,
-      originalName: storedFile.originalName,
-      mimeType: storedFile.mimeType,
-      size: storedFile.size,
-      uploadedAt: storedFile.uploadedAt.toISOString()
-    }
+    answerLatex
   });
 }
 
@@ -125,7 +98,8 @@ export async function DELETE(request: Request) {
     select: {
       id: true,
       topicId: true,
-      answerFileId: true
+      answerFileId: true,
+      answerLatex: true
     }
   });
 
@@ -133,7 +107,7 @@ export async function DELETE(request: Request) {
     return NextResponse.json({ error: "Номер не найден." }, { status: 404 });
   }
 
-  if (!homeworkNumber.answerFileId) {
+  if (!homeworkNumber.answerFileId && !homeworkNumber.answerLatex) {
     return NextResponse.json({ success: true });
   }
 
@@ -141,6 +115,7 @@ export async function DELETE(request: Request) {
     await prisma.topicHomeworkNumber.update({
       where: { id: homeworkNumberId },
       data: {
+        answerLatex: null,
         answerFileId: null
       }
     });
