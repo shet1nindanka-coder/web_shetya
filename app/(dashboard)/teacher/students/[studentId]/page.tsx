@@ -29,7 +29,7 @@ export default async function TeacherStudentPage({ params }: TeacherStudentPageP
           </Link>
           <h1 className="font-display mt-3 text-4xl font-semibold text-slate-950">{data.student.name}</h1>
           <p className="mt-3 max-w-3xl text-base leading-7 text-slate-600">
-            Логин: {data.student.email}. Здесь собран прогресс ученика по всем темам, включая цвета по каждому номеру.
+            Логин: {data.student.email}. Здесь собран прогресс ученика по всем темам, включая цвета по каждому номеру и личные заметки.
           </p>
           <div className="mt-5 flex flex-wrap gap-2">
             <Badge className="border-slate-200 bg-white text-slate-700">Тем {data.stats.totalTopics}</Badge>
@@ -83,8 +83,13 @@ export default async function TeacherStudentPage({ params }: TeacherStudentPageP
 
       <SectionCard
         title="Темы ученика"
-        description="По каждой теме видно, сколько заданий решено, а ниже показаны статусы всех номеров."
+        description="По каждой теме видно, сколько заданий решено, а ниже показаны статусы всех номеров и заметки ученика."
       >
+        {!data.notesEnabled ? (
+          <div className="rounded-[24px] border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+            Заметки ученика появятся здесь после обновления базы данных до актуальной версии.
+          </div>
+        ) : null}
         {data.topics.length === 0 ? (
           <div className="rounded-[28px] border border-dashed border-slate-200 bg-slate-50/60 px-5 py-10 text-center">
             <p className="font-display text-2xl font-semibold text-slate-950">Темы пока не добавлены</p>
@@ -140,6 +145,14 @@ export default async function TeacherStudentPage({ params }: TeacherStudentPageP
                         <p className="text-lg font-semibold text-slate-950">№ {number.number}</p>
                         <HomeworkStatusBadge status={number.studentStatus?.status ?? null} />
                       </div>
+                      {number.studentStatus?.note ? (
+                        <div className="mt-3 rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2">
+                          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">
+                            Заметка ученика
+                          </p>
+                          <p className="mt-2 text-sm leading-6 text-slate-700">{number.studentStatus.note}</p>
+                        </div>
+                      ) : null}
                     </div>
                   ))}
                 </div>

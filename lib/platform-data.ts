@@ -286,7 +286,7 @@ export async function getTeacherTopicsOverview(): Promise<
 }
 
 async function getTeacherTopicDetailUncached(topicId: string) {
-  const [topic, students] = await Promise.all([
+  const buildTeacherTopicDetailQuery = (includeNote: boolean) =>
     prisma.topic.findUniqueOrThrow({
       where: { id: topicId },
       include: {
@@ -296,21 +296,51 @@ async function getTeacherTopicDetailUncached(topicId: string) {
           orderBy: { displayOrder: "asc" },
           include: {
             answerFile: true,
-            statuses: true
+            statuses: {
+              select: includeNote
+                ? {
+                    id: true,
+                    studentId: true,
+                    status: true,
+                    note: true,
+                    updatedAt: true
+                  }
+                : {
+                    id: true,
+                    studentId: true,
+                    status: true,
+                    updatedAt: true
+                  }
+            }
           }
         }
       }
-    }),
-    prisma.user.findMany({
-      where: { role: UserRole.STUDENT },
-      orderBy: { name: "asc" },
-      select: {
-        id: true,
-        name: true,
-        email: true
-      }
-    })
-  ]);
+    });
+
+  const studentsPromise = prisma.user.findMany({
+    where: { role: UserRole.STUDENT },
+    orderBy: { name: "asc" },
+    select: {
+      id: true,
+      name: true,
+      email: true
+    }
+  });
+
+  let notesEnabled = true;
+  let topic: Awaited<ReturnType<typeof buildTeacherTopicDetailQuery>>;
+  const students = await studentsPromise;
+
+  try {
+    topic = await buildTeacherTopicDetailQuery(true);
+  } catch (error) {
+    if (!isMissingStudentNotesColumnError(error)) {
+      throw error;
+    }
+
+    notesEnabled = false;
+    topic = await buildTeacherTopicDetailQuery(false);
+  }
 
   const statusLookup = new Map(
     topic.homeworkNumbers.flatMap((number) =>
@@ -326,6 +356,7 @@ async function getTeacherTopicDetailUncached(topicId: string) {
         id: number.id,
         number: number.number,
         status: status?.status ?? null,
+        note: notesEnabled ? (status as { note?: string | null } | null)?.note?.trim() ?? "" : "",
         updatedAt: status?.updatedAt ?? null
       };
     });
@@ -344,6 +375,7 @@ async function getTeacherTopicDetailUncached(topicId: string) {
 
   return {
     topic,
+    notesEnabled,
     students: studentProgress,
     stats: {
       totalStudents: students.length,
@@ -368,19 +400,7 @@ export async function getTeacherTopicDetail(
 }
 
 async function getTeacherStudentDetailUncached(studentId: string) {
-  const [student, topics] = await Promise.all([
-    prisma.user.findFirstOrThrow({
-      where: {
-        id: studentId,
-        role: UserRole.STUDENT
-      },
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        createdAt: true
-      }
-    }),
+  const buildTeacherStudentTopicsQuery = (includeNote: boolean) =>
     prisma.topic.findMany({
       include: {
         theoryFile: true,
@@ -390,23 +410,62 @@ async function getTeacherStudentDetailUncached(studentId: string) {
           include: {
             statuses: {
               where: { studentId },
-              select: {
-                id: true,
-                status: true,
-                updatedAt: true
-              }
+              select: includeNote
+                ? {
+                    id: true,
+                    status: true,
+                    note: true,
+                    updatedAt: true
+                  }
+                : {
+                    id: true,
+                    status: true,
+                    updatedAt: true
+                  }
             }
           }
         }
       },
       orderBy: [{ displayOrder: "asc" }, { createdAt: "asc" }]
-    })
-  ]);
+    });
+
+  const studentPromise = prisma.user.findFirstOrThrow({
+    where: {
+      id: studentId,
+      role: UserRole.STUDENT
+    },
+    select: {
+      id: true,
+      name: true,
+      email: true,
+      createdAt: true
+    }
+  });
+
+  let notesEnabled = true;
+  let topics: Awaited<ReturnType<typeof buildTeacherStudentTopicsQuery>>;
+  const student = await studentPromise;
+
+  try {
+    topics = await buildTeacherStudentTopicsQuery(true);
+  } catch (error) {
+    if (!isMissingStudentNotesColumnError(error)) {
+      throw error;
+    }
+
+    notesEnabled = false;
+    topics = await buildTeacherStudentTopicsQuery(false);
+  }
 
   const topicCards = topics.map((topic) => {
     const numbers = topic.homeworkNumbers.map((number) => ({
       ...number,
-      studentStatus: number.statuses[0] ?? null
+      studentStatus: number.statuses[0]
+        ? {
+            ...number.statuses[0],
+            note: notesEnabled ? (number.statuses[0] as { note?: string | null }).note ?? "" : ""
+          }
+        : null
     }));
     const summary = buildProgress(
       numbers.map((number) => number.studentStatus?.status ?? null),
@@ -432,6 +491,7 @@ async function getTeacherStudentDetailUncached(studentId: string) {
 
   return {
     student,
+    notesEnabled,
     topics: topicCards,
     stats: {
       totalTopics: topicCards.length,

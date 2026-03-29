@@ -169,8 +169,13 @@ export default async function TeacherTopicPage({ params }: TeacherTopicPageProps
 
       <SectionCard
         title="Прогресс учеников по теме"
-        description="Для каждого ученика видны статусы всех номеров и общий прогресс по этой теме."
+        description="Для каждого ученика видны статусы всех номеров, заметки к задачам и общий прогресс по этой теме."
       >
+        {!data.notesEnabled ? (
+          <div className="rounded-[24px] border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+            Заметки учеников пока недоступны в этой среде. После обновления базы данных они автоматически появятся в карточках номеров.
+          </div>
+        ) : null}
         {data.students.length === 0 ? (
           <div className="rounded-[28px] border border-dashed border-slate-200 bg-slate-50/60 px-5 py-10 text-center">
             <p className="font-display text-2xl font-semibold text-slate-950">Учеников пока нет</p>
@@ -226,6 +231,14 @@ export default async function TeacherTopicPage({ params }: TeacherTopicPageProps
                       <p className="text-lg font-semibold text-slate-950">№ {number.number}</p>
                       <HomeworkStatusBadge status={number.status} />
                     </div>
+                    {number.note ? (
+                      <div className="mt-3 rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2">
+                        <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">
+                          Заметка ученика
+                        </p>
+                        <p className="mt-2 text-sm leading-6 text-slate-700">{number.note}</p>
+                      </div>
+                    ) : null}
                   </div>
                 ))}
               </div>
