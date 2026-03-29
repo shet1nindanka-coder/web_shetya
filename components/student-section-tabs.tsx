@@ -1,7 +1,8 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { useEffect } from "react";
+import { usePathname, useRouter } from "next/navigation";
 import { cx } from "@/lib/utils";
 
 const items = [
@@ -25,6 +26,13 @@ const items = [
 
 export function StudentSectionTabs() {
   const pathname = usePathname();
+  const router = useRouter();
+
+  useEffect(() => {
+    for (const item of items) {
+      router.prefetch(item.href);
+    }
+  }, [router]);
 
   return (
     <nav className="ui-fade-slide mb-8 flex flex-wrap gap-2 rounded-[28px] border border-white/70 bg-white/85 p-3 shadow-sm backdrop-blur">
@@ -35,6 +43,9 @@ export function StudentSectionTabs() {
           <Link
             key={item.href}
             href={item.href}
+            prefetch
+            onMouseEnter={() => router.prefetch(item.href)}
+            onFocus={() => router.prefetch(item.href)}
             className={cx(
               "ui-pressable rounded-full border px-4 py-2 text-sm font-medium transition",
               isActive
