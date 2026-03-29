@@ -195,10 +195,7 @@ const StudentNumberCard = memo(function StudentNumberCard({
             <h3 className="font-display text-2xl font-semibold text-slate-950">№ {number.number}</h3>
             <HomeworkStatusBadge status={number.status} />
             {homeworkGroup ? (
-              <Badge className="border-brand-200 bg-brand-50 text-brand-700">
-                {homeworkGroup.label}
-                {homeworkGroup.deadlineLabel ? ` · ${homeworkGroup.deadlineLabel}` : ""}
-              </Badge>
+              <Badge className="border-brand-200 bg-brand-50 text-brand-700">{homeworkGroup.label}</Badge>
             ) : null}
             {isSaving ? <span className="text-xs font-medium text-slate-500">Сохраняем...</span> : null}
           </div>
@@ -269,15 +266,6 @@ const StudentNumberCard = memo(function StudentNumberCard({
               {notePreview}
             </div>
           ) : null}
-        </div>
-      ) : null}
-
-      {number.deadlineAt ? (
-        <div className="mt-4 rounded-[24px] border border-brand-100 bg-brand-50/60 px-4 py-4">
-          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-brand-600">Дедлайн</p>
-          <p className="mt-2 text-sm leading-6 text-slate-700">
-            Сдать до <span className="font-semibold text-slate-950">{formatDeadlineLabel(number.deadlineAt)}</span>
-          </p>
         </div>
       ) : null}
 
@@ -1004,7 +992,7 @@ export function StudentTopicStatusBoard({
         </div>
         {deadlinesEnabled && numbers.some((number) => number.deadlineAt) ? (
           <p className="mt-4 text-sm leading-6 text-slate-600">
-            Дедлайны по отдельным номерам отображаются прямо внутри карточек ниже.
+            Дедлайны по выданным заданиям указаны в названиях фильтров ДЗ выше.
           </p>
         ) : null}
       </SectionCard>
