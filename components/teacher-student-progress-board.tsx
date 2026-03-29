@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { HomeworkNumberStatus } from "@prisma/client";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Badge } from "@/components/badge";
 import { HomeworkStatusBadge } from "@/components/homework-status-badge";
 import { ProgressBar } from "@/components/progress-bar";
@@ -33,6 +33,19 @@ type TeacherStudentProgressBoardProps = {
 };
 
 type TopicState = TeacherStudentProgressBoardProps["initialTopics"][number];
+
+type TeacherStudentNumberState = TopicState["numbers"][number] & {
+  selectedForBulk: boolean;
+  deadlineInputValue: string;
+  savedDeadlineAt: string | null;
+  isSavingDeadline: boolean;
+};
+
+type TeacherStudentTopicState = Omit<TopicState, "numbers"> & {
+  bulkDeadlineInputValue: string;
+  isSavingBulk: boolean;
+  numbers: TeacherStudentNumberState[];
+};
 
 function formatDeadlineForInput(value: string | null) {
   if (!value) {
@@ -114,13 +127,243 @@ function buildHomeworkGroups(
     }));
 }
 
+type TeacherNumberCardProps = {
+  topicId: string;
+  number: TeacherStudentNumberState;
+  deadlinesEnabled: boolean;
+  homeworkLabel: string | null;
+  onToggleBulkSelection: (topicId: string, homeworkNumberId: string) => void;
+  onUpdateDeadlineValue: (topicId: string, homeworkNumberId: string, value: string) => void;
+  onFlushDeadline: (topicId: string, homeworkNumberId: string) => void;
+};
+
+const TeacherNumberCard = memo(function TeacherNumberCard({
+  topicId,
+  number,
+  deadlinesEnabled,
+  homeworkLabel,
+  onToggleBulkSelection,
+  onUpdateDeadlineValue,
+  onFlushDeadline
+}: TeacherNumberCardProps) {
+  const deadlineLabel = formatDeadlineLabel(number.studentStatus?.deadlineAt ?? null);
+
+  return (
+    <div className="teacher-number-card rounded-[24px] border border-white bg-white px-4 py-4">
+      <div className="flex items-center justify-between gap-3">
+        <label className="inline-flex items-center gap-2 text-xs font-semibold text-slate-500">
+          <input
+            type="checkbox"
+            checked={number.selectedForBulk}
+            onChange={() => onToggleBulkSelection(topicId, number.id)}
+            className="h-4 w-4 rounded border-slate-300"
+          />
+          Выбрать
+        </label>
+        <HomeworkStatusBadge status={number.studentStatus?.status ?? null} />
+      </div>
+      <div className="mt-3 flex items-center justify-between gap-3">
+        <p className="text-lg font-semibold text-slate-950">№ {number.number}</p>
+        {homeworkLabel ? <Badge className="border-brand-200 bg-brand-50 text-brand-700">{homeworkLabel}</Badge> : null}
+      </div>
+      {number.studentStatus?.note ? (
+        <div className="mt-3 rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">Заметка ученика</p>
+          <p className="mt-2 text-sm leading-6 text-slate-700">{number.studentStatus.note}</p>
+        </div>
+      ) : null}
+      <div className="mt-3 rounded-2xl border border-slate-200 bg-slate-50 px-3 py-3">
+        <div className="flex items-center justify-between gap-3">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">Дедлайн</p>
+          {number.isSavingDeadline ? <span className="text-xs text-slate-400">Сохраняем...</span> : null}
+        </div>
+        <input
+          type="datetime-local"
+          value={number.deadlineInputValue}
+          disabled={!deadlinesEnabled}
+          onChange={(event) => onUpdateDeadlineValue(topicId, number.id, event.target.value)}
+          onBlur={() => onFlushDeadline(topicId, number.id)}
+          className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 outline-none transition focus:border-brand-400"
+        />
+        <p className="mt-2 text-xs leading-5 text-slate-500">
+          {deadlineLabel ? `Назначен до ${deadlineLabel}` : "Дедлайн пока не назначен."}
+        </p>
+      </div>
+    </div>
+  );
+}, (previousProps, nextProps) =>
+  previousProps.topicId === nextProps.topicId &&
+  previousProps.deadlinesEnabled === nextProps.deadlinesEnabled &&
+  previousProps.homeworkLabel === nextProps.homeworkLabel &&
+  previousProps.number === nextProps.number
+);
+
+type TeacherTopicCardProps = {
+  topic: TeacherStudentTopicState;
+  deadlinesEnabled: boolean;
+  onApplyBulkDeadline: (topicId: string) => void;
+  onClearBulkSelection: (topicId: string) => void;
+  onToggleBulkSelection: (topicId: string, homeworkNumberId: string) => void;
+  onUpdateBulkDeadlineValue: (topicId: string, value: string) => void;
+  onUpdateDeadlineValue: (topicId: string, homeworkNumberId: string, value: string) => void;
+  onFlushDeadline: (topicId: string, homeworkNumberId: string) => void;
+};
+
+const TeacherTopicCard = memo(function TeacherTopicCard({
+  topic,
+  deadlinesEnabled,
+  onApplyBulkDeadline,
+  onClearBulkSelection,
+  onToggleBulkSelection,
+  onUpdateBulkDeadlineValue,
+  onUpdateDeadlineValue,
+  onFlushDeadline
+}: TeacherTopicCardProps) {
+  const isCompleted = topic.totalNumbers > 0 && topic.solvedCount === topic.totalNumbers;
+  const selectedCount = topic.numbers.filter((number) => number.selectedForBulk).length;
+  const homeworkGroups = useMemo(() => buildHomeworkGroups(topic.numbers), [topic.numbers]);
+  const homeworkLabelByDeadline = useMemo(
+    () => new Map(homeworkGroups.map((group) => [group.id, group.label])),
+    [homeworkGroups]
+  );
+
+  const numberCards = (
+    <div className="teacher-number-grid mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+      {topic.numbers.map((number) => (
+        <TeacherNumberCard
+          key={number.id}
+          topicId={topic.id}
+          number={number}
+          deadlinesEnabled={deadlinesEnabled}
+          homeworkLabel={number.studentStatus?.deadlineAt ? (homeworkLabelByDeadline.get(number.studentStatus.deadlineAt) ?? "ДЗ") : null}
+          onToggleBulkSelection={onToggleBulkSelection}
+          onUpdateDeadlineValue={onUpdateDeadlineValue}
+          onFlushDeadline={onFlushDeadline}
+        />
+      ))}
+    </div>
+  );
+
+  return (
+    <article className="teacher-topic-card rounded-[28px] border border-slate-200 bg-slate-50/80 p-5">
+      <div className="flex flex-col gap-5 xl:flex-row xl:items-start xl:justify-between">
+        <div className="space-y-3">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Номеров: {topic.totalNumbers}</p>
+            <h2 className="font-display mt-2 text-2xl font-semibold text-slate-950">{topic.title}</h2>
+          </div>
+          <p className="max-w-3xl text-sm leading-6 text-slate-600">{topic.description}</p>
+          <div className="flex flex-wrap gap-2">
+            <Badge className="border-slate-200 bg-white text-slate-700">Решено {topic.solvedCount}/{topic.totalNumbers}</Badge>
+            <Badge className="border-slate-200 bg-white text-slate-700">Отмечено {topic.markedCount}/{topic.totalNumbers}</Badge>
+            <Badge className="border-slate-200 bg-white text-slate-700">Красные {topic.redCount}</Badge>
+            {homeworkGroups.length > 0 ? (
+              <Badge className="border-slate-200 bg-white text-slate-700">Выдано ДЗ {homeworkGroups.length}</Badge>
+            ) : null}
+            {isCompleted ? <Badge className="border-emerald-200 bg-emerald-50 text-emerald-700">Тема завершена</Badge> : null}
+          </div>
+        </div>
+
+        <div className="w-full max-w-md space-y-4">
+          <div className="space-y-2 rounded-[24px] border border-white bg-white p-4">
+            <div className="flex items-center justify-between text-sm text-slate-600">
+              <span>Решено по теме</span>
+              <span className="font-semibold text-slate-950">{topic.solvedPercent}%</span>
+            </div>
+            <ProgressBar value={topic.solvedPercent} />
+          </div>
+          <div className="flex flex-wrap gap-3">
+            <Link
+              href={`/teacher/topics/${topic.id}`}
+              className="ui-pressable inline-flex rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-brand-300 hover:text-brand-700"
+            >
+              Открыть тему
+            </Link>
+          </div>
+        </div>
+      </div>
+
+      <div className="mt-5 rounded-[24px] border border-slate-200 bg-white px-4 py-4">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">Выдать ДЗ</p>
+            <p className="mt-2 text-sm leading-6 text-slate-600">Выберите несколько номеров ниже и выдайте их как одно ДЗ с общим дедлайном.</p>
+          </div>
+          <Badge className="border-slate-200 bg-slate-50 text-slate-700">Выбрано {selectedCount}</Badge>
+        </div>
+
+        <div className="mt-4 flex flex-col gap-3 lg:flex-row lg:items-center">
+          <input
+            type="datetime-local"
+            value={topic.bulkDeadlineInputValue}
+            disabled={!deadlinesEnabled || topic.isSavingBulk}
+            onChange={(event) => onUpdateBulkDeadlineValue(topic.id, event.target.value)}
+            className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-3 py-3 text-sm text-slate-700 outline-none transition focus:border-brand-400 focus:bg-white lg:max-w-xs"
+          />
+          <button
+            type="button"
+            disabled={!deadlinesEnabled || !selectedCount || topic.isSavingBulk}
+            onClick={() => onApplyBulkDeadline(topic.id)}
+            className="ui-pressable rounded-full bg-slate-950 px-5 py-3 text-sm font-semibold text-white transition hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {topic.isSavingBulk ? "Выдаем..." : "Выдать ДЗ"}
+          </button>
+          <button
+            type="button"
+            disabled={!selectedCount || topic.isSavingBulk}
+            onClick={() => onClearBulkSelection(topic.id)}
+            className="ui-pressable rounded-full border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-700 transition hover:border-brand-300 hover:text-brand-700 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            Снять выбор
+          </button>
+        </div>
+
+        {homeworkGroups.length > 0 ? (
+          <div className="mt-4 rounded-[20px] border border-slate-200 bg-slate-50/70 px-3 py-3">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">Выданные ДЗ</p>
+            <div className="mt-3 flex flex-wrap gap-2">
+              {homeworkGroups.map((group) => (
+                <Badge key={group.id} className="border-slate-200 bg-white text-slate-700">
+                  {group.label} · {group.count}
+                  {group.deadlineLabel ? ` · ${group.deadlineLabel}` : ""}
+                </Badge>
+              ))}
+            </div>
+          </div>
+        ) : null}
+      </div>
+
+      {isCompleted ? (
+        <details className="mt-5 rounded-[24px] border border-emerald-200 bg-emerald-50/70">
+          <summary className="ui-pressable flex cursor-pointer list-none items-center justify-between gap-4 px-4 py-4 [&::-webkit-details-marker]:hidden">
+            <div>
+              <p className="text-sm font-semibold text-emerald-900">Тема полностью решена</p>
+              <p className="mt-1 text-sm leading-6 text-emerald-800">
+                Все номера уже отмечены зеленым или желтым. Подробности можно открыть при необходимости.
+              </p>
+            </div>
+            <span className="rounded-full border border-emerald-200 bg-white px-4 py-2 text-sm font-semibold text-emerald-800">
+              Показать номера
+            </span>
+          </summary>
+          <div className="border-t border-emerald-100 px-4 py-4">{numberCards}</div>
+        </details>
+      ) : (
+        numberCards
+      )}
+    </article>
+  );
+}, (previousProps, nextProps) =>
+  previousProps.deadlinesEnabled === nextProps.deadlinesEnabled &&
+  previousProps.topic === nextProps.topic
+);
+
 export function TeacherStudentProgressBoard({
   studentId,
-  notesEnabled,
   deadlinesEnabled,
   initialTopics
 }: TeacherStudentProgressBoardProps) {
-  const initialState = useMemo(
+  const initialState = useMemo<TeacherStudentTopicState[]>(
     () =>
       initialTopics.map((topic) => ({
         ...topic,
@@ -146,8 +389,8 @@ export function TeacherStudentProgressBoard({
   const updateTopicsState = useCallback(
     (
       updater: (
-        current: typeof initialState
-      ) => typeof initialState
+        current: TeacherStudentTopicState[]
+      ) => TeacherStudentTopicState[]
     ) => {
       setTopics((current) => {
         const next = updater(current);
@@ -609,249 +852,19 @@ export function TeacherStudentProgressBoard({
         </div>
       ) : null}
 
-      {topics.map((topic) => {
-        const isCompleted = topic.totalNumbers > 0 && topic.solvedCount === topic.totalNumbers;
-        const selectedCount = topic.numbers.filter((number) => number.selectedForBulk).length;
-        const homeworkGroups = buildHomeworkGroups(topic.numbers);
-        const homeworkLabelByDeadline = new Map(homeworkGroups.map((group) => [group.id, group]));
-
-        return (
-          <article key={topic.id} className="rounded-[28px] border border-slate-200 bg-slate-50/80 p-5">
-            <div className="flex flex-col gap-5 xl:flex-row xl:items-start xl:justify-between">
-              <div className="space-y-3">
-                <div>
-                  <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
-                    Номеров: {topic.totalNumbers}
-                  </p>
-                  <h2 className="font-display mt-2 text-2xl font-semibold text-slate-950">{topic.title}</h2>
-                </div>
-                <p className="max-w-3xl text-sm leading-6 text-slate-600">{topic.description}</p>
-                <div className="flex flex-wrap gap-2">
-                  <Badge className="border-slate-200 bg-white text-slate-700">
-                    Решено {topic.solvedCount}/{topic.totalNumbers}
-                  </Badge>
-                  <Badge className="border-slate-200 bg-white text-slate-700">
-                    Отмечено {topic.markedCount}/{topic.totalNumbers}
-                  </Badge>
-                  <Badge className="border-slate-200 bg-white text-slate-700">Красные {topic.redCount}</Badge>
-                  {homeworkGroups.length > 0 ? (
-                    <Badge className="border-slate-200 bg-white text-slate-700">Выдано ДЗ {homeworkGroups.length}</Badge>
-                  ) : null}
-                  {isCompleted ? (
-                    <Badge className="border-emerald-200 bg-emerald-50 text-emerald-700">Тема завершена</Badge>
-                  ) : null}
-                </div>
-              </div>
-
-              <div className="w-full max-w-md space-y-4">
-                <div className="space-y-2 rounded-[24px] border border-white bg-white p-4">
-                  <div className="flex items-center justify-between text-sm text-slate-600">
-                    <span>Решено по теме</span>
-                    <span className="font-semibold text-slate-950">{topic.solvedPercent}%</span>
-                  </div>
-                  <ProgressBar value={topic.solvedPercent} />
-                </div>
-                <div className="flex flex-wrap gap-3">
-                  <Link
-                    href={`/teacher/topics/${topic.id}`}
-                    className="ui-pressable inline-flex rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-brand-300 hover:text-brand-700"
-                  >
-                    Открыть тему
-                  </Link>
-                </div>
-              </div>
-            </div>
-
-            <div className="mt-5 rounded-[24px] border border-slate-200 bg-white px-4 py-4">
-              <div className="flex flex-wrap items-center justify-between gap-3">
-                <div>
-                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">Выдать ДЗ</p>
-                  <p className="mt-2 text-sm leading-6 text-slate-600">
-                    Выберите несколько номеров ниже и выдайте их как одно ДЗ с общим дедлайном.
-                  </p>
-                </div>
-                <Badge className="border-slate-200 bg-slate-50 text-slate-700">Выбрано {selectedCount}</Badge>
-              </div>
-
-              <div className="mt-4 flex flex-col gap-3 lg:flex-row lg:items-center">
-                <input
-                  type="datetime-local"
-                  value={topic.bulkDeadlineInputValue}
-                  disabled={!deadlinesEnabled || topic.isSavingBulk}
-                  onChange={(event) => updateBulkDeadlineValue(topic.id, event.target.value)}
-                  className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-3 py-3 text-sm text-slate-700 outline-none transition focus:border-brand-400 focus:bg-white lg:max-w-xs"
-                />
-                <button
-                  type="button"
-                  disabled={!deadlinesEnabled || !selectedCount || topic.isSavingBulk}
-                  onClick={() => void applyBulkDeadline(topic.id)}
-                  className="ui-pressable rounded-full bg-slate-950 px-5 py-3 text-sm font-semibold text-white transition hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-50"
-                >
-                  {topic.isSavingBulk ? "Выдаем..." : "Выдать ДЗ"}
-                </button>
-                <button
-                  type="button"
-                  disabled={!selectedCount || topic.isSavingBulk}
-                  onClick={() => clearBulkSelection(topic.id)}
-                  className="ui-pressable rounded-full border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-700 transition hover:border-brand-300 hover:text-brand-700 disabled:cursor-not-allowed disabled:opacity-50"
-                >
-                  Снять выбор
-                </button>
-              </div>
-
-              {homeworkGroups.length > 0 ? (
-                <div className="mt-4 rounded-[20px] border border-slate-200 bg-slate-50/70 px-3 py-3">
-                  <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">Выданные ДЗ</p>
-                  <div className="mt-3 flex flex-wrap gap-2">
-                    {homeworkGroups.map((group) => (
-                      <Badge key={group.id} className="border-slate-200 bg-white text-slate-700">
-                        {group.label} · {group.count}
-                        {group.deadlineLabel ? ` · ${group.deadlineLabel}` : ""}
-                      </Badge>
-                    ))}
-                  </div>
-                </div>
-              ) : null}
-            </div>
-
-            {isCompleted ? (
-              <details className="mt-5 rounded-[24px] border border-emerald-200 bg-emerald-50/70">
-                <summary className="ui-pressable flex cursor-pointer list-none items-center justify-between gap-4 px-4 py-4 [&::-webkit-details-marker]:hidden">
-                  <div>
-                    <p className="text-sm font-semibold text-emerald-900">Тема полностью решена</p>
-                    <p className="mt-1 text-sm leading-6 text-emerald-800">
-                      Все номера уже отмечены зеленым или желтым. Подробности можно открыть при необходимости.
-                    </p>
-                  </div>
-                  <span className="rounded-full border border-emerald-200 bg-white px-4 py-2 text-sm font-semibold text-emerald-800">
-                    Показать номера
-                  </span>
-                </summary>
-
-                <div className="border-t border-emerald-100 px-4 py-4">
-                  <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-                    {topic.numbers.map((number) => {
-                      const deadlineLabel = formatDeadlineLabel(number.studentStatus?.deadlineAt ?? null);
-
-                      return (
-                        <div key={number.id} className="rounded-[24px] border border-white bg-white px-4 py-4">
-                          <div className="flex items-center justify-between gap-3">
-                            <label className="inline-flex items-center gap-2 text-xs font-semibold text-slate-500">
-                              <input
-                                type="checkbox"
-                                checked={number.selectedForBulk}
-                                onChange={() => toggleBulkSelection(topic.id, number.id)}
-                                className="h-4 w-4 rounded border-slate-300"
-                              />
-                              Выбрать
-                            </label>
-                            <HomeworkStatusBadge status={number.studentStatus?.status ?? null} />
-                          </div>
-                          <div className="mt-3 flex items-center justify-between gap-3">
-                            <p className="text-lg font-semibold text-slate-950">№ {number.number}</p>
-                            {number.studentStatus?.deadlineAt ? (
-                              <Badge className="border-brand-200 bg-brand-50 text-brand-700">
-                                {homeworkLabelByDeadline.get(number.studentStatus.deadlineAt)?.label ?? "ДЗ"}
-                              </Badge>
-                            ) : null}
-                          </div>
-                          {number.studentStatus?.note ? (
-                            <div className="mt-3 rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2">
-                              <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">
-                                Заметка ученика
-                              </p>
-                              <p className="mt-2 text-sm leading-6 text-slate-700">{number.studentStatus.note}</p>
-                            </div>
-                          ) : null}
-                          <div className="mt-3 rounded-2xl border border-slate-200 bg-slate-50 px-3 py-3">
-                            <div className="flex items-center justify-between gap-3">
-                              <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">
-                                Дедлайн
-                              </p>
-                              {number.isSavingDeadline ? (
-                                <span className="text-xs text-slate-400">Сохраняем...</span>
-                              ) : null}
-                            </div>
-                            <input
-                              type="datetime-local"
-                              value={number.deadlineInputValue}
-                              disabled={!deadlinesEnabled}
-                              onChange={(event) => updateDeadlineValue(topic.id, number.id, event.target.value)}
-                              onBlur={() => flushDeadline(topic.id, number.id)}
-                              className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 outline-none transition focus:border-brand-400"
-                            />
-                            <p className="mt-2 text-xs leading-5 text-slate-500">
-                              {deadlineLabel ? `Назначен до ${deadlineLabel}` : "Дедлайн пока не назначен."}
-                            </p>
-                          </div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                </div>
-              </details>
-            ) : (
-              <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-                {topic.numbers.map((number) => {
-                  const deadlineLabel = formatDeadlineLabel(number.studentStatus?.deadlineAt ?? null);
-
-                  return (
-                    <div key={number.id} className="rounded-[24px] border border-white bg-white px-4 py-4">
-                      <div className="flex items-center justify-between gap-3">
-                        <label className="inline-flex items-center gap-2 text-xs font-semibold text-slate-500">
-                          <input
-                            type="checkbox"
-                            checked={number.selectedForBulk}
-                            onChange={() => toggleBulkSelection(topic.id, number.id)}
-                            className="h-4 w-4 rounded border-slate-300"
-                          />
-                          Выбрать
-                        </label>
-                        <HomeworkStatusBadge status={number.studentStatus?.status ?? null} />
-                      </div>
-                      <div className="mt-3 flex items-center justify-between gap-3">
-                        <p className="text-lg font-semibold text-slate-950">№ {number.number}</p>
-                        {number.studentStatus?.deadlineAt ? (
-                          <Badge className="border-brand-200 bg-brand-50 text-brand-700">
-                            {homeworkLabelByDeadline.get(number.studentStatus.deadlineAt)?.label ?? "ДЗ"}
-                          </Badge>
-                        ) : null}
-                      </div>
-                      {number.studentStatus?.note ? (
-                        <div className="mt-3 rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2">
-                          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">
-                            Заметка ученика
-                          </p>
-                          <p className="mt-2 text-sm leading-6 text-slate-700">{number.studentStatus.note}</p>
-                        </div>
-                      ) : null}
-                      <div className="mt-3 rounded-2xl border border-slate-200 bg-slate-50 px-3 py-3">
-                        <div className="flex items-center justify-between gap-3">
-                          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">
-                            Дедлайн
-                          </p>
-                          {number.isSavingDeadline ? <span className="text-xs text-slate-400">Сохраняем...</span> : null}
-                        </div>
-                        <input
-                          type="datetime-local"
-                          value={number.deadlineInputValue}
-                          disabled={!deadlinesEnabled}
-                          onChange={(event) => updateDeadlineValue(topic.id, number.id, event.target.value)}
-                          onBlur={() => flushDeadline(topic.id, number.id)}
-                          className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 outline-none transition focus:border-brand-400"
-                        />
-                        <p className="mt-2 text-xs leading-5 text-slate-500">
-                          {deadlineLabel ? `Назначен до ${deadlineLabel}` : "Дедлайн пока не назначен."}
-                        </p>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </article>
-        );
-      })}
+      {topics.map((topic) => (
+        <TeacherTopicCard
+          key={topic.id}
+          topic={topic}
+          deadlinesEnabled={deadlinesEnabled}
+          onApplyBulkDeadline={applyBulkDeadline}
+          onClearBulkSelection={clearBulkSelection}
+          onToggleBulkSelection={toggleBulkSelection}
+          onUpdateBulkDeadlineValue={updateBulkDeadlineValue}
+          onUpdateDeadlineValue={updateDeadlineValue}
+          onFlushDeadline={flushDeadline}
+        />
+      ))}
     </div>
   );
 }

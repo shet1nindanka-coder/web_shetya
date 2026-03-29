@@ -1,7 +1,7 @@
 "use client";
 
 import { HomeworkNumberStatus } from "@prisma/client";
-import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { memo, startTransition, useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
 import { Badge } from "@/components/badge";
 import { HomeworkStatusBadge } from "@/components/homework-status-badge";
 import { LatexAnswerPreview } from "@/components/latex-answer-preview";
@@ -117,7 +117,7 @@ function formatDeadlineLabel(value: string | null) {
 
 const statusOptions = [HomeworkNumberStatus.GREEN, HomeworkNumberStatus.YELLOW, HomeworkNumberStatus.RED] as const;
 const VIRTUALIZATION_THRESHOLD = 12;
-const VIRTUAL_OVERSCAN_PX = 960;
+const VIRTUAL_OVERSCAN_PX = 360;
 const VIRTUAL_ITEM_GAP = 16;
 
 function estimateStudentNumberCardHeight(number: StudentNumberState, notesEnabled: boolean) {
@@ -187,7 +187,7 @@ const StudentNumberCard = memo(function StudentNumberCard({
   const notePreview = getNotePreview(number.note);
 
   return (
-    <div className="student-number-card ui-surface rounded-[28px] border border-slate-200 bg-slate-50/80 p-5">
+    <div className="student-number-card rounded-[28px] border border-slate-200 bg-slate-50/80 p-5">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
         <div className="space-y-3">
           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Задания</p>
@@ -696,6 +696,7 @@ export function StudentTopicStatusBoard({
 
     return numbers.filter((number) => number.deadlineAt === activeFilter);
   }, [activeFilter, numbers]);
+  const deferredFilteredNumbers = useDeferredValue(filteredNumbers);
   const isTopicCompleted = totalNumbers > 0 && summary.solvedCount === totalNumbers;
 
   useEffect(() => {
@@ -1043,7 +1044,11 @@ export function StudentTopicStatusBoard({
             <div className="flex flex-wrap gap-2">
               <button
                 type="button"
-                onClick={() => setActiveFilter("all")}
+                  onClick={() => {
+                    startTransition(() => {
+                      setActiveFilter("all");
+                    });
+                  }}
                 data-active={activeFilter === "all"}
                 className={cx(
                   "ui-pressable rounded-full border px-4 py-2 text-sm font-medium transition",
@@ -1061,7 +1066,11 @@ export function StudentTopicStatusBoard({
               {numbersWithoutHomeworkCount > 0 ? (
                 <button
                   type="button"
-                  onClick={() => setActiveFilter("without-homework")}
+                    onClick={() => {
+                      startTransition(() => {
+                        setActiveFilter("without-homework");
+                      });
+                    }}
                   data-active={activeFilter === "without-homework"}
                   className={cx(
                     "ui-pressable rounded-full border px-4 py-2 text-sm font-medium transition",
@@ -1084,7 +1093,11 @@ export function StudentTopicStatusBoard({
                   <button
                     key={group.id}
                     type="button"
-                    onClick={() => setActiveFilter(group.id)}
+                    onClick={() => {
+                      startTransition(() => {
+                        setActiveFilter(group.id);
+                      });
+                    }}
                     data-active={isActive}
                     className={cx(
                       "ui-pressable rounded-full border px-4 py-2 text-sm font-medium transition",
@@ -1104,7 +1117,7 @@ export function StudentTopicStatusBoard({
             </div>
 
             <p className="text-sm leading-6 text-slate-500">
-              Показано {filteredNumbers.length} из {numbers.length} номеров.
+              Показано {deferredFilteredNumbers.length} из {numbers.length} номеров.
             </p>
           </div>
         ) : null}
@@ -1124,9 +1137,9 @@ export function StudentTopicStatusBoard({
             </summary>
 
             <div className="border-t border-emerald-100 px-4 py-4">
-              {filteredNumbers.length > 0 ? (
+              {deferredFilteredNumbers.length > 0 ? (
                 <StudentNumberList
-                  numbers={filteredNumbers}
+                  numbers={deferredFilteredNumbers}
                   notesEnabled={notesEnabled}
                   homeworkGroupsByDeadline={homeworkGroupsByDeadline}
                   onSelect={updateNumberStatus}
@@ -1142,9 +1155,9 @@ export function StudentTopicStatusBoard({
           </details>
         ) : (
           <>
-            {filteredNumbers.length > 0 ? (
+            {deferredFilteredNumbers.length > 0 ? (
               <StudentNumberList
-                numbers={filteredNumbers}
+                numbers={deferredFilteredNumbers}
                 notesEnabled={notesEnabled}
                 homeworkGroupsByDeadline={homeworkGroupsByDeadline}
                 onSelect={updateNumberStatus}
