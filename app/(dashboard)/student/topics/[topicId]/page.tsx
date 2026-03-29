@@ -35,6 +35,7 @@ export default async function StudentTopicPage({ params }: StudentTopicPageProps
           id: number.id,
           number: number.number,
           status: number.studentStatus?.status ?? null,
+          note: number.studentStatus?.note ?? "",
           answerLatex: number.answerLatex
         }))}
       />

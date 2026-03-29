@@ -17,6 +17,7 @@ type StudentTopicStatusBoardProps = {
     id: string;
     number: number;
     status: HomeworkNumberStatus | null;
+    note: string;
     answerLatex: string | null;
   }>;
 };
@@ -25,13 +26,18 @@ type StudentNumberState = {
   id: string;
   number: number;
   status: HomeworkNumberStatus | null;
+  note: string;
+  savedNote: string;
   answerLatex: string | null;
-  isSaving: boolean;
+  isSavingStatus: boolean;
+  isSavingNote: boolean;
 };
 
 type StudentNumberCardProps = {
   number: StudentNumberState;
   onSelect: (homeworkNumberId: string, status: HomeworkNumberStatus | null) => void;
+  onNoteChange: (homeworkNumberId: string, value: string) => void;
+  onNoteBlur: (homeworkNumberId: string) => void;
 };
 
 function getStatusSaveErrorMessage(status: number) {
@@ -50,10 +56,32 @@ function getStatusSaveErrorMessage(status: number) {
   return "Сохранение не удалось. Попробуйте ещё раз.";
 }
 
+function getNoteSaveErrorMessage(status: number) {
+  if (status === 401) {
+    return "Сессия истекла. Обновите страницу и войдите заново.";
+  }
+
+  if (status === 404) {
+    return "Номер больше не найден. Обновите страницу.";
+  }
+
+  if (status === 400) {
+    return "Не удалось сохранить заметку.";
+  }
+
+  return "Заметка не сохранилась. Попробуйте ещё раз.";
+}
+
 const statusOptions = [HomeworkNumberStatus.GREEN, HomeworkNumberStatus.YELLOW, HomeworkNumberStatus.RED] as const;
 
-const StudentNumberCard = memo(function StudentNumberCard({ number, onSelect }: StudentNumberCardProps) {
+const StudentNumberCard = memo(function StudentNumberCard({
+  number,
+  onSelect,
+  onNoteChange,
+  onNoteBlur
+}: StudentNumberCardProps) {
   const [isAnswerVisible, setIsAnswerVisible] = useState(false);
+  const isSaving = number.isSavingStatus || number.isSavingNote;
 
   return (
     <div className="ui-fade-slide ui-surface rounded-[28px] border border-slate-200 bg-slate-50/80 p-5">
@@ -63,7 +91,7 @@ const StudentNumberCard = memo(function StudentNumberCard({ number, onSelect }: 
           <div className="flex flex-wrap items-center gap-3">
             <h3 className="font-display text-2xl font-semibold text-slate-950">№ {number.number}</h3>
             <HomeworkStatusBadge status={number.status} />
-            {number.isSaving ? <span className="text-xs font-medium text-slate-500">Сохраняем...</span> : null}
+            {isSaving ? <span className="text-xs font-medium text-slate-500">Сохраняем...</span> : null}
           </div>
         </div>
 
@@ -91,6 +119,23 @@ const StudentNumberCard = memo(function StudentNumberCard({ number, onSelect }: 
             );
           })}
         </div>
+      </div>
+
+      <div className="mt-4 rounded-[24px] border border-slate-200 bg-white px-4 py-4">
+        <div className="flex items-center justify-between gap-3">
+          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Личная заметка</p>
+          <span className="text-xs text-slate-400">{number.note.length}/240</span>
+        </div>
+        <textarea
+          rows={2}
+          maxLength={240}
+          value={number.note}
+          onChange={(event) => onNoteChange(number.id, event.target.value)}
+          onBlur={() => onNoteBlur(number.id)}
+          placeholder="Короткая заметка к этому номеру"
+          className="mt-3 min-h-[72px] w-full resize-none rounded-2xl border border-slate-200 bg-slate-50 px-3 py-3 text-sm text-slate-700 outline-none transition focus:border-brand-400 focus:bg-white"
+        />
+        <p className="mt-2 text-xs leading-5 text-slate-500">Сохранится автоматически и останется у вас в теме.</p>
       </div>
 
       {number.answerLatex ? (
@@ -150,15 +195,20 @@ export function StudentTopicStatusBoard({
     () =>
       initialNumbers.map((number) => ({
         ...number,
-        isSaving: false
+        savedNote: number.note,
+        isSavingStatus: false,
+        isSavingNote: false
       })),
     [initialNumbers]
   );
   const numbersRef = useRef<StudentNumberState[]>(initialState);
   const [numbers, setNumbers] = useState<StudentNumberState[]>(initialState);
   const [saveError, setSaveError] = useState<string | null>(null);
-  const requestVersionRef = useRef<Record<string, number>>({});
-  const controllersRef = useRef<Record<string, AbortController | undefined>>({});
+  const statusRequestVersionRef = useRef<Record<string, number>>({});
+  const noteRequestVersionRef = useRef<Record<string, number>>({});
+  const statusControllersRef = useRef<Record<string, AbortController | undefined>>({});
+  const noteControllersRef = useRef<Record<string, AbortController | undefined>>({});
+  const noteTimersRef = useRef<Record<string, ReturnType<typeof setTimeout> | undefined>>({});
 
   const updateNumbersState = useCallback((updater: (current: StudentNumberState[]) => StudentNumberState[]) => {
     setNumbers((current) => {
@@ -174,11 +224,23 @@ export function StudentTopicStatusBoard({
   }, [initialState]);
 
   useEffect(() => {
-    const activeControllers = controllersRef.current;
+    const activeStatusControllers = statusControllersRef.current;
+    const activeNoteControllers = noteControllersRef.current;
+    const noteTimers = noteTimersRef.current;
 
     return () => {
-      for (const controller of Object.values(activeControllers)) {
+      for (const controller of Object.values(activeStatusControllers)) {
         controller?.abort();
+      }
+
+      for (const controller of Object.values(activeNoteControllers)) {
+        controller?.abort();
+      }
+
+      for (const timeoutId of Object.values(noteTimers)) {
+        if (timeoutId) {
+          clearTimeout(timeoutId);
+        }
       }
     };
   }, []);
@@ -196,7 +258,7 @@ export function StudentTopicStatusBoard({
     };
   }, [numbers, totalNumbers]);
 
-  const savingCount = numbers.filter((number) => number.isSaving).length;
+  const savingCount = numbers.filter((number) => number.isSavingStatus || number.isSavingNote).length;
 
   const updateNumberStatus = useCallback(async (homeworkNumberId: string, nextStatus: HomeworkNumberStatus | null) => {
     const currentNumber = numbersRef.current.find((number) => number.id === homeworkNumberId);
@@ -208,13 +270,13 @@ export function StudentTopicStatusBoard({
     setSaveError(null);
 
     const previousStatus = currentNumber.status;
-    const nextVersion = (requestVersionRef.current[homeworkNumberId] ?? 0) + 1;
-    requestVersionRef.current[homeworkNumberId] = nextVersion;
+    const nextVersion = (statusRequestVersionRef.current[homeworkNumberId] ?? 0) + 1;
+    statusRequestVersionRef.current[homeworkNumberId] = nextVersion;
 
-    controllersRef.current[homeworkNumberId]?.abort();
+    statusControllersRef.current[homeworkNumberId]?.abort();
 
     const controller = new AbortController();
-    controllersRef.current[homeworkNumberId] = controller;
+    statusControllersRef.current[homeworkNumberId] = controller;
 
     updateNumbersState((current) =>
       current.map((number) =>
@@ -222,7 +284,7 @@ export function StudentTopicStatusBoard({
           ? {
               ...number,
               status: nextStatus,
-              isSaving: true
+              isSavingStatus: true
             }
           : number
       )
@@ -244,7 +306,7 @@ export function StudentTopicStatusBoard({
 
       const result = (await response.json().catch(() => null)) as { error?: string } | null;
 
-      if (requestVersionRef.current[homeworkNumberId] !== nextVersion) {
+      if (statusRequestVersionRef.current[homeworkNumberId] !== nextVersion) {
         return;
       }
 
@@ -257,13 +319,13 @@ export function StudentTopicStatusBoard({
           number.id === homeworkNumberId
             ? {
                 ...number,
-                isSaving: false
+                isSavingStatus: false
               }
             : number
         )
       );
     } catch (error) {
-      if (controller.signal.aborted || requestVersionRef.current[homeworkNumberId] !== nextVersion) {
+      if (controller.signal.aborted || statusRequestVersionRef.current[homeworkNumberId] !== nextVersion) {
         return;
       }
 
@@ -273,7 +335,7 @@ export function StudentTopicStatusBoard({
             ? {
                 ...number,
                 status: previousStatus,
-                isSaving: false
+                isSavingStatus: false
               }
             : number
         )
@@ -281,11 +343,167 @@ export function StudentTopicStatusBoard({
 
       setSaveError(error instanceof Error ? error.message : "Сохранение не удалось. Попробуйте ещё раз.");
     } finally {
-      if (requestVersionRef.current[homeworkNumberId] === nextVersion) {
-        delete controllersRef.current[homeworkNumberId];
+      if (statusRequestVersionRef.current[homeworkNumberId] === nextVersion) {
+        delete statusControllersRef.current[homeworkNumberId];
       }
     }
   }, [topicId, updateNumbersState]);
+
+  const saveNumberNote = useCallback(
+    async (homeworkNumberId: string, nextDraft?: string) => {
+      const currentNumber = numbersRef.current.find((number) => number.id === homeworkNumberId);
+
+      if (!currentNumber) {
+        return;
+      }
+
+      const rawDraftNote = nextDraft ?? currentNumber.note;
+      const draftNote = rawDraftNote.trim();
+      const savedNote = currentNumber.savedNote.trim();
+
+      if (draftNote === savedNote) {
+        if (currentNumber.note !== currentNumber.savedNote) {
+          updateNumbersState((current) =>
+            current.map((number) =>
+              number.id === homeworkNumberId
+                ? {
+                    ...number,
+                    note: currentNumber.savedNote
+                  }
+                : number
+            )
+          );
+        }
+
+        return;
+      }
+
+      setSaveError(null);
+
+      const nextVersion = (noteRequestVersionRef.current[homeworkNumberId] ?? 0) + 1;
+      noteRequestVersionRef.current[homeworkNumberId] = nextVersion;
+
+      noteControllersRef.current[homeworkNumberId]?.abort();
+
+      const controller = new AbortController();
+      noteControllersRef.current[homeworkNumberId] = controller;
+
+      updateNumbersState((current) =>
+        current.map((number) =>
+          number.id === homeworkNumberId
+            ? {
+                ...number,
+                isSavingNote: true
+              }
+            : number
+        )
+      );
+
+      try {
+        const response = await fetch("/api/student/topic-status", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            topicId,
+            homeworkNumberId,
+            note: nextDraft ?? currentNumber.note
+          }),
+          signal: controller.signal
+        });
+
+        const result = (await response.json().catch(() => null)) as { error?: string; note?: string } | null;
+
+        if (noteRequestVersionRef.current[homeworkNumberId] !== nextVersion) {
+          return;
+        }
+
+        if (!response.ok) {
+          throw new Error(result?.error || getNoteSaveErrorMessage(response.status));
+        }
+
+        const savedValue = typeof result?.note === "string" ? result.note : draftNote;
+
+        updateNumbersState((current) =>
+          current.map((number) =>
+            number.id === homeworkNumberId
+              ? {
+                  ...number,
+                  note: savedValue,
+                  savedNote: savedValue,
+                  isSavingNote: false
+                }
+              : number
+          )
+        );
+      } catch (error) {
+        if (controller.signal.aborted || noteRequestVersionRef.current[homeworkNumberId] !== nextVersion) {
+          return;
+        }
+
+        updateNumbersState((current) =>
+          current.map((number) =>
+            number.id === homeworkNumberId
+              ? {
+                  ...number,
+                  isSavingNote: false
+                }
+              : number
+        )
+      );
+
+      setSaveError(error instanceof Error ? error.message : "Не удалось сохранить заметку. Попробуйте ещё раз.");
+      } finally {
+        if (noteRequestVersionRef.current[homeworkNumberId] === nextVersion) {
+          delete noteControllersRef.current[homeworkNumberId];
+        }
+      }
+    },
+    [topicId, updateNumbersState]
+  );
+
+  const updateNumberNote = useCallback(
+    (homeworkNumberId: string, value: string) => {
+      setSaveError(null);
+
+      updateNumbersState((current) =>
+        current.map((number) =>
+          number.id === homeworkNumberId
+            ? {
+                ...number,
+                note: value
+              }
+            : number
+        )
+      );
+
+      const existingTimer = noteTimersRef.current[homeworkNumberId];
+
+      if (existingTimer) {
+        clearTimeout(existingTimer);
+      }
+
+      noteTimersRef.current[homeworkNumberId] = setTimeout(() => {
+        void saveNumberNote(homeworkNumberId, value);
+      }, 650);
+    },
+    [saveNumberNote, updateNumbersState]
+  );
+
+  const flushNumberNote = useCallback(
+    (homeworkNumberId: string) => {
+      const existingTimer = noteTimersRef.current[homeworkNumberId];
+
+      if (existingTimer) {
+        clearTimeout(existingTimer);
+        delete noteTimersRef.current[homeworkNumberId];
+      }
+
+      void saveNumberNote(homeworkNumberId);
+    },
+    [saveNumberNote]
+  );
 
   return (
     <div className="space-y-8">
@@ -324,7 +542,7 @@ export function StudentTopicStatusBoard({
 
       <SectionCard
         title="Статусы номеров"
-        description="Выберите цвет для каждого номера: зеленый, желтый или красный. Повторный клик по активному цвету снимет статус, если номер был отмечен случайно."
+        description="Выберите цвет для каждого номера: зеленый, желтый или красный. Ниже можно оставить короткую личную заметку, которая сохранится автоматически."
       >
         <div className="mb-5 flex flex-wrap gap-2">
           {Object.values(HomeworkNumberStatus).map((status) => {
@@ -352,7 +570,13 @@ export function StudentTopicStatusBoard({
 
         <div className="space-y-4">
           {numbers.map((number) => (
-            <StudentNumberCard key={number.id} number={number} onSelect={updateNumberStatus} />
+            <StudentNumberCard
+              key={number.id}
+              number={number}
+              onSelect={updateNumberStatus}
+              onNoteChange={updateNumberNote}
+              onNoteBlur={flushNumberNote}
+            />
           ))}
         </div>
       </SectionCard>

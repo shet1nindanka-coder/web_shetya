@@ -33,6 +33,7 @@ export async function getStudentTopicsOverview(studentId: string) {
               select: {
                 id: true,
                 status: true,
+                note: true,
                 updatedAt: true
               }
             }
@@ -96,6 +97,7 @@ export async function getStudentTopicDetail(studentId: string, topicId: string) 
             select: {
               id: true,
               status: true,
+              note: true,
               updatedAt: true
             }
           }
@@ -297,6 +299,7 @@ export async function getTeacherStudentDetail(studentId: string) {
               select: {
                 id: true,
                 status: true,
+                note: true,
                 updatedAt: true
               }
             }
