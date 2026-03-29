@@ -21,7 +21,7 @@ export function DashboardNav({ user }: DashboardNavProps) {
   const items = navigation[user.role];
 
   return (
-    <header className="sticky top-0 z-20 border-b border-white/70 bg-[rgba(248,251,255,0.9)] backdrop-blur-xl">
+    <header className="border-b border-white/70 bg-[rgba(248,251,255,0.9)] backdrop-blur-xl sm:sticky sm:top-0 sm:z-20">
       <div className="mx-auto flex w-full max-w-7xl flex-col gap-3 px-3 py-3 sm:px-6 sm:py-4 lg:flex-row lg:items-center lg:justify-between lg:px-8">
         <div className="space-y-3">
           <Link href="/" className="inline-flex items-center gap-3 text-slate-950">

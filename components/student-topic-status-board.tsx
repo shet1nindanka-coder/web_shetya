@@ -1044,7 +1044,7 @@ export function StudentTopicStatusBoard({
               </p>
             </div>
 
-            <div className="flex flex-wrap gap-2">
+            <div className="ui-tab-strip -mx-1 flex gap-2 px-1 pb-1 sm:flex-wrap sm:overflow-visible sm:px-0 sm:pb-0">
               <button
                 type="button"
                   onClick={() => {
@@ -1054,7 +1054,7 @@ export function StudentTopicStatusBoard({
                   }}
                 data-active={activeFilter === "all"}
                 className={cx(
-                  "ui-pressable rounded-full border px-4 py-2 text-sm font-medium transition",
+                  "ui-pressable shrink-0 rounded-full border px-4 py-2 text-sm font-medium transition",
                   activeFilter === "all"
                     ? "border-brand-200 bg-[linear-gradient(180deg,rgba(239,246,255,1),rgba(219,234,254,0.92))] text-brand-700 shadow-[0_12px_24px_rgba(59,130,246,0.14)]"
                     : "border-slate-200 bg-white text-slate-700 hover:border-brand-300 hover:text-brand-700"
@@ -1076,7 +1076,7 @@ export function StudentTopicStatusBoard({
                     }}
                   data-active={activeFilter === "without-homework"}
                   className={cx(
-                    "ui-pressable rounded-full border px-4 py-2 text-sm font-medium transition",
+                    "ui-pressable shrink-0 rounded-full border px-4 py-2 text-sm font-medium transition",
                     activeFilter === "without-homework"
                       ? "border-brand-200 bg-[linear-gradient(180deg,rgba(239,246,255,1),rgba(219,234,254,0.92))] text-brand-700 shadow-[0_12px_24px_rgba(59,130,246,0.14)]"
                       : "border-slate-200 bg-white text-slate-700 hover:border-brand-300 hover:text-brand-700"
@@ -1104,7 +1104,7 @@ export function StudentTopicStatusBoard({
                     }}
                     data-active={isActive}
                     className={cx(
-                      "ui-pressable rounded-full border px-4 py-2 text-sm font-medium transition",
+                      "ui-pressable shrink-0 rounded-full border px-4 py-2 text-sm font-medium transition",
                       isActive && isCompleted
                         ? "border-emerald-200 bg-emerald-50 text-emerald-700 shadow-[0_12px_24px_rgba(16,185,129,0.14)]"
                         : isActive
