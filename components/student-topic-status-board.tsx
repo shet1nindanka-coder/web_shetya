@@ -628,7 +628,8 @@ export function StudentTopicStatusBoard({
       redCount: counts.RED,
       markedCount,
       solvedCount,
-      progressPercent: completionPercent(markedCount, totalNumbers)
+      progressPercent: completionPercent(markedCount, totalNumbers),
+      solvedProgressPercent: completionPercent(solvedCount, totalNumbers)
     };
   }, [numbers, totalNumbers]);
 
@@ -1110,16 +1111,16 @@ export function StudentTopicStatusBoard({
 
       <SectionCard
         title="Общий прогресс по теме"
-        description="Чем больше номеров вы отметили, тем точнее преподаватель видит ваш текущий уровень по теме."
+        description="Здесь учитываются только номера, которые уже доведены до зелёного или жёлтого статуса."
       >
         <div className="space-y-3">
           <div className="flex items-center justify-between text-sm text-slate-600">
-            <span>Отмечено номеров</span>
+            <span>Прорешано номеров</span>
             <span className="font-semibold text-slate-950">
-              {summary.markedCount} / {totalNumbers}
+              {summary.solvedCount} / {totalNumbers}
             </span>
           </div>
-          <ProgressBar value={summary.progressPercent} />
+          <ProgressBar value={summary.solvedProgressPercent} />
         </div>
         {deadlinesEnabled && numbers.some((number) => number.deadlineAt) ? (
           <p className="mt-4 text-sm leading-6 text-slate-600">
