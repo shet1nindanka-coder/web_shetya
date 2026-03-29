@@ -1,0 +1,127 @@
+"use server";
+
+import { UserRole } from "@prisma/client";
+import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
+import { requireUser } from "@/lib/auth";
+import { hashPassword, verifyPassword } from "@/lib/password";
+import { prisma } from "@/lib/prisma";
+import { roleHome } from "@/lib/utils";
+
+function redirectAccountWithStatus(role: UserRole, params: URLSearchParams) {
+  const basePath = `${roleHome(role)}/account`;
+  const query = params.toString();
+  redirect(query ? `${basePath}?${query}` : basePath);
+}
+
+function revalidateAccountRoutes(role: UserRole) {
+  const homePath = roleHome(role);
+
+  revalidatePath("/dashboard");
+  revalidatePath(homePath);
+  revalidatePath(`${homePath}/account`);
+
+  if (role === UserRole.TEACHER) {
+    revalidatePath("/teacher/topics");
+    revalidatePath("/teacher/students");
+    return;
+  }
+
+  revalidatePath("/student/topics");
+  revalidatePath("/student/info");
+}
+
+export async function updateProfileInfoAction(formData: FormData) {
+  const user = await requireUser();
+  const name = String(formData.get("name") ?? "").trim();
+  const login = String(formData.get("login") ?? "").trim().toLowerCase();
+
+  if (!name || !login) {
+    redirectAccountWithStatus(user.role, new URLSearchParams({ infoError: "invalid" }));
+  }
+
+  const existingUser = await prisma.user.findFirst({
+    where: {
+      email: login,
+      NOT: {
+        id: user.id
+      }
+    },
+    select: {
+      id: true
+    }
+  });
+
+  if (existingUser) {
+    redirectAccountWithStatus(user.role, new URLSearchParams({ infoError: "exists" }));
+  }
+
+  try {
+    await prisma.user.update({
+      where: {
+        id: user.id
+      },
+      data: {
+        name,
+        email: login
+      }
+    });
+  } catch (error) {
+    console.error("Failed to update profile info.", error);
+    redirectAccountWithStatus(user.role, new URLSearchParams({ infoError: "save" }));
+  }
+
+  revalidateAccountRoutes(user.role);
+  redirectAccountWithStatus(user.role, new URLSearchParams({ infoUpdated: "1" }));
+}
+
+export async function updatePasswordAction(formData: FormData) {
+  const user = await requireUser();
+  const currentPassword = String(formData.get("currentPassword") ?? "");
+  const newPassword = String(formData.get("newPassword") ?? "");
+  const confirmPassword = String(formData.get("confirmPassword") ?? "");
+
+  if (!currentPassword || newPassword.trim().length < 8 || confirmPassword.trim().length < 8) {
+    redirectAccountWithStatus(user.role, new URLSearchParams({ passwordError: "invalid" }));
+  }
+
+  if (newPassword !== confirmPassword) {
+    redirectAccountWithStatus(user.role, new URLSearchParams({ passwordError: "mismatch" }));
+  }
+
+  const currentUser = await prisma.user.findUnique({
+    where: {
+      id: user.id
+    },
+    select: {
+      passwordHash: true
+    }
+  });
+
+  const isCurrentPasswordValid = currentUser
+    ? await verifyPassword(currentPassword, currentUser.passwordHash)
+    : false;
+
+  if (!isCurrentPasswordValid) {
+    redirectAccountWithStatus(user.role, new URLSearchParams({ passwordError: "current" }));
+  }
+
+  try {
+    const passwordHash = await hashPassword(newPassword);
+
+    await prisma.user.update({
+      where: {
+        id: user.id
+      },
+      data: {
+        passwordHash
+      }
+    });
+  } catch (error) {
+    console.error("Failed to update password.", error);
+    redirectAccountWithStatus(user.role, new URLSearchParams({ passwordError: "save" }));
+  }
+
+  revalidateAccountRoutes(user.role);
+  redirectAccountWithStatus(user.role, new URLSearchParams({ passwordUpdated: "1" }));
+}

@@ -1,8 +1,8 @@
 import { loginAction } from "@/actions/auth";
 
 const errorMap: Record<string, string> = {
-  empty: "Введите e-mail и пароль.",
-  invalid: "Неверный e-mail или пароль.",
+  empty: "Введите логин и пароль.",
+  invalid: "Неверный логин или пароль.",
   database: "Не удалось подключиться к базе данных. Проверьте DATABASE_URL и запустите PostgreSQL."
 };
 
@@ -26,10 +26,10 @@ export function LoginForm({ error }: LoginFormProps) {
 
       <form action={loginAction} className="space-y-4">
         <label className="block space-y-2">
-          <span className="text-sm font-medium text-slate-700">E-mail</span>
+          <span className="text-sm font-medium text-slate-700">Логин</span>
           <input
-            type="email"
-            name="email"
+            type="text"
+            name="login"
             placeholder="teacher@example.com"
             className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-950 outline-none transition focus:border-brand-400 focus:bg-white"
             required

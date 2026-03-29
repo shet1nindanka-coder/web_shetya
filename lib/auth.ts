@@ -8,11 +8,11 @@ import { roleHome } from "@/lib/utils";
 const SESSION_COOKIE = "tutor_session";
 const SESSION_TTL_DAYS = Number(process.env.SESSION_TTL_DAYS ?? 30);
 
-export async function signIn(email: string, password: string) {
-  const normalizedEmail = email.trim().toLowerCase();
+export async function signIn(login: string, password: string) {
+  const normalizedLogin = login.trim().toLowerCase();
 
   const user = await prisma.user.findUnique({
-    where: { email: normalizedEmail }
+    where: { email: normalizedLogin }
   });
 
   if (!user) {

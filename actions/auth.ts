@@ -5,17 +5,17 @@ import { signIn, signOut } from "@/lib/auth";
 import { roleHome } from "@/lib/utils";
 
 export async function loginAction(formData: FormData) {
-  const email = String(formData.get("email") ?? "");
+  const login = String(formData.get("login") ?? formData.get("email") ?? "");
   const password = String(formData.get("password") ?? "");
 
-  if (!email || !password) {
+  if (!login || !password) {
     redirect("/login?error=empty");
   }
 
   let user = null;
 
   try {
-    user = await signIn(email, password);
+    user = await signIn(login, password);
   } catch (error) {
     console.error("Failed to sign in.", error);
     redirect("/login?error=database");
