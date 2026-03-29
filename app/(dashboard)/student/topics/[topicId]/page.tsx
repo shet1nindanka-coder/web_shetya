@@ -34,7 +34,14 @@ export default async function StudentTopicPage({ params }: StudentTopicPageProps
         initialNumbers={topic.numbers.map((number) => ({
           id: number.id,
           number: number.number,
-          status: number.studentStatus?.status ?? null
+          status: number.studentStatus?.status ?? null,
+          answerFile: number.answerFile
+            ? {
+                id: number.answerFile.id,
+                originalName: number.answerFile.originalName,
+                mimeType: number.answerFile.mimeType
+              }
+            : null
         }))}
       />
 

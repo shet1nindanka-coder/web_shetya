@@ -3,41 +3,12 @@ import { UserRole } from "@prisma/client";
 import { NextResponse } from "next/server";
 import { tryGetCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { removeStoredFile, saveUploadedFile } from "@/lib/storage";
+import { deleteOwnedStoredFileIfUnused } from "@/lib/stored-files";
+import { saveUploadedFile } from "@/lib/storage";
 import { allowedUploadExtensions, allowedUploadMimeTypes, getFileExtension } from "@/lib/utils";
 
 export const runtime = "nodejs";
 const MAX_UPLOAD_SIZE = 15 * 1024 * 1024;
-
-async function deleteOwnedStoredFileIfUnused(fileId: string | null | undefined, userId: string) {
-  if (!fileId) {
-    return;
-  }
-
-  const file = await prisma.storedFile.findUnique({
-    where: { id: fileId }
-  });
-
-  if (!file || file.uploadedById !== userId) {
-    return;
-  }
-
-  const usageCount = await prisma.topic.count({
-    where: {
-      OR: [{ theoryFileId: fileId }, { homeworkFileId: fileId }]
-    }
-  });
-
-  if (usageCount > 0) {
-    return;
-  }
-
-  await prisma.storedFile.delete({
-    where: { id: fileId }
-  });
-
-  await removeStoredFile(file.storageKey);
-}
 
 function validateUploadedMetadata(fileName: string, mimeType: string, size: number) {
   const extension = getFileExtension(fileName);

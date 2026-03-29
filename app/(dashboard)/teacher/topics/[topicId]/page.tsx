@@ -8,8 +8,10 @@ import { HomeworkStatusBadge } from "@/components/homework-status-badge";
 import { ProgressBar } from "@/components/progress-bar";
 import { SectionCard } from "@/components/section-card";
 import { StatCard } from "@/components/stat-card";
+import { TopicAnswerManager } from "@/components/topic-answer-manager";
 import { requireUser } from "@/lib/auth";
 import { getTeacherTopicDetail } from "@/lib/platform-data";
+import { getBlobAccessMode } from "@/lib/storage";
 
 type TeacherTopicPageProps = {
   params: Promise<{
@@ -22,6 +24,8 @@ export default async function TeacherTopicPage({ params }: TeacherTopicPageProps
   const { topicId } = await params;
   const data = await getTeacherTopicDetail(topicId);
   const numbersInput = data.topic.homeworkNumbers.map((number) => number.number).join(", ");
+  const uploadMode = process.env.BLOB_READ_WRITE_TOKEN?.trim() ? "blob" : "local";
+  const blobAccess = getBlobAccessMode();
 
   return (
     <div className="space-y-8">
@@ -150,6 +154,30 @@ export default async function TeacherTopicPage({ params }: TeacherTopicPageProps
             Сохранить изменения
           </button>
         </form>
+      </SectionCard>
+
+      <SectionCard
+        title="Ответы к заданиям"
+        description="Загрузите изображение-ответ для конкретного номера. Ученик увидит его на своей странице темы в виде размытого spoiler-блока."
+      >
+        <TopicAnswerManager
+          topicId={data.topic.id}
+          uploadMode={uploadMode}
+          blobAccess={blobAccess}
+          numbers={data.topic.homeworkNumbers.map((number) => ({
+            id: number.id,
+            number: number.number,
+            answerFile: number.answerFile
+              ? {
+                  id: number.answerFile.id,
+                  originalName: number.answerFile.originalName,
+                  mimeType: number.answerFile.mimeType,
+                  size: number.answerFile.size,
+                  uploadedAt: number.answerFile.uploadedAt.toISOString()
+                }
+              : null
+          }))}
+        />
       </SectionCard>
 
       <SectionCard

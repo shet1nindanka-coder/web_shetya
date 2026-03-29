@@ -1,6 +1,7 @@
 "use client";
 
 import { HomeworkNumberStatus } from "@prisma/client";
+import Image from "next/image";
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Badge } from "@/components/badge";
 import { HomeworkStatusBadge } from "@/components/homework-status-badge";
@@ -16,6 +17,11 @@ type StudentTopicStatusBoardProps = {
     id: string;
     number: number;
     status: HomeworkNumberStatus | null;
+    answerFile: {
+      id: string;
+      originalName: string;
+      mimeType: string;
+    } | null;
   }>;
 };
 
@@ -23,6 +29,11 @@ type StudentNumberState = {
   id: string;
   number: number;
   status: HomeworkNumberStatus | null;
+  answerFile: {
+    id: string;
+    originalName: string;
+    mimeType: string;
+  } | null;
   isSaving: boolean;
 };
 
@@ -50,6 +61,8 @@ function getStatusSaveErrorMessage(status: number) {
 const statusOptions = [HomeworkNumberStatus.GREEN, HomeworkNumberStatus.YELLOW, HomeworkNumberStatus.RED] as const;
 
 const StudentNumberCard = memo(function StudentNumberCard({ number, onSelect }: StudentNumberCardProps) {
+  const [isAnswerVisible, setIsAnswerVisible] = useState(false);
+
   return (
     <div className="rounded-[28px] border border-slate-200 bg-slate-50/80 p-5">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
@@ -87,6 +100,53 @@ const StudentNumberCard = memo(function StudentNumberCard({ number, onSelect }: 
           })}
         </div>
       </div>
+
+      {number.answerFile ? (
+        <div className="mt-4 rounded-[24px] border border-slate-200 bg-white p-3">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Ответ к номеру</p>
+              <p className="mt-2 text-sm leading-6 text-slate-600">
+                Нажмите на изображение, чтобы {isAnswerVisible ? "снова скрыть" : "посмотреть"} ответ преподавателя.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setIsAnswerVisible((current) => !current)}
+              className="rounded-full border border-slate-200 bg-slate-50 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-brand-300 hover:text-brand-700"
+            >
+              {isAnswerVisible ? "Скрыть ответ" : "Открыть ответ"}
+            </button>
+          </div>
+
+          <button
+            type="button"
+            onClick={() => setIsAnswerVisible((current) => !current)}
+            className="group mt-3 block w-full overflow-hidden rounded-[20px] border border-slate-200 bg-slate-50 text-left"
+          >
+            <div className="relative aspect-[4/3] bg-white">
+              <Image
+                src={`/files/${number.answerFile.id}`}
+                alt={`Ответ к номеру ${number.number}`}
+                width={1200}
+                height={900}
+                unoptimized
+                className={cx(
+                  "h-full w-full object-contain transition duration-300",
+                  !isAnswerVisible && "scale-105 blur-xl brightness-75"
+                )}
+              />
+              {!isAnswerVisible ? (
+                <div className="absolute inset-0 flex items-center justify-center bg-slate-950/20 px-4 text-center">
+                  <span className="rounded-full border border-white/40 bg-white/85 px-4 py-2 text-sm font-semibold text-slate-950 shadow-sm">
+                    Нажмите, чтобы посмотреть ответ
+                  </span>
+                </div>
+              ) : null}
+            </div>
+          </button>
+        </div>
+      ) : null}
     </div>
   );
 });

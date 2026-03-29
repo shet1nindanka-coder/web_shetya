@@ -90,6 +90,7 @@ export async function getStudentTopicDetail(studentId: string, topicId: string) 
       homeworkNumbers: {
         orderBy: { displayOrder: "asc" },
         include: {
+          answerFile: true,
           statuses: {
             where: { studentId },
             select: {
@@ -120,7 +121,7 @@ export async function getStudentTopicDetail(studentId: string, topicId: string) 
 }
 
 export async function getTeacherTopicsOverview() {
-  const [students, topics] = await Promise.all([
+  const [students, topics, totalFiles] = await Promise.all([
     prisma.user.findMany({
       where: { role: UserRole.STUDENT },
       orderBy: { name: "asc" },
@@ -142,6 +143,27 @@ export async function getTeacherTopicsOverview() {
         }
       },
       orderBy: [{ displayOrder: "asc" }, { createdAt: "asc" }]
+    }),
+    prisma.storedFile.count({
+      where: {
+        OR: [
+          {
+            theoryForTopics: {
+              some: {}
+            }
+          },
+          {
+            homeworkForTopics: {
+              some: {}
+            }
+          },
+          {
+            answerForNumberEntries: {
+              some: {}
+            }
+          }
+        ]
+      }
     })
   ]);
 
@@ -174,9 +196,7 @@ export async function getTeacherTopicsOverview() {
     stats: {
       totalTopics: topicCards.length,
       totalStudents: students.length,
-      totalFiles: topicCards.reduce((sum, topic) => {
-        return sum + (topic.theoryFile ? 1 : 0) + (topic.homeworkFile ? 1 : 0);
-      }, 0),
+      totalFiles,
       totalNumbers: topicCards.reduce((sum, topic) => sum + topic.totalNumbers, 0),
       totalMarked: topicCards.reduce((sum, topic) => sum + topic.markedCount, 0)
     }
@@ -193,6 +213,7 @@ export async function getTeacherTopicDetail(topicId: string) {
         homeworkNumbers: {
           orderBy: { displayOrder: "asc" },
           include: {
+            answerFile: true,
             statuses: true
           }
         }

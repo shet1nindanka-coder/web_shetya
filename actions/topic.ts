@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { requireUser } from "@/lib/auth";
+import { deleteStoredFileRecordIfUnused } from "@/lib/stored-files";
 import { removeStoredFile, saveUploadedFile } from "@/lib/storage";
 import { parseNumbersInput } from "@/lib/utils";
 
@@ -30,33 +31,6 @@ function revalidateTopicRoutes(topicId?: string) {
 function redirectTeacherTopicsWithStatus(params: URLSearchParams) {
   const query = params.toString();
   redirect(query ? `/teacher/topics?${query}` : "/teacher/topics");
-}
-
-async function deleteStoredFileRecordIfUnused(fileId: string | null | undefined) {
-  if (!fileId) {
-    return;
-  }
-
-  const file = await prisma.storedFile.findUnique({
-    where: { id: fileId }
-  });
-
-  if (!file) {
-    return;
-  }
-
-  const usageCount = await prisma.topic.count({
-    where: {
-      OR: [{ theoryFileId: fileId }, { homeworkFileId: fileId }]
-    }
-  });
-
-  if (usageCount === 0) {
-    await prisma.storedFile.delete({
-      where: { id: fileId }
-    });
-    await removeStoredFile(file.storageKey);
-  }
 }
 
 export async function createTopicAction(formData: FormData) {
@@ -198,7 +172,11 @@ export async function updateTopicAction(formData: FormData) {
     include: {
       theoryFile: true,
       homeworkFile: true,
-      homeworkNumbers: true
+      homeworkNumbers: {
+        include: {
+          answerFile: true
+        }
+      }
     }
   });
 
@@ -220,6 +198,7 @@ export async function updateTopicAction(formData: FormData) {
 
   let oldTheoryFileIdToDelete: string | null = null;
   let oldHomeworkFileIdToDelete: string | null = null;
+  const removedAnswerFileIds = new Set<string>();
 
   try {
     await prisma.$transaction(async (tx) => {
@@ -277,6 +256,10 @@ export async function updateTopicAction(formData: FormData) {
 
       for (const existingNumber of existingTopic.homeworkNumbers) {
         if (!nextNumbersSet.has(existingNumber.number)) {
+          if (existingNumber.answerFileId) {
+            removedAnswerFileIds.add(existingNumber.answerFileId);
+          }
+
           await tx.topicHomeworkNumber.delete({
             where: { id: existingNumber.id }
           });
@@ -315,6 +298,7 @@ export async function updateTopicAction(formData: FormData) {
 
   await deleteStoredFileRecordIfUnused(oldTheoryFileIdToDelete);
   await deleteStoredFileRecordIfUnused(oldHomeworkFileIdToDelete);
+  await Promise.all(Array.from(removedAnswerFileIds).map((fileId) => deleteStoredFileRecordIfUnused(fileId)));
   revalidateTopicRoutes(topicId);
 }
 
@@ -331,7 +315,12 @@ export async function deleteTopicAction(formData: FormData) {
     where: { id: topicId },
     include: {
       theoryFile: true,
-      homeworkFile: true
+      homeworkFile: true,
+      homeworkNumbers: {
+        include: {
+          answerFile: true
+        }
+      }
     }
   });
 
@@ -340,34 +329,34 @@ export async function deleteTopicAction(formData: FormData) {
   }
 
   const existingTopic = topic!;
+  const fileIdsToCleanup = new Set<string>();
+
+  if (existingTopic.theoryFileId) {
+    fileIdsToCleanup.add(existingTopic.theoryFileId);
+  }
+
+  if (existingTopic.homeworkFileId) {
+    fileIdsToCleanup.add(existingTopic.homeworkFileId);
+  }
+
+  for (const number of existingTopic.homeworkNumbers) {
+    if (number.answerFileId) {
+      fileIdsToCleanup.add(number.answerFileId);
+    }
+  }
 
   try {
     await prisma.$transaction(async (tx) => {
       await tx.topic.delete({
         where: { id: topicId }
       });
-
-      if (existingTopic.theoryFileId) {
-        await tx.storedFile.delete({
-          where: { id: existingTopic.theoryFileId }
-        });
-      }
-
-      if (existingTopic.homeworkFileId) {
-        await tx.storedFile.delete({
-          where: { id: existingTopic.homeworkFileId }
-        });
-      }
     });
   } catch (error) {
     console.error("Failed to delete topic.", error);
     redirectTeacherTopicsWithStatus(new URLSearchParams({ error: "delete" }));
   }
 
-  await Promise.all([
-    removeStoredFile(existingTopic.theoryFile?.storageKey),
-    removeStoredFile(existingTopic.homeworkFile?.storageKey)
-  ]);
+  await Promise.all(Array.from(fileIdsToCleanup).map((fileId) => deleteStoredFileRecordIfUnused(fileId)));
 
   revalidateTopicRoutes();
   redirectTeacherTopicsWithStatus(new URLSearchParams({ deleted: "1" }));

@@ -43,16 +43,17 @@ model Session {
 }
 
 model StoredFile {
-  id               String   @id @default(cuid())
-  originalName     String
-  storageKey       String   @unique
-  mimeType         String
-  size             Int
-  uploadedAt       DateTime @default(now())
-  uploadedById     String
-  uploadedBy       User     @relation("UploadedFiles", fields: [uploadedById], references: [id], onDelete: Restrict)
-  theoryForTopics  Topic[]  @relation("TheoryFile")
-  homeworkForTopics Topic[] @relation("HomeworkFile")
+  id                     String                @id @default(cuid())
+  originalName           String
+  storageKey             String                @unique
+  mimeType               String
+  size                   Int
+  uploadedAt             DateTime              @default(now())
+  uploadedById           String
+  uploadedBy             User                  @relation("UploadedFiles", fields: [uploadedById], references: [id], onDelete: Restrict)
+  theoryForTopics        Topic[]               @relation("TheoryFile")
+  homeworkForTopics      Topic[]               @relation("HomeworkFile")
+  answerForNumberEntries TopicHomeworkNumber[] @relation("NumberAnswerFile")
 }
 
 model Topic {
@@ -76,10 +77,13 @@ model TopicHomeworkNumber {
   topicId      String
   number       Int
   displayOrder Int                       @default(0)
+  answerFileId String?
   topic        Topic                     @relation(fields: [topicId], references: [id], onDelete: Cascade)
+  answerFile   StoredFile?               @relation("NumberAnswerFile", fields: [answerFileId], references: [id], onDelete: SetNull)
   statuses     StudentTopicNumberStatus[]
 
   @@unique([topicId, number])
+  @@index([answerFileId])
   @@index([topicId, displayOrder])
 }
 
