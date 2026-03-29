@@ -254,17 +254,20 @@ export function StudentTopicStatusBoard({
   const summary = useMemo(() => {
     const counts = getStatusCounts(numbers.map((number) => number.status));
     const markedCount = counts.GREEN + counts.YELLOW + counts.RED;
+    const solvedCount = counts.GREEN + counts.YELLOW;
 
     return {
       greenCount: counts.GREEN,
       yellowCount: counts.YELLOW,
       redCount: counts.RED,
       markedCount,
+      solvedCount,
       progressPercent: completionPercent(markedCount, totalNumbers)
     };
   }, [numbers, totalNumbers]);
 
   const savingCount = numbers.filter((number) => number.isSavingStatus || number.isSavingNote).length;
+  const isTopicCompleted = totalNumbers > 0 && summary.solvedCount === totalNumbers;
 
   const updateNumberStatus = useCallback(async (homeworkNumberId: string, nextStatus: HomeworkNumberStatus | null) => {
     const currentNumber = numbersRef.current.find((number) => number.id === homeworkNumberId);
@@ -578,18 +581,49 @@ export function StudentTopicStatusBoard({
           </div>
         ) : null}
 
-        <div className="space-y-4">
-          {numbers.map((number) => (
-            <StudentNumberCard
-              key={number.id}
-              number={number}
-              notesEnabled={notesEnabled}
-              onSelect={updateNumberStatus}
-              onNoteChange={updateNumberNote}
-              onNoteBlur={flushNumberNote}
-            />
-          ))}
-        </div>
+        {isTopicCompleted ? (
+          <details className="rounded-[24px] border border-emerald-200 bg-emerald-50/70">
+            <summary className="ui-pressable flex cursor-pointer list-none items-center justify-between gap-4 px-4 py-4 [&::-webkit-details-marker]:hidden">
+              <div>
+                <p className="text-sm font-semibold text-emerald-900">Тема полностью решена</p>
+                <p className="mt-1 text-sm leading-6 text-emerald-800">
+                  Все номера уже отмечены зеленым или желтым. Подробности можно открыть в любой момент.
+                </p>
+              </div>
+              <span className="rounded-full border border-emerald-200 bg-white px-4 py-2 text-sm font-semibold text-emerald-800">
+                Показать номера
+              </span>
+            </summary>
+
+            <div className="border-t border-emerald-100 px-4 py-4">
+              <div className="space-y-4">
+                {numbers.map((number) => (
+                  <StudentNumberCard
+                    key={number.id}
+                    number={number}
+                    notesEnabled={notesEnabled}
+                    onSelect={updateNumberStatus}
+                    onNoteChange={updateNumberNote}
+                    onNoteBlur={flushNumberNote}
+                  />
+                ))}
+              </div>
+            </div>
+          </details>
+        ) : (
+          <div className="space-y-4">
+            {numbers.map((number) => (
+              <StudentNumberCard
+                key={number.id}
+                number={number}
+                notesEnabled={notesEnabled}
+                onSelect={updateNumberStatus}
+                onNoteChange={updateNumberNote}
+                onNoteBlur={flushNumberNote}
+              />
+            ))}
+          </div>
+        )}
       </SectionCard>
     </div>
   );

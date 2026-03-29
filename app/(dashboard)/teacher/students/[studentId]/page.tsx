@@ -99,65 +99,109 @@ export default async function TeacherStudentPage({ params }: TeacherStudentPageP
           </div>
         ) : (
           <div className="space-y-5">
-            {data.topics.map((topic) => (
-              <article key={topic.id} className="rounded-[28px] border border-slate-200 bg-slate-50/80 p-5">
-                <div className="flex flex-col gap-5 xl:flex-row xl:items-start xl:justify-between">
-                  <div className="space-y-3">
-                    <div>
-                      <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
-                        Номеров: {topic.totalNumbers}
-                      </p>
-                      <h2 className="font-display mt-2 text-2xl font-semibold text-slate-950">{topic.title}</h2>
-                    </div>
-                    <p className="max-w-3xl text-sm leading-6 text-slate-600">{topic.description}</p>
-                    <div className="flex flex-wrap gap-2">
-                      <Badge className="border-slate-200 bg-white text-slate-700">
-                        Решено {topic.solvedCount}/{topic.totalNumbers}
-                      </Badge>
-                      <Badge className="border-slate-200 bg-white text-slate-700">
-                        Отмечено {topic.markedCount}/{topic.totalNumbers}
-                      </Badge>
-                      <Badge className="border-slate-200 bg-white text-slate-700">Красные {topic.redCount}</Badge>
-                    </div>
-                  </div>
+            {data.topics.map((topic) => {
+              const isCompleted = topic.totalNumbers > 0 && topic.solvedCount === topic.totalNumbers;
 
-                  <div className="w-full max-w-md space-y-4">
-                    <div className="space-y-2 rounded-[24px] border border-white bg-white p-4">
-                      <div className="flex items-center justify-between text-sm text-slate-600">
-                        <span>Решено по теме</span>
-                        <span className="font-semibold text-slate-950">{topic.solvedPercent}%</span>
+              return (
+                <article key={topic.id} className="rounded-[28px] border border-slate-200 bg-slate-50/80 p-5">
+                  <div className="flex flex-col gap-5 xl:flex-row xl:items-start xl:justify-between">
+                    <div className="space-y-3">
+                      <div>
+                        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
+                          Номеров: {topic.totalNumbers}
+                        </p>
+                        <h2 className="font-display mt-2 text-2xl font-semibold text-slate-950">{topic.title}</h2>
                       </div>
-                      <ProgressBar value={topic.solvedPercent} />
+                      <p className="max-w-3xl text-sm leading-6 text-slate-600">{topic.description}</p>
+                      <div className="flex flex-wrap gap-2">
+                        <Badge className="border-slate-200 bg-white text-slate-700">
+                          Решено {topic.solvedCount}/{topic.totalNumbers}
+                        </Badge>
+                        <Badge className="border-slate-200 bg-white text-slate-700">
+                          Отмечено {topic.markedCount}/{topic.totalNumbers}
+                        </Badge>
+                        <Badge className="border-slate-200 bg-white text-slate-700">Красные {topic.redCount}</Badge>
+                        {isCompleted ? (
+                          <Badge className="border-emerald-200 bg-emerald-50 text-emerald-700">Тема завершена</Badge>
+                        ) : null}
+                      </div>
                     </div>
-                    <Link
-                      href={`/teacher/topics/${topic.id}`}
-                      className="ui-pressable inline-flex rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-brand-300 hover:text-brand-700"
-                    >
-                      Открыть тему
-                    </Link>
-                  </div>
-                </div>
 
-                <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-                  {topic.numbers.map((number) => (
-                    <div key={number.id} className="rounded-[24px] border border-white bg-white px-4 py-4">
-                      <div className="flex items-center justify-between gap-3">
-                        <p className="text-lg font-semibold text-slate-950">№ {number.number}</p>
-                        <HomeworkStatusBadge status={number.studentStatus?.status ?? null} />
-                      </div>
-                      {number.studentStatus?.note ? (
-                        <div className="mt-3 rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2">
-                          <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">
-                            Заметка ученика
-                          </p>
-                          <p className="mt-2 text-sm leading-6 text-slate-700">{number.studentStatus.note}</p>
+                    <div className="w-full max-w-md space-y-4">
+                      <div className="space-y-2 rounded-[24px] border border-white bg-white p-4">
+                        <div className="flex items-center justify-between text-sm text-slate-600">
+                          <span>Решено по теме</span>
+                          <span className="font-semibold text-slate-950">{topic.solvedPercent}%</span>
                         </div>
-                      ) : null}
+                        <ProgressBar value={topic.solvedPercent} />
+                      </div>
+                      <Link
+                        href={`/teacher/topics/${topic.id}`}
+                        className="ui-pressable inline-flex rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-brand-300 hover:text-brand-700"
+                      >
+                        Открыть тему
+                      </Link>
                     </div>
-                  ))}
-                </div>
-              </article>
-            ))}
+                  </div>
+
+                  {isCompleted ? (
+                    <details className="mt-5 rounded-[24px] border border-emerald-200 bg-emerald-50/70">
+                      <summary className="ui-pressable flex cursor-pointer list-none items-center justify-between gap-4 px-4 py-4 [&::-webkit-details-marker]:hidden">
+                        <div>
+                          <p className="text-sm font-semibold text-emerald-900">Тема полностью решена</p>
+                          <p className="mt-1 text-sm leading-6 text-emerald-800">
+                            Все номера уже отмечены зеленым или желтым. Подробности можно открыть при необходимости.
+                          </p>
+                        </div>
+                        <span className="rounded-full border border-emerald-200 bg-white px-4 py-2 text-sm font-semibold text-emerald-800">
+                          Показать номера
+                        </span>
+                      </summary>
+
+                      <div className="border-t border-emerald-100 px-4 py-4">
+                        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+                          {topic.numbers.map((number) => (
+                            <div key={number.id} className="rounded-[24px] border border-white bg-white px-4 py-4">
+                              <div className="flex items-center justify-between gap-3">
+                                <p className="text-lg font-semibold text-slate-950">№ {number.number}</p>
+                                <HomeworkStatusBadge status={number.studentStatus?.status ?? null} />
+                              </div>
+                              {number.studentStatus?.note ? (
+                                <div className="mt-3 rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2">
+                                  <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">
+                                    Заметка ученика
+                                  </p>
+                                  <p className="mt-2 text-sm leading-6 text-slate-700">{number.studentStatus.note}</p>
+                                </div>
+                              ) : null}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </details>
+                  ) : (
+                    <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+                      {topic.numbers.map((number) => (
+                        <div key={number.id} className="rounded-[24px] border border-white bg-white px-4 py-4">
+                          <div className="flex items-center justify-between gap-3">
+                            <p className="text-lg font-semibold text-slate-950">№ {number.number}</p>
+                            <HomeworkStatusBadge status={number.studentStatus?.status ?? null} />
+                          </div>
+                          {number.studentStatus?.note ? (
+                            <div className="mt-3 rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2">
+                              <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">
+                                Заметка ученика
+                              </p>
+                              <p className="mt-2 text-sm leading-6 text-slate-700">{number.studentStatus.note}</p>
+                            </div>
+                          ) : null}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </article>
+              );
+            })}
           </div>
         )}
       </SectionCard>
