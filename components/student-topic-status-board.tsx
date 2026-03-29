@@ -1007,28 +1007,10 @@ export function StudentTopicStatusBoard({
         title="Статусы номеров"
         description={
           notesEnabled
-            ? "Выберите цвет для каждого номера: зеленый, желтый или красный. Ниже можно оставить короткую личную заметку, которая сохранится автоматически."
+            ? "Выберите цвет для каждого номера и при необходимости оставьте короткую личную заметку."
             : "Выберите цвет для каждого номера: зеленый, желтый или красный. Повторный клик по активному цвету снимет статус."
         }
       >
-        <div className="mb-5 flex flex-wrap gap-2">
-          {Object.values(HomeworkNumberStatus).map((status) => {
-            const meta = homeworkStatusMeta[status];
-
-            return (
-              <div
-                key={status}
-                className={cx(
-                  "rounded-full border px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em]",
-                  meta.subtleClassName
-                )}
-              >
-                {meta.shortLabel}
-              </div>
-            );
-          })}
-        </div>
-
         {saveError ? (
           <div className="mb-5 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-4 text-sm font-medium text-rose-900">
             {saveError}
@@ -1044,7 +1026,7 @@ export function StudentTopicStatusBoard({
               </p>
             </div>
 
-            <div className="ui-tab-strip -mx-1 flex gap-2 px-1 pb-1 sm:flex-wrap sm:overflow-visible sm:px-0 sm:pb-0">
+            <div className="ui-tab-shell ui-tab-strip -mx-1 flex gap-2 rounded-[22px] px-2 py-2 sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0 sm:py-0 sm:shadow-none sm:backdrop-blur-0">
               <button
                 type="button"
                   onClick={() => {
