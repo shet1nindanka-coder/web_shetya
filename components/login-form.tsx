@@ -12,16 +12,13 @@ type LoginFormProps = {
 
 export function LoginForm({ error }: LoginFormProps) {
   return (
-    <div className="ui-fade-slide w-full max-w-md rounded-[32px] border border-white/70 bg-white/90 p-8 shadow-glow backdrop-blur">
-      <div className="mb-8 space-y-3">
-        <p className="text-sm font-semibold uppercase tracking-[0.3em] text-brand-600">Вход в систему</p>
-        <h1 className="font-display text-4xl font-semibold leading-tight text-slate-950">
-          Личный кабинет для занятий и контроля прогресса
-        </h1>
-        <p className="text-sm leading-6 text-slate-600">
-          Войдите как ученик или преподаватель, чтобы работать с общими темами, файлами и индивидуальными статусами по
-          каждому номеру.
-        </p>
+    <div className="ui-fade-slide w-full max-w-md rounded-[36px] border border-white/75 bg-white/92 p-8 shadow-[0_24px_70px_rgba(15,23,42,0.12)] backdrop-blur">
+      <div className="mb-8 flex flex-col items-center text-center">
+        <span className="mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-slate-950 text-lg font-semibold text-white shadow-lg shadow-slate-950/15">
+          T
+        </span>
+        <p className="text-sm font-semibold uppercase tracking-[0.3em] text-brand-600">TutorFlow</p>
+        <h1 className="font-display mt-3 text-4xl font-semibold leading-tight text-slate-950">Вход в аккаунт</h1>
       </div>
 
       <form action={loginAction} className="space-y-4">
@@ -60,18 +57,6 @@ export function LoginForm({ error }: LoginFormProps) {
           Войти
         </button>
       </form>
-
-      <div className="mt-6 rounded-2xl border border-brand-100 bg-brand-50/80 p-4 text-sm leading-6 text-slate-700">
-        <p className="font-semibold text-slate-900">Тестовые аккаунты</p>
-        <p>
-          Преподаватель: <code className="rounded bg-white px-1.5 py-0.5">teacher@example.com</code> /{" "}
-          <code className="rounded bg-white px-1.5 py-0.5">teacher123</code>
-        </p>
-        <p>
-          Ученик: <code className="rounded bg-white px-1.5 py-0.5">ilya@example.com</code> /{" "}
-          <code className="rounded bg-white px-1.5 py-0.5">student123</code>
-        </p>
-      </div>
     </div>
   );
 }
