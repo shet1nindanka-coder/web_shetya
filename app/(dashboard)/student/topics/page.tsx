@@ -10,6 +10,9 @@ import { getStudentTopicsOverview } from "@/lib/platform-data";
 export default async function StudentTopicsPage() {
   const user = await requireUser(UserRole.STUDENT);
   const data = await getStudentTopicsOverview(user.id);
+  const completedTopics = data.topics.filter(
+    (topic) => topic.totalNumbers > 0 && topic.greenCount + topic.yellowCount === topic.totalNumbers
+  ).length;
 
   return (
     <div className="space-y-8">
@@ -36,14 +39,19 @@ export default async function StudentTopicsPage() {
           <p className="mt-3 text-sm leading-6 text-slate-600">
             Здесь отображаются все темы с файлами и вашим текущим статусом по каждому набору заданий.
           </p>
+          <div className="mt-5">
+            <Badge className="border-emerald-200 bg-emerald-50 text-emerald-700">
+              ✓ Завершено тем: {completedTopics}
+            </Badge>
+          </div>
         </div>
       </section>
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         <StatCard label="Темы" value={data.stats.totalTopics} hint="Все темы платформы доступны в вашем кабинете." />
+        <StatCard label="Завершены" value={completedTopics} hint="Темы, где все номера уже зеленые или желтые." />
         <StatCard label="Зеленые" value={data.stats.totalGreen} hint="Номера, решенные верно с первого раза." />
         <StatCard label="Желтые" value={data.stats.totalYellow} hint="Номера, исправленные после самопроверки." />
-        <StatCard label="Красные" value={data.stats.totalRed} hint="Номера, по которым нужна помощь." />
       </div>
 
       <SectionCard
@@ -59,7 +67,10 @@ export default async function StudentTopicsPage() {
           </div>
         ) : (
           <div className="grid gap-4 xl:grid-cols-2">
-            {data.topics.map((topic) => (
+            {data.topics.map((topic) => {
+              const isCompleted = topic.totalNumbers > 0 && topic.greenCount + topic.yellowCount === topic.totalNumbers;
+
+              return (
               <article key={topic.id} className="rounded-[28px] border border-slate-200 bg-slate-50/80 p-5 shadow-[0_12px_35px_rgba(15,23,42,0.06)]">
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                   <div className="space-y-3">
@@ -77,6 +88,9 @@ export default async function StudentTopicsPage() {
                       <Badge className="border-slate-200 bg-white text-slate-700">
                         Прогресс {topic.progressPercent}%
                       </Badge>
+                      {isCompleted ? (
+                        <Badge className="border-emerald-200 bg-emerald-50 text-emerald-700">✓ Тема завершена</Badge>
+                      ) : null}
                     </div>
                   </div>
                   <div className="rounded-[24px] border border-white bg-white px-4 py-3 text-sm text-slate-600">
@@ -115,11 +129,12 @@ export default async function StudentTopicsPage() {
                     href={`/student/topics/${topic.id}`}
                     className="ui-pressable inline-flex rounded-full bg-slate-950 px-5 py-3 text-sm font-semibold text-white transition hover:bg-brand-700"
                   >
-                    Открыть тему
+                    {isCompleted ? "Открыть завершенную тему" : "Открыть тему"}
                   </Link>
                 </div>
               </article>
-            ))}
+            );
+            })}
           </div>
         )}
       </SectionCard>

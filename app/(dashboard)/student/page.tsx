@@ -10,7 +10,9 @@ import { getStudentTopicsOverview } from "@/lib/platform-data";
 export default async function StudentPage() {
   const user = await requireUser(UserRole.STUDENT);
   const data = await getStudentTopicsOverview(user.id);
-  const activeTopics = data.topics.filter((topic) => topic.markedCount > 0).length;
+  const completedTopics = data.topics.filter(
+    (topic) => topic.totalNumbers > 0 && topic.greenCount + topic.yellowCount === topic.totalNumbers
+  ).length;
 
   return (
     <div className="space-y-8">
@@ -35,6 +37,11 @@ export default async function StudentPage() {
           <p className="mt-3 text-sm leading-6 text-slate-600">
             Здесь учитываются только номера со статусом зеленый или желтый. Красные показывают, где еще нужна помощь.
           </p>
+          <div className="mt-5">
+            <Badge className="border-emerald-200 bg-emerald-50 text-emerald-700">
+              ✓ Завершено тем: {completedTopics}
+            </Badge>
+          </div>
           <div className="mt-5 space-y-2">
             <div className="flex items-center justify-between text-sm text-slate-600">
               <span>Решено номеров</span>
@@ -49,7 +56,7 @@ export default async function StudentPage() {
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         <StatCard label="Темы" value={data.stats.totalTopics} hint="Все темы платформы доступны в вашем кабинете." />
-        <StatCard label="Активные" value={activeTopics} hint="Темы, в которых уже отмечен хотя бы один номер." />
+        <StatCard label="Завершены" value={completedTopics} hint="Темы, где все номера уже зеленые или желтые." />
         <StatCard label="Желтые" value={data.stats.totalYellow} hint="Исправленные после самопроверки номера." />
         <StatCard label="Красные" value={data.stats.totalRed} hint="Номера, где нужна помощь преподавателя." />
       </div>
