@@ -12,7 +12,7 @@ type LoginFormProps = {
 
 export function LoginForm({ error }: LoginFormProps) {
   return (
-    <div className="ui-fade-slide w-full max-w-md rounded-[32px] border border-slate-200/80 bg-white/96 p-8 shadow-[0_18px_44px_rgba(15,23,42,0.08)] backdrop-blur">
+    <div className="ui-fade-slide w-full max-w-md rounded-[32px] border border-slate-200/80 bg-white/96 p-8 shadow-[0_14px_32px_rgba(15,23,42,0.07)]">
       <div className="mb-8 flex flex-col items-center text-center">
         <span className="mb-4 flex h-12 w-12 items-center justify-center rounded-[18px] bg-slate-950 text-base font-semibold text-white shadow-[0_10px_24px_rgba(15,23,42,0.14)]">
           T

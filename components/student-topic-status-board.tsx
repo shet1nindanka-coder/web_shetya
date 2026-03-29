@@ -119,7 +119,7 @@ function formatDeadlineLabel(value: string | null) {
 
 const statusOptions = [HomeworkNumberStatus.GREEN, HomeworkNumberStatus.YELLOW, HomeworkNumberStatus.RED] as const;
 const VIRTUALIZATION_THRESHOLD = 12;
-const VIRTUAL_OVERSCAN_PX = 360;
+const VIRTUAL_OVERSCAN_PX = 220;
 const VIRTUAL_ITEM_GAP = 16;
 
 function estimateStudentNumberCardHeight(number: StudentNumberState, notesEnabled: boolean) {
@@ -377,6 +377,7 @@ function StudentNumberList({
 }: StudentNumberListProps) {
   const shouldVirtualize = numbers.length > VIRTUALIZATION_THRESHOLD;
   const scrollRef = useRef<HTMLDivElement | null>(null);
+  const scrollFrameRef = useRef<number | null>(null);
   const [scrollTop, setScrollTop] = useState(0);
   const [viewportHeight, setViewportHeight] = useState(720);
   const [measuredHeights, setMeasuredHeights] = useState<Record<string, number>>({});
@@ -407,21 +408,38 @@ function StudentNumberList({
     }
 
     const syncMetrics = () => {
-      setScrollTop(element.scrollTop);
-      setViewportHeight(element.clientHeight);
+      scrollFrameRef.current = null;
+
+      const nextScrollTop = element.scrollTop;
+      const nextViewportHeight = element.clientHeight;
+
+      setScrollTop((current) => (current === nextScrollTop ? current : nextScrollTop));
+      setViewportHeight((current) => (current === nextViewportHeight ? current : nextViewportHeight));
+    };
+
+    const requestMetricsSync = () => {
+      if (scrollFrameRef.current !== null) {
+        return;
+      }
+
+      scrollFrameRef.current = window.requestAnimationFrame(syncMetrics);
     };
 
     syncMetrics();
-    element.addEventListener("scroll", syncMetrics, { passive: true });
+    element.addEventListener("scroll", requestMetricsSync, { passive: true });
 
     const resizeObserver = new ResizeObserver(() => {
-      syncMetrics();
+      requestMetricsSync();
     });
 
     resizeObserver.observe(element);
 
     return () => {
-      element.removeEventListener("scroll", syncMetrics);
+      element.removeEventListener("scroll", requestMetricsSync);
+      if (scrollFrameRef.current !== null) {
+        window.cancelAnimationFrame(scrollFrameRef.current);
+        scrollFrameRef.current = null;
+      }
       resizeObserver.disconnect();
     };
   }, [shouldVirtualize]);
@@ -439,9 +457,11 @@ function StudentNumberList({
 
   const metrics = useMemo(() => {
     let offset = 0;
+    const starts: number[] = [];
 
     const items = numbers.map((number) => {
       const size = measuredHeights[number.id] ?? estimateStudentNumberCardHeight(number, notesEnabled);
+      starts.push(offset);
       const item = {
         id: number.id,
         size,
@@ -455,6 +475,7 @@ function StudentNumberList({
 
     return {
       items,
+      starts,
       totalHeight: Math.max(0, offset - VIRTUAL_ITEM_GAP)
     };
   }, [measuredHeights, notesEnabled, numbers]);
@@ -468,8 +489,7 @@ function StudentNumberList({
 
     const startOffset = Math.max(0, scrollTop - VIRTUAL_OVERSCAN_PX);
     const endOffset = scrollTop + viewportHeight + VIRTUAL_OVERSCAN_PX;
-    const starts = metrics.items.map((item) => item.start);
-    const startIndex = findStartIndex(starts, startOffset);
+    const startIndex = findStartIndex(metrics.starts, startOffset);
     let endIndex = startIndex;
 
     while (endIndex < metrics.items.length && metrics.items[endIndex]!.start < endOffset) {
@@ -477,7 +497,7 @@ function StudentNumberList({
     }
 
     return metrics.items.slice(startIndex, Math.min(metrics.items.length, endIndex + 1));
-  }, [metrics.items, scrollTop, shouldVirtualize, viewportHeight]);
+  }, [metrics.items, metrics.starts, scrollTop, shouldVirtualize, viewportHeight]);
 
   const handleHeightChange = useCallback((homeworkNumberId: string, nextHeight: number) => {
     setMeasuredHeights((current) => {

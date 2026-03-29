@@ -21,7 +21,7 @@ export function DashboardNav({ user }: DashboardNavProps) {
   const items = navigation[user.role];
 
   return (
-    <header className="border-b border-white/70 bg-[rgba(248,251,255,0.9)] backdrop-blur-xl sm:sticky sm:top-0 sm:z-20">
+    <header className="border-b border-white/70 bg-[rgba(248,251,255,0.96)] sm:sticky sm:top-0 sm:z-20">
       <div className="mx-auto flex w-full max-w-7xl flex-col gap-3 px-3 py-3 sm:px-6 sm:py-4 lg:flex-row lg:items-center lg:justify-between lg:px-8">
         <div className="space-y-3">
           <Link href="/" className="inline-flex items-center gap-3 text-slate-950">
@@ -33,7 +33,7 @@ export function DashboardNav({ user }: DashboardNavProps) {
           {items.length > 0 ? <nav className="flex flex-wrap gap-2" /> : null}
         </div>
 
-        <div className="flex w-full flex-col gap-3 rounded-[20px] border border-slate-200/80 bg-white/92 px-4 py-3 shadow-[0_12px_28px_rgba(15,23,42,0.05)] sm:w-auto sm:flex-row sm:items-center sm:justify-between sm:rounded-[24px]">
+        <div className="flex w-full flex-col gap-3 rounded-[20px] border border-slate-200/80 bg-white/96 px-4 py-3 shadow-[0_10px_20px_rgba(15,23,42,0.04)] sm:w-auto sm:flex-row sm:items-center sm:justify-between sm:rounded-[24px]">
           <div className="min-w-0">
             <div className="mb-1.5 flex flex-wrap items-center gap-2">
               <p className="truncate font-semibold text-slate-900">{user.name}</p>
