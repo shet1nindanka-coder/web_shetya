@@ -47,6 +47,7 @@ type StudentNumberCardProps = {
 
 type StudentNumberListProps = {
   numbers: StudentNumberState[];
+  resetKey: HomeworkFilterId;
   notesEnabled: boolean;
   homeworkGroupsByDeadline: Map<string, HomeworkGroup>;
   onSelect: (homeworkNumberId: string, status: HomeworkNumberStatus | null) => void;
@@ -375,6 +376,7 @@ const StudentNumberRow = memo(function StudentNumberRow({
 
 function StudentNumberList({
   numbers,
+  resetKey,
   notesEnabled,
   homeworkGroupsByDeadline,
   onSelect,
@@ -441,7 +443,7 @@ function StudentNumberList({
 
     element.scrollTop = 0;
     setScrollTop(0);
-  }, [numbers]);
+  }, [resetKey]);
 
   const metrics = useMemo(() => {
     let offset = 0;
@@ -1137,6 +1139,7 @@ export function StudentTopicStatusBoard({
               {deferredFilteredNumbers.length > 0 ? (
                 <StudentNumberList
                   numbers={deferredFilteredNumbers}
+                  resetKey={activeFilter}
                   notesEnabled={notesEnabled}
                   homeworkGroupsByDeadline={homeworkGroupsByDeadline}
                   onSelect={updateNumberStatus}
@@ -1155,6 +1158,7 @@ export function StudentTopicStatusBoard({
             {deferredFilteredNumbers.length > 0 ? (
               <StudentNumberList
                 numbers={deferredFilteredNumbers}
+                resetKey={activeFilter}
                 notesEnabled={notesEnabled}
                 homeworkGroupsByDeadline={homeworkGroupsByDeadline}
                 onSelect={updateNumberStatus}
