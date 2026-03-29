@@ -559,7 +559,6 @@ export function StudentTopicStatusBoard({
   topicId,
   totalNumbers,
   notesEnabled,
-  deadlinesEnabled,
   initialNumbers
 }: StudentTopicStatusBoardProps) {
   const initialState = useMemo<StudentNumberState[]>(
@@ -685,6 +684,8 @@ export function StudentTopicStatusBoard({
   }, [activeFilter, numbers]);
   const deferredFilteredNumbers = useDeferredValue(filteredNumbers);
   const isTopicCompleted = totalNumbers > 0 && summary.solvedCount === totalNumbers;
+  const hasHomeworkFilters = numbers.length > 0;
+  const hasIssuedHomeworkGroups = homeworkGroups.length > 0;
 
   useEffect(() => {
     if (activeFilter === "all" || activeFilter === "without-homework") {
@@ -957,12 +958,14 @@ export function StudentTopicStatusBoard({
           </div>
         ) : null}
 
-        {deadlinesEnabled && homeworkGroups.length > 0 ? (
+        {hasHomeworkFilters ? (
           <div className="mb-5 space-y-3">
             <div>
               <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">Фильтр по выданному ДЗ</p>
               <p className="mt-2 text-sm leading-6 text-slate-500">
-                Выберите конкретное ДЗ, чтобы увидеть только номера из этого назначения.
+                {hasIssuedHomeworkGroups
+                  ? "Выберите конкретное ДЗ, чтобы увидеть только номера из этого назначения."
+                  : "Для этой темы пока не выданы отдельные ДЗ, поэтому сейчас показаны все номера."}
               </p>
             </div>
 
@@ -988,7 +991,7 @@ export function StudentTopicStatusBoard({
                 </span>
               </button>
 
-              {numbersWithoutHomeworkCount > 0 ? (
+              {hasIssuedHomeworkGroups && numbersWithoutHomeworkCount > 0 ? (
                 <button
                   type="button"
                     onClick={() => {
@@ -1122,7 +1125,7 @@ export function StudentTopicStatusBoard({
           </div>
           <ProgressBar value={summary.solvedProgressPercent} />
         </div>
-        {deadlinesEnabled && numbers.some((number) => number.deadlineAt) ? (
+        {hasIssuedHomeworkGroups ? (
           <p className="mt-4 text-sm leading-6 text-slate-600">
             Дедлайны по выданным заданиям указаны в названиях фильтров ДЗ выше.
           </p>
