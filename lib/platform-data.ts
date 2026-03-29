@@ -4,12 +4,6 @@ import { PLATFORM_DATA_TAGS } from "@/lib/platform-data-cache";
 import { prisma } from "@/lib/prisma";
 import { completionPercent, getStatusCounts } from "@/lib/utils";
 
-const topicDataCapabilitiesHint = {
-  notesEnabled: true,
-  deadlinesEnabled: true,
-  answerLatexEnabled: true
-};
-
 function buildProgress(statuses: Array<HomeworkNumberStatus | null | undefined>, totalNumbers: number) {
   const counts = getStatusCounts(statuses);
   const markedCount = counts.GREEN + counts.YELLOW + counts.RED;
@@ -61,16 +55,14 @@ async function resolveTopicDataCapabilities<T>(
     deadlinesEnabled: boolean;
     answerLatexEnabled: boolean;
   } = {
-    ...topicDataCapabilitiesHint
+    notesEnabled: true,
+    deadlinesEnabled: true,
+    answerLatexEnabled: true
   };
 
   while (true) {
     try {
       const result = await queryBuilder(capabilities);
-
-      topicDataCapabilitiesHint.notesEnabled = capabilities.notesEnabled;
-      topicDataCapabilitiesHint.deadlinesEnabled = capabilities.deadlinesEnabled;
-      topicDataCapabilitiesHint.answerLatexEnabled = capabilities.answerLatexEnabled;
 
       return {
         ...capabilities,
@@ -101,9 +93,6 @@ async function resolveTopicDataCapabilities<T>(
       }
 
       capabilities = nextCapabilities;
-      topicDataCapabilitiesHint.notesEnabled = nextCapabilities.notesEnabled;
-      topicDataCapabilitiesHint.deadlinesEnabled = nextCapabilities.deadlinesEnabled;
-      topicDataCapabilitiesHint.answerLatexEnabled = nextCapabilities.answerLatexEnabled;
     }
   }
 }
