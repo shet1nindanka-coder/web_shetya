@@ -94,8 +94,11 @@ export function TeacherStudentProgressBoard({
     () =>
       initialTopics.map((topic) => ({
         ...topic,
+        bulkDeadlineInputValue: "",
+        isSavingBulk: false,
         numbers: topic.numbers.map((number) => ({
           ...number,
+          selectedForBulk: false,
           deadlineInputValue: formatDeadlineForInput(number.studentStatus?.deadlineAt ?? null),
           savedDeadlineAt: number.studentStatus?.deadlineAt ?? null,
           isSavingDeadline: false
@@ -353,6 +356,215 @@ export function TeacherStudentProgressBoard({
     [saveDeadline]
   );
 
+  const toggleBulkSelection = useCallback(
+    (topicId: string, homeworkNumberId: string) => {
+      updateTopicsState((current) =>
+        current.map((topic) =>
+          topic.id === topicId
+            ? {
+                ...topic,
+                numbers: topic.numbers.map((number) =>
+                  number.id === homeworkNumberId
+                    ? {
+                        ...number,
+                        selectedForBulk: !number.selectedForBulk
+                      }
+                    : number
+                )
+              }
+            : topic
+        )
+      );
+    },
+    [updateTopicsState]
+  );
+
+  const clearBulkSelection = useCallback(
+    (topicId: string) => {
+      updateTopicsState((current) =>
+        current.map((topic) =>
+          topic.id === topicId
+            ? {
+                ...topic,
+                numbers: topic.numbers.map((number) => ({
+                  ...number,
+                  selectedForBulk: false
+                }))
+              }
+            : topic
+        )
+      );
+    },
+    [updateTopicsState]
+  );
+
+  const updateBulkDeadlineValue = useCallback(
+    (topicId: string, value: string) => {
+      updateTopicsState((current) =>
+        current.map((topic) =>
+          topic.id === topicId
+            ? {
+                ...topic,
+                bulkDeadlineInputValue: value
+              }
+            : topic
+        )
+      );
+    },
+    [updateTopicsState]
+  );
+
+  const applyBulkDeadline = useCallback(
+    async (topicId: string) => {
+      if (!deadlinesEnabled) {
+        return;
+      }
+
+      const currentTopic = topicsRef.current.find((topic) => topic.id === topicId);
+
+      if (!currentTopic) {
+        return;
+      }
+
+      const selectedNumbers = currentTopic.numbers.filter((number) => number.selectedForBulk);
+
+      if (!selectedNumbers.length) {
+        setSaveError("Сначала выберите номера, которым нужно назначить общий дедлайн.");
+        return;
+      }
+
+      setSaveError(null);
+
+      for (const number of selectedNumbers) {
+        const timerKey = `${topicId}:${number.id}`;
+        const existingTimer = timersRef.current[timerKey];
+
+        if (existingTimer) {
+          clearTimeout(existingTimer);
+          delete timersRef.current[timerKey];
+        }
+      }
+
+      const versionKey = `bulk:${topicId}`;
+      const nextVersion = (requestVersionRef.current[versionKey] ?? 0) + 1;
+      requestVersionRef.current[versionKey] = nextVersion;
+
+      controllersRef.current[versionKey]?.abort();
+
+      const controller = new AbortController();
+      controllersRef.current[versionKey] = controller;
+      const nextDeadlineAt = inputToIso(currentTopic.bulkDeadlineInputValue);
+
+      updateTopicsState((current) =>
+        current.map((topic) =>
+          topic.id === topicId
+            ? {
+                ...topic,
+                isSavingBulk: true,
+                numbers: topic.numbers.map((number) =>
+                  number.selectedForBulk
+                    ? {
+                        ...number,
+                        isSavingDeadline: true
+                      }
+                    : number
+                )
+              }
+            : topic
+        )
+      );
+
+      try {
+        const response = await fetch("/api/teacher/student-deadlines", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            studentId,
+            topicId,
+            homeworkNumberIds: selectedNumbers.map((number) => number.id),
+            deadlineAt: nextDeadlineAt
+          }),
+          signal: controller.signal
+        });
+
+        const result = (await response.json().catch(() => null)) as
+          | { error?: string; deadlineAt?: string | null; homeworkNumberIds?: string[] }
+          | null;
+
+        if (requestVersionRef.current[versionKey] !== nextVersion) {
+          return;
+        }
+
+        if (!response.ok) {
+          throw new Error(result?.error || "Не удалось сохранить общий дедлайн.");
+        }
+
+        const savedValue = typeof result?.deadlineAt === "string" ? result.deadlineAt : null;
+        const updatedIds = new Set(result?.homeworkNumberIds ?? selectedNumbers.map((number) => number.id));
+
+        updateTopicsState((current) =>
+          current.map((topic) =>
+            topic.id === topicId
+              ? {
+                  ...topic,
+                  isSavingBulk: false,
+                  numbers: topic.numbers.map((number) =>
+                    updatedIds.has(number.id)
+                      ? {
+                          ...number,
+                          selectedForBulk: false,
+                          savedDeadlineAt: savedValue,
+                          deadlineInputValue: formatDeadlineForInput(savedValue),
+                          isSavingDeadline: false,
+                          studentStatus: {
+                            status: number.studentStatus?.status ?? null,
+                            note: number.studentStatus?.note ?? "",
+                            deadlineAt: savedValue
+                          }
+                        }
+                      : number
+                  )
+                }
+              : topic
+          )
+        );
+      } catch (error) {
+        if (controller.signal.aborted || requestVersionRef.current[versionKey] !== nextVersion) {
+          return;
+        }
+
+        updateTopicsState((current) =>
+          current.map((topic) =>
+            topic.id === topicId
+              ? {
+                  ...topic,
+                  isSavingBulk: false,
+                  numbers: topic.numbers.map((number) =>
+                    number.selectedForBulk
+                      ? {
+                          ...number,
+                          isSavingDeadline: false,
+                          deadlineInputValue: formatDeadlineForInput(number.savedDeadlineAt)
+                        }
+                      : number
+                  )
+                }
+              : topic
+          )
+        );
+
+        setSaveError(error instanceof Error ? error.message : "Не удалось сохранить общий дедлайн.");
+      } finally {
+        if (requestVersionRef.current[versionKey] === nextVersion) {
+          delete controllersRef.current[versionKey];
+        }
+      }
+    },
+    [deadlinesEnabled, studentId, updateTopicsState]
+  );
+
   return (
     <div className="space-y-5">
       {!deadlinesEnabled ? (
@@ -369,6 +581,7 @@ export function TeacherStudentProgressBoard({
 
       {topics.map((topic) => {
         const isCompleted = topic.totalNumbers > 0 && topic.solvedCount === topic.totalNumbers;
+        const selectedCount = topic.numbers.filter((number) => number.selectedForBulk).length;
 
         return (
           <article key={topic.id} className="rounded-[28px] border border-slate-200 bg-slate-50/80 p-5">
@@ -414,6 +627,44 @@ export function TeacherStudentProgressBoard({
               </div>
             </div>
 
+            <div className="mt-5 rounded-[24px] border border-slate-200 bg-white px-4 py-4">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-slate-400">Общий дедлайн</p>
+                  <p className="mt-2 text-sm leading-6 text-slate-600">
+                    Выберите несколько номеров ниже и назначьте им один общий срок.
+                  </p>
+                </div>
+                <Badge className="border-slate-200 bg-slate-50 text-slate-700">Выбрано {selectedCount}</Badge>
+              </div>
+
+              <div className="mt-4 flex flex-col gap-3 lg:flex-row lg:items-center">
+                <input
+                  type="datetime-local"
+                  value={topic.bulkDeadlineInputValue}
+                  disabled={!deadlinesEnabled || topic.isSavingBulk}
+                  onChange={(event) => updateBulkDeadlineValue(topic.id, event.target.value)}
+                  className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-3 py-3 text-sm text-slate-700 outline-none transition focus:border-brand-400 focus:bg-white lg:max-w-xs"
+                />
+                <button
+                  type="button"
+                  disabled={!deadlinesEnabled || !selectedCount || topic.isSavingBulk}
+                  onClick={() => void applyBulkDeadline(topic.id)}
+                  className="ui-pressable rounded-full bg-slate-950 px-5 py-3 text-sm font-semibold text-white transition hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  {topic.isSavingBulk ? "Сохраняем..." : "Применить к выбранным"}
+                </button>
+                <button
+                  type="button"
+                  disabled={!selectedCount || topic.isSavingBulk}
+                  onClick={() => clearBulkSelection(topic.id)}
+                  className="ui-pressable rounded-full border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-700 transition hover:border-brand-300 hover:text-brand-700 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  Снять выбор
+                </button>
+              </div>
+            </div>
+
             {isCompleted ? (
               <details className="mt-5 rounded-[24px] border border-emerald-200 bg-emerald-50/70">
                 <summary className="ui-pressable flex cursor-pointer list-none items-center justify-between gap-4 px-4 py-4 [&::-webkit-details-marker]:hidden">
@@ -436,8 +687,19 @@ export function TeacherStudentProgressBoard({
                       return (
                         <div key={number.id} className="rounded-[24px] border border-white bg-white px-4 py-4">
                           <div className="flex items-center justify-between gap-3">
-                            <p className="text-lg font-semibold text-slate-950">№ {number.number}</p>
+                            <label className="inline-flex items-center gap-2 text-xs font-semibold text-slate-500">
+                              <input
+                                type="checkbox"
+                                checked={number.selectedForBulk}
+                                onChange={() => toggleBulkSelection(topic.id, number.id)}
+                                className="h-4 w-4 rounded border-slate-300"
+                              />
+                              Выбрать
+                            </label>
                             <HomeworkStatusBadge status={number.studentStatus?.status ?? null} />
+                          </div>
+                          <div className="mt-3 flex items-center justify-between gap-3">
+                            <p className="text-lg font-semibold text-slate-950">№ {number.number}</p>
                           </div>
                           {number.studentStatus?.note ? (
                             <div className="mt-3 rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2">
@@ -482,8 +744,19 @@ export function TeacherStudentProgressBoard({
                   return (
                     <div key={number.id} className="rounded-[24px] border border-white bg-white px-4 py-4">
                       <div className="flex items-center justify-between gap-3">
-                        <p className="text-lg font-semibold text-slate-950">№ {number.number}</p>
+                        <label className="inline-flex items-center gap-2 text-xs font-semibold text-slate-500">
+                          <input
+                            type="checkbox"
+                            checked={number.selectedForBulk}
+                            onChange={() => toggleBulkSelection(topic.id, number.id)}
+                            className="h-4 w-4 rounded border-slate-300"
+                          />
+                          Выбрать
+                        </label>
                         <HomeworkStatusBadge status={number.studentStatus?.status ?? null} />
+                      </div>
+                      <div className="mt-3 flex items-center justify-between gap-3">
+                        <p className="text-lg font-semibold text-slate-950">№ {number.number}</p>
                       </div>
                       {number.studentStatus?.note ? (
                         <div className="mt-3 rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2">

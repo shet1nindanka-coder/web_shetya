@@ -48,13 +48,23 @@ export async function POST(request: Request) {
         studentId?: string;
         topicId?: string;
         homeworkNumberId?: string;
+        homeworkNumberIds?: string[];
         deadlineAt?: string | null;
       }
     | null;
 
   const studentId = String(body?.studentId ?? "").trim();
   const topicId = String(body?.topicId ?? "").trim();
-  const homeworkNumberId = String(body?.homeworkNumberId ?? "").trim();
+  const homeworkNumberIds = Array.from(
+    new Set(
+      (Array.isArray(body?.homeworkNumberIds)
+        ? body?.homeworkNumberIds
+        : [body?.homeworkNumberId]
+      )
+        .map((value) => String(value ?? "").trim())
+        .filter(Boolean)
+    )
+  );
   const rawDeadline = body?.deadlineAt;
   const deadlineAt =
     typeof rawDeadline === "string" && rawDeadline.trim()
@@ -63,11 +73,17 @@ export async function POST(request: Request) {
         ? null
         : undefined;
 
-  if (!studentId || !topicId || !homeworkNumberId || deadlineAt === undefined || Number.isNaN(deadlineAt?.getTime())) {
+  if (
+    !studentId ||
+    !topicId ||
+    !homeworkNumberIds.length ||
+    deadlineAt === undefined ||
+    Number.isNaN(deadlineAt?.getTime())
+  ) {
     return NextResponse.json({ error: "Некорректные данные для дедлайна." }, { status: 400 });
   }
 
-  const [student, homeworkNumber] = await Promise.all([
+  const [student, homeworkNumbers] = await Promise.all([
     prisma.user.findFirst({
       where: {
         id: studentId,
@@ -77,34 +93,51 @@ export async function POST(request: Request) {
     }),
     prisma.topicHomeworkNumber.findFirst({
       where: {
-        id: homeworkNumberId,
+        id: {
+          in: homeworkNumberIds
+        },
         topicId
       },
       select: { id: true }
     })
   ]);
 
-  if (!student || !homeworkNumber) {
-    return NextResponse.json({ error: "Ученик или номер задания не найден." }, { status: 404 });
+  if (!student || !homeworkNumbers || homeworkNumberIds.length !== 1) {
+    const foundNumbers = await prisma.topicHomeworkNumber.findMany({
+      where: {
+        id: {
+          in: homeworkNumberIds
+        },
+        topicId
+      },
+      select: {
+        id: true
+      }
+    });
+
+    if (!student || foundNumbers.length !== homeworkNumberIds.length) {
+      return NextResponse.json({ error: "Ученик или номер задания не найден." }, { status: 404 });
+    }
   }
 
   let notesEnabled = true;
-  let existingStatus:
-    | {
-        status: string | null;
-        note?: string | null;
-      }
-    | null = null;
+  let existingStatuses:
+    Array<{
+      homeworkNumberId: string;
+      status: string | null;
+      note?: string | null;
+    }> = [];
 
   try {
-    existingStatus = await prisma.studentTopicNumberStatus.findUnique({
+    existingStatuses = await prisma.studentTopicNumberStatus.findMany({
       where: {
-        studentId_homeworkNumberId: {
-          studentId,
-          homeworkNumberId
+        studentId,
+        homeworkNumberId: {
+          in: homeworkNumberIds
         }
       },
       select: {
+        homeworkNumberId: true,
         status: true,
         note: true
       }
@@ -115,47 +148,56 @@ export async function POST(request: Request) {
     }
 
     notesEnabled = !isMissingStudentNoteColumnError(error);
-    existingStatus = await prisma.studentTopicNumberStatus.findUnique({
+    existingStatuses = await prisma.studentTopicNumberStatus.findMany({
       where: {
-        studentId_homeworkNumberId: {
-          studentId,
-          homeworkNumberId
+        studentId,
+        homeworkNumberId: {
+          in: homeworkNumberIds
         }
       },
       select: {
+        homeworkNumberId: true,
         status: true
       }
     });
   }
 
+  const existingStatusMap = new Map(existingStatuses.map((status) => [status.homeworkNumberId, status]));
+
   try {
-    if (!deadlineAt && !existingStatus?.status && !existingStatus?.note) {
-      await prisma.studentTopicNumberStatus.deleteMany({
-        where: {
-          studentId,
-          homeworkNumberId
+    await prisma.$transaction(
+      homeworkNumberIds.map((homeworkNumberId) => {
+        const existingStatus = existingStatusMap.get(homeworkNumberId) ?? null;
+
+        if (!deadlineAt && !existingStatus?.status && !existingStatus?.note) {
+          return prisma.studentTopicNumberStatus.deleteMany({
+            where: {
+              studentId,
+              homeworkNumberId
+            }
+          });
         }
-      });
-    } else {
-      await prisma.studentTopicNumberStatus.upsert({
-        where: {
-          studentId_homeworkNumberId: {
+
+        return prisma.studentTopicNumberStatus.upsert({
+          where: {
+            studentId_homeworkNumberId: {
+              studentId,
+              homeworkNumberId
+            }
+          },
+          update: {
+            deadlineAt
+          },
+          create: {
             studentId,
-            homeworkNumberId
+            homeworkNumberId,
+            status: null,
+            ...(notesEnabled ? { note: null } : {}),
+            deadlineAt
           }
-        },
-        update: {
-          deadlineAt
-        },
-        create: {
-          studentId,
-          homeworkNumberId,
-          status: null,
-          ...(notesEnabled ? { note: null } : {}),
-          deadlineAt
-        }
-      });
-    }
+        });
+      })
+    );
   } catch (error) {
     if (isMissingStudentDeadlineColumnError(error)) {
       return NextResponse.json(
@@ -175,6 +217,7 @@ export async function POST(request: Request) {
   return NextResponse.json({
     ok: true,
     deadlineAt: deadlineAt ? deadlineAt.toISOString() : null,
-    deadlinesEnabled: true
+    deadlinesEnabled: true,
+    homeworkNumberIds
   });
 }
