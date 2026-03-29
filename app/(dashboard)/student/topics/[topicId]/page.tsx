@@ -2,6 +2,7 @@ import Link from "next/link";
 import { UserRole } from "@prisma/client";
 import { FileResourceCard } from "@/components/file-resource-card";
 import { StudentTopicStatusBoard } from "@/components/student-topic-status-board";
+import { StudentTopicTabs } from "@/components/student-topic-tabs";
 import { requireUser } from "@/lib/auth";
 import { getStudentTopicDetail } from "@/lib/platform-data";
 
@@ -28,31 +29,38 @@ export default async function StudentTopicPage({ params }: StudentTopicPageProps
         </div>
       </div>
 
-      <StudentTopicStatusBoard
-        topicId={topic.id}
-        totalNumbers={topic.totalNumbers}
-        notesEnabled={topic.notesEnabled}
-        initialNumbers={topic.numbers.map((number: (typeof topic.numbers)[number]) => ({
-          id: number.id,
-          number: number.number,
-          status: number.studentStatus?.status ?? null,
-          note: number.studentStatus?.note ?? "",
-          answerLatex: number.answerLatex
-        }))}
+      <StudentTopicTabs
+        hasTheoryFile={Boolean(topic.theoryFile)}
+        hasHomeworkFile={Boolean(topic.homeworkFile)}
+        numbersContent={
+          <StudentTopicStatusBoard
+            topicId={topic.id}
+            totalNumbers={topic.totalNumbers}
+            notesEnabled={topic.notesEnabled}
+            initialNumbers={topic.numbers.map((number: (typeof topic.numbers)[number]) => ({
+              id: number.id,
+              number: number.number,
+              status: number.studentStatus?.status ?? null,
+              note: number.studentStatus?.note ?? "",
+              answerLatex: number.answerLatex
+            }))}
+          />
+        }
+        theoryContent={
+          <FileResourceCard
+            title="Теория"
+            description="Откройте файл прямо в браузере или скачайте его себе на устройство."
+            file={topic.theoryFile}
+          />
+        }
+        homeworkContent={
+          <FileResourceCard
+            title="Задания"
+            description="Задания доступны в отдельном файле. При необходимости откройте или скачайте его."
+            file={topic.homeworkFile}
+          />
+        }
       />
-
-      <div className="grid gap-6 xl:grid-cols-2">
-        <FileResourceCard
-          title="Теория"
-          description="Откройте файл прямо в браузере или скачайте его себе на устройство."
-          file={topic.theoryFile}
-        />
-        <FileResourceCard
-          title="Задания"
-          description="Задания доступны в отдельном файле. При необходимости откройте или скачайте его."
-          file={topic.homeworkFile}
-        />
-      </div>
     </div>
   );
 }
