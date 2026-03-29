@@ -53,7 +53,7 @@ export default async function TeacherPage() {
         description="Разделите работу по вкладкам: темы для материалов, ученики для учёток и карточек прогресса."
       >
         <div className="grid gap-4 lg:grid-cols-2">
-          <article className="rounded-[28px] border border-slate-200 bg-slate-50/80 p-5 shadow-[0_12px_35px_rgba(15,23,42,0.06)]">
+          <article className="ui-fade-slide ui-surface rounded-[28px] border border-slate-200 bg-slate-50/80 p-5 shadow-[0_12px_35px_rgba(15,23,42,0.06)]">
             <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Темы</p>
             <h2 className="font-display mt-3 text-2xl font-semibold text-slate-950">Материалы, номера и статусы</h2>
             <p className="mt-3 text-sm leading-6 text-slate-600">
@@ -72,14 +72,14 @@ export default async function TeacherPage() {
             <div className="mt-5">
               <Link
                 href="/teacher/topics"
-                className="inline-flex rounded-full bg-slate-950 px-5 py-3 text-sm font-semibold text-white transition hover:bg-brand-700"
+                className="ui-pressable inline-flex rounded-full bg-slate-950 px-5 py-3 text-sm font-semibold text-white transition hover:bg-brand-700"
               >
                 Перейти к темам
               </Link>
             </div>
           </article>
 
-          <article className="rounded-[28px] border border-slate-200 bg-slate-50/80 p-5 shadow-[0_12px_35px_rgba(15,23,42,0.06)]">
+          <article className="ui-fade-slide ui-surface rounded-[28px] border border-slate-200 bg-slate-50/80 p-5 shadow-[0_12px_35px_rgba(15,23,42,0.06)]">
             <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Ученики</p>
             <h2 className="font-display mt-3 text-2xl font-semibold text-slate-950">Аккаунты и персональный прогресс</h2>
             <p className="mt-3 text-sm leading-6 text-slate-600">
@@ -92,7 +92,7 @@ export default async function TeacherPage() {
             <div className="mt-5">
               <Link
                 href="/teacher/students"
-                className="inline-flex rounded-full bg-slate-950 px-5 py-3 text-sm font-semibold text-white transition hover:bg-brand-700"
+                className="ui-pressable inline-flex rounded-full bg-slate-950 px-5 py-3 text-sm font-semibold text-white transition hover:bg-brand-700"
               >
                 Перейти к ученикам
               </Link>

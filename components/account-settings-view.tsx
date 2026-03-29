@@ -159,7 +159,7 @@ export function AccountSettingsView({ user, notice }: AccountSettingsViewProps) 
               name="name"
               defaultValue={user.name}
               placeholder="Ваше имя"
-              className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-950 outline-none transition focus:border-brand-400 focus:bg-white"
+              className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-950 outline-none transition focus:-translate-y-[1px] focus:border-brand-400 focus:bg-white"
               required
             />
           </label>
@@ -172,7 +172,7 @@ export function AccountSettingsView({ user, notice }: AccountSettingsViewProps) 
           <div className="lg:col-span-2 flex flex-wrap items-center gap-3">
             <button
               type="submit"
-              className="rounded-2xl bg-slate-950 px-5 py-3 text-sm font-semibold text-white transition hover:bg-brand-700"
+              className="ui-pressable rounded-2xl bg-slate-950 px-5 py-3 text-sm font-semibold text-white transition hover:bg-brand-700"
             >
               Сохранить личную информацию
             </button>
@@ -194,7 +194,7 @@ export function AccountSettingsView({ user, notice }: AccountSettingsViewProps) 
               type="password"
               name="currentPassword"
               placeholder="Введите текущий пароль"
-              className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-950 outline-none transition focus:border-brand-400 focus:bg-white"
+              className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-950 outline-none transition focus:-translate-y-[1px] focus:border-brand-400 focus:bg-white"
               required
             />
           </label>
@@ -206,7 +206,7 @@ export function AccountSettingsView({ user, notice }: AccountSettingsViewProps) 
               name="newPassword"
               placeholder="Минимум 8 символов"
               minLength={8}
-              className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-950 outline-none transition focus:border-brand-400 focus:bg-white"
+              className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-950 outline-none transition focus:-translate-y-[1px] focus:border-brand-400 focus:bg-white"
               required
             />
           </label>
@@ -218,7 +218,7 @@ export function AccountSettingsView({ user, notice }: AccountSettingsViewProps) 
               name="confirmPassword"
               placeholder="Повторите новый пароль"
               minLength={8}
-              className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-950 outline-none transition focus:border-brand-400 focus:bg-white"
+              className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-950 outline-none transition focus:-translate-y-[1px] focus:border-brand-400 focus:bg-white"
               required
             />
           </label>
@@ -226,7 +226,7 @@ export function AccountSettingsView({ user, notice }: AccountSettingsViewProps) 
           <div className="xl:col-span-3 flex flex-wrap items-center gap-3">
             <button
               type="submit"
-              className="rounded-2xl bg-slate-950 px-5 py-3 text-sm font-semibold text-white transition hover:bg-brand-700"
+              className="ui-pressable rounded-2xl bg-slate-950 px-5 py-3 text-sm font-semibold text-white transition hover:bg-brand-700"
             >
               Обновить пароль
             </button>

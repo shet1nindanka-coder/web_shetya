@@ -105,7 +105,7 @@ function FileUploadField({
         name={name}
         accept=".pdf,.docx,.png,.jpg,.jpeg"
         onChange={(event) => onFileSelect(event.target.files?.[0] ?? null)}
-        className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700"
+        className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 transition file:mr-4 file:rounded-full file:border-0 file:bg-slate-950 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-white hover:file:bg-brand-700"
       />
 
       {state.status === "uploading" ? (
@@ -379,7 +379,7 @@ export function TopicCreateForm({
           value={title}
           onChange={(event) => setTitle(event.target.value)}
           placeholder="Например, Логарифмы и их свойства"
-          className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none transition focus:border-brand-400 focus:bg-white"
+          className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none transition focus:-translate-y-[1px] focus:border-brand-400 focus:bg-white"
           required
         />
       </label>
@@ -391,7 +391,7 @@ export function TopicCreateForm({
           onChange={(event) => setDescription(event.target.value)}
           rows={4}
           placeholder="Что нужно изучить в теории и на что обратить внимание в заданиях по теме."
-          className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none transition focus:border-brand-400 focus:bg-white"
+          className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none transition focus:-translate-y-[1px] focus:border-brand-400 focus:bg-white"
           required
         />
       </label>
@@ -417,7 +417,7 @@ export function TopicCreateForm({
           value={numbers}
           onChange={(event) => setNumbers(event.target.value)}
           placeholder="1-5, 8, 12-14"
-          className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none transition focus:border-brand-400 focus:bg-white"
+          className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none transition focus:-translate-y-[1px] focus:border-brand-400 focus:bg-white"
           required
         />
         <p className="text-sm text-slate-500">Можно вводить через запятую, пробел или диапазоном через тире, например `1-5`.</p>
@@ -441,7 +441,7 @@ export function TopicCreateForm({
         <button
           type="submit"
           disabled={isSubmitDisabled}
-          className="rounded-2xl bg-slate-950 px-5 py-3 text-sm font-semibold text-white transition hover:bg-brand-700 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-600"
+          className="ui-pressable rounded-2xl bg-slate-950 px-5 py-3 text-sm font-semibold text-white transition hover:bg-brand-700 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-600"
         >
           {isSubmitting ? "Создаем тему..." : "Создать тему"}
         </button>

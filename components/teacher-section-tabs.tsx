@@ -27,7 +27,7 @@ export function TeacherSectionTabs() {
   const pathname = usePathname();
 
   return (
-    <nav className="mb-8 flex flex-wrap gap-2 rounded-[28px] border border-white/70 bg-white/85 p-3 shadow-sm backdrop-blur">
+    <nav className="ui-fade-slide mb-8 flex flex-wrap gap-2 rounded-[28px] border border-white/70 bg-white/85 p-3 shadow-sm backdrop-blur">
       {items.map((item) => {
         const isActive = item.match(pathname);
 
@@ -36,7 +36,7 @@ export function TeacherSectionTabs() {
             key={item.href}
             href={item.href}
             className={cx(
-              "rounded-full border px-4 py-2 text-sm font-medium transition",
+              "ui-pressable rounded-full border px-4 py-2 text-sm font-medium transition",
               isActive
                 ? "border-brand-200 bg-brand-50 text-brand-700 shadow-sm"
                 : "border-slate-200 bg-white text-slate-700 hover:border-brand-300 hover:text-brand-700"

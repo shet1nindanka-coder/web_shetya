@@ -28,7 +28,7 @@ export default async function HomePage() {
           </div>
           <Link
             href="/login"
-            className="rounded-full bg-slate-950 px-5 py-3 text-sm font-semibold text-white transition hover:bg-brand-700"
+            className="ui-pressable rounded-full bg-slate-950 px-5 py-3 text-sm font-semibold text-white transition hover:bg-brand-700"
           >
             Открыть кабинет
           </Link>
@@ -51,22 +51,22 @@ export default async function HomePage() {
             </div>
 
             <div className="grid gap-4 sm:grid-cols-3">
-              <div className="rounded-[28px] border border-white/70 bg-white/85 p-5 shadow-glow">
+              <div className="ui-fade-slide ui-surface rounded-[28px] border border-white/70 bg-white/85 p-5 shadow-glow">
                 <p className="text-sm font-semibold uppercase tracking-[0.2em] text-slate-500">Роли</p>
                 <p className="mt-3 text-2xl font-semibold text-slate-950">Ученик и преподаватель</p>
               </div>
-              <div className="rounded-[28px] border border-white/70 bg-white/85 p-5 shadow-glow">
+              <div className="ui-fade-slide ui-surface rounded-[28px] border border-white/70 bg-white/85 p-5 shadow-glow">
                 <p className="text-sm font-semibold uppercase tracking-[0.2em] text-slate-500">Теория</p>
                 <p className="mt-3 text-2xl font-semibold text-slate-950">Файлы и встроенный просмотр</p>
               </div>
-              <div className="rounded-[28px] border border-white/70 bg-white/85 p-5 shadow-glow">
+              <div className="ui-fade-slide ui-surface rounded-[28px] border border-white/70 bg-white/85 p-5 shadow-glow">
                 <p className="text-sm font-semibold uppercase tracking-[0.2em] text-slate-500">Задания</p>
                 <p className="mt-3 text-2xl font-semibold text-slate-950">Цветные статусы по номерам</p>
               </div>
             </div>
           </div>
 
-          <div className="rounded-[36px] border border-white/70 bg-slate-950 p-8 text-white shadow-glow">
+          <div className="ui-fade-slide ui-surface rounded-[36px] border border-white/70 bg-slate-950 p-8 text-white shadow-glow">
             <p className="text-sm font-semibold uppercase tracking-[0.3em] text-brand-200">Быстрый старт</p>
             <h2 className="font-display mt-4 text-3xl font-semibold">
               В проект уже заложены сиды, роли и PostgreSQL-схема
@@ -80,7 +80,7 @@ export default async function HomePage() {
             </div>
             <Link
               href="/login"
-              className="mt-8 inline-flex rounded-full bg-white px-5 py-3 text-sm font-semibold text-slate-950 transition hover:bg-brand-100"
+              className="ui-pressable mt-8 inline-flex rounded-full bg-white px-5 py-3 text-sm font-semibold text-slate-950 transition hover:bg-brand-100"
             >
               Перейти к входу
             </Link>

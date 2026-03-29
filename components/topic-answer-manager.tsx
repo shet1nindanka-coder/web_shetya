@@ -231,7 +231,7 @@ export function TopicAnswerManager({ topicId, numbers }: TopicAnswerManagerProps
       {items.map((item) => (
         <article
           key={item.id}
-          className="rounded-[28px] border border-slate-200 bg-slate-50/80 p-5 shadow-[0_12px_35px_rgba(15,23,42,0.06)]"
+          className="ui-fade-slide ui-surface rounded-[28px] border border-slate-200 bg-slate-50/80 p-5 shadow-[0_12px_35px_rgba(15,23,42,0.06)]"
         >
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
@@ -269,7 +269,7 @@ export function TopicAnswerManager({ topicId, numbers }: TopicAnswerManagerProps
                   )
                 }
                 placeholder={"Например:\n$$x = \\frac{-b \\pm \\sqrt{D}}{2a}$$\n\nИли с текстом:\nПодставим в формулу: $D=b^2-4ac$"}
-                className="min-h-[180px] w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-950 outline-none transition focus:border-brand-400 focus:bg-white"
+                className="min-h-[180px] w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-950 outline-none transition focus:-translate-y-[1px] focus:border-brand-400 focus:bg-white"
                 disabled={item.isSaving || item.isDeleting}
               />
               <p className="text-sm leading-6 text-slate-500">
@@ -301,7 +301,7 @@ export function TopicAnswerManager({ topicId, numbers }: TopicAnswerManagerProps
                 type="button"
                 onClick={() => void saveAnswer(item.id)}
                 disabled={item.isSaving || item.isDeleting || !item.draftAnswerLatex.trim()}
-                className="rounded-full bg-slate-950 px-4 py-2 text-sm font-semibold text-white transition hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-60"
+                className="ui-pressable rounded-full bg-slate-950 px-4 py-2 text-sm font-semibold text-white transition hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-60"
               >
                 {item.isSaving ? "Сохраняем..." : "Сохранить ответ"}
               </button>
@@ -311,7 +311,7 @@ export function TopicAnswerManager({ topicId, numbers }: TopicAnswerManagerProps
                   type="button"
                   onClick={() => void removeAnswer(item.id)}
                   disabled={item.isDeleting || item.isSaving}
-                  className="rounded-full border border-rose-200 bg-rose-50 px-4 py-2 text-sm font-semibold text-rose-700 transition hover:bg-rose-100 disabled:cursor-not-allowed disabled:opacity-60"
+                  className="ui-pressable rounded-full border border-rose-200 bg-rose-50 px-4 py-2 text-sm font-semibold text-rose-700 transition hover:bg-rose-100 disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   {item.isDeleting ? "Удаляем..." : "Удалить ответ"}
                 </button>

@@ -19,7 +19,7 @@ function DeleteSubmitButton() {
     <button
       type="submit"
       disabled={pending}
-      className="rounded-2xl bg-rose-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-rose-700 disabled:cursor-not-allowed disabled:bg-rose-300"
+      className="ui-pressable rounded-2xl bg-rose-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-rose-700 disabled:cursor-not-allowed disabled:bg-rose-300"
     >
       {pending ? "Удаляем..." : "Да, удалить"}
     </button>
@@ -60,7 +60,7 @@ export function DeleteTopicDialog({
         type="button"
         onClick={() => setIsOpen(true)}
         className={cx(
-          "inline-flex rounded-full border border-rose-200 bg-rose-50 px-5 py-3 text-sm font-semibold text-rose-700 transition hover:bg-rose-100",
+          "ui-pressable inline-flex rounded-full border border-rose-200 bg-rose-50 px-5 py-3 text-sm font-semibold text-rose-700 transition hover:bg-rose-100",
           triggerClassName
         )}
       >
@@ -73,7 +73,7 @@ export function DeleteTopicDialog({
           onClick={() => setIsOpen(false)}
         >
           <div
-            className="w-full max-w-md rounded-[32px] border border-white/70 bg-white p-6 shadow-[0_24px_80px_rgba(15,23,42,0.24)]"
+            className="ui-pop-in w-full max-w-md rounded-[32px] border border-white/70 bg-white p-6 shadow-[0_24px_80px_rgba(15,23,42,0.24)]"
             onClick={(event) => event.stopPropagation()}
           >
             <div className="space-y-3">
@@ -89,7 +89,7 @@ export function DeleteTopicDialog({
               <button
                 type="button"
                 onClick={() => setIsOpen(false)}
-                className="rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-slate-50"
+                className="ui-pressable rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-slate-50"
               >
                 Отмена
               </button>

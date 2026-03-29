@@ -12,7 +12,7 @@ type LoginFormProps = {
 
 export function LoginForm({ error }: LoginFormProps) {
   return (
-    <div className="w-full max-w-md rounded-[32px] border border-white/70 bg-white/90 p-8 shadow-glow backdrop-blur">
+    <div className="ui-fade-slide w-full max-w-md rounded-[32px] border border-white/70 bg-white/90 p-8 shadow-glow backdrop-blur">
       <div className="mb-8 space-y-3">
         <p className="text-sm font-semibold uppercase tracking-[0.3em] text-brand-600">Вход в систему</p>
         <h1 className="font-display text-4xl font-semibold leading-tight text-slate-950">
@@ -31,7 +31,7 @@ export function LoginForm({ error }: LoginFormProps) {
             type="text"
             name="login"
             placeholder="teacher@example.com"
-            className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-950 outline-none transition focus:border-brand-400 focus:bg-white"
+            className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-950 outline-none transition focus:-translate-y-[1px] focus:border-brand-400 focus:bg-white"
             required
           />
         </label>
@@ -42,7 +42,7 @@ export function LoginForm({ error }: LoginFormProps) {
             type="password"
             name="password"
             placeholder="Введите пароль"
-            className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-950 outline-none transition focus:border-brand-400 focus:bg-white"
+            className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-950 outline-none transition focus:-translate-y-[1px] focus:border-brand-400 focus:bg-white"
             required
           />
         </label>
@@ -55,7 +55,7 @@ export function LoginForm({ error }: LoginFormProps) {
 
         <button
           type="submit"
-          className="w-full rounded-2xl bg-slate-950 px-4 py-3 text-sm font-semibold text-white transition hover:translate-y-[-1px] hover:bg-brand-700"
+          className="ui-pressable w-full rounded-2xl bg-slate-950 px-4 py-3 text-sm font-semibold text-white transition hover:translate-y-[-1px] hover:bg-brand-700"
         >
           Войти
         </button>

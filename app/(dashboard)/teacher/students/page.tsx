@@ -117,7 +117,7 @@ export default async function TeacherStudentsPage({ searchParams }: TeacherStude
                 type="text"
                 name="name"
                 placeholder="Например, Мария Смирнова"
-                className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-slate-950 outline-none transition focus:border-brand-400 focus:bg-white"
+                className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-slate-950 outline-none transition focus:-translate-y-[1px] focus:border-brand-400 focus:bg-white"
                 required
               />
             </label>
@@ -128,7 +128,7 @@ export default async function TeacherStudentsPage({ searchParams }: TeacherStude
                 type="text"
                 name="login"
                 placeholder="maria@example.com"
-                className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-slate-950 outline-none transition focus:border-brand-400 focus:bg-white"
+                className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-slate-950 outline-none transition focus:-translate-y-[1px] focus:border-brand-400 focus:bg-white"
                 required
               />
             </label>
@@ -147,13 +147,13 @@ export default async function TeacherStudentsPage({ searchParams }: TeacherStude
 
             <button
               type="submit"
-              className="rounded-2xl bg-slate-950 px-5 py-3 text-sm font-semibold text-white transition hover:bg-brand-700"
+              className="ui-pressable rounded-2xl bg-slate-950 px-5 py-3 text-sm font-semibold text-white transition hover:bg-brand-700"
             >
               Добавить ученика
             </button>
           </form>
 
-          <div className="rounded-[28px] border border-slate-200 bg-slate-50/80 p-5">
+          <div className="ui-fade-slide ui-surface rounded-[28px] border border-slate-200 bg-slate-50/80 p-5">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
                 <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Текущие ученики</p>
@@ -171,14 +171,14 @@ export default async function TeacherStudentsPage({ searchParams }: TeacherStude
             ) : (
               <div className="mt-5 grid gap-3 md:grid-cols-2">
                 {data.students.map((student) => (
-                  <article key={student.id} className="rounded-2xl border border-white bg-white px-4 py-4">
+                  <article key={student.id} className="ui-surface rounded-2xl border border-white bg-white px-4 py-4">
                     <p className="font-semibold text-slate-950">{student.name}</p>
                     <p className="mt-2 text-sm text-slate-500">Логин</p>
                     <p className="text-sm font-medium text-slate-700">{student.email}</p>
                     <div className="mt-4">
                       <Link
                         href={`/teacher/students/${student.id}`}
-                        className="inline-flex rounded-full border border-slate-200 bg-slate-50 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-brand-300 hover:text-brand-700"
+                        className="ui-pressable inline-flex rounded-full border border-slate-200 bg-slate-50 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-brand-300 hover:text-brand-700"
                       >
                         Смотреть прогресс
                       </Link>

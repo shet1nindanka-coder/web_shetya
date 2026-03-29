@@ -113,7 +113,7 @@ export default async function TeacherTopicPage({ params }: TeacherTopicPageProps
                   type="file"
                   name="theoryFile"
                   accept=".pdf,.docx,.png,.jpg,.jpeg"
-                  className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700"
+                  className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 transition file:mr-4 file:rounded-full file:border-0 file:bg-slate-950 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-white hover:file:bg-brand-700"
                 />
               </label>
               <label className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700">
@@ -146,7 +146,7 @@ export default async function TeacherTopicPage({ params }: TeacherTopicPageProps
 
           <button
             type="submit"
-            className="rounded-2xl bg-slate-950 px-5 py-3 text-sm font-semibold text-white transition hover:bg-brand-700"
+            className="ui-pressable rounded-2xl bg-slate-950 px-5 py-3 text-sm font-semibold text-white transition hover:bg-brand-700"
           >
             Сохранить изменения
           </button>
@@ -181,7 +181,7 @@ export default async function TeacherTopicPage({ params }: TeacherTopicPageProps
         ) : (
         <div className="space-y-4">
           {data.students.map((student) => (
-            <article key={student.id} className="rounded-[28px] border border-slate-200 bg-slate-50/80 p-5">
+            <article key={student.id} className="ui-fade-slide ui-surface rounded-[28px] border border-slate-200 bg-slate-50/80 p-5">
               <div className="flex flex-col gap-5 xl:flex-row xl:items-start xl:justify-between">
                 <div className="space-y-3">
                   <div>
@@ -189,7 +189,7 @@ export default async function TeacherTopicPage({ params }: TeacherTopicPageProps
                     <p className="mt-2 text-sm text-slate-500">{student.email}</p>
                     <Link
                       href={`/teacher/students/${student.id}`}
-                      className="mt-3 inline-flex rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-brand-300 hover:text-brand-700"
+                      className="ui-pressable mt-3 inline-flex rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-brand-300 hover:text-brand-700"
                     >
                       Смотреть успехи ученика
                     </Link>

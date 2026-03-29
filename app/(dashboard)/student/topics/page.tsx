@@ -113,7 +113,7 @@ export default async function StudentTopicsPage() {
                 <div className="mt-5">
                   <Link
                     href={`/student/topics/${topic.id}`}
-                    className="inline-flex rounded-full bg-slate-950 px-5 py-3 text-sm font-semibold text-white transition hover:bg-brand-700"
+                    className="ui-pressable inline-flex rounded-full bg-slate-950 px-5 py-3 text-sm font-semibold text-white transition hover:bg-brand-700"
                   >
                     Открыть тему
                   </Link>

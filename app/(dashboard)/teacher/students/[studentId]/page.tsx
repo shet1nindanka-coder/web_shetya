@@ -126,7 +126,7 @@ export default async function TeacherStudentPage({ params }: TeacherStudentPageP
                     </div>
                     <Link
                       href={`/teacher/topics/${topic.id}`}
-                      className="inline-flex rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-brand-300 hover:text-brand-700"
+                      className="ui-pressable inline-flex rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-brand-300 hover:text-brand-700"
                     >
                       Открыть тему
                     </Link>

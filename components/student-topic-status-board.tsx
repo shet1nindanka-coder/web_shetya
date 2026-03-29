@@ -56,7 +56,7 @@ const StudentNumberCard = memo(function StudentNumberCard({ number, onSelect }: 
   const [isAnswerVisible, setIsAnswerVisible] = useState(false);
 
   return (
-    <div className="rounded-[28px] border border-slate-200 bg-slate-50/80 p-5">
+    <div className="ui-fade-slide ui-surface rounded-[28px] border border-slate-200 bg-slate-50/80 p-5">
       <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
         <div className="space-y-3">
           <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Задания</p>
@@ -79,7 +79,7 @@ const StudentNumberCard = memo(function StudentNumberCard({ number, onSelect }: 
                 aria-pressed={isActive}
                 onClick={() => onSelect(number.id, isActive ? null : status)}
                 className={cx(
-                  "min-w-[190px] touch-manipulation rounded-[22px] border px-4 py-4 text-left text-sm transition-colors duration-75",
+                  "ui-pressable min-w-[190px] touch-manipulation rounded-[22px] border px-4 py-4 text-left text-sm transition-colors duration-75",
                   isActive
                     ? meta.cardClassName
                     : "border-slate-200 bg-white text-slate-700 hover:border-brand-300 hover:bg-brand-50"
@@ -105,7 +105,7 @@ const StudentNumberCard = memo(function StudentNumberCard({ number, onSelect }: 
             <button
               type="button"
               onClick={() => setIsAnswerVisible((current) => !current)}
-              className="rounded-full border border-slate-200 bg-slate-50 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-brand-300 hover:text-brand-700"
+              className="ui-pressable rounded-full border border-slate-200 bg-slate-50 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-brand-300 hover:text-brand-700"
             >
               {isAnswerVisible ? "Скрыть ответ" : "Открыть ответ"}
             </button>
@@ -114,7 +114,7 @@ const StudentNumberCard = memo(function StudentNumberCard({ number, onSelect }: 
           <button
             type="button"
             onClick={() => setIsAnswerVisible((current) => !current)}
-            className="group mt-3 block w-full overflow-hidden rounded-[20px] border border-slate-200 bg-slate-50 text-left"
+            className="ui-pressable group mt-3 block w-full overflow-hidden rounded-[20px] border border-slate-200 bg-slate-50 text-left"
           >
             <div className="relative overflow-hidden rounded-[20px] bg-white">
               <div

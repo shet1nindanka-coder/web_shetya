@@ -18,7 +18,7 @@ type FileResourceCardProps = {
 
 export function FileResourceCard({ title, description, file }: FileResourceCardProps) {
   return (
-    <article className="rounded-[28px] border border-slate-200 bg-slate-50/80 p-5 shadow-[0_12px_35px_rgba(15,23,42,0.06)]">
+    <article className="ui-fade-slide ui-surface rounded-[28px] border border-slate-200 bg-slate-50/80 p-5 shadow-[0_12px_35px_rgba(15,23,42,0.06)]">
       <div className="flex flex-col gap-4 border-b border-slate-200 pb-5">
         <div className="space-y-2">
           <p className="text-sm font-semibold uppercase tracking-[0.24em] text-slate-500">{title}</p>
@@ -48,13 +48,13 @@ export function FileResourceCard({ title, description, file }: FileResourceCardP
               href={`/files/${file.id}`}
               target="_blank"
               rel="noreferrer"
-              className="rounded-full bg-slate-950 px-4 py-2 text-sm font-semibold text-white transition hover:bg-brand-700"
+              className="ui-pressable rounded-full bg-slate-950 px-4 py-2 text-sm font-semibold text-white transition hover:bg-brand-700"
             >
               Открыть в браузере
             </a>
             <a
               href={`/files/${file.id}?download=1`}
-              className="rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-brand-300 hover:text-brand-700"
+              className="ui-pressable rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-brand-300 hover:text-brand-700"
             >
               Скачать файл
             </a>

@@ -49,7 +49,7 @@ export function DashboardNav({ user }: DashboardNavProps) {
           <form action={logoutAction}>
             <button
               type="submit"
-              className="rounded-full border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-900 hover:bg-slate-950 hover:text-white"
+              className="ui-pressable rounded-full border border-slate-200 px-4 py-2 text-sm font-medium text-slate-700 transition hover:border-slate-900 hover:bg-slate-950 hover:text-white"
             >
               Выйти
             </button>
