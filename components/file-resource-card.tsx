@@ -26,22 +26,21 @@ export function FileResourceCard({
   const isExpanded = previewSize === "expanded";
 
   return (
-    <article className="ui-fade-slide ui-surface relative overflow-hidden rounded-[30px] border border-slate-200/70 bg-[linear-gradient(180deg,rgba(255,255,255,0.96),rgba(248,250,252,0.92))] p-5 shadow-[0_16px_38px_rgba(15,23,42,0.07)]">
-      <div className="pointer-events-none absolute -right-8 top-0 h-28 w-28 rounded-full bg-brand-100/45 blur-3xl" />
+    <article className="ui-fade-slide ui-surface rounded-[26px] border border-slate-200/80 bg-white/94 p-5 shadow-[0_12px_28px_rgba(15,23,42,0.05)]">
       <div className="flex flex-col gap-4 border-b border-slate-200/80 pb-5">
-        <div className="space-y-2">
-          <p className="text-sm font-semibold uppercase tracking-[0.24em] text-slate-500">{title}</p>
-          <h3 className="font-display text-2xl font-semibold text-slate-950">{file ? file.originalName : "Файл не загружен"}</h3>
-          <p className="text-sm leading-6 text-slate-600">{description}</p>
+        <div className="space-y-1.5">
+          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-400">{title}</p>
+          <h3 className="font-display text-[1.6rem] font-semibold text-slate-950">{file ? file.originalName : "Файл не загружен"}</h3>
+          <p className="text-sm leading-6 text-slate-500">{description}</p>
         </div>
 
         {file ? (
           <div className="flex flex-wrap items-center gap-2">
-            <Badge className="border-brand-200 bg-brand-50 text-brand-700">{file.mimeType}</Badge>
-            <Badge className="border-slate-200 bg-white text-slate-600">{formatFileSize(file.size)}</Badge>
-            <Badge className="border-slate-200 bg-white text-slate-600">
+            <Badge className="border-slate-200 bg-slate-50 text-slate-600">{formatFileSize(file.size)}</Badge>
+            <Badge className="border-slate-200 bg-slate-50 text-slate-600">
               Загружен {formatDateTime(file.uploadedAt)}
             </Badge>
+            <Badge className="border-slate-200 bg-slate-50 text-slate-600">{file.mimeType}</Badge>
           </div>
         ) : null}
       </div>
@@ -57,20 +56,20 @@ export function FileResourceCard({
               href={`/files/${file.id}`}
               target="_blank"
               rel="noreferrer"
-              className="ui-pressable rounded-full bg-slate-950 px-4 py-2 text-sm font-semibold text-white transition hover:bg-brand-700"
+              className="ui-pressable rounded-full bg-slate-950 px-4 py-2 text-sm font-semibold text-white transition"
             >
               Открыть в браузере
             </a>
             <a
               href={`/files/${file.id}?download=1`}
-              className="ui-pressable rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-brand-300 hover:text-brand-700"
+              className="ui-pressable rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition"
             >
               Скачать файл
             </a>
           </div>
 
           {isPdfMime(file.mimeType) ? (
-            <div className="overflow-hidden rounded-[24px] border border-slate-200 bg-white shadow-inner">
+            <div className="overflow-hidden rounded-[22px] border border-slate-200 bg-slate-50">
               <iframe
                 src={`/files/${file.id}`}
                 title={file.originalName}
@@ -80,7 +79,7 @@ export function FileResourceCard({
           ) : null}
 
           {!isPdfMime(file.mimeType) && isImageMime(file.mimeType) ? (
-            <div className="overflow-hidden rounded-[24px] border border-slate-200 bg-white p-2 shadow-inner">
+            <div className="overflow-hidden rounded-[22px] border border-slate-200 bg-slate-50 p-2">
               <Image
                 src={`/files/${file.id}`}
                 alt={file.originalName}
@@ -97,7 +96,7 @@ export function FileResourceCard({
           ) : null}
 
           {!isPdfMime(file.mimeType) && !isImageMime(file.mimeType) && isOfficeMime(file.mimeType) ? (
-            <div className="rounded-[24px] border border-slate-200 bg-white px-4 py-5 text-sm leading-6 text-slate-600">
+            <div className="rounded-[22px] border border-slate-200 bg-slate-50 px-4 py-5 text-sm leading-6 text-slate-600">
               Для DOCX встроенный предпросмотр зависит от браузера. Файл можно открыть отдельной вкладкой или скачать.
             </div>
           ) : null}

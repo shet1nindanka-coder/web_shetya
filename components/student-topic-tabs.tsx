@@ -61,7 +61,7 @@ export function StudentTopicTabs({
 
   return (
     <div className="space-y-6">
-      <nav className="ui-fade-slide flex flex-wrap gap-2 rounded-[32px] border border-white/80 bg-[linear-gradient(180deg,rgba(255,255,255,0.94),rgba(248,250,252,0.88))] p-3 shadow-[0_14px_34px_rgba(15,23,42,0.06)] backdrop-blur">
+      <nav className="ui-fade-slide ui-tab-shell flex flex-wrap gap-2 rounded-[28px] p-2.5">
         {tabMeta.map((tab) => {
           const isActive = activeTab === tab.id;
           const isAvailable = availability[tab.id];
@@ -73,18 +73,15 @@ export function StudentTopicTabs({
               onClick={() => setActiveTab(tab.id)}
               data-active={isActive}
               className={cx(
-                "ui-pressable rounded-full border px-5 py-2.5 text-sm font-medium transition",
-                isActive
-                  ? "border-brand-200 bg-[linear-gradient(180deg,rgba(239,246,255,1),rgba(219,234,254,0.92))] text-brand-700 shadow-[0_12px_24px_rgba(59,130,246,0.14)]"
-                  : "border-slate-200/90 bg-white/92 text-slate-700 hover:border-brand-300 hover:text-brand-700"
+                "ui-pressable ui-tab rounded-full px-5 py-2.5 text-sm font-medium"
               )}
             >
               <span>{tab.label}</span>
               {tab.id !== "numbers" ? (
                 <span
                   className={cx(
-                    "ml-2 rounded-full px-2 py-0.5 text-[11px] font-semibold shadow-sm",
-                    isAvailable ? "bg-emerald-50 text-emerald-700" : "bg-slate-100 text-slate-500"
+                    "ml-2 rounded-full px-2 py-0.5 text-[10px] font-semibold",
+                    isAvailable ? "bg-slate-100 text-slate-600" : "bg-slate-100 text-slate-400"
                   )}
                 >
                   {isAvailable ? "Есть" : tab.emptyLabel}
