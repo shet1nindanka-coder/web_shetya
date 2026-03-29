@@ -116,16 +116,19 @@ const StudentNumberCard = memo(function StudentNumberCard({ number, onSelect }: 
             onClick={() => setIsAnswerVisible((current) => !current)}
             className="group mt-3 block w-full overflow-hidden rounded-[20px] border border-slate-200 bg-slate-50 text-left"
           >
-            <div
-              className={cx(
-                "relative overflow-hidden rounded-[20px] bg-white px-4 py-4 transition duration-300",
-                !isAnswerVisible && "select-none blur-sm"
-              )}
-            >
-              <LatexAnswerPreview value={number.answerLatex} />
+            <div className="relative overflow-hidden rounded-[20px] bg-white">
+              <div
+                className={cx(
+                  "px-4 py-4 transition duration-300",
+                  !isAnswerVisible && "select-none blur-sm scale-[1.01]"
+                )}
+              >
+                <LatexAnswerPreview value={number.answerLatex} />
+              </div>
+
               {!isAnswerVisible ? (
-                <div className="absolute inset-0 flex items-center justify-center bg-slate-950/20 px-4 text-center">
-                  <span className="rounded-full border border-white/40 bg-white/85 px-4 py-2 text-sm font-semibold text-slate-950 shadow-sm">
+                <div className="absolute inset-0 flex items-center justify-center bg-slate-950/10 px-4 text-center">
+                  <span className="rounded-full border border-white/70 bg-white px-4 py-2 text-sm font-semibold text-slate-950 shadow-sm">
                     Нажмите, чтобы посмотреть ответ
                   </span>
                 </div>
