@@ -5,6 +5,7 @@ import { HomeworkStatusBadge } from "@/components/homework-status-badge";
 import { ProgressBar } from "@/components/progress-bar";
 import { SectionCard } from "@/components/section-card";
 import { StatCard } from "@/components/stat-card";
+import { TeacherStudentProgressBoard } from "@/components/teacher-student-progress-board";
 import { requireUser } from "@/lib/auth";
 import { getTeacherStudentDetail } from "@/lib/platform-data";
 import { formatDate } from "@/lib/utils";
@@ -45,6 +46,14 @@ export default async function TeacherStudentPage({ params }: TeacherStudentPageP
         <div className="rounded-[24px] border border-slate-200 bg-white px-5 py-4 text-sm text-slate-600">
           Ученик в системе с{" "}
           <span className="font-semibold text-slate-950">{formatDate(data.student.createdAt)}</span>
+          <div className="mt-3">
+            <a
+              href={`/teacher/students/${data.student.id}/export`}
+              className="ui-pressable inline-flex rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-brand-300 hover:text-brand-700"
+            >
+              Экспорт прогресса CSV
+            </a>
+          </div>
         </div>
       </div>
 
@@ -83,7 +92,7 @@ export default async function TeacherStudentPage({ params }: TeacherStudentPageP
 
       <SectionCard
         title="Темы ученика"
-        description="По каждой теме видно, сколько заданий решено, а ниже показаны статусы всех номеров и заметки ученика."
+        description="По каждой теме видно, сколько заданий решено, а ниже можно посмотреть статусы номеров, заметки и назначить дедлайны."
       >
         {!data.notesEnabled ? (
           <div className="rounded-[24px] border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
@@ -98,111 +107,32 @@ export default async function TeacherStudentPage({ params }: TeacherStudentPageP
             </p>
           </div>
         ) : (
-          <div className="space-y-5">
-            {data.topics.map((topic) => {
-              const isCompleted = topic.totalNumbers > 0 && topic.solvedCount === topic.totalNumbers;
-
-              return (
-                <article key={topic.id} className="rounded-[28px] border border-slate-200 bg-slate-50/80 p-5">
-                  <div className="flex flex-col gap-5 xl:flex-row xl:items-start xl:justify-between">
-                    <div className="space-y-3">
-                      <div>
-                        <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">
-                          Номеров: {topic.totalNumbers}
-                        </p>
-                        <h2 className="font-display mt-2 text-2xl font-semibold text-slate-950">{topic.title}</h2>
-                      </div>
-                      <p className="max-w-3xl text-sm leading-6 text-slate-600">{topic.description}</p>
-                      <div className="flex flex-wrap gap-2">
-                        <Badge className="border-slate-200 bg-white text-slate-700">
-                          Решено {topic.solvedCount}/{topic.totalNumbers}
-                        </Badge>
-                        <Badge className="border-slate-200 bg-white text-slate-700">
-                          Отмечено {topic.markedCount}/{topic.totalNumbers}
-                        </Badge>
-                        <Badge className="border-slate-200 bg-white text-slate-700">Красные {topic.redCount}</Badge>
-                        {isCompleted ? (
-                          <Badge className="border-emerald-200 bg-emerald-50 text-emerald-700">Тема завершена</Badge>
-                        ) : null}
-                      </div>
-                    </div>
-
-                    <div className="w-full max-w-md space-y-4">
-                      <div className="space-y-2 rounded-[24px] border border-white bg-white p-4">
-                        <div className="flex items-center justify-between text-sm text-slate-600">
-                          <span>Решено по теме</span>
-                          <span className="font-semibold text-slate-950">{topic.solvedPercent}%</span>
-                        </div>
-                        <ProgressBar value={topic.solvedPercent} />
-                      </div>
-                      <Link
-                        href={`/teacher/topics/${topic.id}`}
-                        className="ui-pressable inline-flex rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-brand-300 hover:text-brand-700"
-                      >
-                        Открыть тему
-                      </Link>
-                    </div>
-                  </div>
-
-                  {isCompleted ? (
-                    <details className="mt-5 rounded-[24px] border border-emerald-200 bg-emerald-50/70">
-                      <summary className="ui-pressable flex cursor-pointer list-none items-center justify-between gap-4 px-4 py-4 [&::-webkit-details-marker]:hidden">
-                        <div>
-                          <p className="text-sm font-semibold text-emerald-900">Тема полностью решена</p>
-                          <p className="mt-1 text-sm leading-6 text-emerald-800">
-                            Все номера уже отмечены зеленым или желтым. Подробности можно открыть при необходимости.
-                          </p>
-                        </div>
-                        <span className="rounded-full border border-emerald-200 bg-white px-4 py-2 text-sm font-semibold text-emerald-800">
-                          Показать номера
-                        </span>
-                      </summary>
-
-                      <div className="border-t border-emerald-100 px-4 py-4">
-                        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-                          {topic.numbers.map((number) => (
-                            <div key={number.id} className="rounded-[24px] border border-white bg-white px-4 py-4">
-                              <div className="flex items-center justify-between gap-3">
-                                <p className="text-lg font-semibold text-slate-950">№ {number.number}</p>
-                                <HomeworkStatusBadge status={number.studentStatus?.status ?? null} />
-                              </div>
-                              {number.studentStatus?.note ? (
-                                <div className="mt-3 rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2">
-                                  <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">
-                                    Заметка ученика
-                                  </p>
-                                  <p className="mt-2 text-sm leading-6 text-slate-700">{number.studentStatus.note}</p>
-                                </div>
-                              ) : null}
-                            </div>
-                          ))}
-                        </div>
-                      </div>
-                    </details>
-                  ) : (
-                    <div className="mt-5 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-                      {topic.numbers.map((number) => (
-                        <div key={number.id} className="rounded-[24px] border border-white bg-white px-4 py-4">
-                          <div className="flex items-center justify-between gap-3">
-                            <p className="text-lg font-semibold text-slate-950">№ {number.number}</p>
-                            <HomeworkStatusBadge status={number.studentStatus?.status ?? null} />
-                          </div>
-                          {number.studentStatus?.note ? (
-                            <div className="mt-3 rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2">
-                              <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">
-                                Заметка ученика
-                              </p>
-                              <p className="mt-2 text-sm leading-6 text-slate-700">{number.studentStatus.note}</p>
-                            </div>
-                          ) : null}
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </article>
-              );
-            })}
-          </div>
+          <TeacherStudentProgressBoard
+            studentId={data.student.id}
+            notesEnabled={data.notesEnabled}
+            deadlinesEnabled={data.deadlinesEnabled}
+            initialTopics={data.topics.map((topic) => ({
+              id: topic.id,
+              title: topic.title,
+              description: topic.description,
+              totalNumbers: topic.totalNumbers,
+              solvedCount: topic.solvedCount,
+              solvedPercent: topic.solvedPercent,
+              markedCount: topic.markedCount,
+              redCount: topic.redCount,
+              numbers: topic.numbers.map((number) => ({
+                id: number.id,
+                number: number.number,
+                studentStatus: number.studentStatus
+                  ? {
+                      status: number.studentStatus.status,
+                      note: number.studentStatus.note,
+                      deadlineAt: number.studentStatus.deadlineAt?.toISOString() ?? null
+                    }
+                  : null
+              }))
+            }))}
+          />
         )}
       </SectionCard>
     </div>

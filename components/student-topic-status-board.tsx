@@ -14,11 +14,13 @@ type StudentTopicStatusBoardProps = {
   topicId: string;
   totalNumbers: number;
   notesEnabled: boolean;
+  deadlinesEnabled: boolean;
   initialNumbers: Array<{
     id: string;
     number: number;
     status: HomeworkNumberStatus | null;
     note: string;
+    deadlineAt: string | null;
     answerLatex: string | null;
   }>;
 };
@@ -29,6 +31,7 @@ type StudentNumberState = {
   status: HomeworkNumberStatus | null;
   note: string;
   savedNote: string;
+  deadlineAt: string | null;
   answerLatex: string | null;
   isSavingStatus: boolean;
   isSavingNote: boolean;
@@ -72,6 +75,25 @@ function getNoteSaveErrorMessage(status: number) {
   }
 
   return "Заметка не сохранилась. Попробуйте ещё раз.";
+}
+
+function formatDeadlineLabel(value: string | null) {
+  if (!value) {
+    return null;
+  }
+
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return null;
+  }
+
+  return new Intl.DateTimeFormat("ru-RU", {
+    day: "2-digit",
+    month: "long",
+    hour: "2-digit",
+    minute: "2-digit"
+  }).format(date);
 }
 
 const statusOptions = [HomeworkNumberStatus.GREEN, HomeworkNumberStatus.YELLOW, HomeworkNumberStatus.RED] as const;
@@ -143,6 +165,15 @@ const StudentNumberCard = memo(function StudentNumberCard({
         </div>
       ) : null}
 
+      {number.deadlineAt ? (
+        <div className="mt-4 rounded-[24px] border border-brand-100 bg-brand-50/60 px-4 py-4">
+          <p className="text-xs font-semibold uppercase tracking-[0.2em] text-brand-600">Дедлайн</p>
+          <p className="mt-2 text-sm leading-6 text-slate-700">
+            Сдать до <span className="font-semibold text-slate-950">{formatDeadlineLabel(number.deadlineAt)}</span>
+          </p>
+        </div>
+      ) : null}
+
       {number.answerLatex ? (
         <div className="mt-4 rounded-[24px] border border-slate-200 bg-white p-3">
           <div className="flex flex-wrap items-center justify-between gap-3">
@@ -195,6 +226,7 @@ export function StudentTopicStatusBoard({
   topicId,
   totalNumbers,
   notesEnabled,
+  deadlinesEnabled,
   initialNumbers
 }: StudentTopicStatusBoardProps) {
   const initialState = useMemo<StudentNumberState[]>(
@@ -522,6 +554,11 @@ export function StudentTopicStatusBoard({
           Отмечено {summary.markedCount} из {totalNumbers}
         </Badge>
         <Badge className="border-slate-200 bg-white text-slate-700">Прогресс {summary.progressPercent}%</Badge>
+        {deadlinesEnabled ? (
+          <Badge className="border-slate-200 bg-white text-slate-700">
+            Дедлайнов {numbers.filter((number) => Boolean(number.deadlineAt)).length}
+          </Badge>
+        ) : null}
         {savingCount > 0 ? (
           <Badge className="border-brand-200 bg-brand-50 text-brand-700">Сохраняем: {savingCount}</Badge>
         ) : null}
@@ -547,6 +584,11 @@ export function StudentTopicStatusBoard({
           </div>
           <ProgressBar value={summary.progressPercent} />
         </div>
+        {deadlinesEnabled && numbers.some((number) => number.deadlineAt) ? (
+          <p className="mt-4 text-sm leading-6 text-slate-600">
+            Дедлайны по отдельным номерам отображаются прямо внутри карточек ниже.
+          </p>
+        ) : null}
       </SectionCard>
 
       <SectionCard

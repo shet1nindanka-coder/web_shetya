@@ -13,12 +13,12 @@ const allowedStatuses = [
   HomeworkNumberStatus.RED
 ] as const;
 
-function isMissingStudentNotesColumnError(error: unknown) {
+function isMissingStudentStatusColumnError(error: unknown, column: "note" | "deadlineAt") {
   return (
     error instanceof Prisma.PrismaClientKnownRequestError &&
     error.code === "P2022" &&
     error.message.includes("StudentTopicNumberStatus") &&
-    error.message.includes("note")
+    error.message.includes(column)
   );
 }
 
@@ -78,11 +78,13 @@ export async function POST(request: Request) {
   }
 
   let notesEnabled = noteProvided;
+  let deadlinesEnabled = true;
   let existingStatus:
     | {
         id: string;
         status: HomeworkNumberStatus | null;
         note?: string | null;
+        deadlineAt?: Date | null;
       }
     | null;
 
@@ -98,15 +100,57 @@ export async function POST(request: Request) {
         select: {
           id: true,
           status: true,
-          note: true
+          note: true,
+          deadlineAt: true
         }
       });
     } catch (error) {
-      if (!isMissingStudentNotesColumnError(error)) {
+      if (
+        !isMissingStudentStatusColumnError(error, "note") &&
+        !isMissingStudentStatusColumnError(error, "deadlineAt")
+      ) {
         throw error;
       }
 
-      notesEnabled = false;
+      notesEnabled = !isMissingStudentStatusColumnError(error, "note");
+      deadlinesEnabled = !isMissingStudentStatusColumnError(error, "deadlineAt");
+
+      existingStatus = await prisma.studentTopicNumberStatus.findUnique({
+        where: {
+          studentId_homeworkNumberId: {
+            studentId: user.id,
+            homeworkNumberId
+          }
+        },
+        select: {
+          id: true,
+          status: true,
+          ...(notesEnabled ? { note: true } : {}),
+          ...(deadlinesEnabled ? { deadlineAt: true } : {})
+        }
+      });
+    }
+  } else {
+    try {
+      existingStatus = await prisma.studentTopicNumberStatus.findUnique({
+        where: {
+          studentId_homeworkNumberId: {
+            studentId: user.id,
+            homeworkNumberId
+          }
+        },
+        select: {
+          id: true,
+          status: true,
+          deadlineAt: true
+        }
+      });
+    } catch (error) {
+      if (!isMissingStudentStatusColumnError(error, "deadlineAt")) {
+        throw error;
+      }
+
+      deadlinesEnabled = false;
       existingStatus = await prisma.studentTopicNumberStatus.findUnique({
         where: {
           studentId_homeworkNumberId: {
@@ -120,19 +164,6 @@ export async function POST(request: Request) {
         }
       });
     }
-  } else {
-    existingStatus = await prisma.studentTopicNumberStatus.findUnique({
-      where: {
-        studentId_homeworkNumberId: {
-          studentId: user.id,
-          homeworkNumberId
-        }
-      },
-      select: {
-        id: true,
-        status: true
-      }
-    });
   }
 
   const nextStatus = statusProvided ? status ?? null : existingStatus?.status ?? null;
@@ -152,7 +183,9 @@ export async function POST(request: Request) {
     });
   }
 
-  if (!nextStatus && !nextNote) {
+  const nextDeadline = deadlinesEnabled ? existingStatus?.deadlineAt ?? null : null;
+
+  if (!nextStatus && !nextNote && !nextDeadline) {
     if (existingStatus) {
       await prisma.studentTopicNumberStatus.delete({
         where: {
@@ -172,12 +205,24 @@ export async function POST(request: Request) {
         }
       },
       update: {
-        ...(notesEnabled ? { status: nextStatus, note: nextNote } : { status: nextStatus })
+        ...(notesEnabled
+          ? deadlinesEnabled
+            ? { status: nextStatus, note: nextNote, deadlineAt: nextDeadline }
+            : { status: nextStatus, note: nextNote }
+          : deadlinesEnabled
+            ? { status: nextStatus, deadlineAt: nextDeadline }
+            : { status: nextStatus })
       },
       create: {
         studentId: user.id,
         homeworkNumberId,
-        ...(notesEnabled ? { status: nextStatus, note: nextNote } : { status: nextStatus })
+        ...(notesEnabled
+          ? deadlinesEnabled
+            ? { status: nextStatus, note: nextNote, deadlineAt: nextDeadline }
+            : { status: nextStatus, note: nextNote }
+          : deadlinesEnabled
+            ? { status: nextStatus, deadlineAt: nextDeadline }
+            : { status: nextStatus })
       }
     });
   }

@@ -37,11 +37,13 @@ export default async function StudentTopicPage({ params }: StudentTopicPageProps
             topicId={topic.id}
             totalNumbers={topic.totalNumbers}
             notesEnabled={topic.notesEnabled}
+            deadlinesEnabled={topic.deadlinesEnabled}
             initialNumbers={topic.numbers.map((number: (typeof topic.numbers)[number]) => ({
               id: number.id,
               number: number.number,
               status: number.studentStatus?.status ?? null,
               note: number.studentStatus?.note ?? "",
+              deadlineAt: number.studentStatus?.deadlineAt?.toISOString() ?? null,
               answerLatex: number.answerLatex
             }))}
           />
