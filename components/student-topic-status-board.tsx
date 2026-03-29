@@ -124,7 +124,7 @@ function estimateStudentNumberCardHeight(number: StudentNumberState, notesEnable
   let height = 172;
 
   if (notesEnabled) {
-    height += 146;
+    height += 92;
   }
 
   if (number.deadlineAt) {
@@ -132,10 +132,24 @@ function estimateStudentNumberCardHeight(number: StudentNumberState, notesEnable
   }
 
   if (number.answerLatex) {
-    height += 170;
+    height += 84;
   }
 
   return height;
+}
+
+function getNotePreview(note: string) {
+  const trimmed = note.trim();
+
+  if (!trimmed) {
+    return null;
+  }
+
+  if (trimmed.length <= 120) {
+    return trimmed;
+  }
+
+  return `${trimmed.slice(0, 117)}...`;
 }
 
 function findStartIndex(offsets: number[], scrollOffset: number) {
@@ -167,8 +181,10 @@ const StudentNumberCard = memo(function StudentNumberCard({
 }: StudentNumberCardProps & {
   homeworkGroup: HomeworkGroup | null;
 }) {
+  const [isNoteOpen, setIsNoteOpen] = useState(false);
   const [isAnswerVisible, setIsAnswerVisible] = useState(false);
   const isSaving = number.isSavingStatus || number.isSavingNote;
+  const notePreview = getNotePreview(number.note);
 
   return (
     <div className="student-number-card ui-surface rounded-[28px] border border-slate-200 bg-slate-50/80 p-5">
@@ -216,20 +232,43 @@ const StudentNumberCard = memo(function StudentNumberCard({
 
       {notesEnabled ? (
         <div className="mt-4 rounded-[24px] border border-slate-200 bg-white px-4 py-4">
-          <div className="flex items-center justify-between gap-3">
-            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Личная заметка</p>
-            <span className="text-xs text-slate-400">{number.note.length}/240</span>
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Личная заметка</p>
+              <p className="mt-2 text-sm leading-6 text-slate-600">
+                {notePreview ? "Заметка уже есть. Откройте блок, чтобы посмотреть или изменить ее." : "Откройте блок, если хотите оставить заметку к этому номеру."}
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setIsNoteOpen((current) => !current)}
+              className="ui-pressable rounded-full border border-slate-200 bg-slate-50 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-brand-300 hover:text-brand-700"
+            >
+              {isNoteOpen ? "Скрыть заметку" : notePreview ? "Открыть заметку" : "Добавить заметку"}
+            </button>
           </div>
-          <textarea
-            rows={2}
-            maxLength={240}
-            value={number.note}
-            onChange={(event) => onNoteChange(number.id, event.target.value)}
-            onBlur={() => onNoteBlur(number.id)}
-            placeholder="Короткая заметка к этому номеру"
-            className="mt-3 min-h-[72px] w-full resize-none rounded-2xl border border-slate-200 bg-slate-50 px-3 py-3 text-sm text-slate-700 outline-none transition focus:border-brand-400 focus:bg-white"
-          />
-          <p className="mt-2 text-xs leading-5 text-slate-500">Сохранится автоматически и останется у вас в теме.</p>
+
+          {isNoteOpen ? (
+            <>
+              <div className="mt-3 flex items-center justify-between gap-3">
+                <span className="text-xs text-slate-400">{number.note.length}/240</span>
+              </div>
+              <textarea
+                rows={2}
+                maxLength={240}
+                value={number.note}
+                onChange={(event) => onNoteChange(number.id, event.target.value)}
+                onBlur={() => onNoteBlur(number.id)}
+                placeholder="Короткая заметка к этому номеру"
+                className="mt-3 min-h-[72px] w-full resize-none rounded-2xl border border-slate-200 bg-slate-50 px-3 py-3 text-sm text-slate-700 outline-none transition focus:border-brand-400 focus:bg-white"
+              />
+              <p className="mt-2 text-xs leading-5 text-slate-500">Сохранится автоматически и останется у вас в теме.</p>
+            </>
+          ) : notePreview ? (
+            <div className="mt-3 rounded-2xl border border-slate-200 bg-slate-50 px-3 py-3 text-sm leading-6 text-slate-700">
+              {notePreview}
+            </div>
+          ) : null}
         </div>
       ) : null}
 
@@ -248,7 +287,7 @@ const StudentNumberCard = memo(function StudentNumberCard({
             <div>
               <p className="text-xs font-semibold uppercase tracking-[0.2em] text-slate-500">Ответ к номеру</p>
               <p className="mt-2 text-sm leading-6 text-slate-600">
-                Нажмите на карточку, чтобы {isAnswerVisible ? "снова скрыть" : "посмотреть"} ответ преподавателя.
+                Откройте блок только когда захотите посмотреть ответ преподавателя.
               </p>
             </div>
             <button
@@ -260,29 +299,17 @@ const StudentNumberCard = memo(function StudentNumberCard({
             </button>
           </div>
 
-          <button
-            type="button"
-            onClick={() => setIsAnswerVisible((current) => !current)}
-            className="ui-pressable group mt-3 block w-full overflow-hidden rounded-[20px] border border-slate-200 bg-slate-50 text-left"
-          >
-            <div className="relative overflow-hidden rounded-[20px] bg-white">
-              {isAnswerVisible ? (
-                <div className="px-4 py-4">
-                  <LatexAnswerPreview value={number.answerLatex} />
-                </div>
-              ) : (
-                <div className="student-answer-placeholder min-h-[108px] bg-[linear-gradient(135deg,rgba(241,245,249,0.92),rgba(226,232,240,0.72))]" />
-              )}
-
-              {!isAnswerVisible ? (
-                <div className="absolute inset-0 flex items-center justify-center bg-slate-950/10 px-4 text-center">
-                  <span className="rounded-full border border-white/70 bg-white px-4 py-2 text-sm font-semibold text-slate-950 shadow-sm">
-                    Нажмите, чтобы посмотреть ответ
-                  </span>
-                </div>
-              ) : null}
+          {isAnswerVisible ? (
+            <div className="mt-3 overflow-hidden rounded-[20px] border border-slate-200 bg-white">
+              <div className="px-4 py-4">
+                <LatexAnswerPreview value={number.answerLatex} />
+              </div>
             </div>
-          </button>
+          ) : (
+            <div className="mt-3 rounded-[20px] border border-dashed border-slate-200 bg-slate-50 px-4 py-4 text-sm leading-6 text-slate-500">
+              Ответ скрыт, пока вы его не откроете.
+            </div>
+          )}
         </div>
       ) : null}
     </div>
