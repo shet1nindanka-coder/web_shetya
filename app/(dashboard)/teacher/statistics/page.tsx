@@ -483,40 +483,6 @@ export default async function TeacherStatisticsPage({ searchParams }: TeacherSta
             <TeacherStatisticsDrilldown topics={drilldownTopics} students={drilldownStudents} />
           </SectionCard>
 
-          <SectionCard
-            title="Что учителю держать в фокусе"
-            description="Слева темы, где чаще всего нужна помощь, справа ученики, которых можно быстро довести до хорошего результата."
-          >
-            <div className="grid gap-4 xl:grid-cols-2">
-              <RankingCard
-                title="Темы, где чаще нужна помощь"
-                description="По этим темам красных номеров сейчас больше всего."
-                emptyMessage="Пока нет тем с красными статусами."
-                items={attentionTopics.map((topic) => ({
-                  key: topic.id,
-                  title: topic.title,
-                  subtitle: `${topic.redCount} красных · ${topic.studentsWithActivity} учеников в работе`,
-                  valueLabel: `${topic.redPercent}%`,
-                  progress: topic.redPercent,
-                  tone: "rose"
-                }))}
-              />
-
-              <RankingCard
-                title="Кого можно быстро довести"
-                description="Ученики, у которых уже хороший прогресс, но осталось немного красных номеров."
-                emptyMessage="Пока нет учеников для этого сценария."
-                items={quickWinStudents.map((student) => ({
-                  key: student.id,
-                  title: student.name,
-                  subtitle: `${student.redCount} красных · ${student.solvedCount} решено`,
-                  valueLabel: `${student.solvedPercent}%`,
-                  progress: student.solvedPercent,
-                  tone: "brand"
-                }))}
-              />
-            </div>
-          </SectionCard>
         </>
       ) : (
         <>
