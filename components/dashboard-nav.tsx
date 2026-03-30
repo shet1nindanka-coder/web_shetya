@@ -24,11 +24,11 @@ export function DashboardNav({ user }: DashboardNavProps) {
     <header className="app-topbar border-b border-white/70 bg-[rgba(248,251,255,0.96)] sm:sticky sm:top-0 sm:z-20">
       <div className="mx-auto flex w-full max-w-7xl flex-col gap-3 px-3 py-3 sm:px-6 sm:py-4 lg:flex-row lg:items-center lg:justify-between lg:px-8">
         <div className="space-y-3">
-          <Link href="/" className="inline-flex items-center gap-3 text-slate-950">
+          <Link href="/" className="app-brand-link inline-flex items-center gap-3 text-slate-950">
             <span className="app-logo-mark flex h-10 w-10 items-center justify-center rounded-[16px] bg-slate-950 text-sm font-semibold text-white shadow-[0_10px_24px_rgba(15,23,42,0.14)] sm:h-11 sm:w-11 sm:rounded-[18px] sm:text-base">
               T
             </span>
-            <p className="font-display text-base font-semibold leading-none sm:text-lg">TutorFlow</p>
+            <p className="app-brand-title font-display text-base font-semibold leading-none sm:text-lg">TutorFlow</p>
           </Link>
           {items.length > 0 ? <nav className="flex flex-wrap gap-2" /> : null}
         </div>
