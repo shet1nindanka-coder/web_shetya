@@ -2,6 +2,7 @@ import { HomeworkNumberStatus, UserRole } from "@prisma/client";
 import { ProgressBar } from "@/components/progress-bar";
 import { SectionCard } from "@/components/section-card";
 import { StatCard } from "@/components/stat-card";
+import { TeacherStatisticsDrilldown } from "@/components/teacher-statistics-drilldown";
 import { requireUser } from "@/lib/auth";
 import { getTeacherTopicsOverview } from "@/lib/platform-data";
 import { completionPercent, cx } from "@/lib/utils";
@@ -172,6 +173,26 @@ export default async function TeacherStatisticsPage() {
   const activeTopicsPercent = completionPercent(activeTopics.length, data.stats.totalTopics);
   const activeStudentsPercent = completionPercent(activeStudents.length, data.stats.totalStudents);
   const solvedPercent = completionPercent(totalSolved, totalStatusSlots);
+  const drilldownTopics = data.topics.map((topic) => ({
+    id: topic.id,
+    title: topic.title,
+    totalNumbers: topic.totalNumbers,
+    homeworkNumbers: topic.homeworkNumbers.map((number) => ({
+      id: number.id,
+      number: number.number,
+      statuses: number.statuses
+        .filter((status) => status.status)
+        .map((status) => ({
+          studentId: status.studentId,
+          status: status.status as HomeworkNumberStatus
+        }))
+    }))
+  }));
+  const drilldownStudents = data.students.map((student) => ({
+    id: student.id,
+    name: student.name,
+    email: student.email
+  }));
 
   return (
     <div className="space-y-8">
@@ -255,6 +276,13 @@ export default async function TeacherStatisticsPage() {
           accent={<span className="font-semibold text-brand-700">{activeStudentsPercent}% охвата</span>}
         />
       </div>
+
+      <SectionCard
+        title="Срез по теме и ученику"
+        description="Выберите конкретную тему и ученика, чтобы сразу увидеть, сколько там зеленых, желтых и красных статусов."
+      >
+        <TeacherStatisticsDrilldown topics={drilldownTopics} students={drilldownStudents} />
+      </SectionCard>
 
       <SectionCard
         title="Как распределяется прогресс"
