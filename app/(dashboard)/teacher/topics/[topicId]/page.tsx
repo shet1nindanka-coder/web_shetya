@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { UserRole } from "@prisma/client";
-import { updateTopicAction } from "@/actions/topic";
+import { deleteTopicFileAction, updateTopicAction } from "@/actions/topic";
 import { Badge } from "@/components/badge";
 import { DeleteTopicDialog } from "@/components/delete-topic-dialog";
 import { FileDropInput } from "@/components/file-drop-input";
@@ -9,6 +9,7 @@ import { SectionCard } from "@/components/section-card";
 import { StatCard } from "@/components/stat-card";
 import { TopicEditSubmitButton } from "@/components/topic-edit-submit-button";
 import { TopicAnswerManager } from "@/components/topic-answer-manager";
+import { TopicNumbersField } from "@/components/topic-numbers-field";
 import { requireUser } from "@/lib/auth";
 import { getTeacherTopicDetail } from "@/lib/platform-data";
 
@@ -24,6 +25,14 @@ const topicEditNotices = {
     tone: "success",
     message: "Изменения по теме сохранены."
   },
+  theoryDeleted: {
+    tone: "success",
+    message: "Файл теории удалён."
+  },
+  homeworkDeleted: {
+    tone: "success",
+    message: "Файл заданий удалён."
+  },
   invalid: {
     tone: "error",
     message: "Проверьте форму: название, описание и список номеров обязательны."
@@ -31,6 +40,10 @@ const topicEditNotices = {
   upload: {
     tone: "error",
     message: "Не удалось обработать файл. Попробуйте ещё раз или обновите страницу."
+  },
+  fileDelete: {
+    tone: "error",
+    message: "Не удалось удалить файл. Повторите попытку."
   },
   save: {
     tone: "error",
@@ -43,10 +56,16 @@ export default async function TeacherTopicPage({ params, searchParams }: Teacher
   const { topicId } = await params;
   const resolvedSearchParams = (await searchParams) ?? {};
   const saved = typeof resolvedSearchParams.saved === "string" ? resolvedSearchParams.saved : undefined;
+  const fileDeleted =
+    typeof resolvedSearchParams.fileDeleted === "string" ? resolvedSearchParams.fileDeleted : undefined;
   const error = typeof resolvedSearchParams.error === "string" ? resolvedSearchParams.error : undefined;
   const noticeKey =
     saved === "1"
       ? "saved"
+      : fileDeleted === "theory"
+        ? "theoryDeleted"
+        : fileDeleted === "homework"
+          ? "homeworkDeleted"
       : error && error in topicEditNotices
         ? (error as Exclude<keyof typeof topicEditNotices, "saved">)
         : null;
@@ -112,88 +131,132 @@ export default async function TeacherTopicPage({ params, searchParams }: Teacher
 
       <SectionCard
         title="Редактирование темы"
-        description="Здесь можно менять название, описание, номера, а также заменять и удалять файлы."
+        description="Разделите работу по теме на отдельные блоки: сначала содержание и номера, потом файлы."
       >
         <form action={updateTopicAction} className="space-y-6" encType="multipart/form-data">
           <input type="hidden" name="topicId" value={data.topic.id} />
 
-          <div className="grid gap-4 lg:grid-cols-2">
-            <label className="block space-y-2 lg:col-span-2">
-              <span className="text-sm font-medium text-slate-700">Название темы</span>
-              <input
-                type="text"
-                name="title"
-                defaultValue={data.topic.title}
-                className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none transition focus:border-brand-400 focus:bg-white"
-                required
-              />
-            </label>
+          <div className="space-y-4 rounded-[26px] border border-slate-200 bg-slate-50/70 p-5">
+            <div className="space-y-1">
+              <h3 className="text-lg font-semibold text-slate-950">Основная информация</h3>
+              <p className="text-sm leading-6 text-slate-500">Отредактируйте название и описание темы.</p>
+            </div>
 
-            <label className="block space-y-2 lg:col-span-2">
-              <span className="text-sm font-medium text-slate-700">Описание</span>
-              <textarea
-                name="description"
-                rows={4}
-                defaultValue={data.topic.description}
-                className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none transition focus:border-brand-400 focus:bg-white"
-                required
-              />
-            </label>
+            <div className="grid gap-4">
+              <label className="block space-y-2">
+                <span className="text-sm font-medium text-slate-700">Название темы</span>
+                <input
+                  type="text"
+                  name="title"
+                  defaultValue={data.topic.title}
+                  className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 outline-none transition focus:border-brand-400 focus:bg-white"
+                  required
+                />
+              </label>
 
-            <label className="block space-y-2 lg:col-span-2">
-              <span className="text-sm font-medium text-slate-700">Номера заданий</span>
-              <textarea
-                name="numbers"
-                rows={4}
-                defaultValue={numbersInput}
-                className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none transition focus:border-brand-400 focus:bg-white"
-                required
-              />
-              <p className="text-sm text-slate-500">
-                Можно перечислять номера через запятую, пробел, перенос строки или указывать диапазон, например `1-5`.
+              <label className="block space-y-2">
+                <span className="text-sm font-medium text-slate-700">Описание</span>
+                <textarea
+                  name="description"
+                  rows={4}
+                  defaultValue={data.topic.description}
+                  className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 outline-none transition focus:border-brand-400 focus:bg-white"
+                  required
+                />
+              </label>
+            </div>
+          </div>
+
+          <div className="space-y-4 rounded-[26px] border border-slate-200 bg-slate-50/70 p-5">
+            <div className="space-y-1">
+              <h3 className="text-lg font-semibold text-slate-950">Номера</h3>
+              <p className="text-sm leading-6 text-slate-500">
+                Поле само покажет, сколько номеров распознано и как список будет сохранён.
               </p>
-            </label>
-          </div>
-
-          <div className="grid gap-6 xl:grid-cols-2">
-            <div className="space-y-4">
-              <FileResourceCard
-                title="Теория"
-                description="Текущий файл теории по теме."
-                file={data.topic.theoryFile}
-              />
-              <FileDropInput
-                name="theoryFile"
-                label="Заменить файл теории"
-                accept=".pdf,.docx,.png,.jpg,.jpeg"
-                helperText="Можно выбрать новый файл или перетащить его сюда."
-              />
-              <label className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700">
-                <input type="checkbox" name="removeTheoryFile" className="h-4 w-4" />
-                Удалить текущий файл теории при сохранении
-              </label>
             </div>
 
-            <div className="space-y-4">
-              <FileResourceCard
-                title="Задания"
-                description="Текущий файл заданий по теме."
-                file={data.topic.homeworkFile}
-              />
-              <FileDropInput
-                name="homeworkFile"
-                label="Заменить файл заданий"
-                accept=".pdf,.docx,.png,.jpg,.jpeg"
-                helperText="Можно выбрать новый файл или перетащить его сюда."
-              />
-              <label className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700">
-                <input type="checkbox" name="removeHomeworkFile" className="h-4 w-4" />
-                Удалить текущий файл заданий при сохранении
-              </label>
+            <TopicNumbersField
+              name="numbers"
+              initialValue={numbersInput}
+              rows={6}
+              description="Для больших тем удобнее вставлять номера несколькими строками. Порядок и дубликаты будут нормализованы автоматически."
+            />
+          </div>
+
+          <div className="space-y-4 rounded-[26px] border border-slate-200 bg-slate-50/70 p-5">
+            <div className="space-y-1">
+              <h3 className="text-lg font-semibold text-slate-950">Файлы</h3>
+              <p className="text-sm leading-6 text-slate-500">
+                Каждый файл можно заменить отдельно, а удалить его можно отдельной кнопкой без чекбоксов.
+              </p>
+            </div>
+
+            <div className="grid gap-6 xl:grid-cols-2">
+              <div className="space-y-4 rounded-[24px] border border-slate-200 bg-white p-4">
+                <FileResourceCard
+                  title="Теория"
+                  description="Текущий файл теории по теме."
+                  file={data.topic.theoryFile}
+                />
+                <FileDropInput
+                  name="theoryFile"
+                  label="Заменить файл теории"
+                  accept=".pdf,.docx,.png,.jpg,.jpeg"
+                  helperText="Можно выбрать новый файл или перетащить его сюда."
+                />
+                {data.topic.theoryFile ? (
+                  <button
+                    type="submit"
+                    formAction={deleteTopicFileAction}
+                    formNoValidate
+                    formEncType="application/x-www-form-urlencoded"
+                    name="fileKind"
+                    value="theory"
+                    className="ui-pressable rounded-full border border-rose-200 bg-rose-50 px-4 py-2 text-sm font-semibold text-rose-700 transition hover:bg-rose-100"
+                  >
+                    Удалить файл теории
+                  </button>
+                ) : null}
+              </div>
+
+              <div className="space-y-4 rounded-[24px] border border-slate-200 bg-white p-4">
+                <FileResourceCard
+                  title="Задания"
+                  description="Текущий файл заданий по теме."
+                  file={data.topic.homeworkFile}
+                />
+                <FileDropInput
+                  name="homeworkFile"
+                  label="Заменить файл заданий"
+                  accept=".pdf,.docx,.png,.jpg,.jpeg"
+                  helperText="Можно выбрать новый файл или перетащить его сюда."
+                />
+                {data.topic.homeworkFile ? (
+                  <button
+                    type="submit"
+                    formAction={deleteTopicFileAction}
+                    formNoValidate
+                    formEncType="application/x-www-form-urlencoded"
+                    name="fileKind"
+                    value="homework"
+                    className="ui-pressable rounded-full border border-rose-200 bg-rose-50 px-4 py-2 text-sm font-semibold text-rose-700 transition hover:bg-rose-100"
+                  >
+                    Удалить файл заданий
+                  </button>
+                ) : null}
+              </div>
             </div>
           </div>
 
-          <TopicEditSubmitButton />
+          <div className="space-y-3 rounded-[26px] border border-slate-200 bg-white p-5">
+            <div className="space-y-1">
+              <h3 className="text-lg font-semibold text-slate-950">Сохранение</h3>
+              <p className="text-sm leading-6 text-slate-500">
+                Сохраняйте содержание и замены файлов этой темы одним действием.
+              </p>
+            </div>
+            <TopicEditSubmitButton />
+          </div>
         </form>
       </SectionCard>
 

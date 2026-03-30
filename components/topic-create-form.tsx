@@ -5,6 +5,7 @@ import { useRef, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { FileDropInput } from "@/components/file-drop-input";
 import { ProgressBar } from "@/components/progress-bar";
+import { TopicNumbersField } from "@/components/topic-numbers-field";
 import { getSafeUploadFileName } from "@/lib/upload-file-name";
 
 type UploadMode = "local" | "blob";
@@ -410,21 +411,15 @@ export function TopicCreateForm({
         onFileSelect={(file) => handleUpload(file, homeworkUpload, setHomeworkUpload, homeworkAbortRef)}
       />
 
-      <label className="block space-y-2 lg:col-span-2">
-        <span className="text-sm font-medium text-slate-700">Номера заданий</span>
-        <textarea
+      <div className="lg:col-span-2">
+        <TopicNumbersField
+          name="numbers"
           value={numbers}
-          onChange={(event) => setNumbers(event.target.value)}
-          rows={4}
-          placeholder="1-5, 8, 12-14"
-          className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none transition focus:-translate-y-[1px] focus:border-brand-400 focus:bg-white"
-          required
+          onValueChange={setNumbers}
+          rows={5}
+          description="Подходит и для коротких списков, и для больших тем на сотни номеров."
         />
-        <p className="text-sm text-slate-500">
-          Можно вводить через запятую, пробел или диапазоном через тире, например `1-5`. Для больших тем удобнее
-          вставлять список в несколько строк.
-        </p>
-      </label>
+      </div>
 
       <div className="space-y-3 lg:col-span-2">
         <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 text-sm text-slate-600">

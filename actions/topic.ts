@@ -41,6 +41,10 @@ function redirectTeacherTopicWithStatus(topicId: string, params: URLSearchParams
   redirect(query ? `/teacher/topics/${topicId}?${query}` : `/teacher/topics/${topicId}`);
 }
 
+function getTopicFileKind(value: FormDataEntryValue | null) {
+  return value === "theory" || value === "homework" ? value : null;
+}
+
 async function cleanupUploadedStorageKeys(storageKeys: Array<string | null | undefined>) {
   const cleanupResults = await Promise.allSettled(storageKeys.map((storageKey) => removeStoredFile(storageKey)));
 
@@ -188,8 +192,6 @@ export async function updateTopicAction(formData: FormData) {
   const title = String(formData.get("title") ?? "").trim();
   const description = String(formData.get("description") ?? "").trim();
   const numbers = parseNumbersInput(String(formData.get("numbers") ?? ""));
-  const removeTheoryFile = String(formData.get("removeTheoryFile") ?? "") === "on";
-  const removeHomeworkFile = String(formData.get("removeHomeworkFile") ?? "") === "on";
   const theoryFile = formData.get("theoryFile");
   const homeworkFile = formData.get("homeworkFile");
 
@@ -267,16 +269,10 @@ export async function updateTopicAction(formData: FormData) {
       if (createdTheoryFile) {
         theoryFileId = createdTheoryFile.id;
         oldTheoryFileIdToDelete = topicToUpdate.theoryFileId;
-      } else if (removeTheoryFile) {
-        theoryFileId = null;
-        oldTheoryFileIdToDelete = topicToUpdate.theoryFileId;
       }
 
       if (createdHomeworkFile) {
         homeworkFileId = createdHomeworkFile.id;
-        oldHomeworkFileIdToDelete = topicToUpdate.homeworkFileId;
-      } else if (removeHomeworkFile) {
-        homeworkFileId = null;
         oldHomeworkFileIdToDelete = topicToUpdate.homeworkFileId;
       }
 
@@ -361,6 +357,53 @@ export async function updateTopicAction(formData: FormData) {
   await cleanupStoredFileIds(fileIdsToCleanup);
   revalidateTopicRoutes(topicId);
   redirectTeacherTopicWithStatus(topicId, new URLSearchParams({ saved: "1" }));
+}
+
+export async function deleteTopicFileAction(formData: FormData) {
+  await requireUser(UserRole.TEACHER);
+
+  const topicId = String(formData.get("topicId") ?? "").trim();
+  const fileKind = getTopicFileKind(formData.get("fileKind"));
+
+  if (!topicId || !fileKind) {
+    redirectTeacherTopicsWithStatus(new URLSearchParams({ error: "save" }));
+  }
+
+  const targetFileKind = fileKind!;
+
+  const topic = await prisma.topic.findUnique({
+    where: { id: topicId },
+    select: {
+      id: true,
+      theoryFileId: true,
+      homeworkFileId: true
+    }
+  });
+
+  if (!topic) {
+    redirectTeacherTopicsWithStatus(new URLSearchParams({ error: "save" }));
+  }
+
+  const topicToUpdate = topic!;
+  const fileId = targetFileKind === "theory" ? topicToUpdate.theoryFileId : topicToUpdate.homeworkFileId;
+
+  if (!fileId) {
+    redirectTeacherTopicWithStatus(topicId, new URLSearchParams({ fileDeleted: targetFileKind }));
+  }
+
+  try {
+    await prisma.topic.update({
+      where: { id: topicId },
+      data: targetFileKind === "theory" ? { theoryFileId: null } : { homeworkFileId: null }
+    });
+  } catch (error) {
+    console.error("Failed to delete topic file reference.", error);
+    redirectTeacherTopicWithStatus(topicId, new URLSearchParams({ error: "fileDelete" }));
+  }
+
+  await cleanupStoredFileIds([fileId!]);
+  revalidateTopicRoutes(topicId);
+  redirectTeacherTopicWithStatus(topicId, new URLSearchParams({ fileDeleted: targetFileKind }));
 }
 
 export async function deleteTopicAction(formData: FormData) {
