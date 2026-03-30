@@ -18,9 +18,13 @@ const items = [
     match: (pathname: string) => pathname === "/student/info" || pathname.startsWith("/student/info/")
   },
   {
-    href: "/student/account",
-    label: "Личный кабинет",
-    match: (pathname: string) => pathname === "/student/account" || pathname.startsWith("/student/account/")
+    href: "/student/settings",
+    label: "Настройки",
+    match: (pathname: string) =>
+      pathname === "/student/settings" ||
+      pathname.startsWith("/student/settings/") ||
+      pathname === "/student/account" ||
+      pathname.startsWith("/student/account/")
   }
 ];
 

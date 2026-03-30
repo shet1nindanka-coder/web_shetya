@@ -28,7 +28,7 @@ export function SectionCard({
           <h2 className="font-display text-[1.35rem] font-semibold text-slate-950 sm:text-[1.5rem] lg:text-[1.65rem]">
             {title}
           </h2>
-          {description ? <p className="max-w-2xl text-sm leading-6 text-slate-500">{description}</p> : null}
+          {description ? <p className="ui-hint max-w-2xl text-sm leading-6 text-slate-500">{description}</p> : null}
         </div>
         {action ? <div className="shrink-0">{action}</div> : null}
       </div>

@@ -10,7 +10,7 @@ import { prisma } from "@/lib/prisma";
 import { roleHome } from "@/lib/utils";
 
 function redirectAccountWithStatus(role: UserRole, params: URLSearchParams) {
-  const basePath = `${roleHome(role)}/account`;
+  const basePath = `${roleHome(role)}/settings`;
   const query = params.toString();
   redirect(query ? `${basePath}?${query}` : basePath);
 }
@@ -22,6 +22,7 @@ function revalidateAccountRoutes(role: UserRole) {
   revalidatePath("/dashboard");
   revalidatePath(homePath);
   revalidatePath(`${homePath}/account`);
+  revalidatePath(`${homePath}/settings`);
 
   if (role === UserRole.TEACHER) {
     revalidatePath("/teacher/topics");

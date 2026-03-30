@@ -23,7 +23,7 @@ export function StatCard({ label, value, hint, accent, className }: StatCardProp
           <p className="font-display text-[1.6rem] font-semibold leading-none text-slate-950 sm:text-[1.75rem] lg:text-[1.9rem]">
             {value}
           </p>
-          <p className="text-sm leading-6 text-slate-500">{hint}</p>
+          <p className="ui-hint text-sm leading-6 text-slate-500">{hint}</p>
         </div>
         {accent ? <div className="text-right text-sm text-slate-400">{accent}</div> : null}
       </div>

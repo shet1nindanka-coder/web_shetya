@@ -34,7 +34,7 @@ export function FileResourceCard({
           <h3 className="font-display text-[1.35rem] font-semibold text-slate-950 sm:text-[1.45rem] lg:text-[1.6rem]">
             {file ? file.originalName : "Файл не загружен"}
           </h3>
-          <p className="text-sm leading-6 text-slate-500">{description}</p>
+          <p className="ui-hint text-sm leading-6 text-slate-500">{description}</p>
         </div>
 
         {file ? (
@@ -47,7 +47,7 @@ export function FileResourceCard({
       </div>
 
       {!file ? (
-        <div className="mt-5 rounded-[24px] border border-dashed border-slate-200 bg-white/92 px-4 py-6 text-sm leading-6 text-slate-500">
+        <div className="ui-hint mt-5 rounded-[24px] border border-dashed border-slate-200 bg-white/92 px-4 py-6 text-sm leading-6 text-slate-500">
           Преподаватель ещё не прикрепил файл для этого блока.
         </div>
       ) : (
@@ -70,7 +70,7 @@ export function FileResourceCard({
           </div>
 
           {!showPreview ? (
-            <div className="rounded-[22px] border border-slate-200 bg-slate-50 px-4 py-5 text-sm leading-6 text-slate-600">
+            <div className="ui-hint rounded-[22px] border border-slate-200 bg-slate-50 px-4 py-5 text-sm leading-6 text-slate-600">
               Предпросмотр скрыт, чтобы редактор оставался быстрее. Файл всё равно можно открыть в отдельной вкладке
               или скачать.
             </div>
@@ -104,7 +104,7 @@ export function FileResourceCard({
           ) : null}
 
           {showPreview && !isPdfMime(file.mimeType) && !isImageMime(file.mimeType) && isOfficeMime(file.mimeType) ? (
-            <div className="rounded-[22px] border border-slate-200 bg-slate-50 px-4 py-5 text-sm leading-6 text-slate-600">
+            <div className="ui-hint rounded-[22px] border border-slate-200 bg-slate-50 px-4 py-5 text-sm leading-6 text-slate-600">
               Для DOCX встроенный предпросмотр зависит от браузера. Файл можно открыть отдельной вкладкой или скачать.
             </div>
           ) : null}

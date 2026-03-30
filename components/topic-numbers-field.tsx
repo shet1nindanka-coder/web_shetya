@@ -132,7 +132,7 @@ export function TopicNumbersField({
         ) : hasInput && !hasParsedNumbers ? (
           <p>Не удалось распознать номера. Используйте числа и диапазоны вроде `1-5`.</p>
         ) : (
-          <div className="space-y-2">
+          <div className="ui-hint space-y-2">
             <p>{description}</p>
             {hasParsedNumbers ? (
               <p className="text-slate-700">

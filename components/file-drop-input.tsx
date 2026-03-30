@@ -99,7 +99,7 @@ export function FileDropInput({
             <p className="text-sm font-medium text-slate-900">
               {selectedFileName ? selectedFileName : "Файл пока не выбран"}
             </p>
-            <p className="text-sm leading-6 text-slate-500">{helperText}</p>
+            <p className="ui-hint text-sm leading-6 text-slate-500">{helperText}</p>
           </div>
 
           <button

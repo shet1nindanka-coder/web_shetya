@@ -1,5 +1,6 @@
 import { UserRole } from "@prisma/client";
 import { updatePasswordAction, updateProfileInfoAction } from "@/actions/profile";
+import { InterfaceSettingsPanel } from "@/components/interface-settings-panel";
 import { SectionCard } from "@/components/section-card";
 import { formatDate } from "@/lib/utils";
 
@@ -106,10 +107,10 @@ export function AccountSettingsView({ user, notice }: AccountSettingsViewProps) 
 
       <section className="grid gap-6 lg:grid-cols-[1.15fr_0.85fr]">
         <div className="page-header-panel rounded-[36px] border border-white/70 bg-slate-950 px-6 py-8 text-white shadow-glow">
-          <h1 className="font-display text-4xl font-semibold">Личный кабинет</h1>
-          <p className="mt-4 max-w-2xl text-base leading-7 text-slate-300">
-            Здесь можно обновить имя профиля и сменить пароль. Логин для входа остается фиксированным и не меняется
-            из кабинета.
+          <h1 className="font-display text-4xl font-semibold">Настройки</h1>
+          <p className="ui-hint mt-4 max-w-2xl text-base leading-7 text-slate-300">
+            Здесь собраны настройки интерфейса, личная информация и смена пароля. Логин для входа остается
+            фиксированным и не меняется из кабинета.
           </p>
         </div>
 
@@ -137,6 +138,8 @@ export function AccountSettingsView({ user, notice }: AccountSettingsViewProps) 
           </div>
         </div>
       </section>
+
+      <InterfaceSettingsPanel />
 
       <SectionCard
         title="Личная информация"

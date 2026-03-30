@@ -1,15 +1,18 @@
-import { UserRole } from "@prisma/client";
-import { AccountSettingsView, resolveAccountNotice } from "@/components/account-settings-view";
-import { requireUser } from "@/lib/auth";
+import { redirect } from "next/navigation";
 
 type StudentAccountPageProps = {
   searchParams?: Promise<Record<string, string | string[] | undefined>>;
 };
 
 export default async function StudentAccountPage({ searchParams }: StudentAccountPageProps) {
-  const user = await requireUser(UserRole.STUDENT);
   const resolvedSearchParams = (await searchParams) ?? {};
-  const notice = resolveAccountNotice(resolvedSearchParams);
+  const nextParams = new URLSearchParams();
 
-  return <AccountSettingsView user={user} notice={notice} />;
+  for (const [key, value] of Object.entries(resolvedSearchParams)) {
+    if (typeof value === "string") {
+      nextParams.set(key, value);
+    }
+  }
+
+  redirect(nextParams.toString() ? `/student/settings?${nextParams.toString()}` : "/student/settings");
 }

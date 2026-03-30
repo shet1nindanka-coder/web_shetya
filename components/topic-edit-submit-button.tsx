@@ -17,7 +17,7 @@ export function TopicEditSubmitButton() {
 
       <p
         aria-live="polite"
-        className="min-h-[1.25rem] text-sm text-slate-500"
+        className="ui-hint min-h-[1.25rem] text-sm text-slate-500"
       >
         {pending ? "Файлы и номера обновляются. Не закрывайте страницу." : ""}
       </p>
