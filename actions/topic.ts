@@ -203,12 +203,16 @@ export async function updateTopicAction(formData: FormData) {
 
   const existingTopic = await prisma.topic.findUnique({
     where: { id: topicId },
-    include: {
-      theoryFile: true,
-      homeworkFile: true,
+    select: {
+      id: true,
+      theoryFileId: true,
+      homeworkFileId: true,
       homeworkNumbers: {
-        include: {
-          answerFile: true
+        select: {
+          id: true,
+          number: true,
+          displayOrder: true,
+          answerFileId: true
         }
       }
     }
@@ -291,6 +295,8 @@ export async function updateTopicAction(formData: FormData) {
       );
       const nextNumbersSet = new Set(numbers);
       const numbersToCreate: Array<{ number: number; displayOrder: number }> = [];
+      const numberUpdates: Array<Promise<unknown>> = [];
+      const numberIdsToDelete: string[] = [];
 
       for (const existingNumber of topicToUpdate.homeworkNumbers) {
         if (!nextNumbersSet.has(existingNumber.number)) {
@@ -298,28 +304,45 @@ export async function updateTopicAction(formData: FormData) {
             removedAnswerFileIds.add(existingNumber.answerFileId);
           }
 
-          await tx.topicHomeworkNumber.delete({
-            where: { id: existingNumber.id }
-          });
+          numberIdsToDelete.push(existingNumber.id);
         }
+      }
+
+      if (numberIdsToDelete.length > 0) {
+        await tx.topicHomeworkNumber.deleteMany({
+          where: {
+            id: {
+              in: numberIdsToDelete
+            }
+          }
+        });
       }
 
       for (const [index, number] of numbers.entries()) {
         const existingNumber = existingNumbersByValue.get(number);
+        const nextDisplayOrder = index + 1;
 
         if (existingNumber) {
-          await tx.topicHomeworkNumber.update({
-            where: { id: existingNumber.id },
-            data: {
-              displayOrder: index + 1
-            }
-          });
+          if (existingNumber.displayOrder !== nextDisplayOrder) {
+            numberUpdates.push(
+              tx.topicHomeworkNumber.update({
+                where: { id: existingNumber.id },
+                data: {
+                  displayOrder: nextDisplayOrder
+                }
+              })
+            );
+          }
         } else {
           numbersToCreate.push({
             number,
-            displayOrder: index + 1
+            displayOrder: nextDisplayOrder
           });
         }
+      }
+
+      if (numberUpdates.length > 0) {
+        await Promise.all(numberUpdates);
       }
 
       await createTopicHomeworkNumbersInBatches(tx, topicId, numbersToCreate);
