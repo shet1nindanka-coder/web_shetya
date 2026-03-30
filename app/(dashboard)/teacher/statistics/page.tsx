@@ -54,9 +54,21 @@ type ReviewStudentSummary = {
   }>;
 };
 
-export default async function TeacherStatisticsPage() {
+type TeacherStatisticsPageProps = {
+  searchParams?: Promise<Record<string, string | string[] | undefined>>;
+};
+
+const statisticsViews = [
+  { key: "teacher", label: "Для учителя", href: "/teacher/statistics" },
+  { key: "developer", label: "Для разработчиков", href: "/teacher/statistics?view=developer" }
+] as const;
+
+export default async function TeacherStatisticsPage({ searchParams }: TeacherStatisticsPageProps) {
   await requireUser(UserRole.TEACHER);
 
+  const resolvedSearchParams = (await searchParams) ?? {};
+  const requestedView = typeof resolvedSearchParams.view === "string" ? resolvedSearchParams.view : undefined;
+  const view = requestedView === "developer" ? "developer" : "teacher";
   const data = await getTeacherTopicsOverview();
   const totalStatusSlots = data.stats.totalStudents * data.stats.totalNumbers;
 
@@ -213,6 +225,14 @@ export default async function TeacherStatisticsPage() {
     .filter((student) => student.markedCount > 0)
     .sort((left, right) => right.solvedCount - left.solvedCount || right.markedCount - left.markedCount)
     .slice(0, 5);
+  const supportStudents = [...studentStats]
+    .filter((student) => student.redCount > 0)
+    .sort((left, right) => right.redCount - left.redCount || right.redPercent - left.redPercent)
+    .slice(0, 5);
+  const quickWinStudents = [...studentStats]
+    .filter((student) => student.redCount > 0)
+    .sort((left, right) => right.solvedPercent - left.solvedPercent || left.redCount - right.redCount)
+    .slice(0, 5);
 
   const strongestTopic = strongestTopics[0] ?? null;
   const attentionTopic = attentionTopics[0] ?? null;
@@ -257,6 +277,12 @@ export default async function TeacherStatisticsPage() {
   const activeTopicsPercent = completionPercent(activeTopics.length, data.stats.totalTopics);
   const activeStudentsPercent = completionPercent(activeStudents.length, data.stats.totalStudents);
   const solvedPercent = completionPercent(totalSolved, totalStatusSlots);
+  const headlineTitle =
+    view === "teacher" ? "Статистика для подготовки к занятиям" : "Общая аналитика платформы";
+  const headlineDescription =
+    view === "teacher"
+      ? "Здесь собраны только те срезы, которые помогают быстро понять, кого разбирать, по каким темам и где сейчас самое узкое место."
+      : "Здесь собраны общие метрики, распределения и аналитические срезы, которые полезны для продуктового и технического наблюдения за платформой.";
   const drilldownTopics = data.topics.map((topic) => ({
     id: topic.id,
     title: topic.title,
@@ -282,10 +308,9 @@ export default async function TeacherStatisticsPage() {
     <div className="space-y-8">
       <section className="grid gap-6 xl:grid-cols-[1.12fr_0.88fr]">
         <div className="page-header-panel rounded-[28px] border border-white/70 bg-slate-950 px-5 py-6 text-white shadow-glow sm:rounded-[36px] sm:px-6 sm:py-8">
-          <h1 className="font-display text-3xl font-semibold sm:text-4xl">Статистика, из которой можно делать выводы</h1>
+          <h1 className="font-display text-3xl font-semibold sm:text-4xl">{headlineTitle}</h1>
           <p className="mt-4 max-w-2xl text-sm leading-6 text-slate-300 sm:text-base sm:leading-7">
-            Здесь видно не просто общие цифры, а то, как усваиваются темы, где чаще нужна помощь и какие ученики уже
-            двигаются уверенно, а где нужен дополнительный фокус.
+            {headlineDescription}
           </p>
           <div className="mt-6 flex flex-wrap gap-2 text-sm text-slate-200">
             <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1.5">
@@ -323,7 +348,7 @@ export default async function TeacherStatisticsPage() {
             }
           />
           <InsightCard
-            label="Кому первым нужен разбор"
+            label={view === "teacher" ? "Кому первым нужен разбор" : "Ключевой ученик"}
             value={firstReviewStudent ? firstReviewStudent.name : leadStudent ? leadStudent.name : "Пока нет красных"}
             hint={
               firstReviewStudent
@@ -336,242 +361,340 @@ export default async function TeacherStatisticsPage() {
         </div>
       </section>
 
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        <StatCard
-          label="Решено"
-          value={totalSolved}
-          hint="Зеленые и желтые статусы по всем ученикам и темам."
-          accent={<span className="font-semibold text-emerald-700">{solvedPercent}% от всех слотов</span>}
-        />
-        <StatCard
-          label="Нужна помощь"
-          value={totalRed}
-          hint="Красные статусы, где преподавателю стоит обратить внимание."
-          accent={<span className="font-semibold text-rose-700">{completionPercent(totalRed, totalStatusSlots)}% от всех слотов</span>}
-        />
-        <StatCard
-          label="Без статуса"
-          value={totalUnfilled}
-          hint="Пока не отмеченные номера по всем ученикам и темам."
-          accent={<span className="font-semibold text-slate-700">{completionPercent(totalUnfilled, totalStatusSlots)}% от всех слотов</span>}
-        />
-        <StatCard
-          label="Активные ученики"
-          value={`${activeStudents.length} / ${data.stats.totalStudents}`}
-          hint="Ученики, у которых уже есть хотя бы один отмеченный номер."
-          accent={<span className="font-semibold text-brand-700">{activeStudentsPercent}% охвата</span>}
-        />
-      </div>
+      <nav className="ui-fade-slide ui-tab-shell ui-tab-strip flex gap-2 rounded-[24px] p-2 sm:flex-wrap sm:rounded-[28px] sm:p-2.5">
+        {statisticsViews.map((item) => {
+          const isActive = item.key === view;
 
-      <SectionCard
-        title="Срез по теме и ученику"
-        description="Выберите конкретную тему и ученика, чтобы сразу увидеть, сколько там зеленых, желтых и красных статусов."
-      >
-        <TeacherStatisticsDrilldown topics={drilldownTopics} students={drilldownStudents} />
-      </SectionCard>
+          return (
+            <Link
+              key={item.key}
+              href={item.href}
+              className={cx("ui-pressable ui-tab shrink-0 rounded-full px-4 py-2.5 text-sm font-medium sm:px-5", isActive && "data-[active=true]:shadow-none")}
+              data-active={isActive}
+            >
+              {item.label}
+            </Link>
+          );
+        })}
+      </nav>
 
-      <SectionCard
-        title="Как распределяется прогресс"
-        description="Этот блок помогает понять, где уже есть уверенное решение, где нужен разбор, а где работа еще даже не начиналась."
-      >
-        <div className="grid gap-4 xl:grid-cols-[0.9fr_1.1fr]">
-          <article className="ui-surface rounded-[24px] border border-slate-200 bg-slate-50/80 p-5 sm:rounded-[28px] sm:p-6">
-            <div className="flex flex-col items-center gap-6 lg:flex-row">
-              <DonutChart segments={distributionSegments} total={totalStatusSlots} centerValue={`${solvedPercent}%`} centerLabel="решено" />
-              <div className="w-full space-y-3">
-                {distributionSegments.map((segment) => (
-                  <div key={segment.key} className="rounded-2xl border border-slate-200 bg-white px-4 py-3">
-                    <div className="flex items-center justify-between gap-3">
-                      <div className="flex items-center gap-3">
-                        <span className="h-3 w-3 rounded-full" style={{ backgroundColor: segment.color }} />
-                        <div>
-                          <p className="text-sm font-semibold text-slate-950">{segment.label}</p>
-                          <p className="text-xs leading-5 text-slate-500">{segment.note}</p>
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <p className="text-sm font-semibold text-slate-950">{segment.value}</p>
-                        <p className="text-xs text-slate-500">{completionPercent(segment.value, totalStatusSlots)}%</p>
-                      </div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </article>
+      {view === "teacher" ? (
+        <>
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+            <StatCard
+              label="Нужен разбор"
+              value={totalStudentsNeedingReview}
+              hint="Столько учеников сейчас имеют хотя бы один красный номер."
+              accent={<span className="font-semibold text-rose-700">{completionPercent(totalStudentsNeedingReview, data.stats.totalStudents)}% учеников</span>}
+            />
+            <StatCard
+              label="Красные номера"
+              value={totalRed}
+              hint="Именно эти номера сейчас стоит брать в ближайший разбор."
+              accent={<span className="font-semibold text-rose-700">{completionPercent(totalRed, totalStatusSlots)}% от всех слотов</span>}
+            />
+            <StatCard
+              label="Темы с разбором"
+              value={attentionTopics.length}
+              hint="Темы, в которых уже накопились красные статусы."
+            />
+            <StatCard
+              label="Быстрые победы"
+              value={quickWinStudents.length}
+              hint="Ученики, которых можно быстро довести до уверенного завершения темы."
+            />
+          </div>
 
-          <article className="ui-surface rounded-[24px] border border-slate-200 bg-slate-50/80 p-5 sm:rounded-[28px] sm:p-6">
-            <div className="space-y-5">
-              <div>
-                <div className="mb-2 flex items-center justify-between gap-3 text-sm text-slate-600">
-                  <span>Решено уверенно</span>
-                  <span className="font-semibold text-slate-950">
-                    {totalSolved} / {totalStatusSlots}
-                  </span>
-                </div>
-                <ProgressBar value={solvedPercent} />
-              </div>
-
-              <div>
-                <div className="mb-2 flex items-center justify-between gap-3 text-sm text-slate-600">
-                  <span>Темы с активностью</span>
-                  <span className="font-semibold text-slate-950">
-                    {activeTopics.length} / {data.stats.totalTopics}
-                  </span>
-                </div>
-                <ProgressBar value={activeTopicsPercent} />
-              </div>
-
-              <div>
-                <div className="mb-2 flex items-center justify-between gap-3 text-sm text-slate-600">
-                  <span>Ученики в работе</span>
-                  <span className="font-semibold text-slate-950">
-                    {activeStudents.length} / {data.stats.totalStudents}
-                  </span>
-                </div>
-                <ProgressBar value={activeStudentsPercent} />
-              </div>
-
-              <div className="rounded-[24px] border border-slate-200 bg-white px-4 py-4">
-                <p className="text-sm font-medium text-slate-500">Ключевой вывод</p>
-                <p className="mt-2 text-base font-semibold text-slate-950">
-                  {totalUnfilled > totalSolved
-                    ? "Неотмеченных номеров пока больше, чем реально решенных. Здесь главный резерв роста."
-                    : totalRed > 0
-                      ? "Основной фокус сейчас не на охвате, а на разборе красных номеров и снятии трудностей."
-                      : "Охват уже хороший: можно смещать внимание на качество и скорость прохождения тем."}
+          <SectionCard
+            title="Кому нужен разбор сейчас"
+            description="Здесь собраны именно те ученики и номера, которые уже отмечены красным. Это готовая сводка для ближайших занятий."
+          >
+            {studentsNeedingReview.length === 0 ? (
+              <div className="rounded-[28px] border border-dashed border-slate-200 bg-slate-50/60 px-5 py-10 text-center">
+                <p className="font-display text-2xl font-semibold text-slate-950">Сейчас нет учеников с красными номерами</p>
+                <p className="mx-auto mt-3 max-w-2xl text-sm leading-6 text-slate-600">
+                  Как только ученики начнут помечать номера красным, здесь появится готовая сводка по темам и номерам для разбора.
                 </p>
               </div>
-            </div>
-          </article>
-        </div>
-      </SectionCard>
-
-      <SectionCard
-        title="Что происходит по темам"
-        description="Слева видно, какие темы идут лучше всего, справа — где чаще всего требуется помощь."
-      >
-        <div className="grid gap-4 xl:grid-cols-2">
-          <RankingCard
-            title="Лучшее усвоение"
-            description="Темы, где доля решенных номеров сейчас самая высокая."
-            emptyMessage="Пока нет тем с прогрессом."
-            items={strongestTopics.map((topic) => ({
-              key: topic.id,
-              title: topic.title,
-              subtitle: `${topic.solvedCount} решено · ${topic.studentsWithActivity} учеников в работе`,
-              valueLabel: `${topic.solvedPercent}%`,
-              progress: topic.solvedPercent,
-              tone: "emerald"
-            }))}
-          />
-
-          <RankingCard
-            title="Где чаще нужна помощь"
-            description="Темы, в которых красных статусов сейчас больше всего."
-            emptyMessage="Пока нет тем с красными статусами."
-            items={attentionTopics.map((topic) => ({
-              key: topic.id,
-              title: topic.title,
-              subtitle: `${topic.redCount} красных · ${topic.markedCount} отмеченных статусов`,
-              valueLabel: `${topic.redPercent}%`,
-              progress: topic.redPercent,
-              tone: "rose"
-            }))}
-          />
-        </div>
-      </SectionCard>
-
-      <SectionCard
-        title="Кому нужен разбор сейчас"
-        description="Здесь собраны именно те ученики и номера, которые уже отмечены красным. Это готовая сводка для ближайших занятий."
-      >
-        {studentsNeedingReview.length === 0 ? (
-          <div className="rounded-[28px] border border-dashed border-slate-200 bg-slate-50/60 px-5 py-10 text-center">
-            <p className="font-display text-2xl font-semibold text-slate-950">Сейчас нет учеников с красными номерами</p>
-            <p className="mx-auto mt-3 max-w-2xl text-sm leading-6 text-slate-600">
-              Как только ученики начнут помечать номера красным, здесь появится готовая сводка по темам и номерам для разбора.
-            </p>
-          </div>
-        ) : (
-          <div className="space-y-4">
-            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-              <StatCard
-                label="Нужен разбор"
-                value={totalStudentsNeedingReview}
-                hint="Столько учеников сейчас имеют хотя бы один красный номер."
-              />
-              <StatCard
-                label="Красные номера"
-                value={totalRed}
-                hint="Именно эти номера сейчас требуют внимания на занятиях."
-              />
-              <StatCard
-                label="Темы с разбором"
-                value={attentionTopics.length}
-                hint="Темы, в которых уже есть хотя бы один красный статус."
-              />
-            </div>
-
-            <div className="grid gap-4 xl:grid-cols-2">
-              {studentsNeedingReview.map((student, index) => (
-                <article
-                  key={student.id}
-                  className="ui-surface rounded-[24px] border border-slate-200 bg-slate-50/80 p-5 sm:rounded-[28px] sm:p-6"
-                >
-                  <div className="flex flex-wrap items-start justify-between gap-3">
-                    <div>
-                      <div className="flex flex-wrap items-center gap-2">
-                        <span className="rounded-full border border-slate-200 bg-white px-2.5 py-1 text-xs font-medium text-slate-500">
-                          #{index + 1}
-                        </span>
-                        <h2 className="font-display text-[1.35rem] font-semibold text-slate-950 sm:text-[1.5rem]">
-                          {student.name}
-                        </h2>
+            ) : (
+              <div className="grid gap-4 xl:grid-cols-2">
+                {studentsNeedingReview.map((student, index) => (
+                  <article
+                    key={student.id}
+                    className="ui-surface rounded-[24px] border border-slate-200 bg-slate-50/80 p-5 sm:rounded-[28px] sm:p-6"
+                  >
+                    <div className="flex flex-wrap items-start justify-between gap-3">
+                      <div>
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="rounded-full border border-slate-200 bg-white px-2.5 py-1 text-xs font-medium text-slate-500">
+                            #{index + 1}
+                          </span>
+                          <h2 className="font-display text-[1.35rem] font-semibold text-slate-950 sm:text-[1.5rem]">
+                            {student.name}
+                          </h2>
+                        </div>
+                        <p className="mt-2 text-sm leading-6 text-slate-500">
+                          {student.totalRed} красных номеров в {student.topicCount}{" "}
+                          {student.topicCount === 1 ? "теме" : "темах"}
+                        </p>
                       </div>
-                      <p className="mt-2 text-sm leading-6 text-slate-500">
-                        {student.totalRed} красных номеров в {student.topicCount}{" "}
-                        {student.topicCount === 1 ? "теме" : student.topicCount < 5 ? "темах" : "темах"}
-                      </p>
+
+                      <Link
+                        href={`/teacher/students/${student.id}`}
+                        className="ui-pressable inline-flex rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-brand-300 hover:text-brand-700"
+                      >
+                        Открыть ученика
+                      </Link>
                     </div>
 
-                    <Link
-                      href={`/teacher/students/${student.id}`}
-                      className="ui-pressable inline-flex rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-brand-300 hover:text-brand-700"
-                    >
-                      Открыть ученика
-                    </Link>
-                  </div>
-
-                  <div className="mt-5 space-y-3">
-                    {student.topics.map((topic) => (
-                      <div key={topic.topicId} className="rounded-[22px] border border-slate-200 bg-white px-4 py-4">
-                        <div className="flex flex-wrap items-center justify-between gap-3">
-                          <p className="text-base font-semibold text-slate-950">{topic.title}</p>
-                          <span className="rounded-full border border-rose-200 bg-rose-50 px-3 py-1 text-xs font-medium text-rose-800">
-                            {topic.numbers.length} красн.
-                          </span>
-                        </div>
-
-                        <div className="mt-3 flex flex-wrap gap-2">
-                          {topic.numbers.map((number) => (
-                            <span
-                              key={`${topic.topicId}-${number}`}
-                              className="rounded-full border border-rose-200 bg-rose-50 px-3 py-1.5 text-sm font-medium text-rose-900"
-                            >
-                              № {number}
+                    <div className="mt-5 space-y-3">
+                      {student.topics.map((topic) => (
+                        <div key={topic.topicId} className="rounded-[22px] border border-slate-200 bg-white px-4 py-4">
+                          <div className="flex flex-wrap items-center justify-between gap-3">
+                            <p className="text-base font-semibold text-slate-950">{topic.title}</p>
+                            <span className="rounded-full border border-rose-200 bg-rose-50 px-3 py-1 text-xs font-medium text-rose-800">
+                              {topic.numbers.length} красн.
                             </span>
-                          ))}
+                          </div>
+
+                          <div className="mt-3 flex flex-wrap gap-2">
+                            {topic.numbers.map((number) => (
+                              <span
+                                key={`${topic.topicId}-${number}`}
+                                className="rounded-full border border-rose-200 bg-rose-50 px-3 py-1.5 text-sm font-medium text-rose-900"
+                              >
+                                № {number}
+                              </span>
+                            ))}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </article>
+                ))}
+              </div>
+            )}
+          </SectionCard>
+
+          <SectionCard
+            title="Срез по теме и ученику"
+            description="Выберите конкретную тему и ученика, чтобы сразу увидеть, сколько там зеленых, желтых и красных статусов."
+          >
+            <TeacherStatisticsDrilldown topics={drilldownTopics} students={drilldownStudents} />
+          </SectionCard>
+
+          <SectionCard
+            title="Что учителю держать в фокусе"
+            description="Слева темы, где чаще всего нужна помощь, справа ученики, которых можно быстро довести до хорошего результата."
+          >
+            <div className="grid gap-4 xl:grid-cols-2">
+              <RankingCard
+                title="Темы, где чаще нужна помощь"
+                description="По этим темам красных номеров сейчас больше всего."
+                emptyMessage="Пока нет тем с красными статусами."
+                items={attentionTopics.map((topic) => ({
+                  key: topic.id,
+                  title: topic.title,
+                  subtitle: `${topic.redCount} красных · ${topic.studentsWithActivity} учеников в работе`,
+                  valueLabel: `${topic.redPercent}%`,
+                  progress: topic.redPercent,
+                  tone: "rose"
+                }))}
+              />
+
+              <RankingCard
+                title="Кого можно быстро довести"
+                description="Ученики, у которых уже хороший прогресс, но осталось немного красных номеров."
+                emptyMessage="Пока нет учеников для этого сценария."
+                items={quickWinStudents.map((student) => ({
+                  key: student.id,
+                  title: student.name,
+                  subtitle: `${student.redCount} красных · ${student.solvedCount} решено`,
+                  valueLabel: `${student.solvedPercent}%`,
+                  progress: student.solvedPercent,
+                  tone: "brand"
+                }))}
+              />
+            </div>
+          </SectionCard>
+        </>
+      ) : (
+        <>
+          <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+            <StatCard
+              label="Решено"
+              value={totalSolved}
+              hint="Зеленые и желтые статусы по всем ученикам и темам."
+              accent={<span className="font-semibold text-emerald-700">{solvedPercent}% от всех слотов</span>}
+            />
+            <StatCard
+              label="Нужна помощь"
+              value={totalRed}
+              hint="Красные статусы, где преподавателю стоит обратить внимание."
+              accent={<span className="font-semibold text-rose-700">{completionPercent(totalRed, totalStatusSlots)}% от всех слотов</span>}
+            />
+            <StatCard
+              label="Без статуса"
+              value={totalUnfilled}
+              hint="Пока не отмеченные номера по всем ученикам и темам."
+              accent={<span className="font-semibold text-slate-700">{completionPercent(totalUnfilled, totalStatusSlots)}% от всех слотов</span>}
+            />
+            <StatCard
+              label="Активные ученики"
+              value={`${activeStudents.length} / ${data.stats.totalStudents}`}
+              hint="Ученики, у которых уже есть хотя бы один отмеченный номер."
+              accent={<span className="font-semibold text-brand-700">{activeStudentsPercent}% охвата</span>}
+            />
+          </div>
+
+          <SectionCard
+            title="Как распределяется прогресс"
+            description="Этот блок помогает понять, где уже есть уверенное решение, где нужен разбор, а где работа еще даже не начиналась."
+          >
+            <div className="grid gap-4 xl:grid-cols-[0.9fr_1.1fr]">
+              <article className="ui-surface rounded-[24px] border border-slate-200 bg-slate-50/80 p-5 sm:rounded-[28px] sm:p-6">
+                <div className="flex flex-col items-center gap-6 lg:flex-row">
+                  <DonutChart segments={distributionSegments} total={totalStatusSlots} centerValue={`${solvedPercent}%`} centerLabel="решено" />
+                  <div className="w-full space-y-3">
+                    {distributionSegments.map((segment) => (
+                      <div key={segment.key} className="rounded-2xl border border-slate-200 bg-white px-4 py-3">
+                        <div className="flex items-center justify-between gap-3">
+                          <div className="flex items-center gap-3">
+                            <span className="h-3 w-3 rounded-full" style={{ backgroundColor: segment.color }} />
+                            <div>
+                              <p className="text-sm font-semibold text-slate-950">{segment.label}</p>
+                              <p className="text-xs leading-5 text-slate-500">{segment.note}</p>
+                            </div>
+                          </div>
+                          <div className="text-right">
+                            <p className="text-sm font-semibold text-slate-950">{segment.value}</p>
+                            <p className="text-xs text-slate-500">{completionPercent(segment.value, totalStatusSlots)}%</p>
+                          </div>
                         </div>
                       </div>
                     ))}
                   </div>
-                </article>
-              ))}
+                </div>
+              </article>
+
+              <article className="ui-surface rounded-[24px] border border-slate-200 bg-slate-50/80 p-5 sm:rounded-[28px] sm:p-6">
+                <div className="space-y-5">
+                  <div>
+                    <div className="mb-2 flex items-center justify-between gap-3 text-sm text-slate-600">
+                      <span>Решено уверенно</span>
+                      <span className="font-semibold text-slate-950">
+                        {totalSolved} / {totalStatusSlots}
+                      </span>
+                    </div>
+                    <ProgressBar value={solvedPercent} />
+                  </div>
+
+                  <div>
+                    <div className="mb-2 flex items-center justify-between gap-3 text-sm text-slate-600">
+                      <span>Темы с активностью</span>
+                      <span className="font-semibold text-slate-950">
+                        {activeTopics.length} / {data.stats.totalTopics}
+                      </span>
+                    </div>
+                    <ProgressBar value={activeTopicsPercent} />
+                  </div>
+
+                  <div>
+                    <div className="mb-2 flex items-center justify-between gap-3 text-sm text-slate-600">
+                      <span>Ученики в работе</span>
+                      <span className="font-semibold text-slate-950">
+                        {activeStudents.length} / {data.stats.totalStudents}
+                      </span>
+                    </div>
+                    <ProgressBar value={activeStudentsPercent} />
+                  </div>
+
+                  <div className="rounded-[24px] border border-slate-200 bg-white px-4 py-4">
+                    <p className="text-sm font-medium text-slate-500">Ключевой вывод</p>
+                    <p className="mt-2 text-base font-semibold text-slate-950">
+                      {totalUnfilled > totalSolved
+                        ? "Неотмеченных номеров пока больше, чем реально решенных. Здесь главный резерв роста."
+                        : totalRed > 0
+                          ? "Основной фокус сейчас не на охвате, а на разборе красных номеров и снятии трудностей."
+                          : "Охват уже хороший: можно смещать внимание на качество и скорость прохождения тем."}
+                    </p>
+                  </div>
+                </div>
+              </article>
             </div>
-          </div>
-        )}
-      </SectionCard>
+          </SectionCard>
+
+          <SectionCard
+            title="Что происходит по темам"
+            description="Слева видно, какие темы идут лучше всего, справа — где чаще всего требуется помощь."
+          >
+            <div className="grid gap-4 xl:grid-cols-2">
+              <RankingCard
+                title="Лучшее усвоение"
+                description="Темы, где доля решенных номеров сейчас самая высокая."
+                emptyMessage="Пока нет тем с прогрессом."
+                items={strongestTopics.map((topic) => ({
+                  key: topic.id,
+                  title: topic.title,
+                  subtitle: `${topic.solvedCount} решено · ${topic.studentsWithActivity} учеников в работе`,
+                  valueLabel: `${topic.solvedPercent}%`,
+                  progress: topic.solvedPercent,
+                  tone: "emerald"
+                }))}
+              />
+
+              <RankingCard
+                title="Где чаще нужна помощь"
+                description="Темы, в которых красных статусов сейчас больше всего."
+                emptyMessage="Пока нет тем с красными статусами."
+                items={attentionTopics.map((topic) => ({
+                  key: topic.id,
+                  title: topic.title,
+                  subtitle: `${topic.redCount} красных · ${topic.markedCount} отмеченных статусов`,
+                  valueLabel: `${topic.redPercent}%`,
+                  progress: topic.redPercent,
+                  tone: "rose"
+                }))}
+              />
+            </div>
+          </SectionCard>
+
+          <SectionCard
+            title="Что происходит по ученикам"
+            description="Эта вкладка оставляет продуктовые рейтинги и общие срезы по активности и сложностям."
+          >
+            <div className="grid gap-4 xl:grid-cols-2">
+              <RankingCard
+                title="Самые вовлеченные"
+                description="Ученики с самым большим числом уже решенных номеров."
+                emptyMessage="Пока у учеников нет отмеченных номеров."
+                items={engagedStudents.map((student) => ({
+                  key: student.id,
+                  title: student.name,
+                  subtitle: `${student.solvedCount} решено · ${student.markedCount} отмечено`,
+                  valueLabel: `${student.solvedPercent}%`,
+                  progress: student.solvedPercent,
+                  tone: "brand"
+                }))}
+              />
+
+              <RankingCard
+                title="Нужен разбор"
+                description="Ученики, у которых сейчас самая высокая доля красных номеров."
+                emptyMessage="Сейчас нет учеников с красными статусами."
+                items={supportStudents.map((student) => ({
+                  key: student.id,
+                  title: student.name,
+                  subtitle: `${student.redCount} красных · ${student.solvedCount} решено`,
+                  valueLabel: `${student.redPercent}%`,
+                  progress: student.redPercent,
+                  tone: "rose"
+                }))}
+              />
+            </div>
+          </SectionCard>
+        </>
+      )}
     </div>
   );
 }
