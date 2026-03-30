@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useDeferredValue, useMemo, useState } from "react";
 import { Badge } from "@/components/badge";
 import { cx, parseNumbersInput } from "@/lib/utils";
 
@@ -75,10 +75,12 @@ export function TopicNumbersField({
 }: TopicNumbersFieldProps) {
   const [internalValue, setInternalValue] = useState(initialValue);
   const resolvedValue = value ?? internalValue;
-  const parsedNumbers = useMemo(() => parseNumbersInput(resolvedValue), [resolvedValue]);
+  const deferredValue = useDeferredValue(resolvedValue);
+  const parsedNumbers = useMemo(() => parseNumbersInput(deferredValue), [deferredValue]);
   const normalizedRanges = useMemo(() => compressNumbersToRanges(parsedNumbers), [parsedNumbers]);
   const hasInput = resolvedValue.trim().length > 0;
   const hasParsedNumbers = parsedNumbers.length > 0;
+  const isComputing = deferredValue !== resolvedValue;
 
   const handleChange = (nextValue: string) => {
     if (value === undefined) {
@@ -125,7 +127,9 @@ export function TopicNumbersField({
             : "border-slate-200 bg-slate-50/80 text-slate-600"
         )}
       >
-        {hasInput && !hasParsedNumbers ? (
+        {isComputing ? (
+          <p>Обновляем список номеров...</p>
+        ) : hasInput && !hasParsedNumbers ? (
           <p>Не удалось распознать номера. Используйте числа и диапазоны вроде `1-5`.</p>
         ) : (
           <div className="space-y-2">

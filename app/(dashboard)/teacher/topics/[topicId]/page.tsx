@@ -197,6 +197,7 @@ export default async function TeacherTopicPage({ params, searchParams }: Teacher
                   title="Теория"
                   description="Текущий файл теории по теме."
                   file={data.topic.theoryFile}
+                  showPreview={false}
                 />
                 <FileDropInput
                   name="theoryFile"
@@ -224,6 +225,7 @@ export default async function TeacherTopicPage({ params, searchParams }: Teacher
                   title="Задания"
                   description="Текущий файл заданий по теме."
                   file={data.topic.homeworkFile}
+                  showPreview={false}
                 />
                 <FileDropInput
                   name="homeworkFile"

@@ -14,13 +14,15 @@ type FileResourceCardProps = {
   description: string;
   file: FileResource | null;
   previewSize?: "default" | "expanded";
+  showPreview?: boolean;
 };
 
 export function FileResourceCard({
   title,
   description,
   file,
-  previewSize = "default"
+  previewSize = "default",
+  showPreview = true
 }: FileResourceCardProps) {
   const isExpanded = previewSize === "expanded";
 
@@ -67,7 +69,14 @@ export function FileResourceCard({
             </a>
           </div>
 
-          {isPdfMime(file.mimeType) ? (
+          {!showPreview ? (
+            <div className="rounded-[22px] border border-slate-200 bg-slate-50 px-4 py-5 text-sm leading-6 text-slate-600">
+              Предпросмотр скрыт, чтобы редактор оставался быстрее. Файл всё равно можно открыть в отдельной вкладке
+              или скачать.
+            </div>
+          ) : null}
+
+          {showPreview && isPdfMime(file.mimeType) ? (
             <div className="overflow-hidden rounded-[22px] border border-slate-200 bg-slate-50">
               <iframe
                 src={`/files/${file.id}`}
@@ -77,7 +86,7 @@ export function FileResourceCard({
             </div>
           ) : null}
 
-          {!isPdfMime(file.mimeType) && isImageMime(file.mimeType) ? (
+          {showPreview && !isPdfMime(file.mimeType) && isImageMime(file.mimeType) ? (
             <div className="overflow-hidden rounded-[22px] border border-slate-200 bg-slate-50 p-2">
               <Image
                 src={`/files/${file.id}`}
@@ -94,7 +103,7 @@ export function FileResourceCard({
             </div>
           ) : null}
 
-          {!isPdfMime(file.mimeType) && !isImageMime(file.mimeType) && isOfficeMime(file.mimeType) ? (
+          {showPreview && !isPdfMime(file.mimeType) && !isImageMime(file.mimeType) && isOfficeMime(file.mimeType) ? (
             <div className="rounded-[22px] border border-slate-200 bg-slate-50 px-4 py-5 text-sm leading-6 text-slate-600">
               Для DOCX встроенный предпросмотр зависит от браузера. Файл можно открыть отдельной вкладкой или скачать.
             </div>
