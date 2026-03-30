@@ -4,9 +4,11 @@ import { useEffect, useMemo, useState } from "react";
 
 type ThemeMode = "system" | "light" | "dark";
 type HintsMode = "on" | "off";
+type DensityMode = "comfortable" | "compact";
 
 const THEME_STORAGE_KEY = "tutorflow-theme";
 const HINTS_STORAGE_KEY = "tutorflow-hints";
+const DENSITY_STORAGE_KEY = "tutorflow-density";
 
 function getPreferredTheme(themeMode: ThemeMode) {
   if (themeMode !== "system") {
@@ -20,47 +22,53 @@ function getPreferredTheme(themeMode: ThemeMode) {
   return "light";
 }
 
-function applyPreferences(themeMode: ThemeMode, hintsMode: HintsMode) {
+function applyPreferences(themeMode: ThemeMode, hintsMode: HintsMode, densityMode: DensityMode) {
   const root = document.documentElement;
   const resolvedTheme = getPreferredTheme(themeMode);
 
   root.dataset.themeMode = themeMode;
   root.dataset.theme = resolvedTheme;
   root.dataset.hints = hintsMode;
+  root.dataset.density = densityMode;
 }
 
 export function InterfaceSettingsPanel() {
   const [themeMode, setThemeMode] = useState<ThemeMode>("system");
   const [hintsMode, setHintsMode] = useState<HintsMode>("on");
+  const [densityMode, setDensityMode] = useState<DensityMode>("comfortable");
 
   useEffect(() => {
     const storedTheme = window.localStorage.getItem(THEME_STORAGE_KEY);
     const storedHints = window.localStorage.getItem(HINTS_STORAGE_KEY);
+    const storedDensity = window.localStorage.getItem(DENSITY_STORAGE_KEY);
 
     const nextTheme =
       storedTheme === "light" || storedTheme === "dark" || storedTheme === "system" ? storedTheme : "system";
     const nextHints = storedHints === "off" ? "off" : "on";
+    const nextDensity = storedDensity === "compact" ? "compact" : "comfortable";
 
     setThemeMode(nextTheme);
     setHintsMode(nextHints);
-    applyPreferences(nextTheme, nextHints);
+    setDensityMode(nextDensity);
+    applyPreferences(nextTheme, nextHints, nextDensity);
   }, []);
 
   useEffect(() => {
     window.localStorage.setItem(THEME_STORAGE_KEY, themeMode);
     window.localStorage.setItem(HINTS_STORAGE_KEY, hintsMode);
-    applyPreferences(themeMode, hintsMode);
+    window.localStorage.setItem(DENSITY_STORAGE_KEY, densityMode);
+    applyPreferences(themeMode, hintsMode, densityMode);
 
     if (themeMode !== "system") {
       return;
     }
 
     const mediaQuery = window.matchMedia("(prefers-color-scheme: dark)");
-    const handleChange = () => applyPreferences("system", hintsMode);
+    const handleChange = () => applyPreferences("system", hintsMode, densityMode);
 
     mediaQuery.addEventListener("change", handleChange);
     return () => mediaQuery.removeEventListener("change", handleChange);
-  }, [themeMode, hintsMode]);
+  }, [themeMode, hintsMode, densityMode]);
 
   const effectiveThemeLabel = useMemo(() => {
     switch (getPreferredTheme(themeMode)) {
@@ -84,7 +92,7 @@ export function InterfaceSettingsPanel() {
         </p>
       </div>
 
-      <div className="grid gap-4 xl:grid-cols-2">
+      <div className="grid gap-4 xl:grid-cols-3">
         <div className="rounded-[24px] border border-slate-200 bg-slate-50/70 p-4">
           <p className="text-sm font-medium text-slate-700">Тема</p>
           <div className="mt-3 grid gap-2 sm:grid-cols-3">
@@ -143,6 +151,37 @@ export function InterfaceSettingsPanel() {
           </div>
           <p className="ui-hint mt-3 text-sm leading-6 text-slate-500">
             В режиме без подсказок скрываются второстепенные описания, helper-тексты и пояснения.
+          </p>
+        </div>
+
+        <div className="rounded-[24px] border border-slate-200 bg-slate-50/70 p-4">
+          <p className="text-sm font-medium text-slate-700">Плотность интерфейса</p>
+          <div className="mt-3 grid gap-2 sm:grid-cols-2">
+            {[
+              { value: "comfortable", label: "Обычный" },
+              { value: "compact", label: "Компактный" }
+            ].map((option) => {
+              const isActive = densityMode === option.value;
+
+              return (
+                <button
+                  key={option.value}
+                  type="button"
+                  onClick={() => setDensityMode(option.value as DensityMode)}
+                  aria-pressed={isActive}
+                  className={`ui-pressable rounded-2xl border px-4 py-3 text-sm font-medium transition ${
+                    isActive
+                      ? "border-brand-300 bg-brand-50 text-brand-900"
+                      : "border-slate-200 bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-50"
+                  }`}
+                >
+                  {option.label}
+                </button>
+              );
+            })}
+          </div>
+          <p className="ui-hint mt-3 text-sm leading-6 text-slate-500">
+            Компактный режим уменьшает отступы, карточки и табы, чтобы на экране помещалось больше рабочих блоков.
           </p>
         </div>
       </div>

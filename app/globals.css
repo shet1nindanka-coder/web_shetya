@@ -93,6 +93,81 @@ html[data-hints="off"] .ui-hint {
   display: none !important;
 }
 
+html[data-density="compact"] .content-shell {
+  padding-top: 1rem;
+  padding-bottom: 1rem;
+}
+
+html[data-density="compact"] .app-topbar .mx-auto {
+  gap: 0.65rem;
+  padding-top: 0.75rem;
+  padding-bottom: 0.75rem;
+}
+
+html[data-density="compact"] .app-topbar-profile {
+  gap: 0.65rem;
+  border-radius: 18px !important;
+  padding: 0.7rem 0.85rem !important;
+}
+
+html[data-density="compact"] .app-dashboard-frame {
+  border-radius: 24px !important;
+}
+
+html[data-density="compact"] .app-dashboard-inner {
+  border-radius: 20px !important;
+}
+
+html[data-density="compact"] .page-header-panel {
+  padding: 1rem !important;
+}
+
+html[data-density="compact"] .ui-surface {
+  border-radius: 20px !important;
+  padding: 0.95rem !important;
+}
+
+html[data-density="compact"] .ui-tab-shell {
+  border-radius: 20px !important;
+  padding: 0.35rem !important;
+}
+
+html[data-density="compact"] .ui-tab {
+  padding: 0.55rem 0.95rem !important;
+}
+
+html[data-density="compact"] input:not([type="checkbox"]):not([type="radio"]):not([type="file"]),
+html[data-density="compact"] textarea,
+html[data-density="compact"] select,
+html[data-density="compact"] input[type="file"] {
+  border-radius: 16px !important;
+  padding-top: 0.65rem !important;
+  padding-bottom: 0.65rem !important;
+}
+
+html[data-density="compact"] textarea {
+  min-height: 7rem;
+}
+
+html[data-density="compact"] .ui-surface .border-b {
+  margin-bottom: 0.85rem;
+  padding-bottom: 0.85rem;
+}
+
+html[data-density="compact"] .font-display.text-\[1\.35rem\] {
+  font-size: 1.2rem !important;
+}
+
+html[data-density="compact"] .font-display.text-\[1\.6rem\] {
+  font-size: 1.4rem !important;
+}
+
+html[data-density="compact"] .text-base.leading-7,
+html[data-density="compact"] .text-base.leading-8,
+html[data-density="compact"] .text-sm.leading-6 {
+  line-height: 1.45 !important;
+}
+
 html[data-theme="dark"] .soft-grid::before {
   background-image:
     linear-gradient(rgba(148, 163, 184, 0.06) 1px, transparent 1px),
@@ -608,6 +683,20 @@ html[data-theme="dark"] [class*="bg-slate-950"] {
 }
 
 @media (max-width: 640px) {
+  html[data-density="compact"] .content-shell {
+    padding-top: 0.75rem;
+    padding-bottom: 0.85rem;
+  }
+
+  html[data-density="compact"] .ui-surface,
+  html[data-density="compact"] .page-header-panel {
+    padding: 0.85rem !important;
+  }
+
+  html[data-density="compact"] .ui-tab {
+    padding: 0.5rem 0.85rem !important;
+  }
+
   .ui-tab-strip {
     margin-left: -4px;
     margin-right: -4px;
