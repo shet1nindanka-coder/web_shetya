@@ -8,6 +8,7 @@ import { requireUser } from "@/lib/auth";
 import { revalidateAllPlatformData } from "@/lib/platform-data-cache";
 import { deleteStoredFileRecordIfUnused } from "@/lib/stored-files";
 import { removeStoredFile, saveUploadedFile } from "@/lib/storage";
+import { createTopicHomeworkNumbersInBatches } from "@/lib/topic-homework-numbers";
 import { parseNumbersInput } from "@/lib/utils";
 
 const numberStatuses: HomeworkNumberStatus[] = [
@@ -123,21 +124,24 @@ export async function createTopicAction(formData: FormData) {
         finalHomeworkFileId = createdHomeworkFile.id;
       }
 
-      await tx.topic.create({
+      const createdTopic = await tx.topic.create({
         data: {
           title,
           description,
           displayOrder: (lastTopic?.displayOrder ?? 0) + 1,
           theoryFileId: finalTheoryFileId,
-          homeworkFileId: finalHomeworkFileId,
-          homeworkNumbers: {
-            create: numbers.map((number, index) => ({
-              number,
-              displayOrder: index + 1
-            }))
-          }
+          homeworkFileId: finalHomeworkFileId
         }
       });
+
+      await createTopicHomeworkNumbersInBatches(
+        tx,
+        createdTopic.id,
+        numbers.map((number, index) => ({
+          number,
+          displayOrder: index + 1
+        }))
+      );
     });
   } catch (error) {
     console.error("Failed to create topic in database.", error);
@@ -255,6 +259,7 @@ export async function updateTopicAction(formData: FormData) {
         existingTopic.homeworkNumbers.map((number) => [number.number, number] as const)
       );
       const nextNumbersSet = new Set(numbers);
+      const numbersToCreate: Array<{ number: number; displayOrder: number }> = [];
 
       for (const existingNumber of existingTopic.homeworkNumbers) {
         if (!nextNumbersSet.has(existingNumber.number)) {
@@ -279,15 +284,14 @@ export async function updateTopicAction(formData: FormData) {
             }
           });
         } else {
-          await tx.topicHomeworkNumber.create({
-            data: {
-              topicId,
-              number,
-              displayOrder: index + 1
-            }
+          numbersToCreate.push({
+            number,
+            displayOrder: index + 1
           });
         }
       }
+
+      await createTopicHomeworkNumbersInBatches(tx, topicId, numbersToCreate);
     });
   } catch (error) {
     await Promise.all([

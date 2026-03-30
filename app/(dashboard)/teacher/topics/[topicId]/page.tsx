@@ -98,15 +98,15 @@ export default async function TeacherTopicPage({ params }: TeacherTopicPageProps
 
             <label className="block space-y-2 lg:col-span-2">
               <span className="text-sm font-medium text-slate-700">Номера заданий</span>
-              <input
-                type="text"
+              <textarea
                 name="numbers"
+                rows={4}
                 defaultValue={numbersInput}
                 className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none transition focus:border-brand-400 focus:bg-white"
                 required
               />
               <p className="text-sm text-slate-500">
-                Можно перечислять номера через запятую, пробел или указывать диапазон, например `1-5`.
+                Можно перечислять номера через запятую, пробел, перенос строки или указывать диапазон, например `1-5`.
               </p>
             </label>
           </div>

@@ -4,6 +4,7 @@ import { NextResponse } from "next/server";
 import { tryGetCurrentUser } from "@/lib/auth";
 import { revalidateAllPlatformData } from "@/lib/platform-data-cache";
 import { prisma } from "@/lib/prisma";
+import { createTopicHomeworkNumbersInBatches } from "@/lib/topic-homework-numbers";
 import { parseNumbersInput } from "@/lib/utils";
 
 export const runtime = "nodejs";
@@ -80,24 +81,29 @@ export async function POST(request: Request) {
         select: { displayOrder: true }
       });
 
-      return tx.topic.create({
+      const createdTopic = await tx.topic.create({
         data: {
           title,
           description,
           displayOrder: (lastTopic?.displayOrder ?? 0) + 1,
           theoryFileId,
-          homeworkFileId,
-          homeworkNumbers: {
-            create: numbers.map((number, index) => ({
-              number,
-              displayOrder: index + 1
-            }))
-          }
+          homeworkFileId
         },
         select: {
           id: true
         }
       });
+
+      await createTopicHomeworkNumbersInBatches(
+        tx,
+        createdTopic.id,
+        numbers.map((number, index) => ({
+          number,
+          displayOrder: index + 1
+        }))
+      );
+
+      return createdTopic;
     });
 
     revalidateTopicRoutes(topic.id);

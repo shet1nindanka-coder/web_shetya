@@ -412,15 +412,18 @@ export function TopicCreateForm({
 
       <label className="block space-y-2 lg:col-span-2">
         <span className="text-sm font-medium text-slate-700">Номера заданий</span>
-        <input
-          type="text"
+        <textarea
           value={numbers}
           onChange={(event) => setNumbers(event.target.value)}
+          rows={4}
           placeholder="1-5, 8, 12-14"
           className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none transition focus:-translate-y-[1px] focus:border-brand-400 focus:bg-white"
           required
         />
-        <p className="text-sm text-slate-500">Можно вводить через запятую, пробел или диапазоном через тире, например `1-5`.</p>
+        <p className="text-sm text-slate-500">
+          Можно вводить через запятую, пробел или диапазоном через тире, например `1-5`. Для больших тем удобнее
+          вставлять список в несколько строк.
+        </p>
       </label>
 
       <div className="space-y-3 lg:col-span-2">
