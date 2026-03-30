@@ -3,6 +3,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Badge } from "@/components/badge";
 import { LatexAnswerPreview } from "@/components/latex-answer-preview";
+import { cx } from "@/lib/utils";
+
+const ANSWERS_PAGE_SIZE = 10;
 
 type NumberAnswerCard = {
   id: string;
@@ -67,6 +70,7 @@ export function TopicAnswerManager({ topicId, numbers }: TopicAnswerManagerProps
   );
   const numbersRef = useRef<NumberAnswerCard[]>(initialState);
   const [items, setItems] = useState(initialState);
+  const [currentPage, setCurrentPage] = useState(1);
 
   const updateItems = useCallback((updater: (current: NumberAnswerCard[]) => NumberAnswerCard[]) => {
     setItems((current) => {
@@ -80,6 +84,41 @@ export function TopicAnswerManager({ topicId, numbers }: TopicAnswerManagerProps
     numbersRef.current = initialState;
     setItems(initialState);
   }, [initialState]);
+
+  const pageCount = Math.max(1, Math.ceil(items.length / ANSWERS_PAGE_SIZE));
+
+  useEffect(() => {
+    setCurrentPage((current) => Math.min(Math.max(1, current), pageCount));
+  }, [pageCount]);
+
+  const savedAnswersCount = useMemo(
+    () => items.filter((item) => Boolean(item.savedAnswerLatex?.trim())).length,
+    [items]
+  );
+
+  const currentPageItems = useMemo(() => {
+    const startIndex = (currentPage - 1) * ANSWERS_PAGE_SIZE;
+    return items.slice(startIndex, startIndex + ANSWERS_PAGE_SIZE);
+  }, [currentPage, items]);
+
+  const visiblePageNumbers = useMemo(() => {
+    if (pageCount <= 7) {
+      return Array.from({ length: pageCount }, (_, index) => index + 1);
+    }
+
+    const pages = new Set<number>([1, pageCount]);
+
+    for (let page = currentPage - 1; page <= currentPage + 1; page += 1) {
+      if (page > 1 && page < pageCount) {
+        pages.add(page);
+      }
+    }
+
+    return Array.from(pages).sort((left, right) => left - right);
+  }, [currentPage, pageCount]);
+
+  const rangeStart = items.length ? (currentPage - 1) * ANSWERS_PAGE_SIZE + 1 : 0;
+  const rangeEnd = Math.min(currentPage * ANSWERS_PAGE_SIZE, items.length);
 
   const attachUploadedAnswer = useCallback(
     async (homeworkNumberId: string, answerLatex: string) => {
@@ -227,8 +266,85 @@ export function TopicAnswerManager({ topicId, numbers }: TopicAnswerManagerProps
   );
 
   return (
-    <div className="grid gap-4 xl:grid-cols-2">
-      {items.map((item) => (
+    <div className="space-y-5">
+      <div className="ui-surface rounded-[24px] border border-slate-200 bg-slate-50/80 p-4 sm:rounded-[28px] sm:p-5">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+          <div>
+            <p className="text-sm font-medium text-slate-500">Навигация по ответам</p>
+            <p className="mt-2 text-base font-semibold text-slate-950">
+              Показаны номера {rangeStart}-{rangeEnd} из {items.length}
+            </p>
+            <p className="mt-1 text-sm leading-6 text-slate-600">
+              Сохранено ответов: {savedAnswersCount} из {items.length}. Для больших тем ответы разбиты на страницы по{" "}
+              {ANSWERS_PAGE_SIZE} номеров.
+            </p>
+          </div>
+
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+            <label className="flex items-center gap-3 text-sm text-slate-600">
+              <span>Страница</span>
+              <select
+                value={currentPage}
+                onChange={(event) => setCurrentPage(Number(event.target.value))}
+                className="rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-950 outline-none transition focus:border-brand-400"
+              >
+                {Array.from({ length: pageCount }, (_, index) => index + 1).map((page) => (
+                  <option key={page} value={page}>
+                    {page}
+                  </option>
+                ))}
+              </select>
+            </label>
+
+            <div className="flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={() => setCurrentPage((page) => Math.max(1, page - 1))}
+                disabled={currentPage === 1}
+                className="ui-pressable rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-brand-300 hover:text-brand-700 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                Назад
+              </button>
+              <button
+                type="button"
+                onClick={() => setCurrentPage((page) => Math.min(pageCount, page + 1))}
+                disabled={currentPage === pageCount}
+                className="ui-pressable rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-brand-300 hover:text-brand-700 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                Вперед
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div className="mt-4 flex flex-wrap gap-2">
+          {visiblePageNumbers.map((page, index) => {
+            const previousPage = visiblePageNumbers[index - 1];
+            const showGap = previousPage && page - previousPage > 1;
+
+            return (
+              <div key={page} className="flex items-center gap-2">
+                {showGap ? <span className="px-1 text-sm text-slate-400">...</span> : null}
+                <button
+                  type="button"
+                  onClick={() => setCurrentPage(page)}
+                  className={cx(
+                    "ui-pressable rounded-full border px-4 py-2 text-sm font-semibold transition",
+                    page === currentPage
+                      ? "border-brand-200 bg-brand-50 text-brand-800"
+                      : "border-slate-200 bg-white text-slate-700 hover:border-brand-300 hover:text-brand-700"
+                  )}
+                >
+                  {page}
+                </button>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+
+      <div className="grid gap-4 xl:grid-cols-2">
+        {currentPageItems.map((item) => (
         <article
           key={item.id}
           className="ui-fade-slide ui-surface rounded-[28px] border border-slate-200 bg-slate-50/80 p-5 shadow-[0_12px_35px_rgba(15,23,42,0.06)]"
@@ -319,7 +435,34 @@ export function TopicAnswerManager({ topicId, numbers }: TopicAnswerManagerProps
             </div>
           </div>
         </article>
-      ))}
+        ))}
+      </div>
+
+      {pageCount > 1 ? (
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-[24px] border border-slate-200 bg-slate-50/80 px-4 py-4">
+          <p className="text-sm text-slate-600">
+            Страница {currentPage} из {pageCount}
+          </p>
+          <div className="flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={() => setCurrentPage((page) => Math.max(1, page - 1))}
+              disabled={currentPage === 1}
+              className="ui-pressable rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-brand-300 hover:text-brand-700 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              Предыдущая страница
+            </button>
+            <button
+              type="button"
+              onClick={() => setCurrentPage((page) => Math.min(pageCount, page + 1))}
+              disabled={currentPage === pageCount}
+              className="ui-pressable rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-brand-300 hover:text-brand-700 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              Следующая страница
+            </button>
+          </div>
+        </div>
+      ) : null}
     </div>
   );
 }
