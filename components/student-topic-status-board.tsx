@@ -186,10 +186,10 @@ const StudentNumberCard = memo(function StudentNumberCard({
 
   return (
     <div className="student-number-card rounded-[22px] border border-slate-200 bg-slate-50/70 p-3.5 sm:rounded-[24px] sm:p-4">
-      <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+      <div className="student-number-header flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
         <div className="space-y-2">
           <div className="flex flex-wrap items-center gap-3">
-            <h3 className="font-display text-[1.9rem] font-semibold text-slate-950">№ {number.number}</h3>
+            <h3 className="student-number-title font-display text-[1.9rem] font-semibold text-slate-950">№ {number.number}</h3>
             <HomeworkStatusBadge status={number.status} />
             {homeworkGroup ? (
               <Badge className="border-brand-200 bg-brand-50 text-brand-700">{homeworkGroup.label}</Badge>
@@ -198,7 +198,7 @@ const StudentNumberCard = memo(function StudentNumberCard({
           </div>
         </div>
 
-        <div className="grid gap-2 sm:grid-cols-3">
+        <div className="student-status-grid grid gap-2 sm:grid-cols-3">
           {statusOptions.map((status) => {
             const isActive = number.status === status;
             const meta = homeworkStatusMeta[status];
@@ -225,7 +225,7 @@ const StudentNumberCard = memo(function StudentNumberCard({
       </div>
 
       {notesEnabled ? (
-        <div className="mt-3 rounded-[18px] border border-slate-200 bg-white px-3.5 py-3 sm:rounded-[20px] sm:px-4">
+        <div className="student-note-panel mt-3 rounded-[18px] border border-slate-200 bg-white px-3.5 py-3 sm:rounded-[20px] sm:px-4">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
               <p className="text-sm leading-5 text-slate-500">
@@ -266,7 +266,7 @@ const StudentNumberCard = memo(function StudentNumberCard({
       ) : null}
 
       {number.answerLatex ? (
-        <div className="mt-3 rounded-[18px] border border-slate-200 bg-white p-3 sm:rounded-[20px]">
+        <div className="student-answer-panel mt-3 rounded-[18px] border border-slate-200 bg-white p-3 sm:rounded-[20px]">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
               <p className="text-sm leading-5 text-slate-500">Ответ откроется только по вашему клику.</p>

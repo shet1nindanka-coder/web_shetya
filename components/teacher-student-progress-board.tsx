@@ -163,7 +163,7 @@ const TeacherNumberCard = memo(function TeacherNumberCard({
         <HomeworkStatusBadge status={number.studentStatus?.status ?? null} />
       </div>
       <div className="mt-3 flex items-center justify-between gap-3">
-        <p className="text-lg font-semibold text-slate-950">№ {number.number}</p>
+        <p className="teacher-number-title text-lg font-semibold text-slate-950">№ {number.number}</p>
         {homeworkLabel ? <Badge className="border-brand-200 bg-brand-50 text-brand-700">{homeworkLabel}</Badge> : null}
       </div>
       {number.studentStatus?.note ? (
@@ -171,7 +171,7 @@ const TeacherNumberCard = memo(function TeacherNumberCard({
           <p className="text-sm leading-6 text-slate-700">{number.studentStatus.note}</p>
         </div>
       ) : null}
-      <div className="mt-3 rounded-2xl border border-slate-200 bg-slate-50 px-3 py-3">
+      <div className="teacher-deadline-panel mt-3 rounded-2xl border border-slate-200 bg-slate-50 px-3 py-3">
         <div className="flex items-center justify-between gap-3">
           <p className="text-sm font-medium text-slate-500">Дедлайн</p>
           {number.isSavingDeadline ? <span className="text-xs text-slate-400">Сохраняем...</span> : null}
@@ -248,7 +248,7 @@ const TeacherTopicCard = memo(function TeacherTopicCard({
       <div className="flex flex-col gap-5 xl:flex-row xl:items-start xl:justify-between">
         <div className="space-y-3">
           <div>
-            <h2 className="font-display text-2xl font-semibold text-slate-950">{topic.title}</h2>
+            <h2 className="teacher-topic-title font-display text-2xl font-semibold text-slate-950">{topic.title}</h2>
             <p className="mt-2 text-sm text-slate-500">{topic.totalNumbers} номеров</p>
           </div>
           <p className="max-w-3xl text-sm leading-6 text-slate-600">{topic.description}</p>
@@ -282,7 +282,7 @@ const TeacherTopicCard = memo(function TeacherTopicCard({
         </div>
       </div>
 
-      <div className="mt-5 rounded-[24px] border border-slate-200 bg-white px-4 py-4">
+      <div className="teacher-bulk-deadline-panel mt-5 rounded-[24px] border border-slate-200 bg-white px-4 py-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <p className="text-sm font-medium text-slate-500">Выдать ДЗ</p>

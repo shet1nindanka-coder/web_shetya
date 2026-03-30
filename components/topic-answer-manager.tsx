@@ -267,7 +267,7 @@ export function TopicAnswerManager({ topicId, numbers }: TopicAnswerManagerProps
 
   return (
     <div className="space-y-5">
-      <div className="ui-surface rounded-[24px] border border-slate-200 bg-slate-50/80 p-4 sm:rounded-[28px] sm:p-5">
+      <div className="topic-answer-nav ui-surface rounded-[24px] border border-slate-200 bg-slate-50/80 p-4 sm:rounded-[28px] sm:p-5">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div>
             <p className="text-sm font-medium text-slate-500">Навигация по ответам</p>
@@ -347,12 +347,12 @@ export function TopicAnswerManager({ topicId, numbers }: TopicAnswerManagerProps
         {currentPageItems.map((item) => (
         <article
           key={item.id}
-          className="ui-fade-slide ui-surface rounded-[24px] border border-slate-200 bg-slate-50/70 p-4 shadow-[0_10px_24px_rgba(15,23,42,0.05)] sm:p-4.5"
+          className="topic-answer-card ui-fade-slide ui-surface rounded-[24px] border border-slate-200 bg-slate-50/70 p-4 shadow-[0_10px_24px_rgba(15,23,42,0.05)] sm:p-4.5"
         >
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
               <p className="text-xs font-medium tracking-[0.18em] text-slate-400">Ответ к номеру</p>
-              <h3 className="font-display mt-1.5 text-[1.45rem] font-semibold text-slate-950">№ {item.number}</h3>
+              <h3 className="topic-answer-card-title font-display mt-1.5 text-[1.45rem] font-semibold text-slate-950">№ {item.number}</h3>
             </div>
             <Badge
               className={

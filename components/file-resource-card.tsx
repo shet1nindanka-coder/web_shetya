@@ -27,18 +27,18 @@ export function FileResourceCard({
   const isExpanded = previewSize === "expanded";
 
   return (
-    <article className="ui-fade-slide ui-surface rounded-[22px] border border-slate-200/80 bg-white/94 p-4 shadow-[0_12px_28px_rgba(15,23,42,0.05)] sm:rounded-[24px] sm:p-5 lg:rounded-[26px]">
-      <div className="flex flex-col gap-4 border-b border-slate-200/80 pb-5">
+    <article className="ui-file-card ui-fade-slide ui-surface rounded-[22px] border border-slate-200/80 bg-white/94 p-4 shadow-[0_12px_28px_rgba(15,23,42,0.05)] sm:rounded-[24px] sm:p-5 lg:rounded-[26px]">
+      <div className="ui-file-card-header flex flex-col gap-4 border-b border-slate-200/80 pb-5">
         <div className="space-y-1.5">
           <p className="text-sm font-medium text-slate-500">{title}</p>
-          <h3 className="font-display text-[1.35rem] font-semibold text-slate-950 sm:text-[1.45rem] lg:text-[1.6rem]">
+          <h3 className="ui-file-card-title font-display text-[1.35rem] font-semibold text-slate-950 sm:text-[1.45rem] lg:text-[1.6rem]">
             {file ? file.originalName : "Файл не загружен"}
           </h3>
           <p className="ui-hint text-sm leading-6 text-slate-500">{description}</p>
         </div>
 
         {file ? (
-          <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-slate-500">
+          <div className="ui-file-card-meta flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-slate-500">
             <span>{formatFileSize(file.size)}</span>
             <span>Загружен {formatDateTime(file.uploadedAt)}</span>
             <span>{file.mimeType}</span>
@@ -52,7 +52,7 @@ export function FileResourceCard({
         </div>
       ) : (
         <div className="mt-5 space-y-5">
-          <div className="flex flex-wrap gap-3">
+          <div className="ui-file-card-actions flex flex-wrap gap-3">
             <a
               href={`/files/${file.id}`}
               target="_blank"
