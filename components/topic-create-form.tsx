@@ -3,6 +3,7 @@
 import { upload as uploadToBlob } from "@vercel/blob/client";
 import { useRef, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
+import { FileDropInput } from "@/components/file-drop-input";
 import { ProgressBar } from "@/components/progress-bar";
 import { getSafeUploadFileName } from "@/lib/upload-file-name";
 
@@ -98,14 +99,13 @@ function FileUploadField({
     "inline-flex items-center rounded-full border border-emerald-200 bg-white px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-emerald-700";
 
   return (
-    <label className="block space-y-3">
-      <span className="text-sm font-medium text-slate-700">{label}</span>
-      <input
-        type="file"
+    <div className="space-y-3">
+      <FileDropInput
         name={name}
+        label={label}
         accept=".pdf,.docx,.png,.jpg,.jpeg"
-        onChange={(event) => onFileSelect(event.target.files?.[0] ?? null)}
-        className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 transition file:mr-4 file:rounded-full file:border-0 file:bg-slate-950 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-white hover:file:bg-brand-700"
+        onFileSelect={onFileSelect}
+        helperText="Поддерживаются PDF, DOCX, PNG и JPG. Можно выбрать файл или просто перетащить его в это поле."
       />
 
       {state.status === "uploading" ? (
@@ -136,7 +136,7 @@ function FileUploadField({
           {state.error}
         </div>
       ) : null}
-    </label>
+    </div>
   );
 }
 

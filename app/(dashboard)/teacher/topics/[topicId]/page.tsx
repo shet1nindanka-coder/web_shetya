@@ -3,6 +3,7 @@ import { UserRole } from "@prisma/client";
 import { updateTopicAction } from "@/actions/topic";
 import { Badge } from "@/components/badge";
 import { DeleteTopicDialog } from "@/components/delete-topic-dialog";
+import { FileDropInput } from "@/components/file-drop-input";
 import { FileResourceCard } from "@/components/file-resource-card";
 import { SectionCard } from "@/components/section-card";
 import { StatCard } from "@/components/stat-card";
@@ -161,15 +162,12 @@ export default async function TeacherTopicPage({ params, searchParams }: Teacher
                 description="Текущий файл теории по теме."
                 file={data.topic.theoryFile}
               />
-              <label className="block space-y-2">
-                <span className="text-sm font-medium text-slate-700">Заменить файл теории</span>
-                <input
-                  type="file"
-                  name="theoryFile"
-                  accept=".pdf,.docx,.png,.jpg,.jpeg"
-                  className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700 transition file:mr-4 file:rounded-full file:border-0 file:bg-slate-950 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-white hover:file:bg-brand-700"
-                />
-              </label>
+              <FileDropInput
+                name="theoryFile"
+                label="Заменить файл теории"
+                accept=".pdf,.docx,.png,.jpg,.jpeg"
+                helperText="Можно выбрать новый файл или перетащить его сюда."
+              />
               <label className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700">
                 <input type="checkbox" name="removeTheoryFile" className="h-4 w-4" />
                 Удалить текущий файл теории при сохранении
@@ -182,15 +180,12 @@ export default async function TeacherTopicPage({ params, searchParams }: Teacher
                 description="Текущий файл заданий по теме."
                 file={data.topic.homeworkFile}
               />
-              <label className="block space-y-2">
-                <span className="text-sm font-medium text-slate-700">Заменить файл заданий</span>
-                <input
-                  type="file"
-                  name="homeworkFile"
-                  accept=".pdf,.docx,.png,.jpg,.jpeg"
-                  className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700"
-                />
-              </label>
+              <FileDropInput
+                name="homeworkFile"
+                label="Заменить файл заданий"
+                accept=".pdf,.docx,.png,.jpg,.jpeg"
+                helperText="Можно выбрать новый файл или перетащить его сюда."
+              />
               <label className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm text-slate-700">
                 <input type="checkbox" name="removeHomeworkFile" className="h-4 w-4" />
                 Удалить текущий файл заданий при сохранении
