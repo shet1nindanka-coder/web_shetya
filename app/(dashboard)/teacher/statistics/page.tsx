@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { HomeworkNumberStatus, UserRole } from "@prisma/client";
 import { ProgressBar } from "@/components/progress-bar";
 import { SectionCard } from "@/components/section-card";
@@ -38,6 +39,19 @@ type DistributionSegment = {
   value: number;
   color: string;
   badgeClassName: string;
+};
+
+type ReviewStudentSummary = {
+  id: string;
+  name: string;
+  email: string;
+  totalRed: number;
+  topicCount: number;
+  topics: Array<{
+    topicId: string;
+    title: string;
+    numbers: number[];
+  }>;
 };
 
 export default async function TeacherStatisticsPage() {
@@ -106,6 +120,78 @@ export default async function TeacherStatisticsPage() {
     solvedPercent: completionPercent(student.solvedCount, data.stats.totalNumbers),
     redPercent: completionPercent(student.redCount, data.stats.totalNumbers)
   }));
+  const reviewStudentsMap = new Map<
+    string,
+    {
+      id: string;
+      name: string;
+      email: string;
+      totalRed: number;
+      topics: Map<
+        string,
+        {
+          topicId: string;
+          title: string;
+          numbers: number[];
+        }
+      >;
+    }
+  >(
+    data.students.map((student) => [
+      student.id,
+      {
+        id: student.id,
+        name: student.name,
+        email: student.email,
+        totalRed: 0,
+        topics: new Map()
+      }
+    ])
+  );
+
+  for (const topic of data.topics) {
+    for (const number of topic.homeworkNumbers) {
+      for (const status of number.statuses) {
+        if (status.status !== HomeworkNumberStatus.RED) {
+          continue;
+        }
+
+        const current = reviewStudentsMap.get(status.studentId);
+
+        if (!current) {
+          continue;
+        }
+
+        current.totalRed += 1;
+
+        const topicEntry = current.topics.get(topic.id) ?? {
+          topicId: topic.id,
+          title: topic.title,
+          numbers: []
+        };
+
+        topicEntry.numbers.push(number.number);
+        current.topics.set(topic.id, topicEntry);
+      }
+    }
+  }
+
+  const studentsNeedingReview: ReviewStudentSummary[] = Array.from(reviewStudentsMap.values())
+    .filter((student) => student.totalRed > 0)
+    .map((student) => ({
+      id: student.id,
+      name: student.name,
+      email: student.email,
+      totalRed: student.totalRed,
+      topicCount: student.topics.size,
+      topics: Array.from(student.topics.values())
+        .map((topic) => ({
+          ...topic,
+          numbers: [...topic.numbers].sort((left, right) => left - right)
+        }))
+        .sort((left, right) => left.title.localeCompare(right.title, "ru"))
+    }))
+    .sort((left, right) => right.totalRed - left.totalRed || right.topicCount - left.topicCount);
 
   const totalGreen = topicAnalytics.reduce((sum, topic) => sum + topic.greenCount, 0);
   const totalYellow = topicAnalytics.reduce((sum, topic) => sum + topic.yellowCount, 0);
@@ -114,6 +200,7 @@ export default async function TeacherStatisticsPage() {
   const totalUnfilled = Math.max(totalStatusSlots - data.stats.totalMarked, 0);
   const activeTopics = topicAnalytics.filter((topic) => topic.studentsWithActivity > 0);
   const activeStudents = studentStats.filter((student) => student.markedCount > 0);
+  const totalStudentsNeedingReview = studentsNeedingReview.length;
 
   const strongestTopics = [...topicAnalytics]
     .sort((left, right) => right.solvedPercent - left.solvedPercent || right.solvedCount - left.solvedCount)
@@ -126,14 +213,11 @@ export default async function TeacherStatisticsPage() {
     .filter((student) => student.markedCount > 0)
     .sort((left, right) => right.solvedCount - left.solvedCount || right.markedCount - left.markedCount)
     .slice(0, 5);
-  const supportStudents = [...studentStats]
-    .filter((student) => student.redCount > 0)
-    .sort((left, right) => right.redCount - left.redCount || right.redPercent - left.redPercent)
-    .slice(0, 5);
 
   const strongestTopic = strongestTopics[0] ?? null;
   const attentionTopic = attentionTopics[0] ?? null;
   const leadStudent = engagedStudents[0] ?? null;
+  const firstReviewStudent = studentsNeedingReview[0] ?? null;
 
   const distributionSegments: DistributionSegment[] = [
     {
@@ -239,12 +323,14 @@ export default async function TeacherStatisticsPage() {
             }
           />
           <InsightCard
-            label="Самый вовлеченный ученик"
-            value={leadStudent ? leadStudent.name : "Пока нет активности"}
+            label="Кому первым нужен разбор"
+            value={firstReviewStudent ? firstReviewStudent.name : leadStudent ? leadStudent.name : "Пока нет красных"}
             hint={
-              leadStudent
-                ? `${leadStudent.solvedCount} решенных номеров и ${leadStudent.markedCount} отмеченных статусов`
-                : "Когда ученики начнут работать с темами, здесь появится лидер по вовлеченности."
+              firstReviewStudent
+                ? `${firstReviewStudent.totalRed} красных номеров в ${firstReviewStudent.topicCount} темах`
+                : leadStudent
+                  ? `${leadStudent.solvedCount} решенных номеров и ${leadStudent.markedCount} отмеченных статусов`
+                  : "Когда появятся красные статусы, здесь сразу будет виден главный кандидат на разбор."
             }
           />
         </div>
@@ -397,38 +483,94 @@ export default async function TeacherStatisticsPage() {
       </SectionCard>
 
       <SectionCard
-        title="Что происходит по ученикам"
-        description="Слева видны самые вовлеченные ученики, справа — кому сейчас нужнее всего помощь преподавателя."
+        title="Кому нужен разбор сейчас"
+        description="Здесь собраны именно те ученики и номера, которые уже отмечены красным. Это готовая сводка для ближайших занятий."
       >
-        <div className="grid gap-4 xl:grid-cols-2">
-          <RankingCard
-            title="Самые вовлеченные"
-            description="Ученики с самым большим числом уже решенных номеров."
-            emptyMessage="Пока у учеников нет отмеченных номеров."
-            items={engagedStudents.map((student) => ({
-              key: student.id,
-              title: student.name,
-              subtitle: `${student.solvedCount} решено · ${student.markedCount} отмечено`,
-              valueLabel: `${student.solvedPercent}%`,
-              progress: student.solvedPercent,
-              tone: "brand"
-            }))}
-          />
+        {studentsNeedingReview.length === 0 ? (
+          <div className="rounded-[28px] border border-dashed border-slate-200 bg-slate-50/60 px-5 py-10 text-center">
+            <p className="font-display text-2xl font-semibold text-slate-950">Сейчас нет учеников с красными номерами</p>
+            <p className="mx-auto mt-3 max-w-2xl text-sm leading-6 text-slate-600">
+              Как только ученики начнут помечать номера красным, здесь появится готовая сводка по темам и номерам для разбора.
+            </p>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+              <StatCard
+                label="Нужен разбор"
+                value={totalStudentsNeedingReview}
+                hint="Столько учеников сейчас имеют хотя бы один красный номер."
+              />
+              <StatCard
+                label="Красные номера"
+                value={totalRed}
+                hint="Именно эти номера сейчас требуют внимания на занятиях."
+              />
+              <StatCard
+                label="Темы с разбором"
+                value={attentionTopics.length}
+                hint="Темы, в которых уже есть хотя бы один красный статус."
+              />
+            </div>
 
-          <RankingCard
-            title="Нужен разбор"
-            description="Ученики, у которых сейчас больше всего красных номеров."
-            emptyMessage="Сейчас нет учеников с красными статусами."
-            items={supportStudents.map((student) => ({
-              key: student.id,
-              title: student.name,
-              subtitle: `${student.redCount} красных · ${student.solvedCount} решено`,
-              valueLabel: `${student.redPercent}%`,
-              progress: student.redPercent,
-              tone: "rose"
-            }))}
-          />
-        </div>
+            <div className="grid gap-4 xl:grid-cols-2">
+              {studentsNeedingReview.map((student, index) => (
+                <article
+                  key={student.id}
+                  className="ui-surface rounded-[24px] border border-slate-200 bg-slate-50/80 p-5 sm:rounded-[28px] sm:p-6"
+                >
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <span className="rounded-full border border-slate-200 bg-white px-2.5 py-1 text-xs font-medium text-slate-500">
+                          #{index + 1}
+                        </span>
+                        <h2 className="font-display text-[1.35rem] font-semibold text-slate-950 sm:text-[1.5rem]">
+                          {student.name}
+                        </h2>
+                      </div>
+                      <p className="mt-2 text-sm leading-6 text-slate-500">
+                        {student.totalRed} красных номеров в {student.topicCount}{" "}
+                        {student.topicCount === 1 ? "теме" : student.topicCount < 5 ? "темах" : "темах"}
+                      </p>
+                    </div>
+
+                    <Link
+                      href={`/teacher/students/${student.id}`}
+                      className="ui-pressable inline-flex rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-brand-300 hover:text-brand-700"
+                    >
+                      Открыть ученика
+                    </Link>
+                  </div>
+
+                  <div className="mt-5 space-y-3">
+                    {student.topics.map((topic) => (
+                      <div key={topic.topicId} className="rounded-[22px] border border-slate-200 bg-white px-4 py-4">
+                        <div className="flex flex-wrap items-center justify-between gap-3">
+                          <p className="text-base font-semibold text-slate-950">{topic.title}</p>
+                          <span className="rounded-full border border-rose-200 bg-rose-50 px-3 py-1 text-xs font-medium text-rose-800">
+                            {topic.numbers.length} красн.
+                          </span>
+                        </div>
+
+                        <div className="mt-3 flex flex-wrap gap-2">
+                          {topic.numbers.map((number) => (
+                            <span
+                              key={`${topic.topicId}-${number}`}
+                              className="rounded-full border border-rose-200 bg-rose-50 px-3 py-1.5 text-sm font-medium text-rose-900"
+                            >
+                              № {number}
+                            </span>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </article>
+              ))}
+            </div>
+          </div>
+        )}
       </SectionCard>
     </div>
   );
