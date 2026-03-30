@@ -1,6 +1,12 @@
 import { prisma } from "@/lib/prisma";
 import { removeStoredFile } from "@/lib/storage";
 
+function scheduleStoredFileCleanup(storageKey: string) {
+  void removeStoredFile(storageKey).catch((error) => {
+    console.error("Failed to remove file from storage after deleting DB record.", error);
+  });
+}
+
 export async function countStoredFileUsages(fileId: string) {
   const [topicUsageCount, answerUsageCount] = await Promise.all([
     prisma.topic.count({
@@ -41,7 +47,7 @@ export async function deleteStoredFileRecordIfUnused(fileId: string | null | und
     where: { id: fileId }
   });
 
-  await removeStoredFile(file.storageKey);
+  scheduleStoredFileCleanup(file.storageKey);
 }
 
 export async function deleteOwnedStoredFileIfUnused(fileId: string | null | undefined, userId: string) {
