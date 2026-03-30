@@ -36,6 +36,33 @@ function redirectTeacherTopicsWithStatus(params: URLSearchParams) {
   redirect(query ? `/teacher/topics?${query}` : "/teacher/topics");
 }
 
+function redirectTeacherTopicWithStatus(topicId: string, params: URLSearchParams) {
+  const query = params.toString();
+  redirect(query ? `/teacher/topics/${topicId}?${query}` : `/teacher/topics/${topicId}`);
+}
+
+async function cleanupUploadedStorageKeys(storageKeys: Array<string | null | undefined>) {
+  const cleanupResults = await Promise.allSettled(storageKeys.map((storageKey) => removeStoredFile(storageKey)));
+
+  cleanupResults.forEach((result) => {
+    if (result.status === "rejected") {
+      console.error("Failed to cleanup uploaded file from storage.", result.reason);
+    }
+  });
+}
+
+async function cleanupStoredFileIds(fileIds: Iterable<string>) {
+  const cleanupResults = await Promise.allSettled(
+    Array.from(fileIds).map((fileId) => deleteStoredFileRecordIfUnused(fileId))
+  );
+
+  cleanupResults.forEach((result) => {
+    if (result.status === "rejected") {
+      console.error("Failed to cleanup stored file record after topic update.", result.reason);
+    }
+  });
+}
+
 export async function createTopicAction(formData: FormData) {
   const user = await requireUser(UserRole.TEACHER);
   const title = String(formData.get("title") ?? "").trim();
@@ -90,7 +117,7 @@ export async function createTopicAction(formData: FormData) {
       homeworkUpload = await saveUploadedFile(validHomeworkFile);
     } catch (error) {
       console.error("Failed to upload files while creating topic.", error);
-      await Promise.all([removeStoredFile(theoryUpload?.storageKey), removeStoredFile(homeworkUpload?.storageKey)]);
+      await cleanupUploadedStorageKeys([theoryUpload?.storageKey, homeworkUpload?.storageKey]);
       redirectTeacherTopicsWithStatus(new URLSearchParams({ error: "upload" }));
     }
   }
@@ -145,10 +172,7 @@ export async function createTopicAction(formData: FormData) {
     });
   } catch (error) {
     console.error("Failed to create topic in database.", error);
-    await Promise.all([
-      removeStoredFile(theoryUpload?.storageKey),
-      removeStoredFile(homeworkUpload?.storageKey)
-    ]);
+    await cleanupUploadedStorageKeys([theoryUpload?.storageKey, homeworkUpload?.storageKey]);
 
     redirectTeacherTopicsWithStatus(new URLSearchParams({ error: "save" }));
   }
@@ -170,7 +194,11 @@ export async function updateTopicAction(formData: FormData) {
   const homeworkFile = formData.get("homeworkFile");
 
   if (!topicId || !title || !description || !numbers.length) {
-    return;
+    if (topicId) {
+      redirectTeacherTopicWithStatus(topicId, new URLSearchParams({ error: "invalid" }));
+    }
+
+    redirectTeacherTopicsWithStatus(new URLSearchParams({ error: "invalid" }));
   }
 
   const existingTopic = await prisma.topic.findUnique({
@@ -187,8 +215,10 @@ export async function updateTopicAction(formData: FormData) {
   });
 
   if (!existingTopic) {
-    return;
+    redirectTeacherTopicsWithStatus(new URLSearchParams({ error: "save" }));
   }
+
+  const topicToUpdate = existingTopic!;
 
   let theoryUpload: Awaited<ReturnType<typeof saveUploadedFile>> | null = null;
   let homeworkUpload: Awaited<ReturnType<typeof saveUploadedFile>> | null = null;
@@ -198,8 +228,9 @@ export async function updateTopicAction(formData: FormData) {
     homeworkUpload =
       homeworkFile instanceof File && homeworkFile.size > 0 ? await saveUploadedFile(homeworkFile) : null;
   } catch (error) {
-    await Promise.all([removeStoredFile(theoryUpload?.storageKey), removeStoredFile(homeworkUpload?.storageKey)]);
-    throw error;
+    console.error("Failed to upload replacement file while updating topic.", error);
+    await cleanupUploadedStorageKeys([theoryUpload?.storageKey, homeworkUpload?.storageKey]);
+    redirectTeacherTopicWithStatus(topicId, new URLSearchParams({ error: "upload" }));
   }
 
   let oldTheoryFileIdToDelete: string | null = null;
@@ -226,23 +257,23 @@ export async function updateTopicAction(formData: FormData) {
           })
         : null;
 
-      let theoryFileId = existingTopic.theoryFileId;
-      let homeworkFileId = existingTopic.homeworkFileId;
+      let theoryFileId = topicToUpdate.theoryFileId;
+      let homeworkFileId = topicToUpdate.homeworkFileId;
 
       if (createdTheoryFile) {
         theoryFileId = createdTheoryFile.id;
-        oldTheoryFileIdToDelete = existingTopic.theoryFileId;
+        oldTheoryFileIdToDelete = topicToUpdate.theoryFileId;
       } else if (removeTheoryFile) {
         theoryFileId = null;
-        oldTheoryFileIdToDelete = existingTopic.theoryFileId;
+        oldTheoryFileIdToDelete = topicToUpdate.theoryFileId;
       }
 
       if (createdHomeworkFile) {
         homeworkFileId = createdHomeworkFile.id;
-        oldHomeworkFileIdToDelete = existingTopic.homeworkFileId;
+        oldHomeworkFileIdToDelete = topicToUpdate.homeworkFileId;
       } else if (removeHomeworkFile) {
         homeworkFileId = null;
-        oldHomeworkFileIdToDelete = existingTopic.homeworkFileId;
+        oldHomeworkFileIdToDelete = topicToUpdate.homeworkFileId;
       }
 
       await tx.topic.update({
@@ -256,12 +287,12 @@ export async function updateTopicAction(formData: FormData) {
       });
 
       const existingNumbersByValue = new Map(
-        existingTopic.homeworkNumbers.map((number) => [number.number, number] as const)
+        topicToUpdate.homeworkNumbers.map((number) => [number.number, number] as const)
       );
       const nextNumbersSet = new Set(numbers);
       const numbersToCreate: Array<{ number: number; displayOrder: number }> = [];
 
-      for (const existingNumber of existingTopic.homeworkNumbers) {
+      for (const existingNumber of topicToUpdate.homeworkNumbers) {
         if (!nextNumbersSet.has(existingNumber.number)) {
           if (existingNumber.answerFileId) {
             removedAnswerFileIds.add(existingNumber.answerFileId);
@@ -294,18 +325,19 @@ export async function updateTopicAction(formData: FormData) {
       await createTopicHomeworkNumbersInBatches(tx, topicId, numbersToCreate);
     });
   } catch (error) {
-    await Promise.all([
-      removeStoredFile(theoryUpload?.storageKey),
-      removeStoredFile(homeworkUpload?.storageKey)
-    ]);
-
-    throw error;
+    console.error("Failed to update topic in database.", error);
+    await cleanupUploadedStorageKeys([theoryUpload?.storageKey, homeworkUpload?.storageKey]);
+    redirectTeacherTopicWithStatus(topicId, new URLSearchParams({ error: "save" }));
   }
 
-  await deleteStoredFileRecordIfUnused(oldTheoryFileIdToDelete);
-  await deleteStoredFileRecordIfUnused(oldHomeworkFileIdToDelete);
-  await Promise.all(Array.from(removedAnswerFileIds).map((fileId) => deleteStoredFileRecordIfUnused(fileId)));
+  const fileIdsToCleanup: string[] = [
+    ...Array.from(removedAnswerFileIds),
+    ...[oldTheoryFileIdToDelete, oldHomeworkFileIdToDelete].flatMap((fileId) => (fileId ? [fileId] : []))
+  ];
+
+  await cleanupStoredFileIds(fileIdsToCleanup);
   revalidateTopicRoutes(topicId);
+  redirectTeacherTopicWithStatus(topicId, new URLSearchParams({ saved: "1" }));
 }
 
 export async function deleteTopicAction(formData: FormData) {

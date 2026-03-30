@@ -6,6 +6,7 @@ import { DeleteTopicDialog } from "@/components/delete-topic-dialog";
 import { FileResourceCard } from "@/components/file-resource-card";
 import { SectionCard } from "@/components/section-card";
 import { StatCard } from "@/components/stat-card";
+import { TopicEditSubmitButton } from "@/components/topic-edit-submit-button";
 import { TopicAnswerManager } from "@/components/topic-answer-manager";
 import { requireUser } from "@/lib/auth";
 import { getTeacherTopicDetail } from "@/lib/platform-data";
@@ -14,16 +15,58 @@ type TeacherTopicPageProps = {
   params: Promise<{
     topicId: string;
   }>;
+  searchParams?: Promise<Record<string, string | string[] | undefined>>;
 };
 
-export default async function TeacherTopicPage({ params }: TeacherTopicPageProps) {
+const topicEditNotices = {
+  saved: {
+    tone: "success",
+    message: "Изменения по теме сохранены."
+  },
+  invalid: {
+    tone: "error",
+    message: "Проверьте форму: название, описание и список номеров обязательны."
+  },
+  upload: {
+    tone: "error",
+    message: "Не удалось обработать файл. Попробуйте ещё раз или обновите страницу."
+  },
+  save: {
+    tone: "error",
+    message: "Не удалось сохранить изменения. Проверьте подключение к базе данных и повторите попытку."
+  }
+} as const;
+
+export default async function TeacherTopicPage({ params, searchParams }: TeacherTopicPageProps) {
   await requireUser(UserRole.TEACHER);
   const { topicId } = await params;
+  const resolvedSearchParams = (await searchParams) ?? {};
+  const saved = typeof resolvedSearchParams.saved === "string" ? resolvedSearchParams.saved : undefined;
+  const error = typeof resolvedSearchParams.error === "string" ? resolvedSearchParams.error : undefined;
+  const noticeKey =
+    saved === "1"
+      ? "saved"
+      : error && error in topicEditNotices
+        ? (error as Exclude<keyof typeof topicEditNotices, "saved">)
+        : null;
+  const notice = noticeKey ? topicEditNotices[noticeKey] : null;
   const data = await getTeacherTopicDetail(topicId);
   const numbersInput = data.topic.homeworkNumbers.map((number) => number.number).join(", ");
 
   return (
     <div className="space-y-8">
+      {notice ? (
+        <div
+          className={
+            notice.tone === "success"
+              ? "rounded-[28px] border border-emerald-200 bg-emerald-50 px-5 py-4 text-sm font-medium text-emerald-900"
+              : "rounded-[28px] border border-rose-200 bg-rose-50 px-5 py-4 text-sm font-medium text-rose-900"
+          }
+        >
+          {notice.message}
+        </div>
+      ) : null}
+
       <div className="flex flex-wrap items-center justify-between gap-4">
         <div>
           <Link href="/teacher/topics" className="text-sm font-semibold text-brand-700 transition hover:text-brand-900">
@@ -155,12 +198,7 @@ export default async function TeacherTopicPage({ params }: TeacherTopicPageProps
             </div>
           </div>
 
-          <button
-            type="submit"
-            className="ui-pressable rounded-2xl bg-slate-950 px-5 py-3 text-sm font-semibold text-white transition hover:bg-brand-700"
-          >
-            Сохранить изменения
-          </button>
+          <TopicEditSubmitButton />
         </form>
       </SectionCard>
 
