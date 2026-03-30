@@ -2,7 +2,6 @@ import Link from "next/link";
 import { UserRole } from "@prisma/client";
 import { DeleteTopicDialog } from "@/components/delete-topic-dialog";
 import { SectionCard } from "@/components/section-card";
-import { StatCard } from "@/components/stat-card";
 import { TopicCreateForm } from "@/components/topic-create-form";
 import { requireUser } from "@/lib/auth";
 import { getTeacherTopicsOverview } from "@/lib/platform-data";
@@ -82,21 +81,13 @@ export default async function TeacherTopicsPage({ searchParams }: TeacherTopicsP
         </div>
 
         <div className="rounded-[28px] border border-brand-100 bg-white/90 p-5 shadow-glow sm:rounded-[36px] sm:p-6">
-          <p className="text-sm font-medium text-slate-500">Всего на вкладке тем</p>
-          <p className="mt-4 text-2xl font-semibold text-slate-950 sm:text-3xl">
-            {data.stats.totalTopics} тем и {data.stats.totalNumbers} номеров
-          </p>
+          <p className="text-sm font-medium text-slate-500">Работа с материалами</p>
+          <p className="mt-4 text-2xl font-semibold text-slate-950 sm:text-3xl">На этой вкладке только темы, файлы, номера и ответы</p>
           <p className="mt-3 text-sm leading-6 text-slate-600">
-            Откройте тему, чтобы поменять описание, файлы, номера и ответы к заданиям.
+            Числовую сводку по платформе можно посмотреть отдельно во вкладке статистики.
           </p>
         </div>
       </section>
-
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-        <StatCard label="Темы" value={data.stats.totalTopics} hint="Все общие темы платформы." />
-        <StatCard label="Файлы" value={data.stats.totalFiles} hint="Файлы теории и заданий внутри тем." />
-        <StatCard label="Номера" value={data.stats.totalNumbers} hint="Все номера по всем созданным темам." />
-      </div>
 
       <SectionCard
         title="Создать новую тему"

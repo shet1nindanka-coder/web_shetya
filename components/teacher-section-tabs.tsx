@@ -8,6 +8,11 @@ import { cx } from "@/lib/utils";
 const items = [
   { href: "/teacher", label: "Обзор", match: (pathname: string) => pathname === "/teacher" },
   {
+    href: "/teacher/statistics",
+    label: "Статистика",
+    match: (pathname: string) => pathname === "/teacher/statistics" || pathname.startsWith("/teacher/statistics/")
+  },
+  {
     href: "/teacher/topics",
     label: "Темы",
     match: (pathname: string) => pathname === "/teacher/topics" || pathname.startsWith("/teacher/topics/")

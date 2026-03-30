@@ -2,7 +2,6 @@ import Link from "next/link";
 import { UserRole } from "@prisma/client";
 import { createStudentAction } from "@/actions/student";
 import { SectionCard } from "@/components/section-card";
-import { StatCard } from "@/components/stat-card";
 import { requireUser } from "@/lib/auth";
 import { getTeacherTopicsOverview } from "@/lib/platform-data";
 
@@ -73,22 +72,13 @@ export default async function TeacherStudentsPage({ searchParams }: TeacherStude
         </div>
 
         <div className="rounded-[28px] border border-brand-100 bg-white/90 p-5 shadow-glow sm:rounded-[36px] sm:p-6">
-          <p className="text-sm font-medium text-slate-500">Всего в системе</p>
-          <p className="mt-4 text-2xl font-semibold text-slate-950 sm:text-3xl">
-            {data.stats.totalStudents} учеников и {data.stats.totalTopics} общих тем
-          </p>
+          <p className="text-sm font-medium text-slate-500">Работа с учениками</p>
+          <p className="mt-4 text-2xl font-semibold text-slate-950 sm:text-3xl">Здесь удобно создавать аккаунты и переходить в карточки прогресса</p>
           <p className="mt-3 text-sm leading-6 text-slate-600">
-            Откройте карточку ученика, чтобы увидеть, как он продвигается по каждой теме и какие номера уже пометил.
+            Общую числовую картину по платформе и темам можно смотреть отдельно во вкладке статистики.
           </p>
         </div>
       </section>
-
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        <StatCard label="Ученики" value={data.stats.totalStudents} hint="Все аккаунты с ролью STUDENT." />
-        <StatCard label="Темы" value={data.stats.totalTopics} hint="Общие темы, доступные ученикам." />
-        <StatCard label="Номера" value={data.stats.totalNumbers} hint="Все номера по всем темам." />
-        <StatCard label="Статусы" value={data.stats.totalMarked} hint="Все отмеченные ученические статусы." />
-      </div>
 
       <SectionCard
         title="Добавить ученика"

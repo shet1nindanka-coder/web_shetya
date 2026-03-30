@@ -1,15 +1,10 @@
 import Link from "next/link";
 import { UserRole } from "@prisma/client";
-import { ProgressBar } from "@/components/progress-bar";
 import { SectionCard } from "@/components/section-card";
-import { StatCard } from "@/components/stat-card";
 import { requireUser } from "@/lib/auth";
-import { getTeacherTopicsOverview } from "@/lib/platform-data";
 
 export default async function TeacherPage() {
   await requireUser(UserRole.TEACHER);
-  const data = await getTeacherTopicsOverview();
-  const activeTopics = data.topics.filter((topic) => topic.studentsWithActivity > 0).length;
 
   return (
     <div className="space-y-8">
@@ -23,44 +18,26 @@ export default async function TeacherPage() {
         </div>
 
         <div className="rounded-[28px] border border-brand-100 bg-white/90 p-5 shadow-glow sm:rounded-[36px] sm:p-6">
-          <p className="text-sm font-medium text-slate-500">Сейчас на платформе</p>
-          <p className="mt-4 text-2xl font-semibold text-slate-950 sm:text-3xl">
-            {data.stats.totalMarked} отмеченных статусов по всем темам
-          </p>
+          <p className="text-sm font-medium text-slate-500">Рабочий режим преподавателя</p>
+          <p className="mt-4 text-2xl font-semibold text-slate-950 sm:text-3xl">Все основные действия разнесены по отдельным вкладкам</p>
           <p className="mt-3 text-sm leading-6 text-slate-600">
-            {activeTopics} тем уже имеют активность учеников. Для детального просмотра откройте вкладку тем или
-            перейдите в карточку конкретного ученика.
+            Здесь лучше быстро переходить к темам, ученикам и личному кабинету. Вся числовая аналитика теперь собрана
+            в отдельной вкладке статистики.
           </p>
         </div>
       </section>
 
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        <StatCard label="Темы" value={data.stats.totalTopics} hint="Все общие темы платформы." />
-        <StatCard label="Ученики" value={data.stats.totalStudents} hint="Все аккаунты учеников." />
-        <StatCard label="Файлы" value={data.stats.totalFiles} hint="Файлы теории и заданий внутри тем." />
-        <StatCard label="Номера" value={data.stats.totalNumbers} hint="Все номера по всем темам." />
-      </div>
-
       <SectionCard
         title="Быстрые переходы"
-        description="Разделите работу по вкладкам: темы для материалов, ученики для учёток и карточек прогресса."
+        description="Разделите работу по вкладкам: темы для материалов, ученики для персонального контроля, статистика для общей картины."
       >
-        <div className="grid gap-4 lg:grid-cols-2">
+        <div className="grid gap-4 xl:grid-cols-3">
           <article className="ui-fade-slide ui-surface rounded-[24px] border border-slate-200 bg-slate-50/80 p-4 shadow-[0_12px_35px_rgba(15,23,42,0.06)] sm:rounded-[28px] sm:p-5">
             <h2 className="font-display text-[1.55rem] font-semibold text-slate-950 sm:text-2xl">Материалы, номера и статусы</h2>
             <p className="mt-3 text-sm leading-6 text-slate-600">
               Создавайте темы, прикрепляйте файлы, задавайте номера и удаляйте старые темы с подтверждением прямо на
               сайте.
             </p>
-            <div className="mt-5 space-y-2">
-              <div className="flex items-center justify-between text-sm text-slate-600">
-                <span>Активные темы</span>
-                <span className="font-semibold text-slate-950">
-                  {activeTopics} / {data.stats.totalTopics}
-                </span>
-              </div>
-              <ProgressBar value={data.stats.totalTopics ? Math.round((activeTopics / data.stats.totalTopics) * 100) : 0} />
-            </div>
             <div className="mt-5">
               <Link
                 href="/teacher/topics"
@@ -76,16 +53,28 @@ export default async function TeacherPage() {
             <p className="mt-3 text-sm leading-6 text-slate-600">
               Добавляйте учеников, открывайте их персональные карточки и смотрите, как именно они двигаются по всем темам.
             </p>
-            <p className="mt-5 text-sm text-slate-500">
-              Учеников: <span className="font-semibold text-slate-950">{data.stats.totalStudents}</span> · Статусов:{" "}
-              <span className="font-semibold text-slate-950">{data.stats.totalMarked}</span>
-            </p>
             <div className="mt-5">
               <Link
                 href="/teacher/students"
                 className="ui-pressable inline-flex w-full justify-center rounded-full bg-slate-950 px-5 py-3 text-sm font-semibold text-white transition hover:bg-brand-700 sm:w-auto"
               >
                 Перейти к ученикам
+              </Link>
+            </div>
+          </article>
+
+          <article className="ui-fade-slide ui-surface rounded-[24px] border border-slate-200 bg-slate-50/80 p-4 shadow-[0_12px_35px_rgba(15,23,42,0.06)] sm:rounded-[28px] sm:p-5">
+            <h2 className="font-display text-[1.55rem] font-semibold text-slate-950 sm:text-2xl">Статистика платформы</h2>
+            <p className="mt-3 text-sm leading-6 text-slate-600">
+              Откройте отдельную аналитическую вкладку, чтобы посмотреть общие цифры по платформе, активность тем и
+              сводку по прогрессу.
+            </p>
+            <div className="mt-5">
+              <Link
+                href="/teacher/statistics"
+                className="ui-pressable inline-flex w-full justify-center rounded-full bg-slate-950 px-5 py-3 text-sm font-semibold text-white transition hover:bg-brand-700 sm:w-auto"
+              >
+                Открыть статистику
               </Link>
             </div>
           </article>
