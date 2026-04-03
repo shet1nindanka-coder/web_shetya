@@ -247,7 +247,7 @@ export function TopicCreateForm({
             status: "error",
             progress: 0,
             file: null,
-            error: "Не удалось загрузить файл в storage. Проверьте BLOB_READ_WRITE_TOKEN и повторите попытку."
+            error: "Не удалось загрузить файл в storage. Проверьте настройки файлового хранилища и повторите попытку."
           });
         } finally {
           abortRef.current = null;

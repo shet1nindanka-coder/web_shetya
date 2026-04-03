@@ -17,7 +17,7 @@ Full-stack платформа для репетитора на `Next.js`, `TypeS
 - `PostgreSQL`
 - `Prisma`
 - cookie-based auth с ролями `TEACHER` и `STUDENT`
-- локальный storage-адаптер для файлов с подготовкой к замене на S3-совместимое хранилище
+- storage-слой для локального диска, `Vercel Blob` и S3-совместимых хранилищ
 
 ## Реализовано
 
@@ -63,6 +63,7 @@ Full-stack платформа для репетитора на `Next.js`, `TypeS
 
 - локально файлы сохраняются в каталог `STORAGE_DIR`
 - при наличии `BLOB_READ_WRITE_TOKEN` файлы автоматически сохраняются в `Vercel Blob`
+- при наличии `S3_ENDPOINT`, `S3_BUCKET`, `S3_ACCESS_KEY_ID` и `S3_SECRET_ACCESS_KEY` файлы сохраняются в S3-совместимое хранилище, например `Yandex Object Storage`
 - метаданные файла хранятся в PostgreSQL
 - доступ к файлам идёт через защищённый route handler `/files/[fileId]`
 - PDF отображается встроенно через `iframe`
@@ -166,6 +167,13 @@ DATABASE_URL="postgresql://postgres:postgres@127.0.0.1:5433/tutor_mvp?schema=pub
 SESSION_TTL_DAYS=30
 # Optional for Vercel Blob in production. When set, files are stored in Blob instead of local disk.
 # BLOB_READ_WRITE_TOKEN="vercel_blob_rw_..."
+# Optional for S3-compatible storage, for example Yandex Object Storage.
+# S3_ENDPOINT="https://storage.yandexcloud.net"
+# S3_REGION="ru-central1"
+# S3_BUCKET="tutorflow-files"
+# S3_ACCESS_KEY_ID="your-access-key-id"
+# S3_SECRET_ACCESS_KEY="your-secret-access-key"
+# S3_FORCE_PATH_STYLE="true"
 STORAGE_DIR="./storage/uploads"
 ```
 
@@ -247,6 +255,50 @@ git push -u origin main
 - локальный `storage/uploads` используется только как fallback для локальной разработки
 - на Vercel загрузка и выдача файлов должны идти через `Vercel Blob`
 
+## Yandex Cloud
+
+Для переноса в `Yandex Cloud` в проект уже добавлены:
+
+- поддержка S3-совместимого storage через `Yandex Object Storage`
+- production [Dockerfile](/Users/danka2404/Desktop/Сайт/Dockerfile)
+- [docker-compose.prod.yml](/Users/danka2404/Desktop/Сайт/docker-compose.prod.yml) для запуска приложения на VM
+- [.dockerignore](/Users/danka2404/Desktop/Сайт/.dockerignore)
+
+Рекомендуемая схема:
+
+- приложение: `Compute Cloud VM`
+- база данных: `Managed Service for PostgreSQL`
+- файлы: `Yandex Object Storage`
+
+Минимальный порядок миграции:
+
+1. Создайте PostgreSQL-кластер в Yandex Cloud и получите внешний `DATABASE_URL`.
+2. Создайте бакет в `Object Storage` и статический ключ доступа.
+3. Подготовьте на VM файл `.env.production`, например:
+
+```env
+DATABASE_URL="postgresql://USER:PASSWORD@HOST:6432/DBNAME?sslmode=require&schema=public"
+SESSION_TTL_DAYS=30
+S3_ENDPOINT="https://storage.yandexcloud.net"
+S3_REGION="ru-central1"
+S3_BUCKET="tutorflow-files"
+S3_ACCESS_KEY_ID="your-access-key-id"
+S3_SECRET_ACCESS_KEY="your-secret-access-key"
+S3_FORCE_PATH_STYLE="true"
+```
+
+4. На VM запустите:
+
+```bash
+git clone <YOUR_REPOSITORY_URL>
+cd <YOUR_PROJECT_DIR>
+docker compose -f docker-compose.prod.yml build
+docker compose -f docker-compose.prod.yml run --rm app npx prisma migrate deploy
+docker compose -f docker-compose.prod.yml up -d
+```
+
+После этого приложение будет работать на VM, PostgreSQL останется в управляемом сервисе, а файлы будут храниться в `Yandex Object Storage`.
+
 ## Тестовые аккаунты
 
 После `npm run db:seed` доступны:
@@ -263,7 +315,7 @@ git push -u origin main
 - route protection работает через middleware и server-side проверки ролей
 - файлы выдаются не напрямую из `public`, а через защищённый route handler
 - storage вынесен в отдельный слой `lib/storage.ts`
-- для production можно заменить локальный storage на S3 / MinIO / Cloudflare R2 без переделки всей предметной логики
+- для production можно использовать `Vercel Blob`, `Yandex Object Storage`, `S3`, `MinIO` или `Cloudflare R2` без переделки предметной логики
 
 Что рекомендуется сделать на следующем этапе:
 

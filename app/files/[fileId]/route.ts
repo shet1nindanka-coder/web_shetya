@@ -1,6 +1,6 @@
 import { tryGetCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { getBlobAccessMode, getPublicBlobUrl, readStoredFile } from "@/lib/storage";
+import { getBlobAccessMode, getPublicBlobUrl, getStorageBackend, readStoredFile } from "@/lib/storage";
 
 type FileRouteProps = {
   params: Promise<{
@@ -23,7 +23,7 @@ export async function GET(request: Request, { params }: FileRouteProps) {
   if (!file) {
     console.error("Stored file record not found.", {
       fileId,
-      hasBlobToken: Boolean(process.env.BLOB_READ_WRITE_TOKEN?.trim()),
+      storageBackend: getStorageBackend(),
       blobAccess: getBlobAccessMode()
     });
     return new Response("Not found", { status: 404 });
@@ -42,7 +42,7 @@ export async function GET(request: Request, { params }: FileRouteProps) {
     console.error("Stored file payload not found.", {
       fileId,
       storageKey: file.storageKey,
-      hasBlobToken: Boolean(process.env.BLOB_READ_WRITE_TOKEN?.trim()),
+      storageBackend: getStorageBackend(),
       blobAccess: getBlobAccessMode(),
       download
     });

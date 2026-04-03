@@ -1,6 +1,12 @@
 import { randomUUID } from "node:crypto";
 import { promises as fs } from "node:fs";
 import path from "node:path";
+import {
+  DeleteObjectCommand,
+  GetObjectCommand,
+  PutObjectCommand,
+  S3Client
+} from "@aws-sdk/client-s3";
 import { del, get, list, put } from "@vercel/blob";
 import { getSafeUploadFileName } from "@/lib/upload-file-name";
 import {
@@ -14,9 +20,10 @@ import {
 const MAX_UPLOAD_SIZE = 15 * 1024 * 1024;
 const LOCAL_STORAGE_PREFIX = "local:";
 const BLOB_STORAGE_PREFIX = "blob:";
-const BLOB_UPLOADS_PREFIX = "uploads";
+const S3_STORAGE_PREFIX = "s3:";
+const STORAGE_UPLOADS_PREFIX = "uploads";
 
-type StorageBackend = "local" | "blob";
+export type StorageBackend = "local" | "blob" | "s3";
 export type BlobAccessMode = "private" | "public";
 
 type StoredUpload = {
@@ -31,8 +38,67 @@ type StoredFilePayload = {
   size: number;
 };
 
-function getStorageBackend(): StorageBackend {
-  return process.env.BLOB_READ_WRITE_TOKEN?.trim() ? "blob" : "local";
+type S3Config = {
+  endpoint: string;
+  region: string;
+  bucket: string;
+  accessKeyId: string;
+  secretAccessKey: string;
+  forcePathStyle: boolean;
+};
+
+let cachedS3Client: S3Client | null = null;
+let cachedS3ClientCacheKey: string | null = null;
+
+function getS3Config(): S3Config | null {
+  const endpoint = process.env.S3_ENDPOINT?.trim();
+  const bucket = process.env.S3_BUCKET?.trim();
+  const accessKeyId = process.env.S3_ACCESS_KEY_ID?.trim();
+  const secretAccessKey = process.env.S3_SECRET_ACCESS_KEY?.trim();
+
+  if (!endpoint || !bucket || !accessKeyId || !secretAccessKey) {
+    return null;
+  }
+
+  return {
+    endpoint,
+    bucket,
+    accessKeyId,
+    secretAccessKey,
+    region: process.env.S3_REGION?.trim() || "ru-central1",
+    forcePathStyle: process.env.S3_FORCE_PATH_STYLE === "true"
+  };
+}
+
+function getS3Client(config: S3Config) {
+  const cacheKey = JSON.stringify(config);
+
+  if (!cachedS3Client || cachedS3ClientCacheKey !== cacheKey) {
+    cachedS3Client = new S3Client({
+      endpoint: config.endpoint,
+      region: config.region,
+      forcePathStyle: config.forcePathStyle,
+      credentials: {
+        accessKeyId: config.accessKeyId,
+        secretAccessKey: config.secretAccessKey
+      }
+    });
+    cachedS3ClientCacheKey = cacheKey;
+  }
+
+  return cachedS3Client;
+}
+
+export function getStorageBackend(): StorageBackend {
+  if (process.env.BLOB_READ_WRITE_TOKEN?.trim()) {
+    return "blob";
+  }
+
+  if (getS3Config()) {
+    return "s3";
+  }
+
+  return "local";
 }
 
 export function getBlobAccessMode(): BlobAccessMode {
@@ -55,7 +121,11 @@ function createStorageFileName(fileName: string) {
 }
 
 function createBlobPathname(fileName: string) {
-  return `${BLOB_UPLOADS_PREFIX}/${createStorageFileName(fileName)}`;
+  return `${STORAGE_UPLOADS_PREFIX}/${createStorageFileName(fileName)}`;
+}
+
+function createS3ObjectKey(fileName: string) {
+  return `${STORAGE_UPLOADS_PREFIX}/${createStorageFileName(fileName)}`;
 }
 
 function createLocalStorageKey(fileName: string) {
@@ -66,11 +136,22 @@ function createBlobStorageKey(pathname: string) {
   return `${BLOB_STORAGE_PREFIX}${pathname}`;
 }
 
+function createS3StorageKey(objectKey: string) {
+  return `${S3_STORAGE_PREFIX}${objectKey}`;
+}
+
 function parseStorageKey(storageKey: string): { backend: StorageBackend; value: string } {
   if (storageKey.startsWith(BLOB_STORAGE_PREFIX)) {
     return {
       backend: "blob",
       value: storageKey.slice(BLOB_STORAGE_PREFIX.length)
+    };
+  }
+
+  if (storageKey.startsWith(S3_STORAGE_PREFIX)) {
+    return {
+      backend: "s3",
+      value: storageKey.slice(S3_STORAGE_PREFIX.length)
     };
   }
 
@@ -82,7 +163,7 @@ function parseStorageKey(storageKey: string): { backend: StorageBackend; value: 
   }
 
   return {
-    backend: "local",
+    backend: getStorageBackend() === "s3" ? "s3" : "local",
     value: storageKey
   };
 }
@@ -251,24 +332,57 @@ async function saveToBlobStorage(body: Buffer | File, fileName: string, mimeType
   };
 }
 
+async function saveToS3Storage(body: Buffer | File, fileName: string, mimeType: string, size: number): Promise<StoredUpload> {
+  const config = getS3Config();
+
+  if (!config) {
+    throw new Error("S3 storage is not configured.");
+  }
+
+  const objectKey = createS3ObjectKey(fileName);
+  const buffer = body instanceof File ? Buffer.from(await body.arrayBuffer()) : body;
+
+  await getS3Client(config).send(
+    new PutObjectCommand({
+      Bucket: config.bucket,
+      Key: objectKey,
+      Body: buffer,
+      ContentType: mimeType
+    })
+  );
+
+  return {
+    originalName: fileName,
+    storageKey: createS3StorageKey(objectKey),
+    mimeType,
+    size
+  };
+}
+
 export async function saveUploadedFile(file: File) {
   const { mimeType } = validateUploadedFile(file);
 
-  if (getStorageBackend() === "blob") {
-    return saveToBlobStorage(file, file.name, mimeType, file.size);
+  switch (getStorageBackend()) {
+    case "blob":
+      return saveToBlobStorage(file, file.name, mimeType, file.size);
+    case "s3":
+      return saveToS3Storage(file, file.name, mimeType, file.size);
+    default:
+      return saveToLocalStorage(file, file.name, mimeType, file.size);
   }
-
-  return saveToLocalStorage(file, file.name, mimeType, file.size);
 }
 
 export async function saveBufferToStorage(buffer: Buffer, fileName: string, mimeType?: string) {
   const resolvedMimeType = mimeType || getMimeTypeFromExtension(getFileExtension(fileName));
 
-  if (getStorageBackend() === "blob") {
-    return saveToBlobStorage(buffer, fileName, resolvedMimeType, buffer.byteLength);
+  switch (getStorageBackend()) {
+    case "blob":
+      return saveToBlobStorage(buffer, fileName, resolvedMimeType, buffer.byteLength);
+    case "s3":
+      return saveToS3Storage(buffer, fileName, resolvedMimeType, buffer.byteLength);
+    default:
+      return saveToLocalStorage(buffer, fileName, resolvedMimeType, buffer.byteLength);
   }
-
-  return saveToLocalStorage(buffer, fileName, resolvedMimeType, buffer.byteLength);
 }
 
 export async function removeStoredFile(storageKey: string | null | undefined) {
@@ -284,6 +398,25 @@ export async function removeStoredFile(storageKey: string | null | undefined) {
     for (const candidate of candidates) {
       await del(candidate).catch(() => undefined);
     }
+
+    return;
+  }
+
+  if (parsed.backend === "s3") {
+    const config = getS3Config();
+
+    if (!config) {
+      return;
+    }
+
+    await getS3Client(config)
+      .send(
+        new DeleteObjectCommand({
+          Bucket: config.bucket,
+          Key: parsed.value
+        })
+      )
+      .catch(() => undefined);
 
     return;
   }
@@ -325,6 +458,46 @@ export async function readStoredFile(storageKey: string): Promise<StoredFilePayl
     }
 
     return null;
+  }
+
+  if (parsed.backend === "s3") {
+    const config = getS3Config();
+
+    if (!config) {
+      return null;
+    }
+
+    try {
+      const response = await getS3Client(config).send(
+        new GetObjectCommand({
+          Bucket: config.bucket,
+          Key: parsed.value
+        })
+      );
+
+      if (!response.Body) {
+        return null;
+      }
+
+      const body =
+        "transformToWebStream" in response.Body && typeof response.Body.transformToWebStream === "function"
+          ? response.Body.transformToWebStream()
+          : new Uint8Array(await response.Body.transformToByteArray());
+
+      const resolvedSize =
+        typeof response.ContentLength === "number"
+          ? response.ContentLength
+          : body instanceof ReadableStream
+            ? 0
+            : body.byteLength;
+
+      return {
+        body,
+        size: resolvedSize
+      };
+    } catch {
+      return null;
+    }
   }
 
   try {

@@ -5,7 +5,7 @@ import { SectionCard } from "@/components/section-card";
 import { TopicCreateForm } from "@/components/topic-create-form";
 import { requireUser } from "@/lib/auth";
 import { getTeacherTopicsOverview } from "@/lib/platform-data";
-import { getBlobAccessMode } from "@/lib/storage";
+import { getBlobAccessMode, getStorageBackend } from "@/lib/storage";
 
 type TeacherTopicsPageProps = {
   searchParams?: Promise<Record<string, string | string[] | undefined>>;
@@ -26,7 +26,7 @@ const topicNotices = {
   },
   upload: {
     tone: "error",
-    message: "Не удалось загрузить файлы. Если сайт работает на Vercel, проверьте BLOB_READ_WRITE_TOKEN."
+    message: "Не удалось загрузить файлы. Проверьте настройки storage и повторите попытку."
   },
   save: {
     tone: "error",
@@ -41,7 +41,7 @@ const topicNotices = {
 export default async function TeacherTopicsPage({ searchParams }: TeacherTopicsPageProps) {
   await requireUser(UserRole.TEACHER);
   const data = await getTeacherTopicsOverview();
-  const uploadMode = process.env.BLOB_READ_WRITE_TOKEN?.trim() ? "blob" : "local";
+  const uploadMode = getStorageBackend() === "blob" ? "blob" : "local";
   const blobAccess = getBlobAccessMode();
   const resolvedSearchParams = (await searchParams) ?? {};
   const created = typeof resolvedSearchParams.created === "string" ? resolvedSearchParams.created : undefined;
