@@ -1,5 +1,6 @@
 import { UserRole } from "@prisma/client";
 import { cookies } from "next/headers";
+import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { prisma } from "@/lib/prisma";
 import { createSessionToken, hashSessionToken, verifyPassword } from "@/lib/password";
@@ -7,6 +8,26 @@ import { roleHome } from "@/lib/utils";
 
 const SESSION_COOKIE = "tutor_session";
 const SESSION_TTL_DAYS = Number(process.env.SESSION_TTL_DAYS ?? 30);
+
+async function shouldUseSecureSessionCookie() {
+  const forwardedProto = (await headers()).get("x-forwarded-proto");
+
+  if (forwardedProto) {
+    return forwardedProto === "https";
+  }
+
+  return process.env.NODE_ENV === "production" && process.env.ALLOW_INSECURE_SESSION_COOKIE !== "true";
+}
+
+async function getSessionCookieOptions(expires: Date) {
+  return {
+    httpOnly: true as const,
+    sameSite: "lax" as const,
+    secure: await shouldUseSecureSessionCookie(),
+    expires,
+    path: "/"
+  };
+}
 
 export async function signIn(login: string, password: string) {
   const normalizedLogin = login.trim().toLowerCase();
@@ -38,14 +59,7 @@ export async function signIn(login: string, password: string) {
   });
 
   const cookieStore = await cookies();
-
-  cookieStore.set(SESSION_COOKIE, token, {
-    httpOnly: true,
-    sameSite: "lax",
-    secure: process.env.NODE_ENV === "production",
-    expires: expiresAt,
-    path: "/"
-  });
+  cookieStore.set(SESSION_COOKIE, token, await getSessionCookieOptions(expiresAt));
 
   return user;
 }
@@ -62,13 +76,7 @@ export async function signOut() {
     });
   }
 
-  cookieStore.set(SESSION_COOKIE, "", {
-    httpOnly: true,
-    sameSite: "lax",
-    secure: process.env.NODE_ENV === "production",
-    expires: new Date(0),
-    path: "/"
-  });
+  cookieStore.set(SESSION_COOKIE, "", await getSessionCookieOptions(new Date(0)));
 }
 
 export async function getCurrentUser() {
@@ -99,13 +107,7 @@ export async function getCurrentUser() {
       }
     });
 
-    cookieStore.set(SESSION_COOKIE, "", {
-      httpOnly: true,
-      sameSite: "lax",
-      secure: process.env.NODE_ENV === "production",
-      expires: new Date(0),
-      path: "/"
-    });
+    cookieStore.set(SESSION_COOKIE, "", await getSessionCookieOptions(new Date(0)));
 
     return null;
   }
