@@ -8,7 +8,7 @@ type HomeworkStatusBadgeProps = {
 
 export function HomeworkStatusBadge({ status }: HomeworkStatusBadgeProps) {
   if (!status) {
-    return <Badge className="border-slate-200 bg-slate-100 text-slate-600">Не отмечено</Badge>;
+    return <Badge className="ui-badge-soft">Не отмечено</Badge>;
   }
 
   const meta = homeworkStatusMeta[status];

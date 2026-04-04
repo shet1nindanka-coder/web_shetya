@@ -81,20 +81,20 @@ export function InterfaceSettingsPanel() {
   }, [themeMode]);
 
   return (
-    <section className="ui-fade-slide ui-surface rounded-[22px] border border-slate-200/80 bg-white/94 p-4 shadow-[0_10px_24px_rgba(15,23,42,0.045)] sm:rounded-[24px] sm:p-5 lg:rounded-[28px] lg:p-6">
-      <div className="mb-4 flex flex-col gap-2 border-b border-slate-100 pb-4">
-        <h2 className="font-display text-[1.35rem] font-semibold text-slate-950 sm:text-[1.5rem] lg:text-[1.65rem]">
+    <section className="ui-fade-slide ui-surface rounded-[22px] border p-4 sm:rounded-[24px] sm:p-5 lg:rounded-[28px] lg:p-6">
+      <div className="mb-4 flex flex-col gap-2 border-b pb-4">
+        <h2 className="font-display text-[1.35rem] font-semibold text-[var(--theme-text-strong)] sm:text-[1.5rem] lg:text-[1.65rem]">
           Интерфейс
         </h2>
-        <p className="ui-hint max-w-2xl text-sm leading-6 text-slate-500">
+        <p className="ui-hint ui-copy-muted max-w-2xl text-sm leading-6">
           Эти настройки меняют внешний вид сайта на текущем устройстве и помогают убрать лишнюю нагрузку из
           интерфейса.
         </p>
       </div>
 
       <div className="grid gap-4 xl:grid-cols-3">
-        <div className="rounded-[24px] border border-slate-200 bg-slate-50/70 p-4">
-          <p className="text-sm font-medium text-slate-700">Тема</p>
+        <div className="ui-card-soft rounded-[24px] p-4">
+          <p className="text-sm font-medium text-[var(--theme-text-default)]">Тема</p>
           <div className="mt-3 grid gap-2 sm:grid-cols-3">
             {[
               { value: "system", label: "Как на устройстве" },
@@ -109,10 +109,10 @@ export function InterfaceSettingsPanel() {
                   type="button"
                   onClick={() => setThemeMode(option.value as ThemeMode)}
                   aria-pressed={isActive}
-                  className={`ui-pressable rounded-2xl border px-4 py-3 text-sm font-medium transition ${
+                  className={`ui-pressable rounded-2xl px-4 py-3 text-sm font-medium transition ${
                     isActive
-                      ? "border-brand-300 bg-brand-50 text-brand-900"
-                      : "border-slate-200 bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-50"
+                      ? "ui-button-tonal"
+                      : "ui-button-secondary"
                   }`}
                 >
                   {option.label}
@@ -120,11 +120,11 @@ export function InterfaceSettingsPanel() {
               );
             })}
           </div>
-          <p className="ui-hint mt-3 text-sm leading-6 text-slate-500">{effectiveThemeLabel}.</p>
+          <p className="ui-hint ui-copy-muted mt-3 text-sm leading-6">{effectiveThemeLabel}.</p>
         </div>
 
-        <div className="rounded-[24px] border border-slate-200 bg-slate-50/70 p-4">
-          <p className="text-sm font-medium text-slate-700">Подсказки</p>
+        <div className="ui-card-soft rounded-[24px] p-4">
+          <p className="text-sm font-medium text-[var(--theme-text-default)]">Подсказки</p>
           <div className="mt-3 grid gap-2 sm:grid-cols-2">
             {[
               { value: "on", label: "Включены" },
@@ -138,10 +138,10 @@ export function InterfaceSettingsPanel() {
                   type="button"
                   onClick={() => setHintsMode(option.value as HintsMode)}
                   aria-pressed={isActive}
-                  className={`ui-pressable rounded-2xl border px-4 py-3 text-sm font-medium transition ${
+                  className={`ui-pressable rounded-2xl px-4 py-3 text-sm font-medium transition ${
                     isActive
-                      ? "border-brand-300 bg-brand-50 text-brand-900"
-                      : "border-slate-200 bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-50"
+                      ? "ui-button-tonal"
+                      : "ui-button-secondary"
                   }`}
                 >
                   {option.label}
@@ -149,13 +149,13 @@ export function InterfaceSettingsPanel() {
               );
             })}
           </div>
-          <p className="ui-hint mt-3 text-sm leading-6 text-slate-500">
+          <p className="ui-hint ui-copy-muted mt-3 text-sm leading-6">
             В режиме без подсказок скрываются второстепенные описания, helper-тексты и пояснения.
           </p>
         </div>
 
-        <div className="rounded-[24px] border border-slate-200 bg-slate-50/70 p-4">
-          <p className="text-sm font-medium text-slate-700">Плотность интерфейса</p>
+        <div className="ui-card-soft rounded-[24px] p-4">
+          <p className="text-sm font-medium text-[var(--theme-text-default)]">Плотность интерфейса</p>
           <div className="mt-3 grid gap-2 sm:grid-cols-2">
             {[
               { value: "comfortable", label: "Обычный" },
@@ -169,10 +169,10 @@ export function InterfaceSettingsPanel() {
                   type="button"
                   onClick={() => setDensityMode(option.value as DensityMode)}
                   aria-pressed={isActive}
-                  className={`ui-pressable rounded-2xl border px-4 py-3 text-sm font-medium transition ${
+                  className={`ui-pressable rounded-2xl px-4 py-3 text-sm font-medium transition ${
                     isActive
-                      ? "border-brand-300 bg-brand-50 text-brand-900"
-                      : "border-slate-200 bg-white text-slate-700 hover:border-slate-300 hover:bg-slate-50"
+                      ? "ui-button-tonal"
+                      : "ui-button-secondary"
                   }`}
                 >
                   {option.label}
@@ -180,7 +180,7 @@ export function InterfaceSettingsPanel() {
               );
             })}
           </div>
-          <p className="ui-hint mt-3 text-sm leading-6 text-slate-500">
+          <p className="ui-hint ui-copy-muted mt-3 text-sm leading-6">
             Компактный режим уменьшает отступы, карточки и табы, чтобы на экране помещалось больше рабочих блоков.
           </p>
         </div>

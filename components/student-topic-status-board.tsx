@@ -185,16 +185,16 @@ const StudentNumberCard = memo(function StudentNumberCard({
   const notePreview = getNotePreview(number.note);
 
   return (
-    <div className="student-number-card rounded-[22px] border border-slate-200 bg-slate-50/70 p-3.5 sm:rounded-[24px] sm:p-4">
+    <div className="student-number-card rounded-[22px] border p-3.5 sm:rounded-[24px] sm:p-4">
       <div className="student-number-header flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
         <div className="space-y-2">
           <div className="flex flex-wrap items-center gap-3">
-            <h3 className="student-number-title font-display text-[1.9rem] font-semibold text-slate-950">№ {number.number}</h3>
+            <h3 className="student-number-title font-display text-[1.9rem] font-semibold text-[var(--theme-text-strong)]">№ {number.number}</h3>
             <HomeworkStatusBadge status={number.status} />
             {homeworkGroup ? (
               <Badge className="border-brand-200 bg-brand-50 text-brand-700">{homeworkGroup.label}</Badge>
             ) : null}
-            {isSaving ? <span className="text-xs font-medium text-slate-500">Сохраняем...</span> : null}
+            {isSaving ? <span className="ui-copy-muted text-xs font-medium">Сохраняем...</span> : null}
           </div>
         </div>
 
@@ -210,10 +210,10 @@ const StudentNumberCard = memo(function StudentNumberCard({
                 aria-pressed={isActive}
                 onClick={() => onSelect(number.id, isActive ? null : status)}
                 className={cx(
-                  "ui-pressable w-full touch-manipulation rounded-[18px] border px-4 py-3 text-left text-[13px] transition-colors duration-75 sm:min-w-[160px]",
+                  "ui-pressable w-full touch-manipulation rounded-[18px] px-4 py-3 text-left text-[13px] transition-colors duration-75 sm:min-w-[160px]",
                   isActive
                     ? meta.cardClassName
-                    : "border-slate-200 bg-white text-slate-700 hover:border-brand-300 hover:bg-brand-50"
+                    : "ui-button-secondary"
                 )}
               >
                 <p className="font-semibold">{meta.shortLabel}</p>
@@ -225,17 +225,17 @@ const StudentNumberCard = memo(function StudentNumberCard({
       </div>
 
       {notesEnabled ? (
-        <div className="student-note-panel mt-3 rounded-[18px] border border-slate-200 bg-white px-3.5 py-3 sm:rounded-[20px] sm:px-4">
+        <div className="student-note-panel mt-3 rounded-[18px] border px-3.5 py-3 sm:rounded-[20px] sm:px-4">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
-              <p className="text-sm leading-5 text-slate-500">
+              <p className="ui-copy-muted text-sm leading-5">
                 {notePreview ? "Есть сохраненная заметка." : "Можно оставить короткую заметку."}
               </p>
             </div>
             <button
               type="button"
               onClick={() => setIsNoteOpen((current) => !current)}
-              className="ui-pressable w-full rounded-full border border-slate-200 bg-slate-50 px-3.5 py-2 text-sm font-semibold text-slate-700 transition hover:border-brand-300 hover:text-brand-700 sm:w-auto"
+              className="ui-pressable ui-button-secondary w-full rounded-full px-3.5 py-2 text-sm font-semibold transition sm:w-auto"
             >
               {isNoteOpen ? "Скрыть заметку" : notePreview ? "Открыть заметку" : "Добавить заметку"}
             </button>
@@ -244,7 +244,7 @@ const StudentNumberCard = memo(function StudentNumberCard({
           {isNoteOpen ? (
             <>
               <div className="mt-2.5 flex items-center justify-between gap-3">
-                <span className="text-xs text-slate-400">{number.note.length}/240</span>
+                <span className="ui-copy-soft text-xs">{number.note.length}/240</span>
               </div>
               <textarea
                 rows={2}
@@ -253,12 +253,12 @@ const StudentNumberCard = memo(function StudentNumberCard({
                 onChange={(event) => onNoteChange(number.id, event.target.value)}
                 onBlur={() => onNoteBlur(number.id)}
                 placeholder="Короткая заметка к этому номеру"
-                className="mt-2.5 min-h-[68px] w-full resize-none rounded-2xl border border-slate-200 bg-slate-50 px-3 py-3 text-sm text-slate-700 outline-none transition focus:border-brand-400 focus:bg-white"
+                className="ui-input mt-2.5 min-h-[68px] w-full resize-none rounded-2xl px-3 py-3 text-sm"
               />
-              <p className="mt-1.5 text-xs leading-5 text-slate-400">Сохранится автоматически.</p>
+              <p className="ui-copy-soft mt-1.5 text-xs leading-5">Сохранится автоматически.</p>
             </>
           ) : notePreview ? (
-            <div className="mt-2.5 rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2.5 text-sm leading-5 text-slate-700">
+            <div className="ui-card-soft mt-2.5 rounded-2xl px-3 py-2.5 text-sm leading-5 text-[var(--theme-text-default)]">
               {notePreview}
             </div>
           ) : null}
@@ -266,28 +266,28 @@ const StudentNumberCard = memo(function StudentNumberCard({
       ) : null}
 
       {number.answerLatex ? (
-        <div className="student-answer-panel mt-3 rounded-[18px] border border-slate-200 bg-white p-3 sm:rounded-[20px]">
+        <div className="student-answer-panel mt-3 rounded-[18px] border p-3 sm:rounded-[20px]">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
-              <p className="text-sm leading-5 text-slate-500">Ответ откроется только по вашему клику.</p>
+              <p className="ui-copy-muted text-sm leading-5">Ответ откроется только по вашему клику.</p>
             </div>
             <button
               type="button"
               onClick={() => setIsAnswerVisible((current) => !current)}
-              className="ui-pressable w-full rounded-full border border-slate-200 bg-slate-50 px-3.5 py-2 text-sm font-semibold text-slate-700 transition hover:border-brand-300 hover:text-brand-700 sm:w-auto"
+              className="ui-pressable ui-button-secondary w-full rounded-full px-3.5 py-2 text-sm font-semibold transition sm:w-auto"
             >
               {isAnswerVisible ? "Скрыть ответ" : "Открыть ответ"}
             </button>
           </div>
 
           {isAnswerVisible ? (
-            <div className="mt-2.5 overflow-hidden rounded-[18px] border border-slate-200 bg-white">
+            <div className="ui-card-soft mt-2.5 overflow-hidden rounded-[18px]">
               <div className="px-4 py-3.5">
                 <LatexAnswerPreview value={number.answerLatex} />
               </div>
             </div>
           ) : (
-            <div className="mt-2.5 rounded-[18px] border border-dashed border-slate-200 bg-slate-50 px-4 py-3 text-sm leading-5 text-slate-500">
+            <div className="ui-card-soft ui-copy-muted mt-2.5 rounded-[18px] border border-dashed px-4 py-3 text-sm leading-5">
               Ответ скрыт, пока вы его не откроете.
             </div>
           )}

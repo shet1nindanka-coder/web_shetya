@@ -27,18 +27,18 @@ export function FileResourceCard({
   const isExpanded = previewSize === "expanded";
 
   return (
-    <article className="ui-file-card ui-fade-slide ui-surface rounded-[22px] border border-slate-200/80 bg-white/94 p-4 shadow-[0_12px_28px_rgba(15,23,42,0.05)] sm:rounded-[24px] sm:p-5 lg:rounded-[26px]">
-      <div className="ui-file-card-header flex flex-col gap-4 border-b border-slate-200/80 pb-5">
+    <article className="ui-file-card ui-fade-slide ui-surface rounded-[22px] border p-4 sm:rounded-[24px] sm:p-5 lg:rounded-[26px]">
+      <div className="ui-file-card-header flex flex-col gap-4 border-b pb-5">
         <div className="space-y-1.5">
-          <p className="text-sm font-medium text-slate-500">{title}</p>
-          <h3 className="ui-file-card-title font-display text-[1.35rem] font-semibold text-slate-950 sm:text-[1.45rem] lg:text-[1.6rem]">
+          <p className="ui-kicker">{title}</p>
+          <h3 className="ui-file-card-title font-display text-[1.35rem] font-semibold text-[var(--theme-text-strong)] sm:text-[1.45rem] lg:text-[1.6rem]">
             {file ? file.originalName : "Файл не загружен"}
           </h3>
-          <p className="ui-hint text-sm leading-6 text-slate-500">{description}</p>
+          <p className="ui-hint ui-copy-muted text-sm leading-6">{description}</p>
         </div>
 
         {file ? (
-          <div className="ui-file-card-meta flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-slate-500">
+          <div className="ui-file-card-meta ui-copy-muted flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
             <span>{formatFileSize(file.size)}</span>
             <span>Загружен {formatDateTime(file.uploadedAt)}</span>
             <span>{file.mimeType}</span>
@@ -47,7 +47,7 @@ export function FileResourceCard({
       </div>
 
       {!file ? (
-        <div className="ui-hint mt-5 rounded-[24px] border border-dashed border-slate-200 bg-white/92 px-4 py-6 text-sm leading-6 text-slate-500">
+        <div className="ui-card-soft ui-hint ui-copy-muted mt-5 rounded-[24px] border border-dashed px-4 py-6 text-sm leading-6">
           Преподаватель ещё не прикрепил файл для этого блока.
         </div>
       ) : (
@@ -57,27 +57,27 @@ export function FileResourceCard({
               href={`/files/${file.id}`}
               target="_blank"
               rel="noreferrer"
-              className="ui-pressable inline-flex w-full justify-center rounded-full bg-slate-950 px-4 py-2 text-sm font-semibold text-white transition sm:w-auto"
+              className="ui-pressable ui-button-primary inline-flex w-full justify-center rounded-full px-4 py-2 text-sm font-semibold transition sm:w-auto"
             >
               Открыть в браузере
             </a>
             <a
               href={`/files/${file.id}?download=1`}
-              className="ui-pressable inline-flex w-full justify-center rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition sm:w-auto"
+              className="ui-pressable ui-button-secondary inline-flex w-full justify-center rounded-full px-4 py-2 text-sm font-semibold transition sm:w-auto"
             >
               Скачать файл
             </a>
           </div>
 
           {!showPreview ? (
-            <div className="ui-hint rounded-[22px] border border-slate-200 bg-slate-50 px-4 py-5 text-sm leading-6 text-slate-600">
+            <div className="ui-card-soft ui-hint ui-copy-muted rounded-[22px] px-4 py-5 text-sm leading-6">
               Предпросмотр скрыт, чтобы редактор оставался быстрее. Файл всё равно можно открыть в отдельной вкладке
               или скачать.
             </div>
           ) : null}
 
           {showPreview && isPdfMime(file.mimeType) ? (
-            <div className="overflow-hidden rounded-[22px] border border-slate-200 bg-slate-50">
+            <div className="ui-card-soft overflow-hidden rounded-[22px]">
               <iframe
                 src={`/files/${file.id}`}
                 title={file.originalName}
@@ -87,7 +87,7 @@ export function FileResourceCard({
           ) : null}
 
           {showPreview && !isPdfMime(file.mimeType) && isImageMime(file.mimeType) ? (
-            <div className="overflow-hidden rounded-[22px] border border-slate-200 bg-slate-50 p-2">
+            <div className="ui-card-soft overflow-hidden rounded-[22px] p-2">
               <Image
                 src={`/files/${file.id}`}
                 alt={file.originalName}
@@ -104,7 +104,7 @@ export function FileResourceCard({
           ) : null}
 
           {showPreview && !isPdfMime(file.mimeType) && !isImageMime(file.mimeType) && isOfficeMime(file.mimeType) ? (
-            <div className="ui-hint rounded-[22px] border border-slate-200 bg-slate-50 px-4 py-5 text-sm leading-6 text-slate-600">
+            <div className="ui-card-soft ui-hint ui-copy-muted rounded-[22px] px-4 py-5 text-sm leading-6">
               Для DOCX встроенный предпросмотр зависит от браузера. Файл можно открыть отдельной вкладкой или скачать.
             </div>
           ) : null}

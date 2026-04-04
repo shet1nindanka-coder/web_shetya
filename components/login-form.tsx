@@ -12,46 +12,46 @@ type LoginFormProps = {
 
 export function LoginForm({ error }: LoginFormProps) {
   return (
-    <div className="ui-fade-slide w-full max-w-md rounded-[32px] border border-slate-200/80 bg-white/96 p-8 shadow-[0_14px_32px_rgba(15,23,42,0.07)]">
+    <div className="ui-fade-slide ui-surface w-full max-w-md rounded-[32px] border p-8">
       <div className="mb-8 flex flex-col items-center text-center">
-        <span className="mb-4 flex h-12 w-12 items-center justify-center rounded-[18px] bg-slate-950 text-base font-semibold text-white shadow-[0_10px_24px_rgba(15,23,42,0.14)]">
+        <span className="app-logo-mark mb-4 flex h-12 w-12 items-center justify-center rounded-[18px] text-base font-semibold text-white shadow-[0_10px_24px_rgba(15,23,42,0.14)]">
           T
         </span>
-        <h1 className="font-display text-4xl font-semibold leading-tight text-slate-950">Вход</h1>
+        <h1 className="font-display text-4xl font-semibold leading-tight text-[var(--theme-text-strong)]">Вход</h1>
       </div>
 
       <form action={loginAction} className="space-y-4">
         <label className="block space-y-2">
-          <span className="text-sm font-medium text-slate-700">Логин</span>
+          <span className="text-sm font-medium text-[var(--theme-text-default)]">Логин</span>
           <input
             type="text"
             name="login"
             placeholder="teacher@example.com"
-            className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-950 outline-none transition focus:border-slate-300 focus:bg-white"
+            className="ui-input w-full rounded-2xl px-4 py-3"
             required
           />
         </label>
 
         <label className="block space-y-2">
-          <span className="text-sm font-medium text-slate-700">Пароль</span>
+          <span className="text-sm font-medium text-[var(--theme-text-default)]">Пароль</span>
           <input
             type="password"
             name="password"
             placeholder="Введите пароль"
-            className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-950 outline-none transition focus:border-slate-300 focus:bg-white"
+            className="ui-input w-full rounded-2xl px-4 py-3"
             required
           />
         </label>
 
         {error && errorMap[error] ? (
-          <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-700">
+          <div className="ui-notice-error rounded-2xl px-4 py-3 text-sm">
             {errorMap[error]}
           </div>
         ) : null}
 
         <button
           type="submit"
-          className="ui-pressable w-full rounded-2xl bg-slate-950 px-4 py-3 text-sm font-semibold text-white transition"
+          className="ui-pressable ui-button-primary w-full rounded-2xl px-4 py-3 text-sm font-semibold transition"
         >
           Войти
         </button>

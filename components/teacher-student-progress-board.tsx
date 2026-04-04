@@ -149,9 +149,9 @@ const TeacherNumberCard = memo(function TeacherNumberCard({
   const deadlineLabel = formatDeadlineLabel(number.studentStatus?.deadlineAt ?? null);
 
   return (
-    <div className="teacher-number-card rounded-[24px] border border-white bg-white px-4 py-4">
+    <div className="teacher-number-card rounded-[24px] border px-4 py-4">
       <div className="flex items-center justify-between gap-3">
-        <label className="inline-flex items-center gap-2 text-xs font-semibold text-slate-500">
+        <label className="ui-copy-muted inline-flex items-center gap-2 text-xs font-semibold">
           <input
             type="checkbox"
             checked={number.selectedForBulk}
@@ -163,18 +163,18 @@ const TeacherNumberCard = memo(function TeacherNumberCard({
         <HomeworkStatusBadge status={number.studentStatus?.status ?? null} />
       </div>
       <div className="mt-3 flex items-center justify-between gap-3">
-        <p className="teacher-number-title text-lg font-semibold text-slate-950">№ {number.number}</p>
+        <p className="teacher-number-title text-lg font-semibold text-[var(--theme-text-strong)]">№ {number.number}</p>
         {homeworkLabel ? <Badge className="border-brand-200 bg-brand-50 text-brand-700">{homeworkLabel}</Badge> : null}
       </div>
       {number.studentStatus?.note ? (
-        <div className="mt-3 rounded-2xl border border-slate-200 bg-slate-50 px-3 py-2">
-          <p className="text-sm leading-6 text-slate-700">{number.studentStatus.note}</p>
+        <div className="ui-card-soft mt-3 rounded-2xl px-3 py-2">
+          <p className="text-sm leading-6 text-[var(--theme-text-default)]">{number.studentStatus.note}</p>
         </div>
       ) : null}
-      <div className="teacher-deadline-panel mt-3 rounded-2xl border border-slate-200 bg-slate-50 px-3 py-3">
+      <div className="teacher-deadline-panel mt-3 rounded-2xl border px-3 py-3">
         <div className="flex items-center justify-between gap-3">
-          <p className="text-sm font-medium text-slate-500">Дедлайн</p>
-          {number.isSavingDeadline ? <span className="text-xs text-slate-400">Сохраняем...</span> : null}
+          <p className="ui-copy-muted text-sm font-medium">Дедлайн</p>
+          {number.isSavingDeadline ? <span className="ui-copy-soft text-xs">Сохраняем...</span> : null}
         </div>
         <input
           type="datetime-local"
@@ -182,9 +182,9 @@ const TeacherNumberCard = memo(function TeacherNumberCard({
           disabled={!deadlinesEnabled}
           onChange={(event) => onUpdateDeadlineValue(topicId, number.id, event.target.value)}
           onBlur={() => onFlushDeadline(topicId, number.id)}
-          className="mt-2 w-full rounded-2xl border border-slate-200 bg-white px-3 py-2 text-sm text-slate-700 outline-none transition focus:border-brand-400"
+          className="ui-input mt-2 w-full rounded-2xl px-3 py-2 text-sm"
         />
-        <p className="mt-2 text-xs leading-5 text-slate-500">
+        <p className="ui-copy-muted mt-2 text-xs leading-5">
           {deadlineLabel ? `Назначен до ${deadlineLabel}` : "Дедлайн пока не назначен."}
         </p>
       </div>
@@ -244,37 +244,37 @@ const TeacherTopicCard = memo(function TeacherTopicCard({
   );
 
   return (
-    <article className="teacher-topic-card rounded-[28px] border border-slate-200 bg-slate-50/80 p-5">
+    <article className="teacher-topic-card rounded-[28px] border p-5">
       <div className="flex flex-col gap-5 xl:flex-row xl:items-start xl:justify-between">
         <div className="space-y-3">
           <div>
-            <h2 className="teacher-topic-title font-display text-2xl font-semibold text-slate-950">{topic.title}</h2>
-            <p className="mt-2 text-sm text-slate-500">{topic.totalNumbers} номеров</p>
+            <h2 className="teacher-topic-title font-display text-2xl font-semibold text-[var(--theme-text-strong)]">{topic.title}</h2>
+            <p className="ui-copy-muted mt-2 text-sm">{topic.totalNumbers} номеров</p>
           </div>
-          <p className="max-w-3xl text-sm leading-6 text-slate-600">{topic.description}</p>
-          <div className="flex flex-wrap gap-x-5 gap-y-2 text-sm text-slate-600">
-            <span>Решено: <span className="font-semibold text-slate-950">{topic.solvedCount}/{topic.totalNumbers}</span></span>
-            <span>Отмечено: <span className="font-semibold text-slate-950">{topic.markedCount}/{topic.totalNumbers}</span></span>
+          <p className="ui-copy-muted max-w-3xl text-sm leading-6">{topic.description}</p>
+          <div className="ui-copy-muted flex flex-wrap gap-x-5 gap-y-2 text-sm">
+            <span>Решено: <span className="font-semibold text-[var(--theme-text-strong)]">{topic.solvedCount}/{topic.totalNumbers}</span></span>
+            <span>Отмечено: <span className="font-semibold text-[var(--theme-text-strong)]">{topic.markedCount}/{topic.totalNumbers}</span></span>
             <span>Красные: <span className="font-semibold text-rose-700">{topic.redCount}</span></span>
             {homeworkGroups.length > 0 ? (
-              <span>ДЗ: <span className="font-semibold text-slate-950">{homeworkGroups.length}</span></span>
+              <span>ДЗ: <span className="font-semibold text-[var(--theme-text-strong)]">{homeworkGroups.length}</span></span>
             ) : null}
             {isCompleted ? <span className="font-medium text-emerald-700">Тема завершена</span> : null}
           </div>
         </div>
 
         <div className="w-full max-w-md space-y-4">
-          <div className="space-y-2 rounded-[24px] border border-white bg-white p-4">
-            <div className="flex items-center justify-between text-sm text-slate-600">
+          <div className="ui-surface space-y-2 rounded-[24px] border p-4">
+            <div className="ui-copy-muted flex items-center justify-between text-sm">
               <span>Решено по теме</span>
-              <span className="font-semibold text-slate-950">{topic.solvedPercent}%</span>
+              <span className="font-semibold text-[var(--theme-text-strong)]">{topic.solvedPercent}%</span>
             </div>
             <ProgressBar value={topic.solvedPercent} />
           </div>
           <div className="flex flex-wrap gap-3">
             <Link
               href={`/teacher/topics/${topic.id}`}
-              className="ui-pressable inline-flex rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-brand-300 hover:text-brand-700"
+              className="ui-pressable ui-button-secondary inline-flex rounded-full px-4 py-2 text-sm font-semibold transition"
             >
               Открыть тему
             </Link>
@@ -282,13 +282,13 @@ const TeacherTopicCard = memo(function TeacherTopicCard({
         </div>
       </div>
 
-      <div className="teacher-bulk-deadline-panel mt-5 rounded-[24px] border border-slate-200 bg-white px-4 py-4">
+      <div className="teacher-bulk-deadline-panel mt-5 rounded-[24px] border px-4 py-4">
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
-            <p className="text-sm font-medium text-slate-500">Выдать ДЗ</p>
-            <p className="mt-2 text-sm leading-6 text-slate-600">Выберите несколько номеров ниже и выдайте их как одно ДЗ с общим дедлайном.</p>
+            <p className="ui-copy-muted text-sm font-medium">Выдать ДЗ</p>
+            <p className="ui-copy-muted mt-2 text-sm leading-6">Выберите несколько номеров ниже и выдайте их как одно ДЗ с общим дедлайном.</p>
           </div>
-          <span className="text-sm text-slate-500">Выбрано: <span className="font-semibold text-slate-950">{selectedCount}</span></span>
+          <span className="ui-copy-muted text-sm">Выбрано: <span className="font-semibold text-[var(--theme-text-strong)]">{selectedCount}</span></span>
         </div>
 
         <div className="mt-4 flex flex-col gap-3 lg:flex-row lg:items-center">
@@ -297,13 +297,13 @@ const TeacherTopicCard = memo(function TeacherTopicCard({
             value={topic.bulkDeadlineInputValue}
             disabled={!deadlinesEnabled || topic.isSavingBulk}
             onChange={(event) => onUpdateBulkDeadlineValue(topic.id, event.target.value)}
-            className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-3 py-3 text-sm text-slate-700 outline-none transition focus:border-brand-400 focus:bg-white lg:max-w-xs"
+            className="ui-input w-full rounded-2xl px-3 py-3 text-sm lg:max-w-xs"
           />
           <button
             type="button"
             disabled={!deadlinesEnabled || !selectedCount || topic.isSavingBulk}
             onClick={() => onApplyBulkDeadline(topic.id)}
-            className="ui-pressable rounded-full bg-slate-950 px-5 py-3 text-sm font-semibold text-white transition hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-50"
+            className="ui-pressable ui-button-primary rounded-full px-5 py-3 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-50"
           >
             {topic.isSavingBulk ? "Выдаем..." : "Выдать ДЗ"}
           </button>
@@ -311,7 +311,7 @@ const TeacherTopicCard = memo(function TeacherTopicCard({
             type="button"
             disabled={!selectedCount || topic.isSavingBulk}
             onClick={() => onClearBulkSelection(topic.id)}
-            className="ui-pressable rounded-full border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-700 transition hover:border-brand-300 hover:text-brand-700 disabled:cursor-not-allowed disabled:opacity-50"
+            className="ui-pressable ui-button-secondary rounded-full px-5 py-3 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-50"
           >
             Снять выбор
           </button>

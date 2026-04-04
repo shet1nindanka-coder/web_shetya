@@ -13,26 +13,23 @@ export const homeworkStatusMeta: Record<
   GREEN: {
     label: "Решен с первого раза",
     shortLabel: "Зеленый",
-    cardClassName: "border-emerald-200 bg-emerald-50 text-emerald-900",
-    buttonClassName:
-      "border-emerald-200 bg-emerald-50 text-emerald-900 hover:border-emerald-300 hover:bg-emerald-100",
-    subtleClassName: "bg-emerald-100 text-emerald-800 border-emerald-200"
+    cardClassName: "ui-status-surface ui-status-green",
+    buttonClassName: "ui-status-button ui-status-green",
+    subtleClassName: "ui-status-surface ui-status-green"
   },
   YELLOW: {
     label: "Исправлен после самопроверки",
     shortLabel: "Желтый",
-    cardClassName: "border-amber-200 bg-amber-50 text-amber-900",
-    buttonClassName:
-      "border-amber-200 bg-amber-50 text-amber-900 hover:border-amber-300 hover:bg-amber-100",
-    subtleClassName: "bg-amber-100 text-amber-800 border-amber-200"
+    cardClassName: "ui-status-surface ui-status-yellow",
+    buttonClassName: "ui-status-button ui-status-yellow",
+    subtleClassName: "ui-status-surface ui-status-yellow"
   },
   RED: {
     label: "Нужна помощь преподавателя",
     shortLabel: "Красный",
-    cardClassName: "border-rose-200 bg-rose-50 text-rose-900",
-    buttonClassName:
-      "border-rose-200 bg-rose-50 text-rose-900 hover:border-rose-300 hover:bg-rose-100",
-    subtleClassName: "bg-rose-100 text-rose-800 border-rose-200"
+    cardClassName: "ui-status-surface ui-status-red",
+    buttonClassName: "ui-status-button ui-status-red",
+    subtleClassName: "ui-status-surface ui-status-red"
   }
 };
 

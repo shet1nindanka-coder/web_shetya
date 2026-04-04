@@ -97,8 +97,8 @@ export function AccountSettingsView({ user, notice }: AccountSettingsViewProps) 
         <div
           className={
             notice.tone === "success"
-              ? "rounded-[28px] border border-emerald-200 bg-emerald-50 px-5 py-4 text-sm font-medium text-emerald-900"
-              : "rounded-[28px] border border-rose-200 bg-rose-50 px-5 py-4 text-sm font-medium text-rose-900"
+              ? "ui-notice-success rounded-[28px] px-5 py-4 text-sm font-medium"
+              : "ui-notice-error rounded-[28px] px-5 py-4 text-sm font-medium"
           }
         >
           {notice.message}
@@ -114,25 +114,25 @@ export function AccountSettingsView({ user, notice }: AccountSettingsViewProps) 
           </p>
         </div>
 
-        <div className="rounded-[36px] border border-brand-100 bg-white/90 p-6 shadow-glow">
-          <p className="text-sm font-medium text-slate-500">Сейчас в профиле</p>
+        <div className="ui-surface rounded-[36px] border p-6 shadow-glow">
+          <p className="ui-kicker">Сейчас в профиле</p>
           <div className="mt-5 space-y-4">
             <div>
-              <p className="text-sm text-slate-500">Имя</p>
-              <p className="mt-2 text-xl font-semibold text-slate-950">{user.name}</p>
+              <p className="ui-copy-muted text-sm">Имя</p>
+              <p className="mt-2 text-xl font-semibold text-[var(--theme-text-strong)]">{user.name}</p>
             </div>
             <div>
-              <p className="text-sm text-slate-500">Логин</p>
-              <p className="mt-2 break-all text-sm font-medium text-slate-700">{user.email}</p>
+              <p className="ui-copy-muted text-sm">Логин</p>
+              <p className="mt-2 break-all text-sm font-medium text-[var(--theme-text-default)]">{user.email}</p>
             </div>
             <div className="grid gap-4 sm:grid-cols-2">
               <div>
-                <p className="text-sm text-slate-500">Роль</p>
-                <p className="mt-2 text-sm font-semibold text-slate-950">{roleLabel}</p>
+                <p className="ui-copy-muted text-sm">Роль</p>
+                <p className="mt-2 text-sm font-semibold text-[var(--theme-text-strong)]">{roleLabel}</p>
               </div>
               <div>
-                <p className="text-sm text-slate-500">На платформе с</p>
-                <p className="mt-2 text-sm font-semibold text-slate-950">{formatDate(user.createdAt)}</p>
+                <p className="ui-copy-muted text-sm">На платформе с</p>
+                <p className="mt-2 text-sm font-semibold text-[var(--theme-text-strong)]">{formatDate(user.createdAt)}</p>
               </div>
             </div>
           </div>
@@ -147,30 +147,30 @@ export function AccountSettingsView({ user, notice }: AccountSettingsViewProps) 
       >
         <form action={updateProfileInfoAction} className="grid gap-4 lg:grid-cols-2">
           <label className="block space-y-2">
-            <span className="text-sm font-medium text-slate-700">Имя</span>
+            <span className="text-sm font-medium text-[var(--theme-text-default)]">Имя</span>
             <input
               type="text"
               name="name"
               defaultValue={user.name}
               placeholder="Ваше имя"
-              className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-950 outline-none transition focus:-translate-y-[1px] focus:border-brand-400 focus:bg-white"
+              className="ui-input w-full rounded-2xl px-4 py-3"
               required
             />
           </label>
 
           <div className="space-y-2">
-            <span className="text-sm font-medium text-slate-700">Логин для входа</span>
-            <div className="rounded-2xl border border-slate-200 bg-slate-100 px-4 py-3 text-slate-600">{user.email}</div>
+            <span className="text-sm font-medium text-[var(--theme-text-default)]">Логин для входа</span>
+            <div className="ui-readonly-field rounded-2xl px-4 py-3">{user.email}</div>
           </div>
 
           <div className="lg:col-span-2 flex flex-wrap items-center gap-3">
             <button
               type="submit"
-              className="ui-pressable rounded-2xl bg-slate-950 px-5 py-3 text-sm font-semibold text-white transition hover:bg-brand-700"
+              className="ui-pressable ui-button-primary rounded-2xl px-5 py-3 text-sm font-semibold transition"
             >
               Сохранить личную информацию
             </button>
-            <p className="text-sm leading-6 text-slate-500">
+            <p className="ui-copy-muted text-sm leading-6">
               После сохранения в шапке кабинета сразу появятся новые данные.
             </p>
           </div>
@@ -183,36 +183,36 @@ export function AccountSettingsView({ user, notice }: AccountSettingsViewProps) 
       >
         <form action={updatePasswordAction} className="grid gap-4 xl:grid-cols-3">
           <label className="block space-y-2">
-            <span className="text-sm font-medium text-slate-700">Текущий пароль</span>
+            <span className="text-sm font-medium text-[var(--theme-text-default)]">Текущий пароль</span>
             <input
               type="password"
               name="currentPassword"
               placeholder="Введите текущий пароль"
-              className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-950 outline-none transition focus:-translate-y-[1px] focus:border-brand-400 focus:bg-white"
+              className="ui-input w-full rounded-2xl px-4 py-3"
               required
             />
           </label>
 
           <label className="block space-y-2">
-            <span className="text-sm font-medium text-slate-700">Новый пароль</span>
+            <span className="text-sm font-medium text-[var(--theme-text-default)]">Новый пароль</span>
             <input
               type="password"
               name="newPassword"
               placeholder="Минимум 8 символов"
               minLength={8}
-              className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-950 outline-none transition focus:-translate-y-[1px] focus:border-brand-400 focus:bg-white"
+              className="ui-input w-full rounded-2xl px-4 py-3"
               required
             />
           </label>
 
           <label className="block space-y-2">
-            <span className="text-sm font-medium text-slate-700">Повторите новый пароль</span>
+            <span className="text-sm font-medium text-[var(--theme-text-default)]">Повторите новый пароль</span>
             <input
               type="password"
               name="confirmPassword"
               placeholder="Повторите новый пароль"
               minLength={8}
-              className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-slate-950 outline-none transition focus:-translate-y-[1px] focus:border-brand-400 focus:bg-white"
+              className="ui-input w-full rounded-2xl px-4 py-3"
               required
             />
           </label>
@@ -220,11 +220,11 @@ export function AccountSettingsView({ user, notice }: AccountSettingsViewProps) 
           <div className="xl:col-span-3 flex flex-wrap items-center gap-3">
             <button
               type="submit"
-              className="ui-pressable rounded-2xl bg-slate-950 px-5 py-3 text-sm font-semibold text-white transition hover:bg-brand-700"
+              className="ui-pressable ui-button-primary rounded-2xl px-5 py-3 text-sm font-semibold transition"
             >
               Обновить пароль
             </button>
-            <p className="text-sm leading-6 text-slate-500">Текущая сессия сохранится, входить заново не потребуется.</p>
+            <p className="ui-copy-muted text-sm leading-6">Текущая сессия сохранится, входить заново не потребуется.</p>
           </div>
         </form>
       </SectionCard>
