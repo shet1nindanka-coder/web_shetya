@@ -123,6 +123,22 @@ html[data-hints="off"] .ui-hint {
   display: none !important;
 }
 
+html[data-hints="off"] .page-header-panel {
+  padding-top: 1.15rem !important;
+  padding-bottom: 1.15rem !important;
+}
+
+html[data-hints="off"] .ui-section-card-header,
+html[data-hints="off"] .ui-file-card-header {
+  gap: 0.65rem;
+  margin-bottom: 0.9rem;
+  padding-bottom: 0.9rem;
+}
+
+html[data-hints="off"] .ui-settings-card {
+  min-height: 11.5rem;
+}
+
 html[data-density="compact"] .content-shell {
   padding-top: 1rem;
   padding-bottom: 1rem;
@@ -496,6 +512,36 @@ html[data-theme="dark"] .ui-surface:hover {
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2);
 }
 
+.ui-settings-card {
+  display: flex;
+  min-height: 13.25rem;
+  flex-direction: column;
+  border: 1px solid var(--theme-border-soft);
+  background: color-mix(in srgb, var(--theme-surface-soft) 86%, white 14%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.24);
+}
+
+.ui-settings-option {
+  min-height: 4.9rem;
+  align-content: start;
+}
+
+.ui-settings-option-copy {
+  display: flex;
+  min-height: 100%;
+  flex-direction: column;
+  justify-content: center;
+}
+
+.settings-summary-card {
+  background: color-mix(in srgb, var(--theme-surface) 92%, white 8%);
+}
+
+.settings-summary-item {
+  border: 1px solid var(--theme-border-soft);
+  background: color-mix(in srgb, var(--theme-surface-soft) 86%, white 14%);
+}
+
 .ui-readonly-field {
   border: 1px solid var(--theme-border);
   background: var(--theme-surface-soft);
@@ -821,6 +867,16 @@ html[data-theme="dark"] .ui-button-secondary {
 html[data-theme="dark"] .ui-card-soft,
 html[data-theme="dark"] .ui-readonly-field {
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.03);
+}
+
+html[data-theme="dark"] .ui-settings-card,
+html[data-theme="dark"] .settings-summary-item {
+  background: color-mix(in srgb, var(--theme-surface-soft) 92%, rgba(2, 6, 23, 0.34) 8%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+html[data-theme="dark"] .settings-summary-card {
+  background: color-mix(in srgb, var(--theme-surface) 90%, rgba(2, 6, 23, 0.2) 10%);
 }
 
 html[data-theme="dark"] [class*="bg-white"],

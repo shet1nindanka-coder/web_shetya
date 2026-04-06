@@ -90,6 +90,20 @@ export function resolveAccountNotice(searchParams: ResolvedSearchParams) {
 export function AccountSettingsView({ user, notice }: AccountSettingsViewProps) {
   const isTeacher = user.role === UserRole.TEACHER;
   const roleLabel = isTeacher ? "Преподаватель" : "Ученик";
+  const settingsOverview = [
+    {
+      label: "Интерфейс",
+      value: "Тема, подсказки и плотность"
+    },
+    {
+      label: "Профиль",
+      value: "Имя и логин для входа"
+    },
+    {
+      label: "Безопасность",
+      value: "Смена пароля в один шаг"
+    }
+  ];
 
   return (
     <div className="space-y-8">
@@ -97,43 +111,53 @@ export function AccountSettingsView({ user, notice }: AccountSettingsViewProps) 
         <div
           className={
             notice.tone === "success"
-              ? "ui-notice-success rounded-[28px] px-5 py-4 text-sm font-medium"
-              : "ui-notice-error rounded-[28px] px-5 py-4 text-sm font-medium"
+              ? "ui-notice-success rounded-[18px] px-5 py-4 text-sm font-medium"
+              : "ui-notice-error rounded-[18px] px-5 py-4 text-sm font-medium"
           }
         >
           {notice.message}
         </div>
       ) : null}
 
-      <section className="grid gap-6 lg:grid-cols-[1.15fr_0.85fr]">
-        <div className="page-header-panel rounded-[36px] border border-white/70 bg-slate-950 px-6 py-8 text-white shadow-glow">
-          <h1 className="font-display text-4xl font-semibold">Настройки</h1>
-          <p className="ui-hint mt-4 max-w-2xl text-base leading-7 text-slate-300">
+      <section className="grid gap-5 xl:grid-cols-[1.08fr_0.92fr]">
+        <div className="ui-surface rounded-[18px] border p-5 sm:rounded-[20px] sm:p-6">
+          <p className="ui-kicker">Настройки</p>
+          <h1 className="mt-3 font-display text-3xl font-semibold text-[var(--theme-text-strong)] sm:text-4xl">Настройки</h1>
+          <p className="ui-hint ui-copy-muted mt-4 max-w-2xl text-sm leading-6 sm:text-base sm:leading-7">
             Здесь собраны настройки интерфейса, личная информация и смена пароля. Логин для входа остается
             фиксированным и не меняется из кабинета.
           </p>
+
+          <div className="mt-5 grid gap-3 sm:grid-cols-3">
+            {settingsOverview.map((item) => (
+              <div key={item.label} className="settings-summary-item rounded-[16px] px-4 py-4">
+                <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--theme-text-muted)]">
+                  {item.label}
+                </p>
+                <p className="mt-2 text-sm font-medium leading-6 text-[var(--theme-text-default)]">{item.value}</p>
+              </div>
+            ))}
+          </div>
         </div>
 
-        <div className="ui-surface rounded-[36px] border p-6 shadow-glow">
+        <div className="settings-summary-card ui-surface rounded-[18px] border p-5 sm:rounded-[20px] sm:p-6">
           <p className="ui-kicker">Сейчас в профиле</p>
-          <div className="mt-5 space-y-4">
-            <div>
+          <div className="mt-5 grid gap-4 sm:grid-cols-2">
+            <div className="sm:col-span-2">
               <p className="ui-copy-muted text-sm">Имя</p>
               <p className="mt-2 text-xl font-semibold text-[var(--theme-text-strong)]">{user.name}</p>
             </div>
-            <div>
+            <div className="sm:col-span-2">
               <p className="ui-copy-muted text-sm">Логин</p>
               <p className="mt-2 break-all text-sm font-medium text-[var(--theme-text-default)]">{user.email}</p>
             </div>
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div>
-                <p className="ui-copy-muted text-sm">Роль</p>
-                <p className="mt-2 text-sm font-semibold text-[var(--theme-text-strong)]">{roleLabel}</p>
-              </div>
-              <div>
-                <p className="ui-copy-muted text-sm">На платформе с</p>
-                <p className="mt-2 text-sm font-semibold text-[var(--theme-text-strong)]">{formatDate(user.createdAt)}</p>
-              </div>
+            <div>
+              <p className="ui-copy-muted text-sm">Роль</p>
+              <p className="mt-2 text-sm font-semibold text-[var(--theme-text-strong)]">{roleLabel}</p>
+            </div>
+            <div>
+              <p className="ui-copy-muted text-sm">На платформе с</p>
+              <p className="mt-2 text-sm font-semibold text-[var(--theme-text-strong)]">{formatDate(user.createdAt)}</p>
             </div>
           </div>
         </div>
@@ -153,20 +177,20 @@ export function AccountSettingsView({ user, notice }: AccountSettingsViewProps) 
               name="name"
               defaultValue={user.name}
               placeholder="Ваше имя"
-              className="ui-input w-full rounded-2xl px-4 py-3"
+              className="ui-input w-full rounded-[16px] px-4 py-3"
               required
             />
           </label>
 
           <div className="space-y-2">
             <span className="text-sm font-medium text-[var(--theme-text-default)]">Логин для входа</span>
-            <div className="ui-readonly-field rounded-2xl px-4 py-3">{user.email}</div>
+            <div className="ui-readonly-field rounded-[16px] px-4 py-3">{user.email}</div>
           </div>
 
           <div className="lg:col-span-2 flex flex-wrap items-center gap-3">
             <button
               type="submit"
-              className="ui-pressable ui-button-primary rounded-2xl px-5 py-3 text-sm font-semibold transition"
+              className="ui-pressable ui-button-primary rounded-[16px] px-5 py-3 text-sm font-semibold transition"
             >
               Сохранить личную информацию
             </button>
@@ -188,7 +212,7 @@ export function AccountSettingsView({ user, notice }: AccountSettingsViewProps) 
               type="password"
               name="currentPassword"
               placeholder="Введите текущий пароль"
-              className="ui-input w-full rounded-2xl px-4 py-3"
+              className="ui-input w-full rounded-[16px] px-4 py-3"
               required
             />
           </label>
@@ -200,7 +224,7 @@ export function AccountSettingsView({ user, notice }: AccountSettingsViewProps) 
               name="newPassword"
               placeholder="Минимум 8 символов"
               minLength={8}
-              className="ui-input w-full rounded-2xl px-4 py-3"
+              className="ui-input w-full rounded-[16px] px-4 py-3"
               required
             />
           </label>
@@ -212,7 +236,7 @@ export function AccountSettingsView({ user, notice }: AccountSettingsViewProps) 
               name="confirmPassword"
               placeholder="Повторите новый пароль"
               minLength={8}
-              className="ui-input w-full rounded-2xl px-4 py-3"
+              className="ui-input w-full rounded-[16px] px-4 py-3"
               required
             />
           </label>
@@ -220,7 +244,7 @@ export function AccountSettingsView({ user, notice }: AccountSettingsViewProps) 
           <div className="xl:col-span-3 flex flex-wrap items-center gap-3">
             <button
               type="submit"
-              className="ui-pressable ui-button-primary rounded-2xl px-5 py-3 text-sm font-semibold transition"
+              className="ui-pressable ui-button-primary rounded-[16px] px-5 py-3 text-sm font-semibold transition"
             >
               Обновить пароль
             </button>

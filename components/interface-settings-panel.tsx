@@ -80,8 +80,24 @@ export function InterfaceSettingsPanel() {
     }
   }, [themeMode]);
 
+  const themeOptions: Array<{ value: ThemeMode; label: string; caption: string }> = [
+    { value: "system", label: "Системная", caption: "как на устройстве" },
+    { value: "light", label: "Светлая", caption: "дневной режим" },
+    { value: "dark", label: "Темная", caption: "вечерний режим" }
+  ];
+
+  const hintsOptions: Array<{ value: HintsMode; label: string; caption: string }> = [
+    { value: "on", label: "Включены", caption: "больше пояснений" },
+    { value: "off", label: "Скрыты", caption: "меньше шума" }
+  ];
+
+  const densityOptions: Array<{ value: DensityMode; label: string; caption: string }> = [
+    { value: "comfortable", label: "Обычный", caption: "больше воздуха" },
+    { value: "compact", label: "Компактный", caption: "больше на экране" }
+  ];
+
   return (
-    <section className="ui-fade-slide ui-surface rounded-[22px] border p-4 sm:rounded-[24px] sm:p-5 lg:rounded-[28px] lg:p-6">
+    <section className="ui-fade-slide ui-surface rounded-[18px] border p-4 sm:rounded-[20px] sm:p-5 lg:rounded-[22px] lg:p-6">
       <div className="mb-4 flex flex-col gap-2 border-b pb-4">
         <h2 className="font-display text-[1.35rem] font-semibold text-[var(--theme-text-strong)] sm:text-[1.5rem] lg:text-[1.65rem]">
           Интерфейс
@@ -92,95 +108,103 @@ export function InterfaceSettingsPanel() {
         </p>
       </div>
 
-      <div className="grid gap-4 xl:grid-cols-3">
-        <div className="ui-card-soft rounded-[24px] p-4">
-          <p className="text-sm font-medium text-[var(--theme-text-default)]">Тема</p>
-          <div className="mt-3 grid gap-2 sm:grid-cols-3">
-            {[
-              { value: "system", label: "Как на устройстве" },
-              { value: "light", label: "Светлая" },
-              { value: "dark", label: "Темная" }
-            ].map((option) => {
+      <div className="grid gap-4 xl:grid-cols-[1.15fr_0.95fr_0.95fr]">
+        <div className="ui-settings-card rounded-[18px] p-4 sm:rounded-[20px] sm:p-5">
+          <div className="space-y-1">
+            <p className="text-sm font-medium text-[var(--theme-text-default)]">Тема</p>
+            <p className="ui-copy-muted text-sm leading-6">Выберите общий режим оформления для этого устройства.</p>
+          </div>
+
+          <div className="mt-4 grid gap-2 sm:grid-cols-3">
+            {themeOptions.map((option) => {
               const isActive = themeMode === option.value;
 
               return (
                 <button
                   key={option.value}
                   type="button"
-                  onClick={() => setThemeMode(option.value as ThemeMode)}
+                  onClick={() => setThemeMode(option.value)}
                   aria-pressed={isActive}
-                  className={`ui-pressable rounded-2xl px-4 py-3 text-sm font-medium transition ${
-                    isActive
-                      ? "ui-button-tonal"
-                      : "ui-button-secondary"
+                  className={`ui-settings-option ui-pressable rounded-[16px] px-4 py-3 text-left text-sm transition ${
+                    isActive ? "ui-button-tonal" : "ui-button-secondary"
                   }`}
                 >
-                  {option.label}
+                  <span className="ui-settings-option-copy">
+                    <span className="font-medium">{option.label}</span>
+                    <span className="mt-1 text-xs text-[var(--theme-text-muted)]">{option.caption}</span>
+                  </span>
                 </button>
               );
             })}
           </div>
-          <p className="ui-hint ui-copy-muted mt-3 text-sm leading-6">{effectiveThemeLabel}.</p>
+
+          <p className="ui-hint ui-copy-muted mt-auto pt-4 text-sm leading-6">{effectiveThemeLabel}.</p>
         </div>
 
-        <div className="ui-card-soft rounded-[24px] p-4">
-          <p className="text-sm font-medium text-[var(--theme-text-default)]">Подсказки</p>
-          <div className="mt-3 grid gap-2 sm:grid-cols-2">
-            {[
-              { value: "on", label: "Включены" },
-              { value: "off", label: "Скрыты" }
-            ].map((option) => {
+        <div className="ui-settings-card rounded-[18px] p-4 sm:rounded-[20px] sm:p-5">
+          <div className="space-y-1">
+            <p className="text-sm font-medium text-[var(--theme-text-default)]">Подсказки</p>
+            <p className="ui-copy-muted text-sm leading-6">Оставьте пояснения включенными или уберите лишний текст.</p>
+          </div>
+
+          <div className="mt-4 grid gap-2 sm:grid-cols-2">
+            {hintsOptions.map((option) => {
               const isActive = hintsMode === option.value;
 
               return (
                 <button
                   key={option.value}
                   type="button"
-                  onClick={() => setHintsMode(option.value as HintsMode)}
+                  onClick={() => setHintsMode(option.value)}
                   aria-pressed={isActive}
-                  className={`ui-pressable rounded-2xl px-4 py-3 text-sm font-medium transition ${
-                    isActive
-                      ? "ui-button-tonal"
-                      : "ui-button-secondary"
+                  className={`ui-settings-option ui-pressable rounded-[16px] px-4 py-3 text-left text-sm transition ${
+                    isActive ? "ui-button-tonal" : "ui-button-secondary"
                   }`}
                 >
-                  {option.label}
+                  <span className="ui-settings-option-copy">
+                    <span className="font-medium">{option.label}</span>
+                    <span className="mt-1 text-xs text-[var(--theme-text-muted)]">{option.caption}</span>
+                  </span>
                 </button>
               );
             })}
           </div>
-          <p className="ui-hint ui-copy-muted mt-3 text-sm leading-6">
+
+          <p className="ui-hint ui-copy-muted mt-auto pt-4 text-sm leading-6">
             В режиме без подсказок скрываются второстепенные описания, helper-тексты и пояснения.
           </p>
         </div>
 
-        <div className="ui-card-soft rounded-[24px] p-4">
-          <p className="text-sm font-medium text-[var(--theme-text-default)]">Плотность интерфейса</p>
-          <div className="mt-3 grid gap-2 sm:grid-cols-2">
-            {[
-              { value: "comfortable", label: "Обычный" },
-              { value: "compact", label: "Компактный" }
-            ].map((option) => {
+        <div className="ui-settings-card rounded-[18px] p-4 sm:rounded-[20px] sm:p-5">
+          <div className="space-y-1">
+            <p className="text-sm font-medium text-[var(--theme-text-default)]">Плотность интерфейса</p>
+            <p className="ui-copy-muted text-sm leading-6">Управляйте тем, сколько рабочих блоков помещается на экран.</p>
+          </div>
+
+          <div className="mt-4 grid gap-2 sm:grid-cols-2">
+            {densityOptions.map((option) => {
               const isActive = densityMode === option.value;
 
               return (
                 <button
                   key={option.value}
                   type="button"
-                  onClick={() => setDensityMode(option.value as DensityMode)}
+                  onClick={() => setDensityMode(option.value)}
                   aria-pressed={isActive}
-                  className={`ui-pressable rounded-2xl px-4 py-3 text-sm font-medium transition ${
-                    isActive
-                      ? "ui-button-tonal"
-                      : "ui-button-secondary"
+                  className={`ui-settings-option ui-pressable rounded-[16px] px-4 py-3 text-left text-sm transition ${
+                    isActive ? "ui-button-tonal" : "ui-button-secondary"
                   }`}
                 >
-                  {option.label}
+                  <span className="ui-settings-option-copy">
+                    <span className="font-medium">{option.label}</span>
+                    <span className="mt-1 text-xs text-[var(--theme-text-muted)]">{option.caption}</span>
+                  </span>
                 </button>
               );
             })}
           </div>
-          <p className="ui-hint ui-copy-muted mt-3 text-sm leading-6">
+
+          <p className="ui-hint ui-copy-muted mt-auto pt-4 text-sm leading-6">
             Компактный режим уменьшает отступы, карточки и табы, чтобы на экране помещалось больше рабочих блоков.
           </p>
         </div>
