@@ -107,10 +107,10 @@ export function AccountSettingsView({ user, notice }: AccountSettingsViewProps) 
       ) : null}
 
       <section className="grid gap-5 xl:grid-cols-[1.08fr_0.92fr]">
-        <div className="ui-surface rounded-[18px] border p-5 sm:rounded-[20px] sm:p-6">
+        <div className="ui-surface rounded-[18px] border p-5 text-center sm:rounded-[20px] sm:p-6">
           <p className="ui-kicker">Настройки</p>
           <h1 className="mt-3 font-display text-3xl font-semibold text-[var(--theme-text-strong)] sm:text-4xl">Настройки</h1>
-          <p className="ui-hint ui-copy-muted mt-4 max-w-2xl text-sm leading-6 sm:text-base sm:leading-7">Интерфейс, профиль и безопасность в одном месте.</p>
+          <p className="ui-hint ui-copy-muted mx-auto mt-4 max-w-2xl text-sm leading-6 sm:text-base sm:leading-7">Интерфейс, профиль и безопасность в одном месте.</p>
 
           <div className="mt-5 grid gap-3 sm:grid-cols-3">
             {settingsOverview.map((item) => (
@@ -121,22 +121,22 @@ export function AccountSettingsView({ user, notice }: AccountSettingsViewProps) 
           </div>
         </div>
 
-        <div className="settings-summary-card ui-surface rounded-[18px] border p-5 sm:rounded-[20px] sm:p-6">
+        <div className="settings-summary-card ui-surface rounded-[18px] border p-5 text-center sm:rounded-[20px] sm:p-6">
           <p className="ui-kicker">Сейчас в профиле</p>
           <div className="mt-5 grid gap-4 sm:grid-cols-2">
-            <div className="sm:col-span-2">
+            <div className="settings-summary-item rounded-[16px] px-4 py-4 sm:col-span-2">
               <p className="ui-copy-muted text-sm">Имя</p>
               <p className="mt-2 text-xl font-semibold text-[var(--theme-text-strong)]">{user.name}</p>
             </div>
-            <div className="sm:col-span-2">
+            <div className="settings-summary-item rounded-[16px] px-4 py-4 sm:col-span-2">
               <p className="ui-copy-muted text-sm">Логин</p>
               <p className="mt-2 break-all text-sm font-medium text-[var(--theme-text-default)]">{user.email}</p>
             </div>
-            <div>
+            <div className="settings-summary-item rounded-[16px] px-4 py-4">
               <p className="ui-copy-muted text-sm">Роль</p>
               <p className="mt-2 text-sm font-semibold text-[var(--theme-text-strong)]">{roleLabel}</p>
             </div>
-            <div>
+            <div className="settings-summary-item rounded-[16px] px-4 py-4">
               <p className="ui-copy-muted text-sm">На платформе с</p>
               <p className="mt-2 text-sm font-semibold text-[var(--theme-text-strong)]">{formatDate(user.createdAt)}</p>
             </div>

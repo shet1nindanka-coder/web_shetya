@@ -538,8 +538,14 @@ html[data-theme="dark"] .ui-surface:hover {
 }
 
 .settings-summary-item {
+  display: flex;
+  min-height: 5.5rem;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
   border: 1px solid var(--theme-border-soft);
   background: color-mix(in srgb, var(--theme-surface-soft) 86%, white 14%);
+  text-align: center;
 }
 
 .ui-readonly-field {
