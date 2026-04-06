@@ -90,20 +90,7 @@ export function resolveAccountNotice(searchParams: ResolvedSearchParams) {
 export function AccountSettingsView({ user, notice }: AccountSettingsViewProps) {
   const isTeacher = user.role === UserRole.TEACHER;
   const roleLabel = isTeacher ? "Преподаватель" : "Ученик";
-  const settingsOverview = [
-    {
-      label: "Интерфейс",
-      value: "Тема, подсказки и плотность"
-    },
-    {
-      label: "Профиль",
-      value: "Имя и логин для входа"
-    },
-    {
-      label: "Безопасность",
-      value: "Смена пароля в один шаг"
-    }
-  ];
+  const settingsOverview = ["Интерфейс", "Профиль", "Пароль"];
 
   return (
     <div className="space-y-8">
@@ -123,18 +110,12 @@ export function AccountSettingsView({ user, notice }: AccountSettingsViewProps) 
         <div className="ui-surface rounded-[18px] border p-5 sm:rounded-[20px] sm:p-6">
           <p className="ui-kicker">Настройки</p>
           <h1 className="mt-3 font-display text-3xl font-semibold text-[var(--theme-text-strong)] sm:text-4xl">Настройки</h1>
-          <p className="ui-hint ui-copy-muted mt-4 max-w-2xl text-sm leading-6 sm:text-base sm:leading-7">
-            Здесь собраны настройки интерфейса, личная информация и смена пароля. Логин для входа остается
-            фиксированным и не меняется из кабинета.
-          </p>
+          <p className="ui-hint ui-copy-muted mt-4 max-w-2xl text-sm leading-6 sm:text-base sm:leading-7">Интерфейс, профиль и безопасность в одном месте.</p>
 
           <div className="mt-5 grid gap-3 sm:grid-cols-3">
             {settingsOverview.map((item) => (
-              <div key={item.label} className="settings-summary-item rounded-[16px] px-4 py-4">
-                <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[var(--theme-text-muted)]">
-                  {item.label}
-                </p>
-                <p className="mt-2 text-sm font-medium leading-6 text-[var(--theme-text-default)]">{item.value}</p>
+              <div key={item} className="settings-summary-item rounded-[16px] px-4 py-4">
+                <p className="text-sm font-semibold text-[var(--theme-text-default)]">{item}</p>
               </div>
             ))}
           </div>
@@ -167,7 +148,7 @@ export function AccountSettingsView({ user, notice }: AccountSettingsViewProps) 
 
       <SectionCard
         title="Личная информация"
-        description="Здесь можно изменить только имя профиля. Логин для входа остается неизменным."
+        description="Имя можно обновить, логин остаётся фиксированным."
       >
         <form action={updateProfileInfoAction} className="grid gap-4 lg:grid-cols-2">
           <label className="block space-y-2">
@@ -192,18 +173,16 @@ export function AccountSettingsView({ user, notice }: AccountSettingsViewProps) 
               type="submit"
               className="ui-pressable ui-button-primary rounded-[16px] px-5 py-3 text-sm font-semibold transition"
             >
-              Сохранить личную информацию
+              Сохранить
             </button>
-            <p className="ui-copy-muted text-sm leading-6">
-              После сохранения в шапке кабинета сразу появятся новые данные.
-            </p>
+            <p className="ui-hint ui-copy-muted text-sm leading-6">Имя в шапке обновится сразу.</p>
           </div>
         </form>
       </SectionCard>
 
       <SectionCard
         title="Сменить пароль"
-        description="Для безопасности сначала введите текущий пароль, затем задайте новый."
+        description="Сначала введите текущий пароль, затем новый."
       >
         <form action={updatePasswordAction} className="grid gap-4 xl:grid-cols-3">
           <label className="block space-y-2">
@@ -248,7 +227,7 @@ export function AccountSettingsView({ user, notice }: AccountSettingsViewProps) 
             >
               Обновить пароль
             </button>
-            <p className="ui-copy-muted text-sm leading-6">Текущая сессия сохранится, входить заново не потребуется.</p>
+            <p className="ui-hint ui-copy-muted text-sm leading-6">Текущая сессия сохранится.</p>
           </div>
         </form>
       </SectionCard>

@@ -66,7 +66,7 @@ function truncatePreview(value: string, maxLength = 120) {
 export function TopicNumbersField({
   name,
   label = "Номера заданий",
-  description = "Можно вводить через запятую, пробел, перенос строки или диапазоном через тире. Дубликаты будут убраны автоматически.",
+  description = "Запятая, пробел, новая строка или диапазон через тире.",
   placeholder = "1-5, 8, 12-14",
   rows = 5,
   value,
@@ -119,29 +119,29 @@ export function TopicNumbersField({
         ) : null}
       </div>
 
-      <div
-        className={cx(
-          "rounded-2xl border px-4 py-4 text-sm leading-6",
-          hasInput && !hasParsedNumbers
-            ? "border-rose-200 bg-rose-50 text-rose-900"
-            : "border-slate-200 bg-slate-50/80 text-slate-600"
-        )}
-      >
-        {isComputing ? (
-          <p>Обновляем список номеров...</p>
-        ) : hasInput && !hasParsedNumbers ? (
-          <p>Не удалось распознать номера. Используйте числа и диапазоны вроде `1-5`.</p>
-        ) : (
-          <div className="ui-hint space-y-2">
-            <p>{description}</p>
-            {hasParsedNumbers ? (
+      {isComputing || (hasInput && !hasParsedNumbers) || hasParsedNumbers ? (
+        <div
+          className={cx(
+            "rounded-2xl border px-4 py-4 text-sm leading-6",
+            hasInput && !hasParsedNumbers
+              ? "border-rose-200 bg-rose-50 text-rose-900"
+              : "border-slate-200 bg-slate-50/80 text-slate-600"
+          )}
+        >
+          {isComputing ? (
+            <p>Обновляем список номеров...</p>
+          ) : hasInput && !hasParsedNumbers ? (
+            <p>Не удалось распознать номера. Используйте числа и диапазоны вроде `1-5`.</p>
+          ) : (
+            <div className="ui-hint space-y-2">
+              <p>{description}</p>
               <p className="text-slate-700">
                 Будет сохранено как: <span className="font-medium">{truncatePreview(normalizedRanges)}</span>
               </p>
-            ) : null}
-          </div>
-        )}
-      </div>
+            </div>
+          )}
+        </div>
+      ) : null}
     </div>
   );
 }

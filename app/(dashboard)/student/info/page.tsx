@@ -19,27 +19,18 @@ export default function StudentInfoPage() {
     <div className="space-y-8">
       <section className="grid gap-6 lg:grid-cols-[1.15fr_0.85fr]">
         <div className="page-header-panel rounded-[36px] border border-white/70 bg-slate-950 px-6 py-8 text-white shadow-glow">
-          <h1 className="font-display text-4xl font-semibold">Шкала баллов и разбалловка ЕГЭ по математике</h1>
-          <p className="mt-4 max-w-2xl text-base leading-7 text-slate-300">
-            Здесь собрана быстрая справка, чтобы сразу понимать, во что переводятся первичные баллы и сколько дают
-            конкретные задания на экзамене.
-          </p>
+          <h1 className="font-display text-4xl font-semibold">Баллы и разбалловка</h1>
+          <p className="ui-hint mt-4 max-w-2xl text-base leading-7 text-slate-300">Быстрая справка по ЕГЭ.</p>
         </div>
 
         <div className="rounded-[36px] border border-brand-100 bg-white/90 p-6 shadow-glow">
           <p className="text-sm font-medium text-slate-500">Коротко</p>
           <p className="mt-4 text-3xl font-semibold text-slate-950">Максимум — 32 первичных балла</p>
-          <p className="mt-3 text-sm leading-6 text-slate-600">
-            Начиная с 30 первичных баллов тестовый результат уже равен 100. Используйте эту вкладку как быструю
-            опору во время подготовки.
-          </p>
+          <p className="ui-hint mt-3 text-sm leading-6 text-slate-600">30 первичных баллов и выше дают 100 тестовых.</p>
         </div>
       </section>
 
-      <SectionCard
-        title="Соответствие баллов"
-        description="Таблица перевода первичных баллов в тестовые."
-      >
+      <SectionCard title="Соответствие баллов">
         <div className="overflow-hidden rounded-[28px] border border-slate-200">
           <div className="grid grid-cols-2 bg-slate-950 text-sm font-semibold text-white">
             <div className="px-5 py-4">Первичный балл</div>
@@ -56,10 +47,7 @@ export default function StudentInfoPage() {
         </div>
       </SectionCard>
 
-      <SectionCard
-        title="Разбалловка номеров ЕГЭ"
-        description="Сколько первичных баллов дают разные задания профильной математики."
-      >
+      <SectionCard title="Разбалловка номеров ЕГЭ">
         <div className="grid gap-4 md:grid-cols-2">
           {taskScoring.map((item) => (
             <article key={item} className="rounded-[24px] border border-slate-200 bg-slate-50/80 p-5">

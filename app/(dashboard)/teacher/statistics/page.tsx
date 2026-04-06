@@ -281,8 +281,8 @@ export default async function TeacherStatisticsPage({ searchParams }: TeacherSta
     view === "teacher" ? "Статистика для подготовки к занятиям" : "Общая аналитика платформы";
   const headlineDescription =
     view === "teacher"
-      ? "Здесь собраны только те срезы, которые помогают быстро понять, кого разбирать, по каким темам и где сейчас самое узкое место."
-      : "Здесь собраны общие метрики, распределения и аналитические срезы, которые полезны для продуктового и технического наблюдения за платформой.";
+      ? "Кого разбирать, где проблемы и что происходит по темам."
+      : "Общие метрики и аналитика платформы.";
   const drilldownTopics = data.topics.map((topic) => ({
     id: topic.id,
     title: topic.title,
@@ -309,7 +309,7 @@ export default async function TeacherStatisticsPage({ searchParams }: TeacherSta
       <section className="grid gap-6 xl:grid-cols-[1.12fr_0.88fr]">
         <div className="page-header-panel rounded-[28px] border border-white/70 bg-slate-950 px-5 py-6 text-white shadow-glow sm:rounded-[36px] sm:px-6 sm:py-8">
           <h1 className="font-display text-3xl font-semibold sm:text-4xl">{headlineTitle}</h1>
-          <p className="mt-4 max-w-2xl text-sm leading-6 text-slate-300 sm:text-base sm:leading-7">
+          <p className="ui-hint mt-4 max-w-2xl text-sm leading-6 text-slate-300 sm:text-base sm:leading-7">
             {headlineDescription}
           </p>
           <div className="mt-6 flex flex-wrap gap-2 text-sm text-slate-200">
@@ -384,37 +384,27 @@ export default async function TeacherStatisticsPage({ searchParams }: TeacherSta
             <StatCard
               label="Нужен разбор"
               value={totalStudentsNeedingReview}
-              hint="Столько учеников сейчас имеют хотя бы один красный номер."
               accent={<span className="font-semibold text-rose-700">{completionPercent(totalStudentsNeedingReview, data.stats.totalStudents)}% учеников</span>}
             />
             <StatCard
               label="Красные номера"
               value={totalRed}
-              hint="Именно эти номера сейчас стоит брать в ближайший разбор."
               accent={<span className="font-semibold text-rose-700">{completionPercent(totalRed, totalStatusSlots)}% от всех слотов</span>}
             />
             <StatCard
               label="Темы с разбором"
               value={attentionTopics.length}
-              hint="Темы, в которых уже накопились красные статусы."
             />
             <StatCard
               label="Быстрые победы"
               value={quickWinStudents.length}
-              hint="Ученики, которых можно быстро довести до уверенного завершения темы."
             />
           </div>
 
-          <SectionCard
-            title="Кому нужен разбор сейчас"
-            description="Здесь собраны именно те ученики и номера, которые уже отмечены красным. Это готовая сводка для ближайших занятий."
-          >
+          <SectionCard title="Кому нужен разбор сейчас">
             {studentsNeedingReview.length === 0 ? (
               <div className="rounded-[28px] border border-dashed border-slate-200 bg-slate-50/60 px-5 py-10 text-center">
                 <p className="font-display text-2xl font-semibold text-slate-950">Сейчас нет учеников с красными номерами</p>
-                <p className="mx-auto mt-3 max-w-2xl text-sm leading-6 text-slate-600">
-                  Как только ученики начнут помечать номера красным, здесь появится готовая сводка по темам и номерам для разбора.
-                </p>
               </div>
             ) : (
               <div className="grid gap-4 xl:grid-cols-2">
@@ -476,10 +466,7 @@ export default async function TeacherStatisticsPage({ searchParams }: TeacherSta
             )}
           </SectionCard>
 
-          <SectionCard
-            title="Срез по теме и ученику"
-            description="Выберите конкретную тему и ученика, чтобы сразу увидеть, сколько там зеленых, желтых и красных статусов."
-          >
+          <SectionCard title="Срез по теме и ученику">
             <TeacherStatisticsDrilldown topics={drilldownTopics} students={drilldownStudents} />
           </SectionCard>
 
@@ -490,33 +477,26 @@ export default async function TeacherStatisticsPage({ searchParams }: TeacherSta
             <StatCard
               label="Решено"
               value={totalSolved}
-              hint="Зеленые и желтые статусы по всем ученикам и темам."
               accent={<span className="font-semibold text-emerald-700">{solvedPercent}% от всех слотов</span>}
             />
             <StatCard
               label="Нужна помощь"
               value={totalRed}
-              hint="Красные статусы, где преподавателю стоит обратить внимание."
               accent={<span className="font-semibold text-rose-700">{completionPercent(totalRed, totalStatusSlots)}% от всех слотов</span>}
             />
             <StatCard
               label="Без статуса"
               value={totalUnfilled}
-              hint="Пока не отмеченные номера по всем ученикам и темам."
               accent={<span className="font-semibold text-slate-700">{completionPercent(totalUnfilled, totalStatusSlots)}% от всех слотов</span>}
             />
             <StatCard
               label="Активные ученики"
               value={`${activeStudents.length} / ${data.stats.totalStudents}`}
-              hint="Ученики, у которых уже есть хотя бы один отмеченный номер."
               accent={<span className="font-semibold text-brand-700">{activeStudentsPercent}% охвата</span>}
             />
           </div>
 
-          <SectionCard
-            title="Как распределяется прогресс"
-            description="Этот блок помогает понять, где уже есть уверенное решение, где нужен разбор, а где работа еще даже не начиналась."
-          >
+          <SectionCard title="Как распределяется прогресс">
             <div className="grid gap-4 xl:grid-cols-[0.9fr_1.1fr]">
               <article className="ui-surface rounded-[24px] border border-slate-200 bg-slate-50/80 p-5 sm:rounded-[28px] sm:p-6">
                 <div className="flex flex-col items-center gap-6 lg:flex-row">
@@ -590,14 +570,10 @@ export default async function TeacherStatisticsPage({ searchParams }: TeacherSta
             </div>
           </SectionCard>
 
-          <SectionCard
-            title="Что происходит по темам"
-            description="Слева видно, какие темы идут лучше всего, справа — где чаще всего требуется помощь."
-          >
+          <SectionCard title="Что происходит по темам">
             <div className="grid gap-4 xl:grid-cols-2">
               <RankingCard
                 title="Лучшее усвоение"
-                description="Темы, где доля решенных номеров сейчас самая высокая."
                 emptyMessage="Пока нет тем с прогрессом."
                 items={strongestTopics.map((topic) => ({
                   key: topic.id,
@@ -611,7 +587,6 @@ export default async function TeacherStatisticsPage({ searchParams }: TeacherSta
 
               <RankingCard
                 title="Где чаще нужна помощь"
-                description="Темы, в которых красных статусов сейчас больше всего."
                 emptyMessage="Пока нет тем с красными статусами."
                 items={attentionTopics.map((topic) => ({
                   key: topic.id,
@@ -625,14 +600,10 @@ export default async function TeacherStatisticsPage({ searchParams }: TeacherSta
             </div>
           </SectionCard>
 
-          <SectionCard
-            title="Что происходит по ученикам"
-            description="Эта вкладка оставляет продуктовые рейтинги и общие срезы по активности и сложностям."
-          >
+          <SectionCard title="Что происходит по ученикам">
             <div className="grid gap-4 xl:grid-cols-2">
               <RankingCard
                 title="Самые вовлеченные"
-                description="Ученики с самым большим числом уже решенных номеров."
                 emptyMessage="Пока у учеников нет отмеченных номеров."
                 items={engagedStudents.map((student) => ({
                   key: student.id,
@@ -646,7 +617,6 @@ export default async function TeacherStatisticsPage({ searchParams }: TeacherSta
 
               <RankingCard
                 title="Нужен разбор"
-                description="Ученики, у которых сейчас самая высокая доля красных номеров."
                 emptyMessage="Сейчас нет учеников с красными статусами."
                 items={supportStudents.map((student) => ({
                   key: student.id,
@@ -680,7 +650,7 @@ function InsightCard({
       <p className="mt-3 font-display text-[1.45rem] font-semibold leading-tight text-slate-950 sm:text-[1.6rem]">
         {value}
       </p>
-      <p className="mt-3 text-sm leading-6 text-slate-600">{hint}</p>
+      <p className="ui-hint mt-3 text-sm leading-6 text-slate-600">{hint}</p>
     </article>
   );
 }
@@ -717,12 +687,10 @@ function DonutChart({
 
 function RankingCard({
   title,
-  description,
   emptyMessage,
   items
 }: {
   title: string;
-  description: string;
   emptyMessage: string;
   items: Array<{
     key: string;
@@ -736,7 +704,6 @@ function RankingCard({
   return (
     <article className="ui-surface rounded-[24px] border border-slate-200 bg-slate-50/80 p-5 sm:rounded-[28px] sm:p-6">
       <h2 className="font-display text-[1.4rem] font-semibold text-slate-950 sm:text-[1.55rem]">{title}</h2>
-      <p className="mt-2 text-sm leading-6 text-slate-600">{description}</p>
 
       {items.length === 0 ? (
         <div className="mt-5 rounded-[24px] border border-dashed border-slate-200 bg-white/80 px-4 py-8 text-center text-sm text-slate-600">

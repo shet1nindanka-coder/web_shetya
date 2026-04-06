@@ -73,39 +73,26 @@ export default async function TeacherTopicsPage({ searchParams }: TeacherTopicsP
 
       <section className="grid gap-6 lg:grid-cols-[1.15fr_0.85fr]">
         <div className="page-header-panel rounded-[28px] border border-white/70 bg-slate-950 px-5 py-6 text-white shadow-glow sm:rounded-[36px] sm:px-6 sm:py-8">
-          <h1 className="font-display text-3xl font-semibold sm:text-4xl">Общие темы, файлы и номера для всех учеников</h1>
-          <p className="mt-4 max-w-2xl text-sm leading-6 text-slate-300 sm:text-base sm:leading-7">
-            Создавайте темы, прикрепляйте файлы и редактируйте номера. Здесь собраны только материалы курса и
-            инструменты для работы с ними.
+          <h1 className="font-display text-3xl font-semibold sm:text-4xl">Темы</h1>
+          <p className="ui-hint mt-4 max-w-2xl text-sm leading-6 text-slate-300 sm:text-base sm:leading-7">
+            Материалы, номера и ответы.
           </p>
         </div>
 
         <div className="rounded-[28px] border border-brand-100 bg-white/90 p-5 shadow-glow sm:rounded-[36px] sm:p-6">
-          <p className="text-sm font-medium text-slate-500">Работа с материалами</p>
-          <p className="mt-4 text-2xl font-semibold text-slate-950 sm:text-3xl">На этой вкладке только темы, файлы, номера и ответы</p>
-          <p className="mt-3 text-sm leading-6 text-slate-600">
-            Числовую сводку по платформе можно посмотреть отдельно во вкладке статистики.
-          </p>
+          <p className="text-sm font-medium text-slate-500">Материалы</p>
+          <p className="mt-4 text-2xl font-semibold text-slate-950 sm:text-3xl">Темы, файлы и номера</p>
         </div>
       </section>
 
-      <SectionCard
-        title="Создать новую тему"
-        description="Добавьте тему, прикрепите файлы и укажите список номеров заданий."
-      >
+      <SectionCard title="Создать новую тему">
         <TopicCreateForm uploadMode={uploadMode} blobAccess={blobAccess} />
       </SectionCard>
 
-      <SectionCard
-        title="Все темы"
-        description="Темы общие для всех учеников. Здесь можно открыть тему, отредактировать файлы, номера и ответы."
-      >
+      <SectionCard title="Все темы">
         {data.topics.length === 0 ? (
           <div className="rounded-[28px] border border-dashed border-slate-200 bg-slate-50/60 px-5 py-10 text-center">
             <p className="font-display text-2xl font-semibold text-slate-950">Пока нет ни одной темы</p>
-            <p className="mx-auto mt-3 max-w-2xl text-sm leading-6 text-slate-600">
-              Начните с первой темы: добавьте описание, прикрепите файлы и укажите номера заданий.
-            </p>
           </div>
         ) : (
           <div className="grid gap-4 xl:grid-cols-2">
@@ -117,7 +104,7 @@ export default async function TeacherTopicsPage({ searchParams }: TeacherTopicsP
                       <h2 className="font-display text-[1.55rem] font-semibold text-slate-950 sm:text-2xl">{topic.title}</h2>
                       <p className="mt-2 text-sm text-slate-500">{topic.totalNumbers} номеров</p>
                     </div>
-                    <p className="text-sm leading-6 text-slate-600">{topic.description}</p>
+                    {topic.description ? <p className="ui-hint text-sm leading-6 text-slate-600">{topic.description}</p> : null}
                   </div>
                 </div>
 

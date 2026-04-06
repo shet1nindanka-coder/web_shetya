@@ -962,11 +962,11 @@ export function StudentTopicStatusBoard({
   return (
     <div className="space-y-8">
       <SectionCard
-        title="Статусы номеров"
+        title="Номера"
         description={
           notesEnabled
-            ? "Выберите цвет для каждого номера и при необходимости оставьте короткую личную заметку."
-            : "Выберите цвет для каждого номера: зеленый, желтый или красный. Повторный клик по активному цвету снимет статус."
+            ? "Отмечайте номера и при необходимости добавляйте заметки."
+            : "Отмечайте номера цветом. Повторный клик снимает статус."
         }
       >
         {saveError ? (
@@ -977,14 +977,7 @@ export function StudentTopicStatusBoard({
 
         {hasHomeworkFilters ? (
           <div className="mb-5 space-y-3">
-            <div>
-              <p className="text-sm font-medium text-slate-500">Фильтры</p>
-              <p className="mt-2 text-sm leading-6 text-slate-500">
-                {hasIssuedHomeworkGroups
-                  ? "Выберите конкретное ДЗ, чтобы увидеть только номера из этого назначения."
-                  : "Для этой темы пока не выданы отдельные ДЗ, поэтому сейчас показаны все номера."}
-              </p>
-            </div>
+            <p className="text-sm font-medium text-slate-500">Фильтры</p>
 
             <div className="grid gap-2 sm:flex sm:flex-wrap sm:gap-2">
               <button
@@ -1076,7 +1069,7 @@ export function StudentTopicStatusBoard({
               })}
             </div>
 
-            <p className="text-sm leading-6 text-slate-500">
+            <p className="ui-hint text-sm leading-6 text-slate-500">
               Показано {deferredFilteredNumbers.length} из {numbers.length} номеров.
             </p>
           </div>
@@ -1087,9 +1080,7 @@ export function StudentTopicStatusBoard({
             <summary className="ui-pressable flex cursor-pointer list-none items-center justify-between gap-4 px-4 py-4 [&::-webkit-details-marker]:hidden">
               <div>
                 <p className="text-sm font-semibold text-emerald-900">Тема полностью решена</p>
-                <p className="mt-1 text-sm leading-6 text-emerald-800">
-                  Все номера уже отмечены зеленым или желтым. Подробности можно открыть в любой момент.
-                </p>
+                <p className="ui-hint mt-1 text-sm leading-6 text-emerald-800">Подробности можно открыть в любой момент.</p>
               </div>
               <span className="rounded-[12px] border border-emerald-200 bg-white px-4 py-2 text-sm font-semibold text-emerald-800">
                 Показать номера
@@ -1129,19 +1120,14 @@ export function StudentTopicStatusBoard({
             ) : (
               <div className="rounded-[24px] border border-dashed border-slate-200 bg-slate-50/70 px-4 py-10 text-center">
                 <p className="font-display text-2xl font-semibold text-slate-950">Ничего не найдено</p>
-                <p className="mt-2 text-sm leading-6 text-slate-600">
-                  По выбранному фильтру пока нет номеров. Попробуйте переключиться на другой.
-                </p>
+                <p className="ui-hint mt-2 text-sm leading-6 text-slate-600">Попробуйте другой фильтр.</p>
               </div>
             )}
           </>
         )}
       </SectionCard>
 
-      <SectionCard
-        title="Общий прогресс по теме"
-        description="Здесь учитываются только номера, которые уже доведены до зелёного или жёлтого статуса."
-      >
+      <SectionCard title="Прогресс по теме" description="Здесь учитываются только зелёные и жёлтые номера.">
         <div className="space-y-3">
           <div className="flex items-center justify-between text-sm text-slate-600">
             <span>Прорешано номеров</span>
@@ -1152,9 +1138,7 @@ export function StudentTopicStatusBoard({
           <ProgressBar value={summary.solvedProgressPercent} />
         </div>
         {hasIssuedHomeworkGroups ? (
-          <p className="mt-4 text-sm leading-6 text-slate-600">
-            Дедлайны по выданным заданиям указаны в названиях фильтров ДЗ выше.
-          </p>
+          <p className="ui-hint mt-4 text-sm leading-6 text-slate-600">Дедлайны указаны в фильтрах ДЗ.</p>
         ) : null}
       </SectionCard>
     </div>

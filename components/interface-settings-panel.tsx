@@ -102,17 +102,13 @@ export function InterfaceSettingsPanel() {
         <h2 className="font-display text-[1.35rem] font-semibold text-[var(--theme-text-strong)] sm:text-[1.5rem] lg:text-[1.65rem]">
           Интерфейс
         </h2>
-        <p className="ui-hint ui-copy-muted max-w-2xl text-sm leading-6">
-          Эти настройки меняют внешний вид сайта на текущем устройстве и помогают убрать лишнюю нагрузку из
-          интерфейса.
-        </p>
+        <p className="ui-hint ui-copy-muted max-w-2xl text-sm leading-6">Тема, подсказки и плотность на этом устройстве.</p>
       </div>
 
       <div className="grid gap-4 xl:grid-cols-[1.15fr_0.95fr_0.95fr]">
         <div className="ui-settings-card rounded-[18px] p-4 sm:rounded-[20px] sm:p-5">
-          <div className="space-y-1">
+          <div>
             <p className="text-sm font-medium text-[var(--theme-text-default)]">Тема</p>
-            <p className="ui-copy-muted text-sm leading-6">Выберите общий режим оформления для этого устройства.</p>
           </div>
 
           <div className="mt-4 grid gap-2 sm:grid-cols-3">
@@ -131,7 +127,7 @@ export function InterfaceSettingsPanel() {
                 >
                   <span className="ui-settings-option-copy">
                     <span className="font-medium">{option.label}</span>
-                    <span className="mt-1 text-xs text-[var(--theme-text-muted)]">{option.caption}</span>
+                    <span className="ui-hint mt-1 text-xs text-[var(--theme-text-muted)]">{option.caption}</span>
                   </span>
                 </button>
               );
@@ -142,9 +138,8 @@ export function InterfaceSettingsPanel() {
         </div>
 
         <div className="ui-settings-card rounded-[18px] p-4 sm:rounded-[20px] sm:p-5">
-          <div className="space-y-1">
+          <div>
             <p className="text-sm font-medium text-[var(--theme-text-default)]">Подсказки</p>
-            <p className="ui-copy-muted text-sm leading-6">Оставьте пояснения включенными или уберите лишний текст.</p>
           </div>
 
           <div className="mt-4 grid gap-2 sm:grid-cols-2">
@@ -163,22 +158,17 @@ export function InterfaceSettingsPanel() {
                 >
                   <span className="ui-settings-option-copy">
                     <span className="font-medium">{option.label}</span>
-                    <span className="mt-1 text-xs text-[var(--theme-text-muted)]">{option.caption}</span>
+                    <span className="ui-hint mt-1 text-xs text-[var(--theme-text-muted)]">{option.caption}</span>
                   </span>
                 </button>
               );
             })}
           </div>
-
-          <p className="ui-hint ui-copy-muted mt-auto pt-4 text-sm leading-6">
-            В режиме без подсказок скрываются второстепенные описания, helper-тексты и пояснения.
-          </p>
         </div>
 
         <div className="ui-settings-card rounded-[18px] p-4 sm:rounded-[20px] sm:p-5">
-          <div className="space-y-1">
+          <div>
             <p className="text-sm font-medium text-[var(--theme-text-default)]">Плотность интерфейса</p>
-            <p className="ui-copy-muted text-sm leading-6">Управляйте тем, сколько рабочих блоков помещается на экран.</p>
           </div>
 
           <div className="mt-4 grid gap-2 sm:grid-cols-2">
@@ -197,16 +187,12 @@ export function InterfaceSettingsPanel() {
                 >
                   <span className="ui-settings-option-copy">
                     <span className="font-medium">{option.label}</span>
-                    <span className="mt-1 text-xs text-[var(--theme-text-muted)]">{option.caption}</span>
+                    <span className="ui-hint mt-1 text-xs text-[var(--theme-text-muted)]">{option.caption}</span>
                   </span>
                 </button>
               );
             })}
           </div>
-
-          <p className="ui-hint ui-copy-muted mt-auto pt-4 text-sm leading-6">
-            Компактный режим уменьшает отступы, карточки и табы, чтобы на экране помещалось больше рабочих блоков.
-          </p>
         </div>
       </div>
     </section>

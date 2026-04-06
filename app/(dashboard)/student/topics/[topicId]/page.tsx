@@ -52,7 +52,6 @@ export default async function StudentTopicPage({ params }: StudentTopicPageProps
         theoryContent={
           <FileResourceCard
             title="Теория"
-            description="Откройте файл прямо в браузере или скачайте его себе на устройство."
             file={topic.theoryFile}
             previewSize="expanded"
           />
@@ -60,7 +59,6 @@ export default async function StudentTopicPage({ params }: StudentTopicPageProps
         homeworkContent={
           <FileResourceCard
             title="Задания"
-            description="Задания доступны в отдельном файле. При необходимости откройте или скачайте его."
             file={topic.homeworkFile}
             previewSize="expanded"
           />

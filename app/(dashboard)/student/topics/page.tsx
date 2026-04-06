@@ -17,10 +17,9 @@ export default async function StudentTopicsPage() {
     <div className="space-y-8">
       <section className="grid gap-6 lg:grid-cols-[1.15fr_0.85fr]">
         <div className="page-header-panel rounded-[28px] border border-white/70 bg-slate-950 px-5 py-6 text-white shadow-glow sm:rounded-[36px] sm:px-6 sm:py-8">
-          <h1 className="font-display text-3xl font-semibold sm:text-4xl">Все темы и личный прогресс по каждой из них</h1>
-          <p className="mt-4 max-w-2xl text-sm leading-6 text-slate-300 sm:text-base sm:leading-7">
-            Темы общие для всех учеников, но статусы по номерам сохраняются индивидуально. Откройте нужную тему и
-            отметьте, как у вас идут задания.
+          <h1 className="font-display text-3xl font-semibold sm:text-4xl">Темы</h1>
+          <p className="ui-hint mt-4 max-w-2xl text-sm leading-6 text-slate-300 sm:text-base sm:leading-7">
+            Откройте тему и продолжайте работу.
           </p>
         </div>
 
@@ -29,30 +28,21 @@ export default async function StudentTopicsPage() {
           <p className="mt-4 text-2xl font-semibold text-slate-950 sm:text-3xl">
             {data.stats.totalSolved} из {data.stats.totalNumbers} номеров уже решены
           </p>
-          <p className="mt-3 text-sm leading-6 text-slate-600">
-            Здесь отображаются все темы с файлами и вашим текущим статусом по каждому набору заданий.
-          </p>
           <p className="mt-5 text-sm font-medium text-emerald-700">Завершено тем: {completedTopics}</p>
         </div>
       </section>
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        <StatCard label="Темы" value={data.stats.totalTopics} hint="Все темы платформы доступны в вашем кабинете." />
-        <StatCard label="Завершены" value={completedTopics} hint="Темы, где все номера уже зеленые или желтые." />
-        <StatCard label="Зеленые" value={data.stats.totalGreen} hint="Номера, решенные верно с первого раза." />
-        <StatCard label="Желтые" value={data.stats.totalYellow} hint="Номера, исправленные после самопроверки." />
+        <StatCard label="Темы" value={data.stats.totalTopics} />
+        <StatCard label="Завершены" value={completedTopics} />
+        <StatCard label="Зеленые" value={data.stats.totalGreen} />
+        <StatCard label="Желтые" value={data.stats.totalYellow} />
       </div>
 
-      <SectionCard
-        title="Список тем"
-        description="Откройте тему, чтобы посмотреть файлы теории и заданий, а также выставить статусы каждому номеру."
-      >
+      <SectionCard title="Список тем">
         {data.topics.length === 0 ? (
           <div className="rounded-[28px] border border-dashed border-slate-200 bg-slate-50/60 px-5 py-10 text-center">
             <p className="font-display text-2xl font-semibold text-slate-950">Темы пока не добавлены</p>
-            <p className="mx-auto mt-3 max-w-2xl text-sm leading-6 text-slate-600">
-              Как только преподаватель создаст первую тему, она появится здесь вместе с файлами и номерами.
-            </p>
           </div>
         ) : (
           <div className="grid gap-4 xl:grid-cols-2">
@@ -67,7 +57,7 @@ export default async function StudentTopicsPage() {
                       <h2 className="font-display text-[1.55rem] font-semibold text-slate-950 sm:text-2xl">{topic.title}</h2>
                       <p className="mt-2 text-sm text-slate-500">{topic.totalNumbers} номеров</p>
                     </div>
-                    <p className="text-sm leading-6 text-slate-600">{topic.description}</p>
+                    {topic.description ? <p className="ui-hint text-sm leading-6 text-slate-600">{topic.description}</p> : null}
                     <div className="flex flex-wrap gap-2">
                       <Badge className="border-slate-200 bg-white text-slate-700">{topic.greenCount + topic.yellowCount} решено</Badge>
                       {isCompleted ? (
@@ -88,7 +78,7 @@ export default async function StudentTopicsPage() {
                     href={`/student/topics/${topic.id}`}
                     className="ui-pressable inline-flex w-full justify-center rounded-[16px] bg-slate-950 px-5 py-3 text-sm font-semibold text-white transition hover:bg-brand-700 sm:w-auto"
                   >
-                    {isCompleted ? "Открыть завершенную тему" : "Открыть тему"}
+                    Открыть
                   </Link>
                 </div>
               </article>

@@ -4,7 +4,7 @@ import { cx } from "@/lib/utils";
 type StatCardProps = {
   label: string;
   value: string | number;
-  hint: string;
+  hint?: string;
   accent?: ReactNode;
   className?: string;
 };
@@ -23,7 +23,7 @@ export function StatCard({ label, value, hint, accent, className }: StatCardProp
           <p className="ui-stat-card-value font-display text-[1.6rem] font-semibold leading-none text-[var(--theme-text-strong)] sm:text-[1.75rem] lg:text-[1.9rem]">
             {value}
           </p>
-          <p className="ui-hint ui-copy-muted text-sm leading-6">{hint}</p>
+          {hint ? <p className="ui-hint ui-copy-muted text-sm leading-6">{hint}</p> : null}
         </div>
         {accent ? <div className="ui-copy-soft text-right text-sm">{accent}</div> : null}
       </div>

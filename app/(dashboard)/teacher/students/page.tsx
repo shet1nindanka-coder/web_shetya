@@ -64,33 +64,24 @@ export default async function TeacherStudentsPage({ searchParams }: TeacherStude
 
       <section className="grid gap-6 lg:grid-cols-[1.15fr_0.85fr]">
         <div className="page-header-panel rounded-[28px] border border-white/70 bg-slate-950 px-5 py-6 text-white shadow-glow sm:rounded-[36px] sm:px-6 sm:py-8">
-          <h1 className="font-display text-3xl font-semibold sm:text-4xl">Учётные записи и индивидуальные успехи учеников</h1>
-          <p className="mt-4 max-w-2xl text-sm leading-6 text-slate-300 sm:text-base sm:leading-7">
-            Создавайте новые аккаунты учеников и переходите в их персональные карточки, чтобы смотреть прогресс по
-            всем темам и видеть цвета по каждому номеру.
+          <h1 className="font-display text-3xl font-semibold sm:text-4xl">Ученики</h1>
+          <p className="ui-hint mt-4 max-w-2xl text-sm leading-6 text-slate-300 sm:text-base sm:leading-7">
+            Аккаунты и личный прогресс.
           </p>
         </div>
 
         <div className="rounded-[28px] border border-brand-100 bg-white/90 p-5 shadow-glow sm:rounded-[36px] sm:p-6">
           <p className="text-sm font-medium text-slate-500">Работа с учениками</p>
-          <p className="mt-4 text-2xl font-semibold text-slate-950 sm:text-3xl">Здесь удобно создавать аккаунты и переходить в карточки прогресса</p>
-          <p className="mt-3 text-sm leading-6 text-slate-600">
-            Общую числовую картину по платформе и темам можно смотреть отдельно во вкладке статистики.
-          </p>
+          <p className="mt-4 text-2xl font-semibold text-slate-950 sm:text-3xl">Создание аккаунтов и переход в прогресс</p>
         </div>
       </section>
 
-      <SectionCard
-        title="Добавить ученика"
-        description="Задайте имя, логин и пароль. После создания ученик сразу сможет войти в систему."
-      >
+      <SectionCard title="Добавить ученика">
         <div className="grid gap-6 xl:grid-cols-[0.88fr_1.12fr]">
           <form action={createStudentAction} className="space-y-4 rounded-[24px] border border-slate-200 bg-slate-50/80 p-4 sm:rounded-[28px] sm:p-5">
             <div className="space-y-2">
               <h3 className="font-display text-[1.55rem] font-semibold text-slate-950 sm:text-2xl">Создать доступ ученику</h3>
-              <p className="text-sm leading-6 text-slate-600">
-                Логин используется для входа. Для удобства можно использовать e-mail в качестве логина.
-              </p>
+              <p className="ui-hint text-sm leading-6 text-slate-600">Можно использовать e-mail как логин.</p>
             </div>
 
             <label className="block space-y-2">

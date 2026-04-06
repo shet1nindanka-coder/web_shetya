@@ -24,7 +24,7 @@ export function SectionCard({
       )}
     >
       <div className="ui-section-card-header mb-4 flex flex-col gap-3 border-b pb-4 lg:mb-5 lg:flex-row lg:items-end lg:justify-between">
-        <div className="space-y-1.5">
+        <div className={description ? "space-y-1.5" : undefined}>
           <h2 className="ui-section-card-title font-display text-[1.35rem] font-semibold text-[var(--theme-text-strong)] sm:text-[1.5rem] lg:text-[1.65rem]">
             {title}
           </h2>

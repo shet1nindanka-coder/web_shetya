@@ -28,9 +28,7 @@ export default async function TeacherStudentPage({ params }: TeacherStudentPageP
             ← Ко всем ученикам
           </Link>
           <h1 className="font-display mt-3 text-4xl font-semibold text-slate-950">{data.student.name}</h1>
-          <p className="mt-3 max-w-3xl text-base leading-7 text-slate-600">
-            Логин: {data.student.email}. Здесь собран прогресс ученика по всем темам, включая цвета по каждому номеру и личные заметки.
-          </p>
+          <p className="mt-3 text-sm text-slate-500">{data.student.email}</p>
           <p className="mt-5 text-sm text-slate-500">
             Тем: <span className="font-semibold text-slate-950">{data.stats.totalTopics}</span>
             {" · "}
@@ -55,16 +53,13 @@ export default async function TeacherStudentPage({ params }: TeacherStudentPageP
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        <StatCard label="Темы" value={data.stats.totalTopics} hint="Все общие темы, доступные ученику." />
-        <StatCard label="Решено" value={`${data.stats.solvedPercent}%`} hint="Зеленые и желтые номера по всем темам." />
-        <StatCard label="Желтые" value={data.stats.totalYellow} hint="Исправлены после самопроверки." />
-        <StatCard label="Красные" value={data.stats.totalRed} hint="Номера, где ученику нужна помощь." />
+        <StatCard label="Темы" value={data.stats.totalTopics} />
+        <StatCard label="Решено" value={`${data.stats.solvedPercent}%`} />
+        <StatCard label="Желтые" value={data.stats.totalYellow} />
+        <StatCard label="Красные" value={data.stats.totalRed} />
       </div>
 
-      <SectionCard
-        title="Общая картина по ученику"
-        description="Решено учитывает только зеленые и желтые номера, а отмечено показывает все номера с выбранным цветом."
-      >
+      <SectionCard title="Общая картина" description="Решено учитывает только зелёные и жёлтые номера.">
         <div className="grid gap-5 lg:grid-cols-2">
           <div className="space-y-3 rounded-[24px] border border-slate-200 bg-slate-50/70 p-5">
             <div className="flex items-center justify-between text-sm text-slate-600">
@@ -87,10 +82,7 @@ export default async function TeacherStudentPage({ params }: TeacherStudentPageP
         </div>
       </SectionCard>
 
-      <SectionCard
-        title="Темы ученика"
-        description="По каждой теме видно, сколько заданий решено, а ниже можно посмотреть статусы номеров, заметки и назначить дедлайны."
-      >
+      <SectionCard title="Темы ученика">
         {!data.notesEnabled ? (
           <div className="rounded-[24px] border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
             Заметки ученика появятся здесь после обновления базы данных до актуальной версии.
@@ -99,9 +91,6 @@ export default async function TeacherStudentPage({ params }: TeacherStudentPageP
         {data.topics.length === 0 ? (
           <div className="rounded-[28px] border border-dashed border-slate-200 bg-slate-50/60 px-5 py-10 text-center">
             <p className="font-display text-2xl font-semibold text-slate-950">Темы пока не добавлены</p>
-            <p className="mx-auto mt-3 max-w-2xl text-sm leading-6 text-slate-600">
-              Как только преподаватель создаст темы, здесь появится прогресс ученика по каждой из них.
-            </p>
           </div>
         ) : (
           <TeacherStudentProgressBoard

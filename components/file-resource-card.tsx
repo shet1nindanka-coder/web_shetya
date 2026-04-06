@@ -11,7 +11,7 @@ type FileResource = {
 
 type FileResourceCardProps = {
   title: string;
-  description: string;
+  description?: string;
   file: FileResource | null;
   previewSize?: "default" | "expanded";
   showPreview?: boolean;
@@ -34,7 +34,7 @@ export function FileResourceCard({
           <h3 className="ui-file-card-title font-display text-[1.35rem] font-semibold text-[var(--theme-text-strong)] sm:text-[1.45rem] lg:text-[1.6rem]">
             {file ? file.originalName : "Файл не загружен"}
           </h3>
-          <p className="ui-hint ui-copy-muted text-sm leading-6">{description}</p>
+          {description ? <p className="ui-hint ui-copy-muted text-sm leading-6">{description}</p> : null}
         </div>
 
         {file ? (
@@ -48,7 +48,7 @@ export function FileResourceCard({
 
       {!file ? (
         <div className="ui-card-soft ui-hint ui-copy-muted mt-5 rounded-[24px] border border-dashed px-4 py-6 text-sm leading-6">
-          Преподаватель ещё не прикрепил файл для этого блока.
+          Файл пока не загружен.
         </div>
       ) : (
         <div className="mt-5 space-y-5">
@@ -71,8 +71,7 @@ export function FileResourceCard({
 
           {!showPreview ? (
             <div className="ui-card-soft ui-hint ui-copy-muted rounded-[22px] px-4 py-5 text-sm leading-6">
-              Предпросмотр скрыт, чтобы редактор оставался быстрее. Файл всё равно можно открыть в отдельной вкладке
-              или скачать.
+              Предпросмотр скрыт. Файл можно открыть или скачать.
             </div>
           ) : null}
 
@@ -105,7 +104,7 @@ export function FileResourceCard({
 
           {showPreview && !isPdfMime(file.mimeType) && !isImageMime(file.mimeType) && isOfficeMime(file.mimeType) ? (
             <div className="ui-card-soft ui-hint ui-copy-muted rounded-[22px] px-4 py-5 text-sm leading-6">
-              Для DOCX встроенный предпросмотр зависит от браузера. Файл можно открыть отдельной вкладкой или скачать.
+              Для DOCX встроенный предпросмотр зависит от браузера.
             </div>
           ) : null}
         </div>

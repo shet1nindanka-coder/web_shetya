@@ -111,35 +111,28 @@ export default async function TeacherTopicPage({ params, searchParams }: Teacher
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        <StatCard label="Номера" value={data.stats.totalNumbers} hint="Номеров заданий внутри темы." />
+        <StatCard label="Номера" value={data.stats.totalNumbers} />
         <StatCard
           label="Файл теории"
           value={data.stats.theoryAttached ? "Есть" : "Нет"}
-          hint="Прикреплен ли файл теории к этой теме."
         />
         <StatCard
           label="Файл заданий"
           value={data.stats.homeworkAttached ? "Есть" : "Нет"}
-          hint="Прикреплен ли файл заданий к этой теме."
         />
         <StatCard
           label="Ответы"
           value={`${data.stats.answersCount}/${data.stats.totalNumbers}`}
-          hint="Сколько номеров уже снабжены ответами."
         />
       </div>
 
-      <SectionCard
-        title="Редактирование темы"
-        description="Разделите работу по теме на отдельные блоки: сначала содержание и номера, потом файлы."
-      >
+      <SectionCard title="Редактирование темы">
         <form action={updateTopicAction} className="space-y-6" encType="multipart/form-data">
           <input type="hidden" name="topicId" value={data.topic.id} />
 
           <div className="space-y-4 rounded-[26px] border border-slate-200 bg-slate-50/70 p-5">
             <div className="space-y-1">
               <h3 className="text-lg font-semibold text-slate-950">Основная информация</h3>
-              <p className="text-sm leading-6 text-slate-500">Отредактируйте название и описание темы.</p>
             </div>
 
             <div className="grid gap-4">
@@ -170,32 +163,25 @@ export default async function TeacherTopicPage({ params, searchParams }: Teacher
           <div className="space-y-4 rounded-[26px] border border-slate-200 bg-slate-50/70 p-5">
             <div className="space-y-1">
               <h3 className="text-lg font-semibold text-slate-950">Номера</h3>
-              <p className="text-sm leading-6 text-slate-500">
-                Поле само покажет, сколько номеров распознано и как список будет сохранён.
-              </p>
             </div>
 
             <TopicNumbersField
               name="numbers"
               initialValue={numbersInput}
               rows={6}
-              description="Для больших тем удобнее вставлять номера несколькими строками. Порядок и дубликаты будут нормализованы автоматически."
+              description="Можно вставлять длинные списки в несколько строк."
             />
           </div>
 
           <div className="space-y-4 rounded-[26px] border border-slate-200 bg-slate-50/70 p-5">
             <div className="space-y-1">
               <h3 className="text-lg font-semibold text-slate-950">Файлы</h3>
-              <p className="text-sm leading-6 text-slate-500">
-                Каждый файл можно заменить отдельно, а удалить его можно отдельной кнопкой без чекбоксов.
-              </p>
             </div>
 
             <div className="grid gap-6 xl:grid-cols-2">
               <div className="space-y-4 rounded-[24px] border border-slate-200 bg-white p-4">
                 <FileResourceCard
                   title="Теория"
-                  description="Текущий файл теории по теме."
                   file={data.topic.theoryFile}
                   showPreview={false}
                 />
@@ -223,7 +209,6 @@ export default async function TeacherTopicPage({ params, searchParams }: Teacher
               <div className="space-y-4 rounded-[24px] border border-slate-200 bg-white p-4">
                 <FileResourceCard
                   title="Задания"
-                  description="Текущий файл заданий по теме."
                   file={data.topic.homeworkFile}
                   showPreview={false}
                 />
@@ -253,19 +238,13 @@ export default async function TeacherTopicPage({ params, searchParams }: Teacher
           <div className="space-y-3 rounded-[26px] border border-slate-200 bg-white p-5">
             <div className="space-y-1">
               <h3 className="text-lg font-semibold text-slate-950">Сохранение</h3>
-              <p className="text-sm leading-6 text-slate-500">
-                Сохраняйте содержание и замены файлов этой темы одним действием.
-              </p>
             </div>
             <TopicEditSubmitButton />
           </div>
         </form>
       </SectionCard>
 
-      <SectionCard
-        title="Ответы к заданиям"
-        description="Для каждого номера можно сохранить текстовый ответ с LaTeX-формулами. Ученик увидит его в виде spoiler-блока на странице темы."
-      >
+      <SectionCard title="Ответы к заданиям" description="LaTeX-ответы к номерам.">
         <TopicAnswerManager
           topicId={data.topic.id}
           numbers={data.topic.homeworkNumbers.map((number) => ({

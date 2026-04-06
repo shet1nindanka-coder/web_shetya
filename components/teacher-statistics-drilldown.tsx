@@ -35,21 +35,18 @@ const statusCards = [
   {
     key: "green",
     label: "Зеленые",
-    hint: "Решены уверенно",
     valueKey: "greenCount" as const,
     className: "border-emerald-200 bg-emerald-50 text-emerald-900"
   },
   {
     key: "yellow",
     label: "Желтые",
-    hint: "Исправлены после самопроверки",
     valueKey: "yellowCount" as const,
     className: "border-amber-200 bg-amber-50 text-amber-900"
   },
   {
     key: "red",
     label: "Красные",
-    hint: "Требуют разбора",
     valueKey: "redCount" as const,
     className: "border-rose-200 bg-rose-50 text-rose-900"
   }
@@ -160,9 +157,6 @@ export function TeacherStatisticsDrilldown({
     return (
       <div className="rounded-[28px] border border-dashed border-slate-200 bg-slate-50/60 px-5 py-10 text-center">
         <p className="font-display text-2xl font-semibold text-slate-950">Пока недостаточно данных для персонального среза</p>
-        <p className="mx-auto mt-3 max-w-2xl text-sm leading-6 text-slate-600">
-          Как только в системе появятся и темы, и ученики, здесь можно будет смотреть цветовую статистику по каждой паре.
-        </p>
       </div>
     );
   }
@@ -242,7 +236,6 @@ export function TeacherStatisticsDrilldown({
               <p className="mt-2 font-display text-3xl font-semibold">
                 {metrics[card.valueKey]}
               </p>
-              <p className="mt-2 text-sm/6 opacity-80">{card.hint}</p>
             </div>
           ))}
         </div>
@@ -272,7 +265,7 @@ export function TeacherStatisticsDrilldown({
         </div>
 
         <div className="mt-5 rounded-[24px] border border-slate-200 bg-white px-4 py-4">
-          <p className="text-sm font-medium text-slate-500">Что это значит</p>
+          <p className="text-sm font-medium text-slate-500">Сейчас</p>
           <p className="mt-2 text-base font-semibold leading-7 text-slate-950">{insight}</p>
         </div>
       </article>
