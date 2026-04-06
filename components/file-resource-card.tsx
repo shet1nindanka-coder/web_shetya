@@ -57,13 +57,13 @@ export function FileResourceCard({
               href={`/files/${file.id}`}
               target="_blank"
               rel="noreferrer"
-              className="ui-pressable ui-button-primary inline-flex w-full justify-center rounded-full px-4 py-2 text-sm font-semibold transition sm:w-auto"
+              className="ui-pressable ui-button-primary inline-flex w-full justify-center rounded-[14px] px-4 py-2 text-sm font-semibold transition sm:w-auto"
             >
               Открыть в браузере
             </a>
             <a
               href={`/files/${file.id}?download=1`}
-              className="ui-pressable ui-button-secondary inline-flex w-full justify-center rounded-full px-4 py-2 text-sm font-semibold transition sm:w-auto"
+              className="ui-pressable ui-button-secondary inline-flex w-full justify-center rounded-[14px] px-4 py-2 text-sm font-semibold transition sm:w-auto"
             >
               Скачать файл
             </a>

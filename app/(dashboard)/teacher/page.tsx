@@ -41,7 +41,7 @@ export default async function TeacherPage() {
             <div className="mt-5">
               <Link
                 href="/teacher/topics"
-                className="ui-pressable inline-flex w-full justify-center rounded-full bg-slate-950 px-5 py-3 text-sm font-semibold text-white transition hover:bg-brand-700 sm:w-auto"
+                className="ui-pressable inline-flex w-full justify-center rounded-[16px] bg-slate-950 px-5 py-3 text-sm font-semibold text-white transition hover:bg-brand-700 sm:w-auto"
               >
                 Перейти к темам
               </Link>
@@ -56,7 +56,7 @@ export default async function TeacherPage() {
             <div className="mt-5">
               <Link
                 href="/teacher/students"
-                className="ui-pressable inline-flex w-full justify-center rounded-full bg-slate-950 px-5 py-3 text-sm font-semibold text-white transition hover:bg-brand-700 sm:w-auto"
+                className="ui-pressable inline-flex w-full justify-center rounded-[16px] bg-slate-950 px-5 py-3 text-sm font-semibold text-white transition hover:bg-brand-700 sm:w-auto"
               >
                 Перейти к ученикам
               </Link>
@@ -72,7 +72,7 @@ export default async function TeacherPage() {
             <div className="mt-5">
               <Link
                 href="/teacher/statistics"
-                className="ui-pressable inline-flex w-full justify-center rounded-full bg-slate-950 px-5 py-3 text-sm font-semibold text-white transition hover:bg-brand-700 sm:w-auto"
+                className="ui-pressable inline-flex w-full justify-center rounded-[16px] bg-slate-950 px-5 py-3 text-sm font-semibold text-white transition hover:bg-brand-700 sm:w-auto"
               >
                 Открыть статистику
               </Link>

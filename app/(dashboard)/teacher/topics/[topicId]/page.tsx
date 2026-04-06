@@ -106,7 +106,7 @@ export default async function TeacherTopicPage({ params, searchParams }: Teacher
           topicId={data.topic.id}
           topicTitle={data.topic.title}
           triggerLabel="Удалить тему"
-          triggerClassName="rounded-full border border-rose-200 bg-rose-50 px-5 py-3 text-sm font-semibold text-rose-700 transition hover:bg-rose-100"
+          triggerClassName="rounded-[14px] border border-rose-200 bg-rose-50 px-5 py-3 text-sm font-semibold text-rose-700 transition hover:bg-rose-100"
         />
       </div>
 
@@ -213,7 +213,7 @@ export default async function TeacherTopicPage({ params, searchParams }: Teacher
                     formEncType="application/x-www-form-urlencoded"
                     name="fileKind"
                     value="theory"
-                    className="ui-pressable rounded-full border border-rose-200 bg-rose-50 px-4 py-2 text-sm font-semibold text-rose-700 transition hover:bg-rose-100"
+                    className="ui-pressable rounded-[14px] border border-rose-200 bg-rose-50 px-4 py-2 text-sm font-semibold text-rose-700 transition hover:bg-rose-100"
                   >
                     Удалить файл теории
                   </button>
@@ -241,7 +241,7 @@ export default async function TeacherTopicPage({ params, searchParams }: Teacher
                     formEncType="application/x-www-form-urlencoded"
                     name="fileKind"
                     value="homework"
-                    className="ui-pressable rounded-full border border-rose-200 bg-rose-50 px-4 py-2 text-sm font-semibold text-rose-700 transition hover:bg-rose-100"
+                    className="ui-pressable rounded-[14px] border border-rose-200 bg-rose-50 px-4 py-2 text-sm font-semibold text-rose-700 transition hover:bg-rose-100"
                   >
                     Удалить файл заданий
                   </button>

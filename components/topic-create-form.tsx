@@ -97,7 +97,7 @@ function FileUploadField({
   onFileSelect: (file: File | null) => void;
 }) {
   const uploadBadgeClassName =
-    "inline-flex items-center rounded-full border border-emerald-200 bg-white px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-emerald-700";
+    "inline-flex items-center rounded-[12px] border border-emerald-200 bg-white px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-emerald-700";
 
   return (
     <div className="space-y-3">

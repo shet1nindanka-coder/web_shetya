@@ -257,16 +257,16 @@ export function TeacherStatisticsDrilldown({
         </div>
 
         <div className="mt-4 flex flex-wrap gap-2 text-sm">
-          <span className="rounded-full border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-emerald-900">
+          <span className="rounded-[12px] border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-emerald-900">
             Зеленых: {metrics.greenCount}
           </span>
-          <span className="rounded-full border border-amber-200 bg-amber-50 px-3 py-1.5 text-amber-900">
+          <span className="rounded-[12px] border border-amber-200 bg-amber-50 px-3 py-1.5 text-amber-900">
             Желтых: {metrics.yellowCount}
           </span>
-          <span className="rounded-full border border-rose-200 bg-rose-50 px-3 py-1.5 text-rose-900">
+          <span className="rounded-[12px] border border-rose-200 bg-rose-50 px-3 py-1.5 text-rose-900">
             Красных: {metrics.redCount}
           </span>
-          <span className="rounded-full border border-slate-200 bg-white px-3 py-1.5 text-slate-700">
+          <span className="rounded-[12px] border border-slate-200 bg-white px-3 py-1.5 text-slate-700">
             Без статуса: {metrics.unmarkedCount}
           </span>
         </div>

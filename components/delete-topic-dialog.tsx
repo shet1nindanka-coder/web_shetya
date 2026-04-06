@@ -60,7 +60,7 @@ export function DeleteTopicDialog({
         type="button"
         onClick={() => setIsOpen(true)}
         className={cx(
-          "ui-pressable inline-flex rounded-full border border-rose-200 bg-rose-50 px-5 py-3 text-sm font-semibold text-rose-700 transition hover:bg-rose-100",
+          "ui-pressable inline-flex rounded-[14px] border border-rose-200 bg-rose-50 px-5 py-3 text-sm font-semibold text-rose-700 transition hover:bg-rose-100",
           triggerClassName
         )}
       >

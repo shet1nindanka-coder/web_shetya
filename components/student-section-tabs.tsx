@@ -39,7 +39,7 @@ export function StudentSectionTabs() {
   }, [router]);
 
   return (
-    <nav className="ui-fade-slide ui-tab-shell ui-tab-strip mb-6 flex gap-2 rounded-[24px] p-2 sm:mb-8 sm:flex-wrap sm:overflow-visible sm:rounded-[28px] sm:p-2.5">
+    <nav className="ui-fade-slide ui-tab-shell ui-tab-strip mb-6 flex gap-1.5 rounded-[20px] p-1.5 sm:mb-8 sm:flex-wrap sm:overflow-visible sm:rounded-[22px] sm:p-2">
       {items.map((item) => {
         const isActive = item.match(pathname);
 
@@ -51,7 +51,7 @@ export function StudentSectionTabs() {
             onMouseEnter={() => router.prefetch(item.href)}
             onFocus={() => router.prefetch(item.href)}
             data-active={isActive}
-            className={cx("ui-pressable ui-tab shrink-0 rounded-full px-4 py-2.5 text-sm font-medium sm:px-5")}
+            className={cx("ui-pressable ui-tab shrink-0 rounded-[14px] px-4 py-2.5 text-sm font-medium sm:px-4.5")}
           >
             {item.label}
           </Link>

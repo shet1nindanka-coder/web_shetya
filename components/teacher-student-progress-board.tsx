@@ -274,7 +274,7 @@ const TeacherTopicCard = memo(function TeacherTopicCard({
           <div className="flex flex-wrap gap-3">
             <Link
               href={`/teacher/topics/${topic.id}`}
-              className="ui-pressable ui-button-secondary inline-flex rounded-full px-4 py-2 text-sm font-semibold transition"
+              className="ui-pressable ui-button-secondary inline-flex rounded-[14px] px-4 py-2 text-sm font-semibold transition"
             >
               Открыть тему
             </Link>
@@ -303,7 +303,7 @@ const TeacherTopicCard = memo(function TeacherTopicCard({
             type="button"
             disabled={!deadlinesEnabled || !selectedCount || topic.isSavingBulk}
             onClick={() => onApplyBulkDeadline(topic.id)}
-            className="ui-pressable ui-button-primary rounded-full px-5 py-3 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-50"
+            className="ui-pressable ui-button-primary rounded-[16px] px-5 py-3 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-50"
           >
             {topic.isSavingBulk ? "Выдаем..." : "Выдать ДЗ"}
           </button>
@@ -311,7 +311,7 @@ const TeacherTopicCard = memo(function TeacherTopicCard({
             type="button"
             disabled={!selectedCount || topic.isSavingBulk}
             onClick={() => onClearBulkSelection(topic.id)}
-            className="ui-pressable ui-button-secondary rounded-full px-5 py-3 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-50"
+            className="ui-pressable ui-button-secondary rounded-[16px] px-5 py-3 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-50"
           >
             Снять выбор
           </button>
@@ -333,7 +333,7 @@ const TeacherTopicCard = memo(function TeacherTopicCard({
       </div>
 
       {isCompleted ? (
-        <details className="mt-5 rounded-[24px] border border-emerald-200 bg-emerald-50/70">
+        <details className="mt-5 rounded-[20px] border border-emerald-200 bg-emerald-50/70">
           <summary className="ui-pressable flex cursor-pointer list-none items-center justify-between gap-4 px-4 py-4 [&::-webkit-details-marker]:hidden">
             <div>
               <p className="text-sm font-semibold text-emerald-900">Тема полностью решена</p>
@@ -341,7 +341,7 @@ const TeacherTopicCard = memo(function TeacherTopicCard({
                 Все номера уже отмечены зеленым или желтым. Подробности можно открыть при необходимости.
               </p>
             </div>
-            <span className="rounded-full border border-emerald-200 bg-white px-4 py-2 text-sm font-semibold text-emerald-800">
+            <span className="rounded-[12px] border border-emerald-200 bg-white px-4 py-2 text-sm font-semibold text-emerald-800">
               Показать номера
             </span>
           </summary>

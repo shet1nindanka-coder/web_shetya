@@ -313,16 +313,16 @@ export default async function TeacherStatisticsPage({ searchParams }: TeacherSta
             {headlineDescription}
           </p>
           <div className="mt-6 flex flex-wrap gap-2 text-sm text-slate-200">
-            <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1.5">
+            <span className="rounded-[12px] border border-white/10 bg-white/5 px-3 py-1.5">
               Тем: <span className="font-semibold text-white">{data.stats.totalTopics}</span>
             </span>
-            <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1.5">
+            <span className="rounded-[12px] border border-white/10 bg-white/5 px-3 py-1.5">
               Ученики: <span className="font-semibold text-white">{data.stats.totalStudents}</span>
             </span>
-            <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1.5">
+            <span className="rounded-[12px] border border-white/10 bg-white/5 px-3 py-1.5">
               Номера: <span className="font-semibold text-white">{data.stats.totalNumbers}</span>
             </span>
-            <span className="rounded-full border border-white/10 bg-white/5 px-3 py-1.5">
+            <span className="rounded-[12px] border border-white/10 bg-white/5 px-3 py-1.5">
               Файлы: <span className="font-semibold text-white">{data.stats.totalFiles}</span>
             </span>
           </div>
@@ -361,7 +361,7 @@ export default async function TeacherStatisticsPage({ searchParams }: TeacherSta
         </div>
       </section>
 
-      <nav className="ui-fade-slide ui-tab-shell ui-tab-strip flex gap-2 rounded-[24px] p-2 sm:flex-wrap sm:rounded-[28px] sm:p-2.5">
+      <nav className="ui-fade-slide ui-tab-shell ui-tab-strip flex gap-1.5 rounded-[20px] p-1.5 sm:flex-wrap sm:rounded-[22px] sm:p-2">
         {statisticsViews.map((item) => {
           const isActive = item.key === view;
 
@@ -369,7 +369,7 @@ export default async function TeacherStatisticsPage({ searchParams }: TeacherSta
             <Link
               key={item.key}
               href={item.href}
-              className={cx("ui-pressable ui-tab shrink-0 rounded-full px-4 py-2.5 text-sm font-medium sm:px-5", isActive && "data-[active=true]:shadow-none")}
+              className={cx("ui-pressable ui-tab shrink-0 rounded-[14px] px-4 py-2.5 text-sm font-medium sm:px-4.5", isActive && "data-[active=true]:shadow-none")}
               data-active={isActive}
             >
               {item.label}
@@ -426,7 +426,7 @@ export default async function TeacherStatisticsPage({ searchParams }: TeacherSta
                     <div className="flex flex-wrap items-start justify-between gap-3">
                       <div>
                         <div className="flex flex-wrap items-center gap-2">
-                          <span className="rounded-full border border-slate-200 bg-white px-2.5 py-1 text-xs font-medium text-slate-500">
+                          <span className="rounded-[10px] border border-slate-200 bg-white px-2.5 py-1 text-xs font-medium text-slate-500">
                             #{index + 1}
                           </span>
                           <h2 className="font-display text-[1.35rem] font-semibold text-slate-950 sm:text-[1.5rem]">
@@ -441,7 +441,7 @@ export default async function TeacherStatisticsPage({ searchParams }: TeacherSta
 
                       <Link
                         href={`/teacher/students/${student.id}`}
-                        className="ui-pressable inline-flex rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-brand-300 hover:text-brand-700"
+                        className="ui-pressable inline-flex rounded-[14px] border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-brand-300 hover:text-brand-700"
                       >
                         Открыть ученика
                       </Link>
@@ -452,7 +452,7 @@ export default async function TeacherStatisticsPage({ searchParams }: TeacherSta
                         <div key={topic.topicId} className="rounded-[22px] border border-slate-200 bg-white px-4 py-4">
                           <div className="flex flex-wrap items-center justify-between gap-3">
                             <p className="text-base font-semibold text-slate-950">{topic.title}</p>
-                            <span className="rounded-full border border-rose-200 bg-rose-50 px-3 py-1 text-xs font-medium text-rose-800">
+                            <span className="rounded-[10px] border border-rose-200 bg-rose-50 px-3 py-1 text-xs font-medium text-rose-800">
                               {topic.numbers.length} красн.
                             </span>
                           </div>
@@ -461,7 +461,7 @@ export default async function TeacherStatisticsPage({ searchParams }: TeacherSta
                             {topic.numbers.map((number) => (
                               <span
                                 key={`${topic.topicId}-${number}`}
-                                className="rounded-full border border-rose-200 bg-rose-50 px-3 py-1.5 text-sm font-medium text-rose-900"
+                                className="rounded-[12px] border border-rose-200 bg-rose-50 px-3 py-1.5 text-sm font-medium text-rose-900"
                               >
                                 № {number}
                               </span>
@@ -749,7 +749,7 @@ function RankingCard({
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <div className="flex items-center gap-2">
-                    <span className="rounded-full border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-medium text-slate-500">
+                    <span className="rounded-[10px] border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-medium text-slate-500">
                       #{index + 1}
                     </span>
                     <h3 className="text-base font-semibold text-slate-950">{item.title}</h3>

@@ -46,7 +46,7 @@ export default async function TeacherStudentPage({ params }: TeacherStudentPageP
           <div className="mt-3">
             <a
               href={`/teacher/students/${data.student.id}/export`}
-              className="ui-pressable inline-flex rounded-full border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-brand-300 hover:text-brand-700"
+              className="ui-pressable inline-flex rounded-[14px] border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-brand-300 hover:text-brand-700"
             >
               Экспорт прогресса CSV
             </a>

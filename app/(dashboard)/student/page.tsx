@@ -63,7 +63,7 @@ export default async function StudentPage() {
             <div className="mt-5">
               <Link
                 href="/student/topics"
-                className="ui-pressable inline-flex rounded-full bg-slate-950 px-5 py-3 text-sm font-semibold text-white transition hover:bg-brand-700"
+                className="ui-pressable inline-flex rounded-[16px] bg-slate-950 px-5 py-3 text-sm font-semibold text-white transition hover:bg-brand-700"
               >
                 Перейти к темам
               </Link>
@@ -78,7 +78,7 @@ export default async function StudentPage() {
             <div className="mt-5">
               <Link
                 href="/student/info"
-                className="ui-pressable inline-flex rounded-full bg-slate-950 px-5 py-3 text-sm font-semibold text-white transition hover:bg-brand-700"
+                className="ui-pressable inline-flex rounded-[16px] bg-slate-950 px-5 py-3 text-sm font-semibold text-white transition hover:bg-brand-700"
               >
                 Открыть общую инфу
               </Link>

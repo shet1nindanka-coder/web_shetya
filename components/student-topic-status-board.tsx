@@ -235,7 +235,7 @@ const StudentNumberCard = memo(function StudentNumberCard({
             <button
               type="button"
               onClick={() => setIsNoteOpen((current) => !current)}
-              className="ui-pressable ui-button-secondary w-full rounded-full px-3.5 py-2 text-sm font-semibold transition sm:w-auto"
+              className="ui-pressable ui-button-secondary w-full rounded-[14px] px-3.5 py-2 text-sm font-semibold transition sm:w-auto"
             >
               {isNoteOpen ? "Скрыть заметку" : notePreview ? "Открыть заметку" : "Добавить заметку"}
             </button>
@@ -274,7 +274,7 @@ const StudentNumberCard = memo(function StudentNumberCard({
             <button
               type="button"
               onClick={() => setIsAnswerVisible((current) => !current)}
-              className="ui-pressable ui-button-secondary w-full rounded-full px-3.5 py-2 text-sm font-semibold transition sm:w-auto"
+              className="ui-pressable ui-button-secondary w-full rounded-[14px] px-3.5 py-2 text-sm font-semibold transition sm:w-auto"
             >
               {isAnswerVisible ? "Скрыть ответ" : "Открыть ответ"}
             </button>
@@ -970,7 +970,7 @@ export function StudentTopicStatusBoard({
         }
       >
         {saveError ? (
-          <div className="mb-5 rounded-2xl border border-rose-200 bg-rose-50 px-4 py-4 text-sm font-medium text-rose-900">
+          <div className="mb-5 rounded-[18px] border border-rose-200 bg-rose-50 px-4 py-4 text-sm font-medium text-rose-900">
             {saveError}
           </div>
         ) : null}
@@ -996,14 +996,14 @@ export function StudentTopicStatusBoard({
                 }}
                 data-active={activeFilter === "all"}
                 className={cx(
-                  "ui-pressable flex w-full items-center justify-between gap-3 rounded-[16px] border px-4 py-2.5 text-left text-sm font-medium transition sm:w-auto sm:shrink-0 sm:rounded-full sm:px-5 sm:py-2.5",
+                  "ui-pressable flex w-full items-center justify-between gap-3 rounded-[16px] border px-4 py-2.5 text-left text-sm font-medium transition sm:w-auto sm:shrink-0 sm:px-5 sm:py-2.5",
                   activeFilter === "all"
                     ? "border-brand-200 bg-[linear-gradient(180deg,rgba(239,246,255,1),rgba(219,234,254,0.92))] text-brand-700 shadow-[0_12px_24px_rgba(59,130,246,0.14)]"
                     : "border-slate-200 bg-white text-slate-700 hover:border-brand-300 hover:text-brand-700"
                 )}
               >
                 <span>Все номера</span>
-                <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-500">
+                <span className="ui-chip-count rounded-[10px] px-2 py-0.5 text-xs font-semibold">
                   {numbers.length}
                 </span>
               </button>
@@ -1018,14 +1018,14 @@ export function StudentTopicStatusBoard({
                   }}
                   data-active={activeFilter === "without-homework"}
                   className={cx(
-                    "ui-pressable flex w-full items-center justify-between gap-3 rounded-[16px] border px-4 py-2.5 text-left text-sm font-medium transition sm:w-auto sm:shrink-0 sm:rounded-full sm:px-5 sm:py-2.5",
+                    "ui-pressable flex w-full items-center justify-between gap-3 rounded-[16px] border px-4 py-2.5 text-left text-sm font-medium transition sm:w-auto sm:shrink-0 sm:px-5 sm:py-2.5",
                     activeFilter === "without-homework"
                       ? "border-brand-200 bg-[linear-gradient(180deg,rgba(239,246,255,1),rgba(219,234,254,0.92))] text-brand-700 shadow-[0_12px_24px_rgba(59,130,246,0.14)]"
                       : "border-slate-200 bg-white text-slate-700 hover:border-brand-300 hover:text-brand-700"
                   )}
                 >
                   <span>Без ДЗ</span>
-                  <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-500">
+                  <span className="ui-chip-count rounded-[10px] px-2 py-0.5 text-xs font-semibold">
                     {numbersWithoutHomeworkCount}
                   </span>
                 </button>
@@ -1046,7 +1046,7 @@ export function StudentTopicStatusBoard({
                     }}
                     data-active={isActive}
                     className={cx(
-                      "ui-pressable w-full rounded-[16px] border px-4 py-2.5 text-left text-sm font-medium transition sm:inline-flex sm:w-auto sm:shrink-0 sm:items-center sm:gap-2 sm:rounded-full sm:px-5 sm:py-2.5",
+                      "ui-pressable w-full rounded-[16px] border px-4 py-2.5 text-left text-sm font-medium transition sm:inline-flex sm:w-auto sm:shrink-0 sm:items-center sm:gap-2 sm:px-5 sm:py-2.5",
                       isActive && isCompleted
                         ? "border-emerald-200 bg-emerald-50 text-emerald-700 shadow-[0_12px_24px_rgba(16,185,129,0.14)]"
                         : isActive
@@ -1061,7 +1061,7 @@ export function StudentTopicStatusBoard({
                         {isCompleted ? <span>✓</span> : null}
                         <span>{group.label}</span>
                       </span>
-                      <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs font-semibold text-slate-500">
+                      <span className="ui-chip-count rounded-[10px] px-2 py-0.5 text-xs font-semibold">
                         {group.solvedCount}/{group.count}
                       </span>
                     </span>
@@ -1083,7 +1083,7 @@ export function StudentTopicStatusBoard({
         ) : null}
 
         {isTopicCompleted ? (
-          <details className="rounded-[24px] border border-emerald-200 bg-emerald-50/70">
+          <details className="rounded-[20px] border border-emerald-200 bg-emerald-50/70">
             <summary className="ui-pressable flex cursor-pointer list-none items-center justify-between gap-4 px-4 py-4 [&::-webkit-details-marker]:hidden">
               <div>
                 <p className="text-sm font-semibold text-emerald-900">Тема полностью решена</p>
@@ -1091,7 +1091,7 @@ export function StudentTopicStatusBoard({
                   Все номера уже отмечены зеленым или желтым. Подробности можно открыть в любой момент.
                 </p>
               </div>
-              <span className="rounded-full border border-emerald-200 bg-white px-4 py-2 text-sm font-semibold text-emerald-800">
+              <span className="rounded-[12px] border border-emerald-200 bg-white px-4 py-2 text-sm font-semibold text-emerald-800">
                 Показать номера
               </span>
             </summary>

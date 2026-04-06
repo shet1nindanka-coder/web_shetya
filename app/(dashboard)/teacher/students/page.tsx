@@ -129,7 +129,7 @@ export default async function TeacherStudentsPage({ searchParams }: TeacherStude
 
             <button
               type="submit"
-              className="ui-pressable w-full rounded-2xl bg-slate-950 px-5 py-3 text-sm font-semibold text-white transition hover:bg-brand-700 sm:w-auto"
+              className="ui-pressable w-full rounded-[16px] bg-slate-950 px-5 py-3 text-sm font-semibold text-white transition hover:bg-brand-700 sm:w-auto"
             >
               Добавить ученика
             </button>
@@ -159,7 +159,7 @@ export default async function TeacherStudentsPage({ searchParams }: TeacherStude
                     <div className="mt-4">
                       <Link
                         href={`/teacher/students/${student.id}`}
-                        className="ui-pressable inline-flex w-full justify-center rounded-full border border-slate-200 bg-slate-50 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-brand-300 hover:text-brand-700 sm:w-auto"
+                        className="ui-pressable inline-flex w-full justify-center rounded-[14px] border border-slate-200 bg-slate-50 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-brand-300 hover:text-brand-700 sm:w-auto"
                       >
                         Смотреть прогресс
                       </Link>

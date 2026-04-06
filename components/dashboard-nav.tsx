@@ -33,11 +33,11 @@ export function DashboardNav({ user }: DashboardNavProps) {
           {items.length > 0 ? <nav className="flex flex-wrap gap-2" /> : null}
         </div>
 
-        <div className="app-topbar-profile ui-card-soft flex w-full flex-col gap-3 rounded-[20px] px-4 py-3 sm:w-auto sm:flex-row sm:items-center sm:justify-between sm:rounded-[24px]">
+        <div className="app-topbar-profile ui-card-soft flex w-full flex-col gap-3 rounded-[18px] px-4 py-3 sm:w-auto sm:flex-row sm:items-center sm:justify-between sm:rounded-[20px]">
           <div className="min-w-0">
             <div className="mb-1.5 flex flex-wrap items-center gap-2">
               <p className="truncate font-semibold text-[var(--theme-text-strong)]">{user.name}</p>
-              <span className="ui-badge-soft inline-flex items-center rounded-full px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.16em]">
+              <span className="ui-badge-soft inline-flex items-center rounded-[10px] px-2.5 py-1 text-[10px] font-semibold uppercase tracking-[0.14em]">
                 {user.role === UserRole.TEACHER ? "Преподаватель" : "Ученик"}
               </span>
             </div>
@@ -46,7 +46,7 @@ export function DashboardNav({ user }: DashboardNavProps) {
           <form action={logoutAction}>
             <button
               type="submit"
-              className="ui-pressable ui-button-secondary w-full rounded-full px-4 py-2 text-sm font-medium transition sm:w-auto"
+              className="ui-pressable ui-button-secondary w-full rounded-[14px] px-4 py-2 text-sm font-medium transition sm:w-auto"
             >
               Выйти
             </button>

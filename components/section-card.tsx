@@ -19,7 +19,7 @@ export function SectionCard({
   return (
     <section
       className={cx(
-        "ui-section-card ui-fade-slide ui-surface rounded-[22px] border p-4 sm:rounded-[24px] sm:p-5 lg:rounded-[28px] lg:p-6",
+        "ui-section-card ui-fade-slide ui-surface rounded-[18px] border p-4 sm:rounded-[20px] sm:p-5 lg:rounded-[22px] lg:p-6",
         className
       )}
     >

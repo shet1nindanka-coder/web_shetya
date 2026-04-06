@@ -13,7 +13,7 @@ export function StatCard({ label, value, hint, accent, className }: StatCardProp
   return (
     <article
       className={cx(
-        "ui-stat-card ui-fade-slide ui-surface rounded-[20px] border p-4 sm:rounded-[22px] sm:p-5 lg:rounded-[24px]",
+        "ui-stat-card ui-fade-slide ui-surface rounded-[18px] border p-4 sm:rounded-[20px] sm:p-5 lg:rounded-[22px]",
         className
       )}
     >

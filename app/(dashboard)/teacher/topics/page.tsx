@@ -124,7 +124,7 @@ export default async function TeacherTopicsPage({ searchParams }: TeacherTopicsP
                 <div className="mt-5 flex flex-wrap gap-3">
                   <Link
                     href={`/teacher/topics/${topic.id}`}
-                    className="ui-pressable inline-flex w-full justify-center rounded-full bg-slate-950 px-5 py-3 text-sm font-semibold text-white transition hover:bg-brand-700 sm:w-auto"
+                    className="ui-pressable inline-flex w-full justify-center rounded-[16px] bg-slate-950 px-5 py-3 text-sm font-semibold text-white transition hover:bg-brand-700 sm:w-auto"
                   >
                     Открыть и редактировать
                   </Link>
