@@ -176,17 +176,23 @@ export async function GET(
     const csvBody = rows
       .map((row) => row.map((value) => escapeCsvValue(value ?? "")).join(CSV_DELIMITER))
       .join("\r\n");
-    const csv = `\uFEFFsep=${CSV_DELIMITER}\r\n${csvBody}`;
+    const csv = `sep=${CSV_DELIMITER}\r\n${csvBody}`;
 
     const fileName = sanitizeFileName(`progress-${data.student.id}-${new Date().toISOString().slice(0, 10)}.csv`);
     const safeUnicodeFileName = fileName || `progress-student-${new Date().toISOString().slice(0, 10)}.csv`;
     const safeAsciiFileName = toAsciiFileName(safeUnicodeFileName);
     const encodedUnicodeFileName = encodeURIComponent(safeUnicodeFileName);
 
-    return new NextResponse(csv, {
+    // Excel on Windows often opens UTF-8 CSV as ANSI (mojibake for Cyrillic).
+    // UTF-16LE with BOM is parsed reliably without manual import steps.
+    const utf16LeBom = Buffer.from([0xff, 0xfe]);
+    const utf16LeBody = Buffer.from(csv, "utf16le");
+    const csvBuffer = Buffer.concat([utf16LeBom, utf16LeBody]);
+
+    return new NextResponse(csvBuffer, {
       status: 200,
       headers: {
-        "Content-Type": "text/csv; charset=utf-8",
+        "Content-Type": "text/csv; charset=utf-16le",
         "Content-Disposition": `attachment; filename="${safeAsciiFileName}"; filename*=UTF-8''${encodedUnicodeFileName}`,
         "Cache-Control": "no-store"
       }
