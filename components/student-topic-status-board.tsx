@@ -684,35 +684,41 @@ export function StudentTopicStatusBoard({
     () => new Map(homeworkGroups.map((group) => [group.id, group])),
     [homeworkGroups]
   );
-  const numbersWithoutHomeworkCount = useMemo(
-    () => numbers.filter((number) => !number.deadlineAt).length,
-    [numbers]
-  );
   const filteredNumbers = useMemo(() => {
-    if (activeFilter === "all") {
+    if (!homeworkGroups.length || activeFilter === "all") {
       return numbers;
     }
 
-    if (activeFilter === "without-homework") {
-      return numbers.filter((number) => !number.deadlineAt);
-    }
-
     return numbers.filter((number) => number.deadlineAt === activeFilter);
-  }, [activeFilter, numbers]);
+  }, [activeFilter, homeworkGroups.length, numbers]);
   const deferredFilteredNumbers = useDeferredValue(filteredNumbers);
   const isTopicCompleted = totalNumbers > 0 && summary.solvedCount === totalNumbers;
-  const hasHomeworkFilters = numbers.length > 0;
+  const hasHomeworkFilters = homeworkGroups.length > 0;
   const hasIssuedHomeworkGroups = homeworkGroups.length > 0;
 
   useEffect(() => {
-    if (activeFilter === "all" || activeFilter === "without-homework") {
+    if (!hasIssuedHomeworkGroups) {
+      if (activeFilter !== "all") {
+        setActiveFilter("all");
+      }
+
       return;
     }
 
     if (!homeworkGroupsByDeadline.has(activeFilter)) {
-      setActiveFilter("all");
+      setActiveFilter(homeworkGroups[0]!.id);
     }
-  }, [activeFilter, homeworkGroupsByDeadline]);
+  }, [activeFilter, hasIssuedHomeworkGroups, homeworkGroups, homeworkGroupsByDeadline]);
+
+  useEffect(() => {
+    if (!hasIssuedHomeworkGroups) {
+      return;
+    }
+
+    if (activeFilter === "all" || activeFilter === "without-homework") {
+      setActiveFilter(homeworkGroups[0]!.id);
+    }
+  }, [activeFilter, hasIssuedHomeworkGroups, homeworkGroups]);
 
   const updateNumberStatus = useCallback(async (homeworkNumberId: string, nextStatus: HomeworkNumberStatus | null) => {
     const currentNumber = numbersRef.current.find((number) => number.id === homeworkNumberId);
@@ -977,53 +983,9 @@ export function StudentTopicStatusBoard({
 
         {hasHomeworkFilters ? (
           <div className="mb-5 space-y-3">
-            <p className="text-sm font-medium text-slate-500">Фильтры</p>
+            <p className="text-sm font-medium text-slate-500">Выберите ДЗ</p>
 
             <div className="grid gap-2 sm:flex sm:flex-wrap sm:gap-2">
-              <button
-                type="button"
-                onClick={() => {
-                  startTransition(() => {
-                    setActiveFilter("all");
-                  });
-                }}
-                data-active={activeFilter === "all"}
-                className={cx(
-                  "ui-pressable flex w-full items-center justify-between gap-3 rounded-[16px] border px-4 py-2.5 text-left text-sm font-medium transition sm:w-auto sm:shrink-0 sm:px-5 sm:py-2.5",
-                  activeFilter === "all"
-                    ? "border-brand-200 bg-[linear-gradient(180deg,rgba(239,246,255,1),rgba(219,234,254,0.92))] text-brand-700 shadow-[0_12px_24px_rgba(59,130,246,0.14)]"
-                    : "border-slate-200 bg-white text-slate-700 hover:border-brand-300 hover:text-brand-700"
-                )}
-              >
-                <span>Все номера</span>
-                <span className="ui-chip-count rounded-[10px] px-2 py-0.5 text-xs font-semibold">
-                  {numbers.length}
-                </span>
-              </button>
-
-              {hasIssuedHomeworkGroups && numbersWithoutHomeworkCount > 0 ? (
-                <button
-                  type="button"
-                  onClick={() => {
-                    startTransition(() => {
-                      setActiveFilter("without-homework");
-                    });
-                  }}
-                  data-active={activeFilter === "without-homework"}
-                  className={cx(
-                    "ui-pressable flex w-full items-center justify-between gap-3 rounded-[16px] border px-4 py-2.5 text-left text-sm font-medium transition sm:w-auto sm:shrink-0 sm:px-5 sm:py-2.5",
-                    activeFilter === "without-homework"
-                      ? "border-brand-200 bg-[linear-gradient(180deg,rgba(239,246,255,1),rgba(219,234,254,0.92))] text-brand-700 shadow-[0_12px_24px_rgba(59,130,246,0.14)]"
-                      : "border-slate-200 bg-white text-slate-700 hover:border-brand-300 hover:text-brand-700"
-                  )}
-                >
-                  <span>Без ДЗ</span>
-                  <span className="ui-chip-count rounded-[10px] px-2 py-0.5 text-xs font-semibold">
-                    {numbersWithoutHomeworkCount}
-                  </span>
-                </button>
-              ) : null}
-
               {homeworkGroups.map((group) => {
                 const isActive = activeFilter === group.id;
                 const isCompleted = group.isCompleted;
@@ -1070,7 +1032,7 @@ export function StudentTopicStatusBoard({
             </div>
 
             <p className="ui-hint text-sm leading-6 text-slate-500">
-              Показано {deferredFilteredNumbers.length} из {numbers.length} номеров.
+              Показаны номера выбранного ДЗ: {deferredFilteredNumbers.length}.
             </p>
           </div>
         ) : null}
