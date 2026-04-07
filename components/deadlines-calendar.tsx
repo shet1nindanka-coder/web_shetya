@@ -149,6 +149,7 @@ export function DeadlinesCalendar({ deadlines }: DeadlinesCalendarProps) {
                 onClick={() => {
                   setPreviewDayKey((current) => (current === dayKey ? null : dayKey));
                 }}
+                aria-expanded={isPreviewOpen}
                 className={`relative flex h-12 w-full flex-col items-center justify-center rounded-[10px] border text-sm transition ${
                   isCurrentMonth
                     ? "border-slate-200 bg-white text-[var(--theme-text-strong)] hover:border-brand-300"
@@ -160,16 +161,15 @@ export function DeadlinesCalendar({ deadlines }: DeadlinesCalendarProps) {
                 <span>{day.getDate()}</span>
                 {hasDeadlines ? (
                   <span
-                    className={`mt-1 inline-flex min-w-4 items-center justify-center rounded-full px-1 text-[10px] font-semibold leading-4 ${
+                    aria-hidden
+                    className={`mt-1 inline-flex h-2.5 w-2.5 rotate-45 rounded-[2px] ${
                       hasOverdue
-                        ? "bg-rose-500 text-white"
+                        ? "bg-rose-500"
                         : hasSoon
-                        ? "bg-amber-500 text-white"
-                        : "bg-brand-500 text-white"
+                        ? "bg-amber-500"
+                        : "bg-brand-500"
                     }`}
-                  >
-                    {dayItems.length}
-                  </span>
+                  />
                 ) : null}
               </button>
 
@@ -180,10 +180,16 @@ export function DeadlinesCalendar({ deadlines }: DeadlinesCalendarProps) {
                     : "pointer-events-none -translate-y-1 scale-[0.98] opacity-0"
                 }`}
               >
-                <p className="mb-1 text-xs font-semibold text-[var(--theme-text-muted)]">
-                  {new Intl.DateTimeFormat("ru-RU", { day: "numeric", month: "long" }).format(day)}
-                </p>
-                <DeadlineList items={dayItems} compact emptyMessage="На этот день дедлайнов нет." />
+                <div className="mb-2 rounded-[10px] border border-slate-200 bg-slate-50 px-2.5 py-2">
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--theme-text-muted)]">Дедлайн по ДЗ</p>
+                  <p className="mt-0.5 text-sm font-semibold text-[var(--theme-text-strong)]">
+                    {new Intl.DateTimeFormat("ru-RU", { day: "numeric", month: "long" }).format(day)}
+                  </p>
+                </div>
+                <DeadlineList items={dayItems} compact emptyMessage="На этот день дедлайн не назначен." />
+                {dayItems.length > 0 ? (
+                  <p className="mt-2 text-[11px] text-[var(--theme-text-muted)]">Нажмите вне окна или Esc, чтобы закрыть.</p>
+                ) : null}
               </div>
             </div>
           );
