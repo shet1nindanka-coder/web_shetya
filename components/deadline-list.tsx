@@ -28,10 +28,8 @@ export function DeadlineList({ items, emptyMessage = "На эту дату де�
           <li key={item.id} className="ui-surface rounded-[14px] border p-3">
             <div className="min-w-0">
               <p className="font-medium text-[var(--theme-text-strong)]">{item.topicTitle}</p>
-              <div className="mt-1.5 space-y-1">
-                <div className="h-2">
-                  <ProgressBar value={progressPercent} />
-                </div>
+              <div className="mt-1.5 space-y-1.5">
+                <ProgressBar value={progressPercent} size="sm" />
                 <p className="text-xs text-[var(--theme-text-muted)]">Прогресс ДЗ: {progressPercent}%</p>
               </div>
             </div>
