@@ -44,8 +44,8 @@ function isMissingColumn(error: unknown, column: "note" | "deadlineAt") {
 }
 
 async function loadExportData(studentId: string) {
-  const student = await prisma.user.findFirstOrThrow({
-    where: { id: studentId, role: UserRole.STUDENT },
+  const student = await prisma.user.findUniqueOrThrow({
+    where: { id: studentId },
     select: { id: true, name: true, email: true }
   });
 
