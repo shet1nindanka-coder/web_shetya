@@ -31,14 +31,36 @@ function escapeCsvValue(value: string | number) {
   return `"${stringValue}"`;
 }
 
-function toAsciiFileName(value: string) {
-  const normalized = value
-    .normalize("NFKD")
-    .replace(/[^\x20-\x7E]+/g, "-")
-    .replace(/-+/g, "-")
-    .replace(/^-|-$/g, "");
+function encodeWindows1251(text: string): Buffer {
+  const bytes: number[] = [];
 
-  return normalized || "progress.csv";
+  for (let i = 0; i < text.length; i++) {
+    const code = text.charCodeAt(i);
+
+    if (code <= 0x7f) {
+      bytes.push(code);
+    } else if (code >= 0x0410 && code <= 0x044f) {
+      bytes.push(code - 0x0410 + 0xc0);
+    } else if (code === 0x0401) {
+      bytes.push(0xa8);
+    } else if (code === 0x0451) {
+      bytes.push(0xb8);
+    } else if (code === 0xab) {
+      bytes.push(0xab);
+    } else if (code === 0xbb) {
+      bytes.push(0xbb);
+    } else if (code === 0x2013) {
+      bytes.push(0x96);
+    } else if (code === 0x2014) {
+      bytes.push(0x97);
+    } else if (code === 0x2116) {
+      bytes.push(0xb9);
+    } else {
+      bytes.push(0x3f);
+    }
+  }
+
+  return Buffer.from(bytes);
 }
 
 function isMissingStudentStatusColumnError(error: unknown, column: "note" | "deadlineAt") {
@@ -173,15 +195,11 @@ export async function GET(
 
     rows.splice(3, 0, ["Решено", `${totalSolved}/${totalNumbers}`], ["Отмечено", `${totalMarked}/${totalNumbers}`]);
 
-    const csvBody = rows
+    const csvText = rows
       .map((row) => row.map((value) => escapeCsvValue(value ?? "")).join(CSV_DELIMITER))
       .join("\r\n");
-    const csvString = `sep=${CSV_DELIMITER}\r\n${csvBody}`;
 
-    const utf8Bom = Buffer.from([0xef, 0xbb, 0xbf]);
-    const utf8Body = Buffer.from(csvString, "utf-8");
-    const csvBuffer = Buffer.concat([utf8Bom, utf8Body]);
-
+    const csvBuffer = encodeWindows1251(csvText);
     const datePart = new Date().toISOString().slice(0, 10);
     const asciiFileName = `progress-${datePart}.csv`;
 
