@@ -11,7 +11,11 @@ async function StudentDeadlinesCalendarContent({ studentId }: { studentId: strin
   const deadlines = await getStudentDeadlines(studentId);
   const assignmentDeadlines = groupStudentDeadlinesAsAssignments(deadlines);
 
-  return <DeadlinesCalendar deadlines={assignmentDeadlines} />;
+  return (
+    <div className="ui-pop-in">
+      <DeadlinesCalendar deadlines={assignmentDeadlines} />
+    </div>
+  );
 }
 
 export default async function StudentDeadlinesPage() {
@@ -25,7 +29,13 @@ export default async function StudentDeadlinesPage() {
         description="Отмечайте приоритет на ближайшие дни и не пропускайте сроки."
       />
 
-      <Suspense fallback={<StudentDeadlinesCalendarSkeleton />}>
+      <Suspense
+        fallback={
+          <div className="ui-pop-in">
+            <StudentDeadlinesCalendarSkeleton />
+          </div>
+        }
+      >
         <StudentDeadlinesCalendarContent studentId={user.id} />
       </Suspense>
     </div>
