@@ -7,7 +7,6 @@ import { FileDropInput } from "@/components/file-drop-input";
 import { FileResourceCard } from "@/components/file-resource-card";
 import { PageHeader } from "@/components/page-header";
 import { SectionCard } from "@/components/section-card";
-import { StatCard } from "@/components/stat-card";
 import { TopicEditSubmitButton } from "@/components/topic-edit-submit-button";
 import { TopicAnswerManager } from "@/components/topic-answer-manager";
 import { TopicNumbersField } from "@/components/topic-numbers-field";
@@ -118,12 +117,6 @@ export default async function TeacherTopicPage({ params, searchParams }: Teacher
         }
       />
 
-      <div className="grid grid-cols-2 gap-2.5 sm:gap-3 xl:grid-cols-4">
-        <StatCard label="Номера" value={data.stats.totalNumbers} />
-        <StatCard label="Теория" value={data.stats.theoryAttached ? "Есть" : "Нет"} />
-        <StatCard label="Задания" value={data.stats.homeworkAttached ? "Есть" : "Нет"} />
-        <StatCard label="Ответы" value={`${data.stats.answersCount}/${data.stats.totalNumbers}`} />
-      </div>
 
       <SectionCard title="Редактирование темы">
         <form action={updateTopicAction} className="space-y-4 sm:space-y-5" encType="multipart/form-data">

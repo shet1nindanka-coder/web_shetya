@@ -766,6 +766,73 @@ export async function getTeacherStudentDetail(
   return getTeacherStudentDetailCached(studentId);
 }
 
+
+// ── Student Deadlines ─────────────────────────────
+
+async function getStudentDeadlinesUncached(studentId: string) {
+  const statuses = await prisma.studentTopicNumberStatus.findMany({
+    where: {
+      studentId,
+      deadlineAt: { not: null }
+    },
+    select: {
+      id: true,
+      status: true,
+      deadlineAt: true,
+      homeworkNumber: {
+        select: {
+          id: true,
+          number: true,
+          topic: {
+            select: {
+              id: true,
+              title: true
+            }
+          }
+        }
+      }
+    },
+    orderBy: { deadlineAt: "asc" }
+  });
+
+  return statuses.map((s) => ({
+    id: s.id,
+    deadlineAt: s.deadlineAt!,
+    status: s.status,
+    homeworkNumberId: s.homeworkNumber.id,
+    homeworkNumber: s.homeworkNumber.number,
+    topicId: s.homeworkNumber.topic.id,
+    topicTitle: s.homeworkNumber.topic.title
+  }));
+}
+
+const getStudentDeadlinesCached = unstable_cache(
+  getStudentDeadlinesUncached,
+  ["student-deadlines"],
+  {
+    tags: [PLATFORM_DATA_TAGS.studentTopics]
+  }
+);
+
+export async function getStudentDeadlines(studentId: string) {
+  try {
+    return await getStudentDeadlinesCached(studentId);
+  } catch (error) {
+    if (!isRecoverablePlatformDataError(error)) {
+      throw error;
+    }
+
+    console.error("Falling back to empty deadlines due to Prisma schema mismatch.", {
+      studentId,
+      error
+    });
+
+    return [];
+  }
+}
+
+export type StudentDeadline = Awaited<ReturnType<typeof getStudentDeadlines>>[number];
+
 export async function getDashboardSummary(userId: string, role: UserRole) {
   if (role === UserRole.TEACHER) {
     return getTeacherTopicsOverview();

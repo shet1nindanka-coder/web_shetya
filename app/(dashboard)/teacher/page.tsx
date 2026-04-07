@@ -2,7 +2,6 @@ import Link from "next/link";
 import { UserRole } from "@prisma/client";
 import { PageHeader } from "@/components/page-header";
 import { SectionCard } from "@/components/section-card";
-import { StatCard } from "@/components/stat-card";
 import { requireUser } from "@/lib/auth";
 import { getTeacherTopicsOverview } from "@/lib/platform-data";
 
@@ -34,12 +33,6 @@ export default async function TeacherPage() {
         }
       />
 
-      <div className="grid grid-cols-2 gap-2.5 sm:gap-3 xl:grid-cols-4">
-        <StatCard label="Темы" value={data.stats.totalTopics} />
-        <StatCard label="Ученики" value={data.stats.totalStudents} />
-        <StatCard label="Файлы" value={data.stats.totalFiles} />
-        <StatCard label="Номера" value={data.stats.totalNumbers} />
-      </div>
 
       <SectionCard title="Быстрые переходы" description="Основные рабочие разделы преподавателя.">
         <div className="grid gap-3 sm:gap-4 md:grid-cols-2 xl:grid-cols-3">

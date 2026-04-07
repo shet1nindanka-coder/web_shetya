@@ -3,7 +3,6 @@ import { UserRole } from "@prisma/client";
 import { Badge } from "@/components/badge";
 import { PageHeader } from "@/components/page-header";
 import { SectionCard } from "@/components/section-card";
-import { StatCard } from "@/components/stat-card";
 import { requireUser } from "@/lib/auth";
 import { getStudentTopicsOverview } from "@/lib/platform-data";
 
@@ -36,12 +35,6 @@ export default async function StudentTopicsPage() {
         }
       />
 
-      <div className="grid grid-cols-2 gap-2.5 sm:gap-3 xl:grid-cols-4">
-        <StatCard label="Темы" value={data.stats.totalTopics} />
-        <StatCard label="Завершены" value={completedTopics} />
-        <StatCard label="Зелёные" value={data.stats.totalGreen} />
-        <StatCard label="Жёлтые" value={data.stats.totalYellow} />
-      </div>
 
       <SectionCard title="Список тем">
         {data.topics.length === 0 ? (

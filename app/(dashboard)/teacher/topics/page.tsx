@@ -3,7 +3,6 @@ import { UserRole } from "@prisma/client";
 import { DeleteTopicDialog } from "@/components/delete-topic-dialog";
 import { PageHeader } from "@/components/page-header";
 import { SectionCard } from "@/components/section-card";
-import { StatCard } from "@/components/stat-card";
 import { TopicCreateForm } from "@/components/topic-create-form";
 import { requireUser } from "@/lib/auth";
 import { getTeacherTopicsOverview } from "@/lib/platform-data";
@@ -101,12 +100,6 @@ export default async function TeacherTopicsPage({ searchParams }: TeacherTopicsP
         }
       />
 
-      <div className="grid grid-cols-2 gap-2.5 sm:gap-3 xl:grid-cols-4">
-        <StatCard label="Темы" value={data.stats.totalTopics} />
-        <StatCard label="Файлы" value={data.stats.totalFiles} />
-        <StatCard label="Номера" value={data.stats.totalNumbers} />
-        <StatCard label="Ученики" value={data.stats.totalStudents} />
-      </div>
 
       <SectionCard title="Создать новую тему" description="Название, файлы и список номеров сохраняются одной формой." className="scroll-mt-20">
         <div id="create-topic" className="scroll-mt-20">

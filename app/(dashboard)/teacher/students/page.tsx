@@ -3,7 +3,6 @@ import { UserRole } from "@prisma/client";
 import { createStudentAction } from "@/actions/student";
 import { PageHeader } from "@/components/page-header";
 import { SectionCard } from "@/components/section-card";
-import { StatCard } from "@/components/stat-card";
 import { requireUser } from "@/lib/auth";
 import { getTeacherTopicsOverview } from "@/lib/platform-data";
 
@@ -84,12 +83,6 @@ export default async function TeacherStudentsPage({ searchParams }: TeacherStude
         }
       />
 
-      <div className="grid grid-cols-2 gap-2.5 sm:gap-3 xl:grid-cols-4">
-        <StatCard label="Ученики" value={data.students.length} />
-        <StatCard label="Темы" value={data.stats.totalTopics} />
-        <StatCard label="Номера" value={data.stats.totalNumbers} />
-        <StatCard label="Файлы" value={data.stats.totalFiles} />
-      </div>
 
       <SectionCard title="Добавить ученика" description="Создайте логин и пароль для нового ученика.">
         <div className="grid gap-4 xl:grid-cols-[0.88fr_1.12fr]">

@@ -18,3 +18,4 @@ pnpm-debug.log*
 .turbo
 .idea
 .vscode
+tsconfig.tsbuildinfo
