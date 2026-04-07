@@ -42,7 +42,7 @@ export default async function StudentTopicsPage() {
                       <p className="text-sm text-[var(--theme-text-muted)]">
                         {solvedCount} из {topic.totalNumbers} задач выполнено
                       </p>
-                      <ProgressBar value={solvedPercent} />
+                      <ProgressBar value={solvedPercent} size="sm" />
                     </div>
 
                     <Link

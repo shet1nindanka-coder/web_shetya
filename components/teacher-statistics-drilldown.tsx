@@ -213,7 +213,7 @@ export function TeacherStatisticsDrilldown({
                 {metrics.solvedCount} / {metrics.totalNumbers}
               </span>
             </div>
-            <ProgressBar value={metrics.solvedPercent} />
+            <ProgressBar value={metrics.solvedPercent} size="sm" />
           </div>
 
           <div>
@@ -223,7 +223,7 @@ export function TeacherStatisticsDrilldown({
                 {metrics.markedCount} / {metrics.totalNumbers}
               </span>
             </div>
-            <ProgressBar value={metrics.markedPercent} />
+            <ProgressBar value={metrics.markedPercent} size="sm" />
           </div>
         </div>
       </article>
@@ -240,12 +240,12 @@ export function TeacherStatisticsDrilldown({
           ))}
         </div>
 
-        <div className="mt-5 overflow-hidden rounded-full border border-slate-200 bg-slate-200/90">
-          <div className="flex h-3 w-full">
-            <RatioSegment value={metrics.greenCount} total={metrics.totalNumbers} className="bg-emerald-400" />
-            <RatioSegment value={metrics.yellowCount} total={metrics.totalNumbers} className="bg-amber-400" />
-            <RatioSegment value={metrics.redCount} total={metrics.totalNumbers} className="bg-rose-400" />
-            <RatioSegment value={metrics.unmarkedCount} total={metrics.totalNumbers} className="bg-slate-300" />
+        <div className="ui-progress-track mt-5 overflow-hidden rounded-full border border-[var(--theme-border-soft)] bg-[var(--theme-surface-soft)] shadow-[inset_0_1px_1px_rgba(15,23,42,0.06)]">
+          <div className="flex h-2.5 w-full">
+            <RatioSegment value={metrics.greenCount} total={metrics.totalNumbers} className="bg-[rgba(16,185,129,0.72)]" />
+            <RatioSegment value={metrics.yellowCount} total={metrics.totalNumbers} className="bg-[rgba(245,158,11,0.72)]" />
+            <RatioSegment value={metrics.redCount} total={metrics.totalNumbers} className="bg-[rgba(244,63,94,0.72)]" />
+            <RatioSegment value={metrics.unmarkedCount} total={metrics.totalNumbers} className="bg-[rgba(148,163,184,0.55)]" />
           </div>
         </div>
 
@@ -286,5 +286,5 @@ function RatioSegment({
     return null;
   }
 
-  return <div className={className} style={{ width: `${(value / total) * 100}%` }} />;
+  return <div className={cx("transition-[width] duration-300 ease-out", className)} style={{ width: `${(value / total) * 100}%` }} />;
 }

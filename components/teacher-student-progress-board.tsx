@@ -269,7 +269,7 @@ const TeacherTopicCard = memo(function TeacherTopicCard({
               <span>Решено по теме</span>
               <span className="font-semibold text-[var(--theme-text-strong)]">{topic.solvedPercent}%</span>
             </div>
-            <ProgressBar value={topic.solvedPercent} />
+            <ProgressBar value={topic.solvedPercent} size="sm" />
           </div>
           <div className="flex flex-wrap gap-3">
             <Link

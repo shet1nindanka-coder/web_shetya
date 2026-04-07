@@ -545,7 +545,7 @@ export default async function TeacherStatisticsPage({ searchParams }: TeacherSta
                         {totalSolved} / {totalStatusSlots}
                       </span>
                     </div>
-                    <ProgressBar value={solvedPercent} />
+                    <ProgressBar value={solvedPercent} size="sm" />
                   </div>
 
                   <div>
@@ -555,7 +555,7 @@ export default async function TeacherStatisticsPage({ searchParams }: TeacherSta
                         {activeTopics.length} / {data.stats.totalTopics}
                       </span>
                     </div>
-                    <ProgressBar value={activeTopicsPercent} />
+                    <ProgressBar value={activeTopicsPercent} size="sm" />
                   </div>
 
                   <div>
@@ -565,7 +565,7 @@ export default async function TeacherStatisticsPage({ searchParams }: TeacherSta
                         {activeStudents.length} / {data.stats.totalStudents}
                       </span>
                     </div>
-                    <ProgressBar value={activeStudentsPercent} />
+                    <ProgressBar value={activeStudentsPercent} size="sm" />
                   </div>
 
                   <div className="rounded-[14px] sm:rounded-[16px] border border-slate-200 bg-white px-4 py-4">

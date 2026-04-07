@@ -70,7 +70,7 @@ export default async function StudentPage() {
                 {solvedCount} / {totalCount}
               </span>
             </div>
-            <ProgressBar value={overview.stats.solvedPercent} />
+            <ProgressBar value={overview.stats.solvedPercent} size="md" />
             <div className="flex flex-wrap gap-2">
               <Link
                 href="/student/deadlines"

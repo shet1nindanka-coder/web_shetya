@@ -115,7 +115,7 @@ function FileUploadField({
             <span>Загрузка файла...</span>
             <span className="font-semibold">{state.progress}%</span>
           </div>
-          <ProgressBar value={state.progress} />
+          <ProgressBar value={state.progress} size="lg" />
         </div>
       ) : null}
 

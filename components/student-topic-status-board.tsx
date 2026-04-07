@@ -1097,7 +1097,7 @@ export function StudentTopicStatusBoard({
               {summary.solvedCount} / {totalNumbers}
             </span>
           </div>
-          <ProgressBar value={summary.solvedProgressPercent} />
+          <ProgressBar value={summary.solvedProgressPercent} size="md" />
         </div>
         {hasIssuedHomeworkGroups ? (
           <p className="ui-hint mt-4 text-sm leading-6 text-slate-600">Дедлайны указаны в фильтрах ДЗ.</p>

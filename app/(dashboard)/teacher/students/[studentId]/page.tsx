@@ -64,7 +64,7 @@ export default async function TeacherStudentPage({ params }: TeacherStudentPageP
                 {data.stats.totalSolved} / {data.stats.totalNumbers}
               </span>
             </div>
-            <ProgressBar value={data.stats.solvedPercent} />
+            <ProgressBar value={data.stats.solvedPercent} size="md" />
           </div>
           <div className="space-y-3 rounded-[24px] border border-slate-200 bg-slate-50/70 p-5">
             <div className="flex items-center justify-between text-sm text-slate-600">
@@ -73,7 +73,7 @@ export default async function TeacherStudentPage({ params }: TeacherStudentPageP
                 {data.stats.totalMarked} / {data.stats.totalNumbers}
               </span>
             </div>
-            <ProgressBar value={data.stats.markedPercent} />
+            <ProgressBar value={data.stats.markedPercent} size="md" />
           </div>
         </div>
       </SectionCard>
