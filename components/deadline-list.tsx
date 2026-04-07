@@ -26,23 +26,24 @@ export function DeadlineList({ items, emptyMessage = "На эту дату де�
 
         return (
           <li key={item.id} className="ui-surface rounded-[14px] border p-3">
-            <div className="min-w-0">
-              <p className="font-medium text-[var(--theme-text-strong)]">{item.topicTitle}</p>
-              <div className="mt-1.5 space-y-1.5">
-                <ProgressBar value={progressPercent} size="sm" />
-                <p className="text-xs text-[var(--theme-text-muted)]">Прогресс ДЗ: {progressPercent}%</p>
+            <div className={compact ? "min-w-0" : "flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between"}>
+              <div className={compact ? "min-w-0" : "min-w-0 flex-1 sm:max-w-[660px]"}>
+                <p className="font-medium text-[var(--theme-text-strong)]">{item.topicTitle}</p>
+                <div className="mt-1.5 space-y-1.5">
+                  <ProgressBar value={progressPercent} size="sm" />
+                  <p className="text-xs text-[var(--theme-text-muted)]">Прогресс ДЗ: {progressPercent}%</p>
+                </div>
               </div>
-            </div>
-            {!compact ? (
-              <div className="mt-2 flex flex-wrap items-center justify-end gap-2">
+
+              {!compact ? (
                 <Link
                   href={`/student/topics/${item.topicId}`}
-                  className="ui-pressable ui-button-secondary inline-flex rounded-[10px] px-2.5 py-1.5 text-xs font-semibold"
+                  className="ui-pressable ui-button-secondary inline-flex w-full justify-center rounded-[10px] px-2.5 py-1.5 text-xs font-semibold sm:w-auto sm:shrink-0"
                 >
                   Открыть тему
                 </Link>
-              </div>
-            ) : null}
+              ) : null}
+            </div>
           </li>
         );
       })}
