@@ -1,6 +1,7 @@
 import { UserRole } from "@prisma/client";
 import { updatePasswordAction, updateProfileInfoAction } from "@/actions/profile";
 import { InterfaceSettingsPanel } from "@/components/interface-settings-panel";
+import { PageHeader } from "@/components/page-header";
 import { SectionCard } from "@/components/section-card";
 import { formatDate } from "@/lib/utils";
 
@@ -90,7 +91,6 @@ export function resolveAccountNotice(searchParams: ResolvedSearchParams) {
 export function AccountSettingsView({ user, notice }: AccountSettingsViewProps) {
   const isTeacher = user.role === UserRole.TEACHER;
   const roleLabel = isTeacher ? "Преподаватель" : "Ученик";
-  const settingsOverview = ["Интерфейс", "Профиль", "Пароль"];
 
   return (
     <div className="space-y-8">
@@ -106,49 +106,28 @@ export function AccountSettingsView({ user, notice }: AccountSettingsViewProps) 
         </div>
       ) : null}
 
-      <section className="grid gap-5 xl:grid-cols-[1.08fr_0.92fr]">
-        <div className="ui-surface rounded-[18px] border p-5 text-center sm:rounded-[20px] sm:p-6">
-          <p className="ui-kicker">Настройки</p>
-          <h1 className="mt-3 font-display text-3xl font-semibold text-[var(--theme-text-strong)] sm:text-4xl">Настройки</h1>
-          <p className="ui-hint ui-copy-muted mx-auto mt-4 max-w-2xl text-sm leading-6 sm:text-base sm:leading-7">Интерфейс, профиль и безопасность в одном месте.</p>
-
-          <div className="mt-5 grid gap-3 sm:grid-cols-3">
-            {settingsOverview.map((item) => (
-              <div key={item} className="settings-summary-item rounded-[16px] px-4 py-4">
-                <p className="text-sm font-semibold text-[var(--theme-text-default)]">{item}</p>
-              </div>
-            ))}
+      <PageHeader
+        eyebrow="Настройки"
+        title="Настройки"
+        description="Интерфейс, профиль и безопасность в одном месте."
+        metrics={[
+          { label: "Роль", value: roleLabel },
+          { label: "На платформе", value: formatDate(user.createdAt) }
+        ]}
+        aside={
+          <div className="ui-page-header-panel rounded-[18px] p-4 sm:p-5">
+            <p className="ui-kicker">Сейчас в профиле</p>
+            <p className="mt-2 text-lg font-semibold text-[var(--theme-text-strong)]">{user.name}</p>
+            <p className="mt-2 text-sm leading-6 text-[var(--theme-text-muted)]">{user.email}</p>
           </div>
-        </div>
-
-        <div className="settings-summary-card ui-surface rounded-[18px] border p-5 text-center sm:rounded-[20px] sm:p-6">
-          <p className="ui-kicker">Сейчас в профиле</p>
-          <div className="mt-5 grid gap-4 sm:grid-cols-2">
-            <div className="settings-summary-item rounded-[16px] px-4 py-4 sm:col-span-2">
-              <p className="ui-copy-muted text-sm">Имя</p>
-              <p className="mt-2 text-xl font-semibold text-[var(--theme-text-strong)]">{user.name}</p>
-            </div>
-            <div className="settings-summary-item rounded-[16px] px-4 py-4 sm:col-span-2">
-              <p className="ui-copy-muted text-sm">Логин</p>
-              <p className="mt-2 break-all text-sm font-medium text-[var(--theme-text-default)]">{user.email}</p>
-            </div>
-            <div className="settings-summary-item rounded-[16px] px-4 py-4">
-              <p className="ui-copy-muted text-sm">Роль</p>
-              <p className="mt-2 text-sm font-semibold text-[var(--theme-text-strong)]">{roleLabel}</p>
-            </div>
-            <div className="settings-summary-item rounded-[16px] px-4 py-4">
-              <p className="ui-copy-muted text-sm">На платформе с</p>
-              <p className="mt-2 text-sm font-semibold text-[var(--theme-text-strong)]">{formatDate(user.createdAt)}</p>
-            </div>
-          </div>
-        </div>
-      </section>
+        }
+      />
 
       <InterfaceSettingsPanel />
 
       <SectionCard
         title="Личная информация"
-        description="Имя можно обновить, логин остаётся фиксированным."
+        description="Логин остаётся фиксированным, имя можно обновить."
       >
         <form action={updateProfileInfoAction} className="grid gap-4 lg:grid-cols-2">
           <label className="block space-y-2">

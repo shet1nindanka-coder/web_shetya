@@ -1,7 +1,9 @@
 import Link from "next/link";
 import { UserRole } from "@prisma/client";
 import { DeleteTopicDialog } from "@/components/delete-topic-dialog";
+import { PageHeader } from "@/components/page-header";
 import { SectionCard } from "@/components/section-card";
+import { StatCard } from "@/components/stat-card";
 import { TopicCreateForm } from "@/components/topic-create-form";
 import { requireUser } from "@/lib/auth";
 import { getTeacherTopicsOverview } from "@/lib/platform-data";
@@ -71,22 +73,45 @@ export default async function TeacherTopicsPage({ searchParams }: TeacherTopicsP
         </div>
       ) : null}
 
-      <section className="grid gap-6 lg:grid-cols-[1.15fr_0.85fr]">
-        <div className="page-header-panel rounded-[28px] border border-white/70 bg-slate-950 px-5 py-6 text-white shadow-glow sm:rounded-[36px] sm:px-6 sm:py-8">
-          <h1 className="font-display text-3xl font-semibold sm:text-4xl">Темы</h1>
-          <p className="ui-hint mt-4 max-w-2xl text-sm leading-6 text-slate-300 sm:text-base sm:leading-7">
-            Материалы, номера и ответы.
-          </p>
-        </div>
+      <PageHeader
+        eyebrow="Темы"
+        title="Материалы и номера"
+        description="Создание тем, загрузка файлов и настройка ответов в одном рабочем разделе."
+        metrics={[
+          { label: "Темы", value: data.stats.totalTopics },
+          { label: "Файлы", value: data.stats.totalFiles },
+          { label: "Номера", value: data.stats.totalNumbers }
+        ]}
+        actions={
+          <a
+            href="#create-topic"
+            className="ui-pressable ui-button-primary inline-flex rounded-[14px] px-4 py-2.5 text-sm font-semibold transition"
+          >
+            Создать тему
+          </a>
+        }
+        aside={
+          <div className="ui-page-header-panel rounded-[18px] p-4 sm:p-5">
+            <p className="ui-kicker">Содержимое раздела</p>
+            <p className="mt-2 font-display text-[1.7rem] font-semibold text-[var(--theme-text-strong)]">
+              {data.topics.length} тем
+            </p>
+            <p className="mt-2 text-sm leading-6 text-[var(--theme-text-muted)]">Каждая тема объединяет материалы, номера и ответы к заданиям.</p>
+          </div>
+        }
+      />
 
-        <div className="rounded-[28px] border border-brand-100 bg-white/90 p-5 shadow-glow sm:rounded-[36px] sm:p-6">
-          <p className="text-sm font-medium text-slate-500">Материалы</p>
-          <p className="mt-4 text-2xl font-semibold text-slate-950 sm:text-3xl">Темы, файлы и номера</p>
-        </div>
-      </section>
+      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+        <StatCard label="Темы" value={data.stats.totalTopics} />
+        <StatCard label="Файлы" value={data.stats.totalFiles} />
+        <StatCard label="Номера" value={data.stats.totalNumbers} />
+        <StatCard label="Ученики" value={data.stats.totalStudents} />
+      </div>
 
-      <SectionCard title="Создать новую тему">
+      <SectionCard title="Создать новую тему" description="Название, файлы и список номеров сохраняются одной формой." className="scroll-mt-24">
+        <div id="create-topic" className="scroll-mt-24">
         <TopicCreateForm uploadMode={uploadMode} blobAccess={blobAccess} />
+        </div>
       </SectionCard>
 
       <SectionCard title="Все темы">
@@ -97,21 +122,37 @@ export default async function TeacherTopicsPage({ searchParams }: TeacherTopicsP
         ) : (
           <div className="grid gap-4 xl:grid-cols-2">
             {data.topics.map((topic) => (
-              <article key={topic.id} className="rounded-[24px] border border-slate-200 bg-slate-50/80 p-4 shadow-[0_12px_35px_rgba(15,23,42,0.06)] sm:rounded-[28px] sm:p-5">
-                <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-                  <div className="space-y-3">
-                    <div>
-                      <h2 className="font-display text-[1.55rem] font-semibold text-slate-950 sm:text-2xl">{topic.title}</h2>
-                      <p className="mt-2 text-sm text-slate-500">{topic.totalNumbers} номеров</p>
+              <article key={topic.id} className="ui-surface rounded-[20px] border p-4 sm:p-5">
+                <div className="flex flex-col gap-4">
+                  <div className="space-y-2">
+                    <h2 className="font-display text-[1.45rem] font-semibold text-[var(--theme-text-strong)] sm:text-[1.7rem]">
+                      {topic.title}
+                    </h2>
+                    {topic.description ? (
+                      <p className="ui-hint text-sm leading-6 text-[var(--theme-text-muted)]">{topic.description}</p>
+                    ) : null}
+                  </div>
+
+                  <div className="grid gap-2 sm:grid-cols-3">
+                    <div className="ui-mini-stat-card">
+                      <p className="ui-mini-stat-card-label">Номера</p>
+                      <p className="ui-mini-stat-card-value mt-2">{topic.totalNumbers}</p>
                     </div>
-                    {topic.description ? <p className="ui-hint text-sm leading-6 text-slate-600">{topic.description}</p> : null}
+                    <div className="ui-mini-stat-card">
+                      <p className="ui-mini-stat-card-label">Активных учеников</p>
+                      <p className="ui-mini-stat-card-value mt-2">{topic.studentsWithActivity}</p>
+                    </div>
+                    <div className="ui-mini-stat-card">
+                      <p className="ui-mini-stat-card-label">Отмечено статусов</p>
+                      <p className="ui-mini-stat-card-value mt-2">{topic.markedCount}</p>
+                    </div>
                   </div>
                 </div>
 
-                <div className="mt-5 flex flex-wrap gap-3">
+                <div className="mt-4 flex flex-wrap gap-3">
                   <Link
                     href={`/teacher/topics/${topic.id}`}
-                    className="ui-pressable inline-flex w-full justify-center rounded-[16px] bg-slate-950 px-5 py-3 text-sm font-semibold text-white transition hover:bg-brand-700 sm:w-auto"
+                    className="ui-pressable ui-button-primary inline-flex w-full justify-center rounded-[14px] px-4 py-2.5 text-sm font-semibold transition sm:w-auto"
                   >
                     Открыть и редактировать
                   </Link>

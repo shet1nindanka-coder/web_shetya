@@ -163,14 +163,14 @@ export function TeacherStatisticsDrilldown({
 
   return (
     <div className="grid gap-4 xl:grid-cols-[0.86fr_1.14fr]">
-      <article className="ui-surface rounded-[24px] border border-slate-200 bg-slate-50/80 p-5 sm:rounded-[28px] sm:p-6">
+      <article className="ui-surface rounded-[20px] border p-4 sm:p-5">
         <div className="grid gap-4">
           <label className="space-y-2">
             <span className="text-sm font-medium text-slate-600">Тема</span>
             <select
               value={selectedTopic?.id ?? ""}
               onChange={(event) => setSelectedTopicId(event.target.value)}
-              className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-950 outline-none transition focus:border-brand-400"
+              className="ui-input w-full rounded-[16px] px-4 py-3 text-sm font-medium"
             >
               {topics.map((topic) => (
                 <option key={topic.id} value={topic.id}>
@@ -185,7 +185,7 @@ export function TeacherStatisticsDrilldown({
             <select
               value={selectedStudent?.id ?? ""}
               onChange={(event) => setSelectedStudentId(event.target.value)}
-              className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-medium text-slate-950 outline-none transition focus:border-brand-400"
+              className="ui-input w-full rounded-[16px] px-4 py-3 text-sm font-medium"
             >
               {students.map((student) => (
                 <option key={student.id} value={student.id}>
@@ -196,7 +196,7 @@ export function TeacherStatisticsDrilldown({
           </label>
         </div>
 
-        <div className="mt-5 rounded-[24px] border border-slate-200 bg-white px-4 py-4">
+        <div className="ui-card-soft mt-5 rounded-[18px] px-4 py-4">
           <p className="text-sm font-medium text-slate-500">Выбрано</p>
           <p className="mt-2 text-lg font-semibold text-slate-950">{selectedTopic?.title ?? "Тема не выбрана"}</p>
           <p className="mt-1 text-sm text-slate-500">
@@ -228,10 +228,10 @@ export function TeacherStatisticsDrilldown({
         </div>
       </article>
 
-      <article className="ui-surface rounded-[24px] border border-slate-200 bg-slate-50/80 p-5 sm:rounded-[28px] sm:p-6">
+      <article className="ui-surface rounded-[20px] border p-4 sm:p-5">
         <div className="grid gap-3 sm:grid-cols-3">
           {statusCards.map((card) => (
-            <div key={card.key} className={cx("rounded-[22px] border px-4 py-4", card.className)}>
+            <div key={card.key} className={cx("rounded-[18px] border px-4 py-4", card.className)}>
               <p className="text-sm font-medium">{card.label}</p>
               <p className="mt-2 font-display text-3xl font-semibold">
                 {metrics[card.valueKey]}

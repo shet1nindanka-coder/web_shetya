@@ -1,3 +1,4 @@
+import { PageHeader } from "@/components/page-header";
 import { SectionCard } from "@/components/section-card";
 
 const scoreTable = [
@@ -17,30 +18,34 @@ const taskScoring = [
 export default function StudentInfoPage() {
   return (
     <div className="space-y-8">
-      <section className="grid gap-6 lg:grid-cols-[1.15fr_0.85fr]">
-        <div className="page-header-panel rounded-[36px] border border-white/70 bg-slate-950 px-6 py-8 text-white shadow-glow">
-          <h1 className="font-display text-4xl font-semibold">Баллы и разбалловка</h1>
-          <p className="ui-hint mt-4 max-w-2xl text-base leading-7 text-slate-300">Быстрая справка по ЕГЭ.</p>
-        </div>
-
-        <div className="rounded-[36px] border border-brand-100 bg-white/90 p-6 shadow-glow">
-          <p className="text-sm font-medium text-slate-500">Коротко</p>
-          <p className="mt-4 text-3xl font-semibold text-slate-950">Максимум — 32 первичных балла</p>
-          <p className="ui-hint mt-3 text-sm leading-6 text-slate-600">30 первичных баллов и выше дают 100 тестовых.</p>
-        </div>
-      </section>
+      <PageHeader
+        eyebrow="Общая инфа"
+        title="Баллы и разбалловка"
+        description="Краткая справка по первичным и тестовым баллам ЕГЭ."
+        metrics={[
+          { label: "Максимум", value: "32 первичных" },
+          { label: "100 тестовых", value: "от 30", tone: "accent" }
+        ]}
+        aside={
+          <div className="ui-page-header-panel rounded-[18px] p-4 sm:p-5">
+            <p className="ui-kicker">Коротко</p>
+            <p className="mt-2 font-display text-[1.7rem] font-semibold text-[var(--theme-text-strong)]">30+ = 100</p>
+            <p className="mt-2 text-sm leading-6 text-[var(--theme-text-muted)]">Начиная с 30 первичных баллов тестовый результат уже равен 100.</p>
+          </div>
+        }
+      />
 
       <SectionCard title="Соответствие баллов">
-        <div className="overflow-hidden rounded-[28px] border border-slate-200">
-          <div className="grid grid-cols-2 bg-slate-950 text-sm font-semibold text-white">
-            <div className="px-5 py-4">Первичный балл</div>
-            <div className="border-l border-white/10 px-5 py-4">Тестовый балл</div>
+        <div className="overflow-hidden rounded-[20px] border border-slate-200 bg-white">
+          <div className="grid grid-cols-2 border-b border-slate-200 bg-slate-50 text-sm font-semibold text-slate-700">
+            <div className="px-4 py-3 sm:px-5">Первичный балл</div>
+            <div className="border-l border-slate-200 px-4 py-3 sm:px-5">Тестовый балл</div>
           </div>
-          <div className="divide-y divide-slate-200 bg-white">
+          <div className="divide-y divide-slate-200">
             {scoreTable.map(([primary, test]) => (
-              <div key={primary} className="grid grid-cols-2 text-sm text-slate-700">
-                <div className="px-5 py-3 font-semibold text-slate-950">{primary}</div>
-                <div className="border-l border-slate-100 px-5 py-3">{test}</div>
+              <div key={primary} className="grid grid-cols-2 text-sm text-slate-700 odd:bg-white even:bg-slate-50/60">
+                <div className="px-4 py-3 font-semibold text-slate-950 sm:px-5">{primary}</div>
+                <div className="border-l border-slate-100 px-4 py-3 sm:px-5">{test}</div>
               </div>
             ))}
           </div>
@@ -48,10 +53,10 @@ export default function StudentInfoPage() {
       </SectionCard>
 
       <SectionCard title="Разбалловка номеров ЕГЭ">
-        <div className="grid gap-4 md:grid-cols-2">
+        <div className="grid gap-3 md:grid-cols-2">
           {taskScoring.map((item) => (
-            <article key={item} className="rounded-[24px] border border-slate-200 bg-slate-50/80 p-5">
-              <p className="text-base leading-7 text-slate-700">{item}</p>
+            <article key={item} className="ui-mini-stat-card">
+              <p className="text-sm leading-6 text-slate-700 sm:text-[0.95rem]">{item}</p>
             </article>
           ))}
         </div>

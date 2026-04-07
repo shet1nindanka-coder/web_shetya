@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { UserRole } from "@prisma/client";
 import { Badge } from "@/components/badge";
+import { PageHeader } from "@/components/page-header";
 import { SectionCard } from "@/components/section-card";
 import { StatCard } from "@/components/stat-card";
 import { requireUser } from "@/lib/auth";
@@ -15,22 +16,25 @@ export default async function StudentTopicsPage() {
 
   return (
     <div className="space-y-8">
-      <section className="grid gap-6 lg:grid-cols-[1.15fr_0.85fr]">
-        <div className="page-header-panel rounded-[28px] border border-white/70 bg-slate-950 px-5 py-6 text-white shadow-glow sm:rounded-[36px] sm:px-6 sm:py-8">
-          <h1 className="font-display text-3xl font-semibold sm:text-4xl">Темы</h1>
-          <p className="ui-hint mt-4 max-w-2xl text-sm leading-6 text-slate-300 sm:text-base sm:leading-7">
-            Откройте тему и продолжайте работу.
-          </p>
-        </div>
-
-        <div className="rounded-[28px] border border-brand-100 bg-white/90 p-5 shadow-glow sm:rounded-[36px] sm:p-6">
-          <p className="text-sm font-medium text-slate-500">По всем темам</p>
-          <p className="mt-4 text-2xl font-semibold text-slate-950 sm:text-3xl">
-            {data.stats.totalSolved} из {data.stats.totalNumbers} номеров уже решены
-          </p>
-          <p className="mt-5 text-sm font-medium text-emerald-700">Завершено тем: {completedTopics}</p>
-        </div>
-      </section>
+      <PageHeader
+        eyebrow="Темы"
+        title="Все темы"
+        description="Откройте тему и продолжайте работу с того места, где остановились."
+        metrics={[
+          { label: "Всего тем", value: data.stats.totalTopics },
+          { label: "Решено", value: `${data.stats.totalSolved} / ${data.stats.totalNumbers}` },
+          { label: "Завершено", value: completedTopics, tone: "success" }
+        ]}
+        aside={
+          <div className="ui-page-header-panel rounded-[18px] p-4 sm:p-5">
+            <p className="ui-kicker">По всем темам</p>
+            <p className="mt-2 font-display text-[1.85rem] font-semibold text-[var(--theme-text-strong)]">
+              {data.stats.totalSolved} / {data.stats.totalNumbers}
+            </p>
+            <p className="mt-2 text-sm text-[var(--theme-text-muted)]">Решённые номера по всем доступным темам.</p>
+          </div>
+        }
+      />
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         <StatCard label="Темы" value={data.stats.totalTopics} />
@@ -50,39 +54,58 @@ export default async function StudentTopicsPage() {
               const isCompleted = topic.totalNumbers > 0 && topic.greenCount + topic.yellowCount === topic.totalNumbers;
 
               return (
-              <article key={topic.id} className="rounded-[24px] border border-slate-200 bg-slate-50/80 p-4 shadow-[0_12px_35px_rgba(15,23,42,0.06)] sm:rounded-[28px] sm:p-5">
-                <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
-                  <div className="space-y-3">
-                    <div>
-                      <h2 className="font-display text-[1.55rem] font-semibold text-slate-950 sm:text-2xl">{topic.title}</h2>
-                      <p className="mt-2 text-sm text-slate-500">{topic.totalNumbers} номеров</p>
+                <article key={topic.id} className="ui-surface rounded-[20px] border p-4 sm:p-5">
+                  <div className="flex flex-col gap-4">
+                    <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                      <div className="space-y-2">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <h2 className="font-display text-[1.45rem] font-semibold text-[var(--theme-text-strong)] sm:text-[1.7rem]">
+                            {topic.title}
+                          </h2>
+                          {isCompleted ? (
+                            <Badge className="border-emerald-200 bg-emerald-50 text-emerald-700">✓ Завершена</Badge>
+                          ) : null}
+                        </div>
+                        {topic.description ? (
+                          <p className="ui-hint max-w-2xl text-sm leading-6 text-[var(--theme-text-muted)]">{topic.description}</p>
+                        ) : null}
+                      </div>
+
+                      <Link
+                        href={`/student/topics/${topic.id}`}
+                        className="ui-pressable ui-button-primary inline-flex w-full justify-center rounded-[14px] px-4 py-2.5 text-sm font-semibold transition sm:w-auto"
+                      >
+                        Открыть
+                      </Link>
                     </div>
-                    {topic.description ? <p className="ui-hint text-sm leading-6 text-slate-600">{topic.description}</p> : null}
-                    <div className="flex flex-wrap gap-2">
-                      <Badge className="border-slate-200 bg-white text-slate-700">{topic.greenCount + topic.yellowCount} решено</Badge>
-                      {isCompleted ? (
-                        <Badge className="border-emerald-200 bg-emerald-50 text-emerald-700">✓ Тема завершена</Badge>
-                      ) : null}
+
+                    <div className="grid gap-2 sm:grid-cols-4">
+                      <div className="ui-mini-stat-card">
+                        <p className="ui-mini-stat-card-label">Номера</p>
+                        <p className="ui-mini-stat-card-value mt-2">{topic.totalNumbers}</p>
+                      </div>
+                      <div className="ui-mini-stat-card">
+                        <p className="ui-mini-stat-card-label">Решено</p>
+                        <p className="ui-mini-stat-card-value mt-2">{topic.greenCount + topic.yellowCount}</p>
+                      </div>
+                      <div className="ui-mini-stat-card">
+                        <p className="ui-mini-stat-card-label">Желтые</p>
+                        <p className="ui-mini-stat-card-value mt-2 text-amber-700">{topic.yellowCount}</p>
+                      </div>
+                      <div className="ui-mini-stat-card">
+                        <p className="ui-mini-stat-card-label">Красные</p>
+                        <p className="ui-mini-stat-card-value mt-2 text-rose-700">{topic.redCount}</p>
+                      </div>
                     </div>
                   </div>
-                </div>
 
-                <div className="mt-5 flex flex-wrap gap-x-5 gap-y-2 text-sm text-slate-600">
-                  <span>Зеленые: <span className="font-semibold text-emerald-700">{topic.greenCount}</span></span>
-                  <span>Желтые: <span className="font-semibold text-amber-700">{topic.yellowCount}</span></span>
-                  <span>Красные: <span className="font-semibold text-rose-700">{topic.redCount}</span></span>
-                </div>
-
-                <div className="mt-5">
-                  <Link
-                    href={`/student/topics/${topic.id}`}
-                    className="ui-pressable inline-flex w-full justify-center rounded-[16px] bg-slate-950 px-5 py-3 text-sm font-semibold text-white transition hover:bg-brand-700 sm:w-auto"
-                  >
-                    Открыть
-                  </Link>
-                </div>
-              </article>
-            );
+                  <div className="mt-4 flex flex-wrap gap-2">
+                    <Badge className="border-slate-200 bg-white text-slate-700">{topic.greenCount} зелёных</Badge>
+                    <Badge className="border-slate-200 bg-white text-slate-700">{topic.yellowCount} жёлтых</Badge>
+                    <Badge className="border-slate-200 bg-white text-slate-700">{topic.redCount} красных</Badge>
+                  </div>
+                </article>
+              );
             })}
           </div>
         )}

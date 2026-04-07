@@ -1,7 +1,9 @@
 import Link from "next/link";
 import { UserRole } from "@prisma/client";
 import { createStudentAction } from "@/actions/student";
+import { PageHeader } from "@/components/page-header";
 import { SectionCard } from "@/components/section-card";
+import { StatCard } from "@/components/stat-card";
 import { requireUser } from "@/lib/auth";
 import { getTeacherTopicsOverview } from "@/lib/platform-data";
 
@@ -62,25 +64,38 @@ export default async function TeacherStudentsPage({ searchParams }: TeacherStude
         </div>
       ) : null}
 
-      <section className="grid gap-6 lg:grid-cols-[1.15fr_0.85fr]">
-        <div className="page-header-panel rounded-[28px] border border-white/70 bg-slate-950 px-5 py-6 text-white shadow-glow sm:rounded-[36px] sm:px-6 sm:py-8">
-          <h1 className="font-display text-3xl font-semibold sm:text-4xl">Ученики</h1>
-          <p className="ui-hint mt-4 max-w-2xl text-sm leading-6 text-slate-300 sm:text-base sm:leading-7">
-            Аккаунты и личный прогресс.
-          </p>
-        </div>
+      <PageHeader
+        eyebrow="Ученики"
+        title="Аккаунты и прогресс"
+        description="Создавайте доступы ученикам и открывайте их личные результаты из одного списка."
+        metrics={[
+          { label: "Ученики", value: data.students.length },
+          { label: "Темы в системе", value: data.stats.totalTopics },
+          { label: "Номера в системе", value: data.stats.totalNumbers }
+        ]}
+        aside={
+          <div className="ui-page-header-panel rounded-[18px] p-4 sm:p-5">
+            <p className="ui-kicker">Работа с учениками</p>
+            <p className="mt-2 font-display text-[1.65rem] font-semibold text-[var(--theme-text-strong)]">
+              {data.students.length} аккаунтов
+            </p>
+            <p className="mt-2 text-sm leading-6 text-[var(--theme-text-muted)]">Новые логины создаются здесь же, без отдельной панели администратора.</p>
+          </div>
+        }
+      />
 
-        <div className="rounded-[28px] border border-brand-100 bg-white/90 p-5 shadow-glow sm:rounded-[36px] sm:p-6">
-          <p className="text-sm font-medium text-slate-500">Работа с учениками</p>
-          <p className="mt-4 text-2xl font-semibold text-slate-950 sm:text-3xl">Создание аккаунтов и переход в прогресс</p>
-        </div>
-      </section>
+      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+        <StatCard label="Ученики" value={data.students.length} />
+        <StatCard label="Темы" value={data.stats.totalTopics} />
+        <StatCard label="Номера" value={data.stats.totalNumbers} />
+        <StatCard label="Файлы" value={data.stats.totalFiles} />
+      </div>
 
-      <SectionCard title="Добавить ученика">
+      <SectionCard title="Добавить ученика" description="Создайте логин и пароль для нового ученика.">
         <div className="grid gap-6 xl:grid-cols-[0.88fr_1.12fr]">
-          <form action={createStudentAction} className="space-y-4 rounded-[24px] border border-slate-200 bg-slate-50/80 p-4 sm:rounded-[28px] sm:p-5">
+          <form action={createStudentAction} className="space-y-4 rounded-[20px] border border-slate-200 bg-slate-50/80 p-4 sm:p-5">
             <div className="space-y-2">
-              <h3 className="font-display text-[1.55rem] font-semibold text-slate-950 sm:text-2xl">Создать доступ ученику</h3>
+              <h3 className="font-display text-[1.35rem] font-semibold text-slate-950 sm:text-[1.55rem]">Создать доступ ученику</h3>
               <p className="ui-hint text-sm leading-6 text-slate-600">Можно использовать e-mail как логин.</p>
             </div>
 
@@ -126,11 +141,11 @@ export default async function TeacherStudentsPage({ searchParams }: TeacherStude
             </button>
           </form>
 
-          <div className="ui-fade-slide ui-surface rounded-[24px] border border-slate-200 bg-slate-50/80 p-4 sm:rounded-[28px] sm:p-5">
+          <div className="ui-fade-slide ui-surface rounded-[20px] border p-4 sm:p-5">
             <div className="flex flex-wrap items-center justify-between gap-3">
               <div>
-                <p className="text-sm font-medium text-slate-500">Текущие ученики</p>
-                <h3 className="font-display mt-2 text-[1.55rem] font-semibold text-slate-950 sm:text-2xl">
+                <p className="ui-kicker">Текущие ученики</p>
+                <h3 className="font-display mt-2 text-[1.35rem] font-semibold text-slate-950 sm:text-[1.55rem]">
                   {data.students.length} аккаунтов ученика
                 </h3>
               </div>
@@ -143,7 +158,7 @@ export default async function TeacherStudentsPage({ searchParams }: TeacherStude
             ) : (
               <div className="mt-5 grid gap-3 md:grid-cols-2">
                 {data.students.map((student) => (
-                  <article key={student.id} className="ui-surface rounded-2xl border border-white bg-white px-4 py-4">
+                  <article key={student.id} className="ui-surface rounded-[18px] border border-white bg-white px-4 py-4">
                     <p className="font-semibold text-slate-950">{student.name}</p>
                     <p className="mt-2 text-sm text-slate-500">Логин</p>
                     <p className="text-sm font-medium text-slate-700">{student.email}</p>

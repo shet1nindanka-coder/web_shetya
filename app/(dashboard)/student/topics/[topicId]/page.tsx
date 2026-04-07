@@ -1,6 +1,6 @@
-import Link from "next/link";
 import { UserRole } from "@prisma/client";
 import { FileResourceCard } from "@/components/file-resource-card";
+import { PageHeader } from "@/components/page-header";
 import { StudentTopicStatusBoard } from "@/components/student-topic-status-board";
 import { StudentTopicTabs } from "@/components/student-topic-tabs";
 import { requireUser } from "@/lib/auth";
@@ -20,15 +20,18 @@ export default async function StudentTopicPage({ params }: StudentTopicPageProps
 
   return (
     <div className="space-y-8">
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <Link href="/student/topics" className="text-sm font-semibold text-brand-700 transition hover:text-brand-900">
-            ← Ко всем темам
-          </Link>
-          <h1 className="font-display mt-3 text-3xl font-semibold text-slate-950 sm:text-4xl">{topic.title}</h1>
-          <p className="mt-3 max-w-3xl text-sm leading-6 text-slate-600 sm:text-base sm:leading-7">{topic.description}</p>
-        </div>
-      </div>
+      <PageHeader
+        backHref="/student/topics"
+        backLabel="← Ко всем темам"
+        eyebrow="Тема"
+        title={topic.title}
+        description={topic.description}
+        metrics={[
+          { label: "Номера", value: topic.totalNumbers },
+          { label: "Теория", value: topic.theoryFile ? "Есть" : "Нет", tone: topic.theoryFile ? "accent" : "default" },
+          { label: "Задания", value: topic.homeworkFile ? "Есть" : "Нет", tone: topic.homeworkFile ? "accent" : "default" }
+        ]}
+      />
 
       <StudentTopicTabs
         hasTheoryFile={Boolean(topic.theoryFile)}

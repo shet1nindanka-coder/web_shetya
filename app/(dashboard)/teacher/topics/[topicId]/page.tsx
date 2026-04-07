@@ -5,6 +5,7 @@ import { Badge } from "@/components/badge";
 import { DeleteTopicDialog } from "@/components/delete-topic-dialog";
 import { FileDropInput } from "@/components/file-drop-input";
 import { FileResourceCard } from "@/components/file-resource-card";
+import { PageHeader } from "@/components/page-header";
 import { SectionCard } from "@/components/section-card";
 import { StatCard } from "@/components/stat-card";
 import { TopicEditSubmitButton } from "@/components/topic-edit-submit-button";
@@ -87,28 +88,35 @@ export default async function TeacherTopicPage({ params, searchParams }: Teacher
         </div>
       ) : null}
 
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <Link href="/teacher/topics" className="text-sm font-semibold text-brand-700 transition hover:text-brand-900">
-            ← Ко всем темам
-          </Link>
-          <h1 className="font-display mt-3 text-4xl font-semibold text-slate-950">{data.topic.title}</h1>
-          <p className="mt-3 max-w-3xl text-base leading-7 text-slate-600">{data.topic.description}</p>
-          <div className="mt-5 flex flex-wrap gap-2">
-            <Badge className="border-slate-200 bg-white text-slate-700">Номеров {data.stats.totalNumbers}</Badge>
-            <Badge className="border-slate-200 bg-white text-slate-700">
-              Ответов {data.stats.answersCount}/{data.stats.totalNumbers}
-            </Badge>
+      <PageHeader
+        backHref="/teacher/topics"
+        backLabel="← Ко всем темам"
+        eyebrow="Тема"
+        title={data.topic.title}
+        description={data.topic.description}
+        metrics={[
+          { label: "Номера", value: data.stats.totalNumbers },
+          { label: "Ответы", value: `${data.stats.answersCount} / ${data.stats.totalNumbers}` },
+          { label: "Файлы", value: `${Number(data.stats.theoryAttached) + Number(data.stats.homeworkAttached)} / 2` }
+        ]}
+        aside={
+          <div className="ui-page-header-aside">
+            <div className="ui-page-header-panel rounded-[18px] p-4 sm:p-5">
+              <p className="ui-kicker">Готовность темы</p>
+              <div className="mt-3 flex flex-wrap gap-2">
+                <Badge className="border-slate-200 bg-white text-slate-700">Теория {data.stats.theoryAttached ? "есть" : "нет"}</Badge>
+                <Badge className="border-slate-200 bg-white text-slate-700">Задания {data.stats.homeworkAttached ? "есть" : "нет"}</Badge>
+              </div>
+            </div>
+            <DeleteTopicDialog
+              topicId={data.topic.id}
+              topicTitle={data.topic.title}
+              triggerLabel="Удалить тему"
+              triggerClassName="ui-pressable rounded-[14px] border border-rose-200 bg-rose-50 px-4 py-2.5 text-sm font-semibold text-rose-700 transition hover:bg-rose-100"
+            />
           </div>
-        </div>
-
-        <DeleteTopicDialog
-          topicId={data.topic.id}
-          topicTitle={data.topic.title}
-          triggerLabel="Удалить тему"
-          triggerClassName="rounded-[14px] border border-rose-200 bg-rose-50 px-5 py-3 text-sm font-semibold text-rose-700 transition hover:bg-rose-100"
-        />
-      </div>
+        }
+      />
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         <StatCard label="Номера" value={data.stats.totalNumbers} />

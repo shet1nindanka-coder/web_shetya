@@ -1,6 +1,5 @@
-import Link from "next/link";
 import { UserRole } from "@prisma/client";
-import { Badge } from "@/components/badge";
+import { PageHeader } from "@/components/page-header";
 import { ProgressBar } from "@/components/progress-bar";
 import { SectionCard } from "@/components/section-card";
 import { StatCard } from "@/components/stat-card";
@@ -22,35 +21,32 @@ export default async function TeacherStudentPage({ params }: TeacherStudentPageP
 
   return (
     <div className="space-y-8">
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <div>
-          <Link href="/teacher/students" className="text-sm font-semibold text-brand-700 transition hover:text-brand-900">
-            ← Ко всем ученикам
-          </Link>
-          <h1 className="font-display mt-3 text-4xl font-semibold text-slate-950">{data.student.name}</h1>
-          <p className="mt-3 text-sm text-slate-500">{data.student.email}</p>
-          <p className="mt-5 text-sm text-slate-500">
-            Тем: <span className="font-semibold text-slate-950">{data.stats.totalTopics}</span>
-            {" · "}
-            Решено: <span className="font-semibold text-slate-950">{data.stats.totalSolved}/{data.stats.totalNumbers}</span>
-            {" · "}
-            Отмечено: <span className="font-semibold text-slate-950">{data.stats.totalMarked}/{data.stats.totalNumbers}</span>
-          </p>
-        </div>
-
-        <div className="rounded-[24px] border border-slate-200 bg-white px-5 py-4 text-sm text-slate-600">
-          Ученик в системе с{" "}
-          <span className="font-semibold text-slate-950">{formatDate(data.student.createdAt)}</span>
-          <div className="mt-3">
+      <PageHeader
+        backHref="/teacher/students"
+        backLabel="← Ко всем ученикам"
+        eyebrow="Ученик"
+        title={data.student.name}
+        description={data.student.email}
+        metrics={[
+          { label: "Темы", value: data.stats.totalTopics },
+          { label: "Решено", value: `${data.stats.totalSolved} / ${data.stats.totalNumbers}` },
+          { label: "Отмечено", value: `${data.stats.totalMarked} / ${data.stats.totalNumbers}` }
+        ]}
+        aside={
+          <div className="ui-page-header-aside">
+            <div className="ui-page-header-panel rounded-[18px] p-4 sm:p-5">
+              <p className="ui-kicker">Ученик в системе</p>
+              <p className="mt-2 text-sm font-semibold text-[var(--theme-text-strong)]">{formatDate(data.student.createdAt)}</p>
+            </div>
             <a
               href={`/teacher/students/${data.student.id}/export`}
-              className="ui-pressable inline-flex rounded-[14px] border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-brand-300 hover:text-brand-700"
+              className="ui-pressable ui-button-secondary inline-flex justify-center rounded-[14px] px-4 py-2.5 text-sm font-semibold transition"
             >
               Экспорт прогресса CSV
             </a>
           </div>
-        </div>
-      </div>
+        }
+      />
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         <StatCard label="Темы" value={data.stats.totalTopics} />

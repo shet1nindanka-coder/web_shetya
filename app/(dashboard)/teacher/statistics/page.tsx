@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { HomeworkNumberStatus, UserRole } from "@prisma/client";
+import { PageHeader } from "@/components/page-header";
 import { ProgressBar } from "@/components/progress-bar";
 import { SectionCard } from "@/components/section-card";
 import { StatCard } from "@/components/stat-card";
@@ -306,60 +307,72 @@ export default async function TeacherStatisticsPage({ searchParams }: TeacherSta
 
   return (
     <div className="space-y-8">
-      <section className="grid gap-6 xl:grid-cols-[1.12fr_0.88fr]">
-        <div className="page-header-panel rounded-[28px] border border-white/70 bg-slate-950 px-5 py-6 text-white shadow-glow sm:rounded-[36px] sm:px-6 sm:py-8">
-          <h1 className="font-display text-3xl font-semibold sm:text-4xl">{headlineTitle}</h1>
-          <p className="ui-hint mt-4 max-w-2xl text-sm leading-6 text-slate-300 sm:text-base sm:leading-7">
-            {headlineDescription}
-          </p>
-          <div className="mt-6 flex flex-wrap gap-2 text-sm text-slate-200">
-            <span className="rounded-[12px] border border-white/10 bg-white/5 px-3 py-1.5">
-              Тем: <span className="font-semibold text-white">{data.stats.totalTopics}</span>
-            </span>
-            <span className="rounded-[12px] border border-white/10 bg-white/5 px-3 py-1.5">
-              Ученики: <span className="font-semibold text-white">{data.stats.totalStudents}</span>
-            </span>
-            <span className="rounded-[12px] border border-white/10 bg-white/5 px-3 py-1.5">
-              Номера: <span className="font-semibold text-white">{data.stats.totalNumbers}</span>
-            </span>
-            <span className="rounded-[12px] border border-white/10 bg-white/5 px-3 py-1.5">
-              Файлы: <span className="font-semibold text-white">{data.stats.totalFiles}</span>
-            </span>
-          </div>
-        </div>
-
-        <div className="grid gap-4 sm:grid-cols-3 xl:grid-cols-1">
-          <InsightCard
-            label="Лучше всего идет"
-            value={strongestTopic ? strongestTopic.title : "Пока нет данных"}
-            hint={
-              strongestTopic
-                ? `${strongestTopic.solvedPercent}% решенных слотов, ${strongestTopic.solvedCount} решенных статусов`
-                : "Как только появится активность, здесь покажется самая сильная тема."
-            }
-          />
-          <InsightCard
-            label="Больше всего внимания"
-            value={attentionTopic ? attentionTopic.title : "Пока без красных"}
-            hint={
-              attentionTopic
-                ? `${attentionTopic.redCount} красных статусов и ${attentionTopic.studentsWithActivity} активных учеников`
-                : "Сейчас нет тем, в которых уже накопились красные статусы."
-            }
-          />
-          <InsightCard
-            label={view === "teacher" ? "Кому первым нужен разбор" : "Ключевой ученик"}
-            value={firstReviewStudent ? firstReviewStudent.name : leadStudent ? leadStudent.name : "Пока нет красных"}
-            hint={
-              firstReviewStudent
-                ? `${firstReviewStudent.totalRed} красных номеров в ${firstReviewStudent.topicCount} темах`
+      <PageHeader
+        eyebrow="Статистика"
+        title={headlineTitle}
+        description={headlineDescription}
+        metrics={[
+          { label: "Темы", value: data.stats.totalTopics },
+          { label: "Ученики", value: data.stats.totalStudents },
+          { label: "Номера", value: data.stats.totalNumbers },
+          { label: "Файлы", value: data.stats.totalFiles }
+        ]}
+        aside={
+          <div className="ui-page-header-panel rounded-[18px] p-4 sm:p-5">
+            <p className="ui-kicker">{view === "teacher" ? "Главный приоритет" : "Лидер по прогрессу"}</p>
+            <p className="mt-2 text-lg font-semibold text-[var(--theme-text-strong)]">
+              {view === "teacher"
+                ? firstReviewStudent
+                  ? firstReviewStudent.name
+                  : "Пока без красных"
                 : leadStudent
-                  ? `${leadStudent.solvedCount} решенных номеров и ${leadStudent.markedCount} отмеченных статусов`
-                  : "Когда появятся красные статусы, здесь сразу будет виден главный кандидат на разбор."
-            }
-          />
-        </div>
-      </section>
+                  ? leadStudent.name
+                  : "Пока нет активности"}
+            </p>
+            <p className="mt-2 text-sm leading-6 text-[var(--theme-text-muted)]">
+              {view === "teacher"
+                ? firstReviewStudent
+                  ? `${firstReviewStudent.totalRed} красных номеров в ${firstReviewStudent.topicCount} темах.`
+                  : "Как только появятся красные статусы, здесь будет первый кандидат на разбор."
+                : leadStudent
+                  ? `${leadStudent.solvedCount} решенных номеров и ${leadStudent.markedCount} отмеченных статусов.`
+                  : "Когда появится активность, здесь будет виден ученик с самым сильным прогрессом."}
+            </p>
+          </div>
+        }
+      />
+
+      <div className="grid gap-4 sm:grid-cols-3">
+        <InsightCard
+          label="Лучше всего идет"
+          value={strongestTopic ? strongestTopic.title : "Пока нет данных"}
+          hint={
+            strongestTopic
+              ? `${strongestTopic.solvedPercent}% решенных слотов, ${strongestTopic.solvedCount} решенных статусов`
+              : "Как только появится активность, здесь покажется самая сильная тема."
+          }
+        />
+        <InsightCard
+          label="Больше всего внимания"
+          value={attentionTopic ? attentionTopic.title : "Пока без красных"}
+          hint={
+            attentionTopic
+              ? `${attentionTopic.redCount} красных статусов и ${attentionTopic.studentsWithActivity} активных учеников`
+              : "Сейчас нет тем, в которых уже накопились красные статусы."
+          }
+        />
+        <InsightCard
+          label={view === "teacher" ? "Кому первым нужен разбор" : "Ключевой ученик"}
+          value={firstReviewStudent ? firstReviewStudent.name : leadStudent ? leadStudent.name : "Пока нет красных"}
+          hint={
+            firstReviewStudent
+              ? `${firstReviewStudent.totalRed} красных номеров в ${firstReviewStudent.topicCount} темах`
+              : leadStudent
+                ? `${leadStudent.solvedCount} решенных номеров и ${leadStudent.markedCount} отмеченных статусов`
+                : "Когда появятся красные статусы, здесь сразу будет виден главный кандидат на разбор."
+          }
+        />
+      </div>
 
       <nav className="ui-fade-slide ui-tab-shell ui-tab-strip flex gap-1.5 rounded-[20px] p-1.5 sm:flex-wrap sm:rounded-[22px] sm:p-2">
         {statisticsViews.map((item) => {

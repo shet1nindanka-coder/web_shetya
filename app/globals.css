@@ -128,6 +128,11 @@ html[data-hints="off"] .page-header-panel {
   padding-bottom: 1.15rem !important;
 }
 
+html[data-hints="off"] .ui-page-header {
+  padding-top: 1.1rem !important;
+  padding-bottom: 1.1rem !important;
+}
+
 html[data-hints="off"] .ui-section-card-header,
 html[data-hints="off"] .ui-file-card-header {
   gap: 0.65rem;
@@ -136,7 +141,7 @@ html[data-hints="off"] .ui-file-card-header {
 }
 
 html[data-hints="off"] .ui-settings-card {
-  min-height: 11.5rem;
+  min-height: 0;
 }
 
 html[data-density="compact"] .content-shell {
@@ -166,6 +171,10 @@ html[data-density="compact"] .app-dashboard-inner {
 
 html[data-density="compact"] .page-header-panel {
   padding: 1rem !important;
+}
+
+html[data-density="compact"] .ui-page-header {
+  padding: 0.95rem !important;
 }
 
 html[data-density="compact"] .ui-surface {
@@ -367,6 +376,101 @@ textarea {
   z-index: 1;
 }
 
+.ui-page-header {
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--theme-surface) 96%, white 4%), color-mix(in srgb, var(--theme-surface) 92%, transparent 8%)),
+    var(--theme-surface);
+}
+
+.ui-page-header-aside {
+  display: flex;
+  flex-direction: column;
+  gap: 0.875rem;
+}
+
+.ui-page-header-panel {
+  border: 1px solid var(--theme-border-soft);
+  background: color-mix(in srgb, var(--theme-surface-soft) 88%, white 12%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.26);
+}
+
+.ui-page-header-metrics {
+  align-items: stretch;
+}
+
+.ui-metric-pill {
+  display: inline-flex;
+  min-width: 128px;
+  flex-direction: column;
+  gap: 0.2rem;
+  border: 1px solid var(--theme-border-soft);
+  background: color-mix(in srgb, var(--theme-surface-soft) 86%, white 14%);
+  border-radius: 16px;
+  padding: 0.7rem 0.85rem;
+}
+
+.ui-metric-pill-label {
+  color: var(--theme-text-muted);
+  font-size: 0.74rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.ui-metric-pill-value {
+  color: var(--theme-text-strong);
+  font-size: 1rem;
+  font-weight: 700;
+  line-height: 1.15;
+}
+
+.ui-metric-pill-accent {
+  border-color: var(--theme-accent-border);
+  background: color-mix(in srgb, var(--theme-accent-soft) 78%, white 22%);
+}
+
+.ui-metric-pill-success {
+  border-color: var(--theme-success-border);
+  background: color-mix(in srgb, var(--theme-success-soft) 80%, white 20%);
+}
+
+.ui-metric-pill-warning {
+  border-color: var(--theme-warning-border);
+  background: color-mix(in srgb, var(--theme-warning-soft) 80%, white 20%);
+}
+
+.ui-metric-pill-danger {
+  border-color: var(--theme-danger-border);
+  background: color-mix(in srgb, var(--theme-danger-soft) 80%, white 20%);
+}
+
+.ui-mini-stat-grid {
+  display: grid;
+  gap: 0.7rem;
+}
+
+.ui-mini-stat-card {
+  border: 1px solid var(--theme-border-soft);
+  background: color-mix(in srgb, var(--theme-surface-soft) 82%, white 18%);
+  border-radius: 16px;
+  padding: 0.9rem 1rem;
+}
+
+.ui-mini-stat-card-label {
+  color: var(--theme-text-muted);
+  font-size: 0.76rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.ui-mini-stat-card-value {
+  color: var(--theme-text-strong);
+  font-size: 1.2rem;
+  font-weight: 700;
+  line-height: 1.1;
+}
+
 .page-header-panel {
   position: relative;
   overflow: hidden;
@@ -514,7 +618,6 @@ html[data-theme="dark"] .ui-surface:hover {
 
 .ui-settings-card {
   display: flex;
-  min-height: 13.25rem;
   flex-direction: column;
   border: 1px solid var(--theme-border-soft);
   background: color-mix(in srgb, var(--theme-surface-soft) 86%, white 14%);
@@ -522,7 +625,7 @@ html[data-theme="dark"] .ui-surface:hover {
 }
 
 .ui-settings-option {
-  min-height: 4.9rem;
+  min-height: 4.25rem;
   align-content: start;
 }
 
@@ -539,7 +642,7 @@ html[data-theme="dark"] .ui-surface:hover {
 
 .settings-summary-item {
   display: flex;
-  min-height: 5.5rem;
+  min-height: 4.75rem;
   flex-direction: column;
   align-items: center;
   justify-content: center;
@@ -885,6 +988,19 @@ html[data-theme="dark"] .settings-summary-card {
   background: color-mix(in srgb, var(--theme-surface) 90%, rgba(2, 6, 23, 0.2) 10%);
 }
 
+html[data-theme="dark"] .ui-page-header {
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--theme-surface) 96%, rgba(2, 6, 23, 0.12) 4%), color-mix(in srgb, var(--theme-surface) 92%, rgba(2, 6, 23, 0.08) 8%)),
+    var(--theme-surface);
+}
+
+html[data-theme="dark"] .ui-page-header-panel,
+html[data-theme="dark"] .ui-mini-stat-card,
+html[data-theme="dark"] .ui-metric-pill {
+  background: color-mix(in srgb, var(--theme-surface-soft) 90%, rgba(2, 6, 23, 0.1) 10%);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
 html[data-theme="dark"] [class*="bg-white"],
 html[data-theme="dark"] [class*="bg-slate-50"],
 html[data-theme="dark"] [class*="bg-slate-100"] {
@@ -1077,6 +1193,10 @@ html[data-theme="dark"] [class*="bg-slate-950"] {
     padding: 0.85rem !important;
   }
 
+  html[data-density="compact"] .ui-page-header {
+    padding: 0.85rem !important;
+  }
+
   html[data-density="compact"] .ui-tab {
     padding: 0.5rem 0.85rem !important;
   }
@@ -1086,6 +1206,14 @@ html[data-theme="dark"] [class*="bg-slate-950"] {
     margin-right: -4px;
     padding-left: 4px;
     padding-right: 4px;
+  }
+
+  .ui-page-header-aside {
+    width: 100%;
+  }
+
+  .ui-metric-pill {
+    min-width: calc(50% - 0.5rem);
   }
 }
 
