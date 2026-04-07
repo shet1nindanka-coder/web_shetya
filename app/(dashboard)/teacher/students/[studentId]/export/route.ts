@@ -2,65 +2,26 @@ import { Prisma, UserRole } from "@prisma/client";
 import { NextResponse } from "next/server";
 import { tryGetCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
-import { formatDateTime, sanitizeFileName } from "@/lib/utils";
+import { formatDateTime } from "@/lib/utils";
 
 export const runtime = "nodejs";
 
-const statusLabels = {
+const TAB = "\t";
+
+const statusLabels: Record<string, string> = {
   GREEN: "Зеленый",
   YELLOW: "Желтый",
   RED: "Красный"
-} as const;
+};
 
-const CSV_DELIMITER = ";";
+function sanitizeCell(value: string | number | null | undefined): string {
+  const text = String(value ?? "");
 
-function normalizeCsvValue(value: string | number) {
-  const stringValue = String(value);
-
-  // Protect from CSV formula injection in spreadsheet apps.
-  if (/^[=+\-@]/.test(stringValue)) {
-    return `'${stringValue}`;
+  if (/^[=+\-@]/.test(text)) {
+    return `'${text}`;
   }
 
-  return stringValue;
-}
-
-function escapeCsvValue(value: string | number) {
-  const stringValue = normalizeCsvValue(value).replace(/"/g, '""');
-
-  return `"${stringValue}"`;
-}
-
-function encodeWindows1251(text: string): Buffer {
-  const bytes: number[] = [];
-
-  for (let i = 0; i < text.length; i++) {
-    const code = text.charCodeAt(i);
-
-    if (code <= 0x7f) {
-      bytes.push(code);
-    } else if (code >= 0x0410 && code <= 0x044f) {
-      bytes.push(code - 0x0410 + 0xc0);
-    } else if (code === 0x0401) {
-      bytes.push(0xa8);
-    } else if (code === 0x0451) {
-      bytes.push(0xb8);
-    } else if (code === 0xab) {
-      bytes.push(0xab);
-    } else if (code === 0xbb) {
-      bytes.push(0xbb);
-    } else if (code === 0x2013) {
-      bytes.push(0x96);
-    } else if (code === 0x2014) {
-      bytes.push(0x97);
-    } else if (code === 0x2116) {
-      bytes.push(0xb9);
-    } else {
-      bytes.push(0x3f);
-    }
-  }
-
-  return Buffer.from(bytes);
+  return text.replace(/\t/g, " ").replace(/\r?\n/g, " ");
 }
 
 function isMissingStudentStatusColumnError(error: unknown, column: "note" | "deadlineAt") {
@@ -152,62 +113,70 @@ export async function GET(
     const { studentId } = await params;
     const data = await loadStudentExportData(studentId);
 
-    const totalTopics = data.topics.length;
     let totalNumbers = 0;
     let totalMarked = 0;
     let totalSolved = 0;
 
-    const rows = [
-      ["Ученик", data.student.name],
-      ["Логин", data.student.email],
-      ["Тем", totalTopics],
-      [],
-      ["Тема", "Номер", "Статус", "Заметка", "Дедлайн", "Последнее обновление"]
-    ];
+    const dataRows: string[][] = [];
 
     for (const topic of data.topics) {
       for (const number of topic.homeworkNumbers) {
         totalNumbers += 1;
         const studentStatus = number.statuses[0] ?? null;
         const statusValue = studentStatus?.status ?? null;
-        const isSolved = statusValue === "GREEN" || statusValue === "YELLOW";
 
         if (statusValue) {
           totalMarked += 1;
         }
 
-        if (isSolved) {
+        if (statusValue === "GREEN" || statusValue === "YELLOW") {
           totalSolved += 1;
         }
 
-        rows.push([
-          topic.title,
-          number.number,
-          statusValue ? statusLabels[statusValue] : "Не отмечено",
-          data.notesEnabled ? ((studentStatus as { note?: string | null })?.note ?? "") : "",
-          data.deadlinesEnabled
-            ? ((studentStatus as { deadlineAt?: Date | null })?.deadlineAt ? formatDateTime((studentStatus as { deadlineAt?: Date | null }).deadlineAt ?? null) : "")
-            : "",
-          studentStatus?.updatedAt ? formatDateTime(studentStatus.updatedAt) : ""
+        dataRows.push([
+          sanitizeCell(topic.title),
+          sanitizeCell(number.number),
+          sanitizeCell(statusValue ? statusLabels[statusValue] ?? statusValue : "Не отмечено"),
+          sanitizeCell(data.notesEnabled ? (studentStatus as { note?: string | null })?.note : ""),
+          sanitizeCell(
+            data.deadlinesEnabled && (studentStatus as { deadlineAt?: Date | null })?.deadlineAt
+              ? formatDateTime((studentStatus as { deadlineAt?: Date | null }).deadlineAt ?? null)
+              : ""
+          ),
+          sanitizeCell(studentStatus?.updatedAt ? formatDateTime(studentStatus.updatedAt) : "")
         ]);
       }
     }
 
-    rows.splice(3, 0, ["Решено", `${totalSolved}/${totalNumbers}`], ["Отмечено", `${totalMarked}/${totalNumbers}`]);
+    const lines: string[] = [
+      ["ПРОГРЕСС УЧЕНИКА"].join(TAB),
+      "",
+      ["Ученик", sanitizeCell(data.student.name)].join(TAB),
+      ["Логин", sanitizeCell(data.student.email)].join(TAB),
+      ["Тем", String(data.topics.length)].join(TAB),
+      ["Решено", `${totalSolved} из ${totalNumbers}`].join(TAB),
+      ["Отмечено", `${totalMarked} из ${totalNumbers}`].join(TAB),
+      "",
+      ["Тема", "Номер", "Статус", "Заметка", "Дедлайн", "Последнее обновление"].join(TAB),
+      ...dataRows.map((row) => row.join(TAB))
+    ];
 
-    const csvText = rows
-      .map((row) => row.map((value) => escapeCsvValue(value ?? "")).join(CSV_DELIMITER))
-      .join("\r\n");
+    const tsvString = lines.join("\r\n");
 
-    const csvBuffer = encodeWindows1251(csvText);
+    const encoder = new TextEncoder();
+    const bom = new Uint8Array([0xef, 0xbb, 0xbf]);
+    const body = encoder.encode(tsvString);
+    const result = new Uint8Array(bom.length + body.length);
+    result.set(bom);
+    result.set(body, bom.length);
+
     const datePart = new Date().toISOString().slice(0, 10);
-    const asciiFileName = `progress-${datePart}.csv`;
 
-    return new NextResponse(new Uint8Array(csvBuffer), {
+    return new NextResponse(result, {
       status: 200,
       headers: {
-        "Content-Type": "application/octet-stream",
-        "Content-Disposition": `attachment; filename="${asciiFileName}"`,
+        "Content-Type": "text/csv; charset=utf-8",
+        "Content-Disposition": `attachment; filename="progress-${datePart}.csv"`,
         "Cache-Control": "no-store"
       }
     });
