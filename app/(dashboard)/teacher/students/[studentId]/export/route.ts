@@ -203,7 +203,7 @@ export async function GET(
     const datePart = new Date().toISOString().slice(0, 10);
     const asciiFileName = `progress-${datePart}.csv`;
 
-    return new NextResponse(csvBuffer, {
+    return new NextResponse(new Uint8Array(csvBuffer), {
       status: 200,
       headers: {
         "Content-Type": "application/octet-stream",
