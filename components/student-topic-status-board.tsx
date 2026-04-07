@@ -14,6 +14,7 @@ type StudentTopicStatusBoardProps = {
   totalNumbers: number;
   notesEnabled: boolean;
   deadlinesEnabled: boolean;
+  initialHomeworkFilterId?: string;
   initialNumbers: Array<{
     id: string;
     number: number;
@@ -54,7 +55,7 @@ type StudentNumberListProps = {
   onNoteBlur: (homeworkNumberId: string) => void;
 };
 
-type HomeworkFilterId = "all" | "without-homework" | string;
+type HomeworkFilterId = "all" | string;
 
 type HomeworkGroup = {
   id: string;
@@ -576,6 +577,7 @@ export function StudentTopicStatusBoard({
   topicId,
   totalNumbers,
   notesEnabled,
+  initialHomeworkFilterId,
   initialNumbers
 }: StudentTopicStatusBoardProps) {
   const initialState = useMemo<StudentNumberState[]>(
@@ -590,7 +592,7 @@ export function StudentTopicStatusBoard({
   );
   const numbersRef = useRef<StudentNumberState[]>(initialState);
   const [numbers, setNumbers] = useState<StudentNumberState[]>(initialState);
-  const [activeFilter, setActiveFilter] = useState<HomeworkFilterId>("all");
+  const [activeFilter, setActiveFilter] = useState<HomeworkFilterId>(initialHomeworkFilterId ?? "all");
   const [saveError, setSaveError] = useState<string | null>(null);
   const statusRequestVersionRef = useRef<Record<string, number>>({});
   const noteRequestVersionRef = useRef<Record<string, number>>({});
@@ -711,11 +713,19 @@ export function StudentTopicStatusBoard({
   }, [activeFilter, hasIssuedHomeworkGroups, homeworkGroups, homeworkGroupsByDeadline]);
 
   useEffect(() => {
+    if (!initialHomeworkFilterId) {
+      return;
+    }
+
+    setActiveFilter(initialHomeworkFilterId);
+  }, [initialHomeworkFilterId]);
+
+  useEffect(() => {
     if (!hasIssuedHomeworkGroups) {
       return;
     }
 
-    if (activeFilter === "all" || activeFilter === "without-homework") {
+    if (activeFilter === "all") {
       setActiveFilter(homeworkGroups[0]!.id);
     }
   }, [activeFilter, hasIssuedHomeworkGroups, homeworkGroups]);
