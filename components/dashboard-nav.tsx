@@ -110,7 +110,7 @@ export function DashboardNav({ user }: DashboardNavProps) {
                 <form action={logoutAction}>
                   <button
                     type="submit"
-                    className="ui-button-secondary w-full rounded-[10px] px-3 py-2 text-sm font-medium transition"
+                    className="ui-pressable ui-button-secondary w-full rounded-[10px] px-3 py-2 text-sm font-medium transition"
                   >
                     Выйти из аккаунта
                   </button>

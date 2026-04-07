@@ -71,7 +71,7 @@ export function FileDropInput({
   return (
     <div className="space-y-3">
       <div className="space-y-2">
-        <label htmlFor={inputId} className="text-sm font-medium text-slate-700">
+        <label htmlFor={inputId} className="ui-form-label">
           {label}
         </label>
         <input
@@ -90,16 +90,18 @@ export function FileDropInput({
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
         className={cx(
-          "rounded-[24px] border border-dashed bg-white px-4 py-5 transition sm:px-5",
-          isDragging ? "border-brand-400 bg-brand-50/70 shadow-[0_18px_40px_rgba(59,130,246,0.14)]" : "border-slate-200"
+          "rounded-[20px] border border-dashed px-4 py-5 transition sm:px-5",
+          isDragging
+            ? "border-[var(--theme-accent-border)] bg-[var(--theme-accent-soft)] shadow-[0_14px_30px_rgba(59,130,246,0.12)]"
+            : "ui-panel-soft"
         )}
       >
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="space-y-1">
-            <p className="text-sm font-medium text-slate-900">
+            <p className="text-sm font-medium text-[var(--theme-text-strong)]">
               {selectedFileName ? selectedFileName : "Файл пока не выбран"}
             </p>
-            <p className="ui-hint text-sm leading-6 text-slate-500">{helperText}</p>
+            <p className="ui-hint text-sm leading-6 text-[var(--theme-text-muted)]">{helperText}</p>
           </div>
 
           <button

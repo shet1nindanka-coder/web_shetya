@@ -55,8 +55,8 @@ export default async function TeacherStudentsPage({ searchParams }: TeacherStude
         <div
           className={
             notice.tone === "success"
-              ? "rounded-[14px] border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-900 sm:rounded-[16px]"
-              : "rounded-[14px] border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-medium text-rose-900 sm:rounded-[16px]"
+              ? "ui-notice-success rounded-[14px] px-4 py-3 text-sm font-medium sm:rounded-[16px]"
+              : "ui-notice-error rounded-[14px] px-4 py-3 text-sm font-medium sm:rounded-[16px]"
           }
         >
           {notice.message}
@@ -86,14 +86,14 @@ export default async function TeacherStudentsPage({ searchParams }: TeacherStude
 
       <SectionCard title="Добавить ученика" description="Создайте логин и пароль для нового ученика.">
         <div className="grid gap-4 xl:grid-cols-[0.88fr_1.12fr]">
-          <form action={createStudentAction} className="space-y-3 rounded-[14px] border border-slate-200 bg-slate-50/80 p-3.5 sm:space-y-4 sm:rounded-[16px] sm:p-4">
+          <form action={createStudentAction} className="ui-panel-soft space-y-3 rounded-[14px] p-3.5 sm:space-y-4 sm:rounded-[16px] sm:p-4">
             <div className="space-y-1.5">
-              <h3 className="font-display text-base font-semibold text-slate-950 sm:text-lg">Создать доступ ученику</h3>
-              <p className="ui-hint text-sm leading-relaxed text-slate-600">Можно использовать e-mail как логин.</p>
+              <h3 className="font-display text-base font-semibold text-[var(--theme-text-strong)] sm:text-lg">Создать доступ ученику</h3>
+              <p className="ui-hint text-sm leading-relaxed text-[var(--theme-text-muted)]">Можно использовать e-mail как логин.</p>
             </div>
 
             <label className="block space-y-1.5">
-              <span className="text-sm font-medium text-slate-700">Имя ученика</span>
+              <span className="ui-form-label">Имя ученика</span>
               <input
                 type="text"
                 name="name"
@@ -104,7 +104,7 @@ export default async function TeacherStudentsPage({ searchParams }: TeacherStude
             </label>
 
             <label className="block space-y-1.5">
-              <span className="text-sm font-medium text-slate-700">Логин ученика</span>
+              <span className="ui-form-label">Логин ученика</span>
               <input
                 type="text"
                 name="login"
@@ -115,7 +115,7 @@ export default async function TeacherStudentsPage({ searchParams }: TeacherStude
             </label>
 
             <label className="block space-y-1.5">
-              <span className="text-sm font-medium text-slate-700">Пароль</span>
+              <span className="ui-form-label">Пароль</span>
               <input
                 type="password"
                 name="password"
@@ -145,16 +145,16 @@ export default async function TeacherStudentsPage({ searchParams }: TeacherStude
             </div>
 
             {data.students.length === 0 ? (
-              <div className="mt-4 rounded-[14px] border border-dashed border-slate-200 bg-white/70 px-4 py-6 text-center text-sm text-slate-600">
+              <div className="ui-panel-soft mt-4 rounded-[14px] border-dashed px-4 py-6 text-center text-sm text-[var(--theme-text-muted)]">
                 Пока ни одного ученика не добавлено.
               </div>
             ) : (
               <div className="mt-4 grid gap-2.5 sm:gap-3 md:grid-cols-2">
                 {data.students.map((student) => (
-                  <article key={student.id} className="ui-surface rounded-[12px] border bg-white px-3.5 py-3 sm:rounded-[14px] sm:px-4 sm:py-3.5">
-                    <p className="font-semibold text-slate-950">{student.name}</p>
-                    <p className="mt-1.5 text-xs text-slate-500">Логин</p>
-                    <p className="text-sm font-medium text-slate-700">{student.email}</p>
+                  <article key={student.id} className="ui-panel-soft rounded-[12px] px-3.5 py-3 sm:rounded-[14px] sm:px-4 sm:py-3.5">
+                    <p className="font-semibold text-[var(--theme-text-strong)]">{student.name}</p>
+                    <p className="mt-1.5 text-xs text-[var(--theme-text-muted)]">Логин</p>
+                    <p className="text-sm font-medium text-[var(--theme-text-default)]">{student.email}</p>
                     <div className="mt-3">
                       <Link
                         href={`/teacher/students/${student.id}`}

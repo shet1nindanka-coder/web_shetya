@@ -64,8 +64,8 @@ export default async function TeacherTopicsPage({ searchParams }: TeacherTopicsP
         <div
           className={
             notice.tone === "success"
-              ? "rounded-[14px] border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-900 sm:rounded-[16px]"
-              : "rounded-[14px] border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-medium text-rose-900 sm:rounded-[16px]"
+              ? "ui-notice-success rounded-[14px] px-4 py-3 text-sm font-medium sm:rounded-[16px]"
+              : "ui-notice-error rounded-[14px] px-4 py-3 text-sm font-medium sm:rounded-[16px]"
           }
         >
           {notice.message}
@@ -109,8 +109,8 @@ export default async function TeacherTopicsPage({ searchParams }: TeacherTopicsP
 
       <SectionCard title="Все темы">
         {data.topics.length === 0 ? (
-          <div className="rounded-[16px] border border-dashed border-slate-200 bg-slate-50/60 px-4 py-8 text-center sm:rounded-[20px] sm:px-5 sm:py-10">
-            <p className="font-display text-lg font-semibold text-slate-950 sm:text-xl">Пока нет ни одной темы</p>
+          <div className="ui-panel-soft rounded-[16px] border-dashed px-4 py-8 text-center sm:rounded-[20px] sm:px-5 sm:py-10">
+            <p className="font-display text-lg font-semibold text-[var(--theme-text-strong)] sm:text-xl">Пока нет ни одной темы</p>
           </div>
         ) : (
           <div className="grid gap-3 sm:gap-4 xl:grid-cols-2">

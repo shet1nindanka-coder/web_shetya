@@ -19,7 +19,7 @@ function DeleteSubmitButton() {
     <button
       type="submit"
       disabled={pending}
-      className="ui-pressable rounded-2xl bg-rose-600 px-4 py-3 text-sm font-semibold text-white transition hover:bg-rose-700 disabled:cursor-not-allowed disabled:bg-rose-300"
+      className="ui-pressable ui-button-danger rounded-2xl px-4 py-3 text-sm font-semibold transition disabled:cursor-not-allowed"
     >
       {pending ? "Удаляем..." : "Да, удалить"}
     </button>
@@ -60,7 +60,7 @@ export function DeleteTopicDialog({
         type="button"
         onClick={() => setIsOpen(true)}
         className={cx(
-          "ui-pressable inline-flex rounded-[14px] border border-rose-200 bg-rose-50 px-5 py-3 text-sm font-semibold text-rose-700 transition hover:bg-rose-100",
+          "ui-pressable ui-button-danger inline-flex rounded-[14px] px-5 py-3 text-sm font-semibold transition",
           triggerClassName
         )}
       >
@@ -73,14 +73,14 @@ export function DeleteTopicDialog({
           onClick={() => setIsOpen(false)}
         >
           <div
-            className="ui-pop-in w-full max-w-md rounded-[32px] border border-white/70 bg-white p-6 shadow-[0_24px_80px_rgba(15,23,42,0.24)]"
+            className="ui-pop-in w-full max-w-md rounded-[32px] border border-[var(--theme-border)] bg-[var(--theme-surface-strong)] p-6 shadow-[0_24px_80px_rgba(15,23,42,0.24)]"
             onClick={(event) => event.stopPropagation()}
           >
             <div className="space-y-3">
-              <p className="text-sm font-semibold uppercase tracking-[0.24em] text-rose-600">Подтверждение</p>
-              <h3 className="font-display text-3xl font-semibold text-slate-950">Удалить тему?</h3>
-              <p className="text-sm leading-6 text-slate-600">
-                Тема <span className="font-semibold text-slate-950">«{topicTitle}»</span> будет удалена вместе с
+              <p className="text-sm font-semibold uppercase tracking-[0.24em] text-[var(--theme-danger-text)]">Подтверждение</p>
+              <h3 className="font-display text-3xl font-semibold text-[var(--theme-text-strong)]">Удалить тему?</h3>
+              <p className="text-sm leading-6 text-[var(--theme-text-default)]">
+                Тема <span className="font-semibold text-[var(--theme-text-strong)]">«{topicTitle}»</span> будет удалена вместе с
                 прикреплёнными файлами и статусами по номерам. Это действие нельзя отменить.
               </p>
             </div>
@@ -89,7 +89,7 @@ export function DeleteTopicDialog({
               <button
                 type="button"
                 onClick={() => setIsOpen(false)}
-                className="ui-pressable rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 transition hover:border-slate-300 hover:bg-slate-50"
+                className="ui-pressable ui-button-secondary rounded-2xl px-4 py-3 text-sm font-semibold transition"
               >
                 Отмена
               </button>

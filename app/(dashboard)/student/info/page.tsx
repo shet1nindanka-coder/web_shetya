@@ -36,16 +36,16 @@ export default function StudentInfoPage() {
       />
 
       <SectionCard title="Соответствие баллов">
-        <div className="overflow-hidden rounded-[12px] border border-slate-200 bg-white sm:rounded-[16px]">
-          <div className="grid grid-cols-2 border-b border-slate-200 bg-slate-50 text-xs font-semibold text-slate-700 sm:text-sm">
-            <div className="px-3 py-2.5 sm:px-4 sm:py-3">Первичный балл</div>
-            <div className="border-l border-slate-200 px-3 py-2.5 sm:px-4 sm:py-3">Тестовый балл</div>
+        <div className="ui-table-shell">
+          <div className="ui-table-head grid grid-cols-2 text-xs font-semibold text-[var(--theme-text-default)] sm:text-sm">
+            <div className="ui-table-cell">Первичный балл</div>
+            <div className="ui-table-cell border-l border-[var(--theme-border-soft)]">Тестовый балл</div>
           </div>
-          <div className="divide-y divide-slate-200">
+          <div>
             {scoreTable.map(([primary, test]) => (
-              <div key={primary} className="grid grid-cols-2 text-xs text-slate-700 odd:bg-white even:bg-slate-50/60 sm:text-sm">
-                <div className="px-3 py-2 font-semibold text-slate-950 sm:px-4 sm:py-2.5">{primary}</div>
-                <div className="border-l border-slate-100 px-3 py-2 sm:px-4 sm:py-2.5">{test}</div>
+              <div key={primary} className="ui-table-row grid grid-cols-2 text-xs sm:text-sm">
+                <div className="ui-table-cell font-semibold text-[var(--theme-text-strong)]">{primary}</div>
+                <div className="ui-table-cell border-l border-[var(--theme-border-soft)]">{test}</div>
               </div>
             ))}
           </div>
@@ -56,7 +56,7 @@ export default function StudentInfoPage() {
         <div className="grid gap-2.5 sm:gap-3 md:grid-cols-2">
           {taskScoring.map((item) => (
             <article key={item} className="ui-mini-stat-card">
-              <p className="text-sm leading-relaxed text-slate-700">{item}</p>
+              <p className="text-sm leading-relaxed text-[var(--theme-text-default)]">{item}</p>
             </article>
           ))}
         </div>

@@ -763,7 +763,17 @@ const getTeacherStudentDetailCached = unstable_cache(
 export async function getTeacherStudentDetail(
   studentId: string
 ): Promise<Awaited<ReturnType<typeof getTeacherStudentDetailUncached>>> {
-  return getTeacherStudentDetailCached(studentId);
+  try {
+    return await getTeacherStudentDetailCached(studentId);
+  } catch (error) {
+    // Some runtime contexts (e.g. route handlers on specific deployments)
+    // may not provide incremental cache internals for unstable_cache.
+    if (error instanceof Error && error.message.includes("incrementalCache")) {
+      return getTeacherStudentDetailUncached(studentId);
+    }
+
+    throw error;
+  }
 }
 
 

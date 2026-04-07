@@ -131,7 +131,7 @@ export function AccountSettingsView({ user, notice }: AccountSettingsViewProps) 
       >
         <form action={updateProfileInfoAction} className="grid gap-4 lg:grid-cols-2">
           <label className="block space-y-2">
-            <span className="text-sm font-medium text-[var(--theme-text-default)]">Имя</span>
+            <span className="ui-form-label">Имя</span>
             <input
               type="text"
               name="name"
@@ -143,7 +143,7 @@ export function AccountSettingsView({ user, notice }: AccountSettingsViewProps) 
           </label>
 
           <div className="space-y-2">
-            <span className="text-sm font-medium text-[var(--theme-text-default)]">Логин для входа</span>
+            <span className="ui-form-label">Логин для входа</span>
             <div className="ui-readonly-field rounded-[16px] px-4 py-3">{user.email}</div>
           </div>
 
@@ -165,7 +165,7 @@ export function AccountSettingsView({ user, notice }: AccountSettingsViewProps) 
       >
         <form action={updatePasswordAction} className="grid gap-4 xl:grid-cols-3">
           <label className="block space-y-2">
-            <span className="text-sm font-medium text-[var(--theme-text-default)]">Текущий пароль</span>
+            <span className="ui-form-label">Текущий пароль</span>
             <input
               type="password"
               name="currentPassword"
@@ -176,7 +176,7 @@ export function AccountSettingsView({ user, notice }: AccountSettingsViewProps) 
           </label>
 
           <label className="block space-y-2">
-            <span className="text-sm font-medium text-[var(--theme-text-default)]">Новый пароль</span>
+            <span className="ui-form-label">Новый пароль</span>
             <input
               type="password"
               name="newPassword"
@@ -188,7 +188,7 @@ export function AccountSettingsView({ user, notice }: AccountSettingsViewProps) 
           </label>
 
           <label className="block space-y-2">
-            <span className="text-sm font-medium text-[var(--theme-text-default)]">Повторите новый пароль</span>
+            <span className="ui-form-label">Повторите новый пароль</span>
             <input
               type="password"
               name="confirmPassword"

@@ -40,7 +40,7 @@ export function StudentTopicTabs({
 
   return (
     <div className="space-y-4 sm:space-y-6">
-      <nav className="ui-fade-slide ui-tab-shell ui-tab-strip flex gap-1 rounded-[12px] p-1 sm:gap-1.5 sm:rounded-[16px] sm:p-1.5">
+      <nav className="ui-fade-slide ui-tab-shell ui-tab-strip flex gap-0.5 rounded-[10px] p-0.5 sm:gap-1.5 sm:rounded-[16px] sm:p-1.5">
         {tabMeta.map((tab) => {
           const isActive = activeTab === tab.id;
 
@@ -50,7 +50,9 @@ export function StudentTopicTabs({
               type="button"
               onClick={() => setActiveTab(tab.id)}
               data-active={isActive}
-              className={cx("ui-pressable ui-tab shrink-0 rounded-[10px] px-3 py-2 text-[0.8rem] font-medium sm:rounded-[12px] sm:px-4 sm:py-2.5 sm:text-sm")}
+              className={cx(
+                "ui-pressable ui-tab shrink-0 rounded-[8px] px-2.5 py-1.5 text-[0.78rem] font-medium sm:rounded-[12px] sm:px-4 sm:py-2.5 sm:text-sm"
+              )}
             >
               <span>{tab.label}</span>
             </button>

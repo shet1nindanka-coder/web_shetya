@@ -79,8 +79,8 @@ export default async function TeacherTopicPage({ params, searchParams }: Teacher
         <div
           className={
             notice.tone === "success"
-              ? "rounded-[14px] border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-900 sm:rounded-[16px]"
-              : "rounded-[14px] border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-medium text-rose-900 sm:rounded-[16px]"
+              ? "ui-notice-success rounded-[14px] px-4 py-3 text-sm font-medium sm:rounded-[16px]"
+              : "ui-notice-error rounded-[14px] px-4 py-3 text-sm font-medium sm:rounded-[16px]"
           }
         >
           {notice.message}
@@ -111,7 +111,7 @@ export default async function TeacherTopicPage({ params, searchParams }: Teacher
               topicId={data.topic.id}
               topicTitle={data.topic.title}
               triggerLabel="Удалить тему"
-              triggerClassName="ui-pressable rounded-[10px] border border-rose-200 bg-rose-50 px-3.5 py-2 text-sm font-semibold text-rose-700 transition hover:bg-rose-100 sm:rounded-[12px]"
+              triggerClassName="ui-pressable ui-button-danger rounded-[10px] px-3.5 py-2 text-sm font-semibold transition sm:rounded-[12px]"
             />
           </div>
         }
@@ -122,12 +122,12 @@ export default async function TeacherTopicPage({ params, searchParams }: Teacher
         <form action={updateTopicAction} className="space-y-4 sm:space-y-5" encType="multipart/form-data">
           <input type="hidden" name="topicId" value={data.topic.id} />
 
-          <div className="space-y-3 rounded-[14px] border border-slate-200 bg-slate-50/70 p-3.5 sm:space-y-4 sm:rounded-[18px] sm:p-4">
-            <h3 className="text-base font-semibold text-slate-950 sm:text-lg">Основная информация</h3>
+          <div className="ui-panel-soft space-y-3 rounded-[14px] p-3.5 sm:space-y-4 sm:rounded-[18px] sm:p-4">
+            <h3 className="text-base font-semibold text-[var(--theme-text-strong)] sm:text-lg">Основная информация</h3>
 
             <div className="grid gap-3 sm:gap-4">
               <label className="block space-y-1.5">
-                <span className="text-sm font-medium text-slate-700">Название темы</span>
+                <span className="ui-form-label">Название темы</span>
                 <input
                   type="text"
                   name="title"
@@ -138,7 +138,7 @@ export default async function TeacherTopicPage({ params, searchParams }: Teacher
               </label>
 
               <label className="block space-y-1.5">
-                <span className="text-sm font-medium text-slate-700">Описание</span>
+                <span className="ui-form-label">Описание</span>
                 <textarea
                   name="description"
                   rows={3}
@@ -150,8 +150,8 @@ export default async function TeacherTopicPage({ params, searchParams }: Teacher
             </div>
           </div>
 
-          <div className="space-y-3 rounded-[14px] border border-slate-200 bg-slate-50/70 p-3.5 sm:space-y-4 sm:rounded-[18px] sm:p-4">
-            <h3 className="text-base font-semibold text-slate-950 sm:text-lg">Номера</h3>
+          <div className="ui-panel-soft space-y-3 rounded-[14px] p-3.5 sm:space-y-4 sm:rounded-[18px] sm:p-4">
+            <h3 className="text-base font-semibold text-[var(--theme-text-strong)] sm:text-lg">Номера</h3>
             <TopicNumbersField
               name="numbers"
               initialValue={numbersInput}
@@ -160,11 +160,11 @@ export default async function TeacherTopicPage({ params, searchParams }: Teacher
             />
           </div>
 
-          <div className="space-y-3 rounded-[14px] border border-slate-200 bg-slate-50/70 p-3.5 sm:space-y-4 sm:rounded-[18px] sm:p-4">
-            <h3 className="text-base font-semibold text-slate-950 sm:text-lg">Файлы</h3>
+          <div className="ui-panel-soft space-y-3 rounded-[14px] p-3.5 sm:space-y-4 sm:rounded-[18px] sm:p-4">
+            <h3 className="text-base font-semibold text-[var(--theme-text-strong)] sm:text-lg">Файлы</h3>
 
             <div className="grid gap-4 xl:grid-cols-2">
-              <div className="space-y-3 rounded-[12px] border border-slate-200 bg-white p-3 sm:space-y-4 sm:rounded-[16px] sm:p-3.5">
+              <div className="ui-card-soft space-y-3 rounded-[12px] p-3 sm:space-y-4 sm:rounded-[16px] sm:p-3.5">
                 <FileResourceCard title="Теория" file={data.topic.theoryFile} showPreview={false} />
                 <FileDropInput
                   name="theoryFile"
@@ -180,14 +180,14 @@ export default async function TeacherTopicPage({ params, searchParams }: Teacher
                     formEncType="application/x-www-form-urlencoded"
                     name="fileKind"
                     value="theory"
-                    className="ui-pressable rounded-[10px] border border-rose-200 bg-rose-50 px-3.5 py-1.5 text-sm font-semibold text-rose-700 transition hover:bg-rose-100"
+                    className="ui-pressable ui-button-danger rounded-[10px] px-3.5 py-1.5 text-sm font-semibold transition"
                   >
                     Удалить файл теории
                   </button>
                 ) : null}
               </div>
 
-              <div className="space-y-3 rounded-[12px] border border-slate-200 bg-white p-3 sm:space-y-4 sm:rounded-[16px] sm:p-3.5">
+              <div className="ui-card-soft space-y-3 rounded-[12px] p-3 sm:space-y-4 sm:rounded-[16px] sm:p-3.5">
                 <FileResourceCard title="Задания" file={data.topic.homeworkFile} showPreview={false} />
                 <FileDropInput
                   name="homeworkFile"
@@ -203,7 +203,7 @@ export default async function TeacherTopicPage({ params, searchParams }: Teacher
                     formEncType="application/x-www-form-urlencoded"
                     name="fileKind"
                     value="homework"
-                    className="ui-pressable rounded-[10px] border border-rose-200 bg-rose-50 px-3.5 py-1.5 text-sm font-semibold text-rose-700 transition hover:bg-rose-100"
+                    className="ui-pressable ui-button-danger rounded-[10px] px-3.5 py-1.5 text-sm font-semibold transition"
                   >
                     Удалить файл заданий
                   </button>
@@ -212,8 +212,8 @@ export default async function TeacherTopicPage({ params, searchParams }: Teacher
             </div>
           </div>
 
-          <div className="space-y-2.5 rounded-[14px] border border-slate-200 bg-white p-3.5 sm:rounded-[18px] sm:p-4">
-            <h3 className="text-base font-semibold text-slate-950 sm:text-lg">Сохранение</h3>
+          <div className="ui-card-soft space-y-2.5 rounded-[14px] p-3.5 sm:rounded-[18px] sm:p-4">
+            <h3 className="text-base font-semibold text-[var(--theme-text-strong)] sm:text-lg">Сохранение</h3>
             <TopicEditSubmitButton />
           </div>
         </form>

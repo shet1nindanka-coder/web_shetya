@@ -161,8 +161,8 @@ export function DeadlinesCalendar({ deadlines }: DeadlinesCalendarProps) {
                 aria-expanded={isPreviewOpen}
                 className={`relative flex h-12 w-full flex-col items-center justify-center rounded-[10px] border text-sm transition ${
                   isCurrentMonth
-                    ? "border-slate-200 bg-white text-[var(--theme-text-strong)] hover:border-brand-300"
-                    : "border-transparent bg-slate-50/60 text-[var(--theme-text-muted)] opacity-70"
+                    ? "border-[var(--theme-border-soft)] bg-[var(--theme-surface-strong)] text-[var(--theme-text-strong)] hover:border-[var(--theme-accent-border)]"
+                    : "border-transparent bg-[var(--theme-surface-soft)] text-[var(--theme-text-muted)] opacity-70"
                 } ${isToday ? "ring-1 ring-brand-300" : ""} ${
                   hasOverdue ? "border-rose-200 bg-rose-50/70 text-rose-700" : hasSoon ? "border-amber-200 bg-amber-50/70" : ""
                 } ${isCurrentMonth ? "cursor-pointer" : "cursor-default"}`}
@@ -184,13 +184,13 @@ export function DeadlinesCalendar({ deadlines }: DeadlinesCalendarProps) {
 
               {isCurrentMonth ? (
                 <div
-                  className={`absolute left-1/2 top-[calc(100%+8px)] z-20 w-64 -translate-x-1/2 rounded-[12px] border bg-white p-2 shadow-lg transition-all duration-200 ease-out ${
+                  className={`absolute left-1/2 top-[calc(100%+8px)] z-20 w-64 -translate-x-1/2 rounded-[12px] border border-[var(--theme-border)] bg-[var(--theme-surface-strong)] p-2 shadow-lg transition-all duration-200 ease-out ${
                     isPreviewOpen
                       ? "pointer-events-auto translate-y-0 scale-100 opacity-100"
                       : "pointer-events-none -translate-y-1 scale-[0.98] opacity-0"
                   }`}
                 >
-                  <div className="mb-2 rounded-[10px] border border-slate-200 bg-slate-50 px-2.5 py-2">
+                  <div className="mb-2 rounded-[10px] border border-[var(--theme-border-soft)] bg-[var(--theme-surface-soft)] px-2.5 py-2">
                     <p className="text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--theme-text-muted)]">Дедлайн по ДЗ</p>
                     <p className="mt-0.5 text-sm font-semibold text-[var(--theme-text-strong)]">
                       {new Intl.DateTimeFormat("ru-RU", { day: "numeric", month: "long" }).format(day)}

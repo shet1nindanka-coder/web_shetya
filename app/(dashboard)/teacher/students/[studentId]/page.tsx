@@ -57,19 +57,19 @@ export default async function TeacherStudentPage({ params }: TeacherStudentPageP
 
       <SectionCard title="Общая картина" description="Решено учитывает только зелёные и жёлтые номера.">
         <div className="grid gap-5 lg:grid-cols-2">
-          <div className="space-y-3 rounded-[24px] border border-slate-200 bg-slate-50/70 p-5">
-            <div className="flex items-center justify-between text-sm text-slate-600">
+          <div className="ui-panel-soft space-y-3 rounded-[24px] p-5">
+            <div className="flex items-center justify-between text-sm text-[var(--theme-text-muted)]">
               <span>Решено номеров</span>
-              <span className="font-semibold text-slate-950">
+              <span className="font-semibold text-[var(--theme-text-strong)]">
                 {data.stats.totalSolved} / {data.stats.totalNumbers}
               </span>
             </div>
             <ProgressBar value={data.stats.solvedPercent} size="md" />
           </div>
-          <div className="space-y-3 rounded-[24px] border border-slate-200 bg-slate-50/70 p-5">
-            <div className="flex items-center justify-between text-sm text-slate-600">
+          <div className="ui-panel-soft space-y-3 rounded-[24px] p-5">
+            <div className="flex items-center justify-between text-sm text-[var(--theme-text-muted)]">
               <span>Отмечено статусов</span>
-              <span className="font-semibold text-slate-950">
+              <span className="font-semibold text-[var(--theme-text-strong)]">
                 {data.stats.totalMarked} / {data.stats.totalNumbers}
               </span>
             </div>
@@ -80,13 +80,13 @@ export default async function TeacherStudentPage({ params }: TeacherStudentPageP
 
       <SectionCard title="Темы ученика">
         {!data.notesEnabled ? (
-          <div className="rounded-[24px] border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+          <div className="ui-notice-warning rounded-[24px] px-4 py-3 text-sm">
             Заметки ученика появятся здесь после обновления базы данных до актуальной версии.
           </div>
         ) : null}
         {data.topics.length === 0 ? (
-          <div className="rounded-[28px] border border-dashed border-slate-200 bg-slate-50/60 px-5 py-10 text-center">
-            <p className="font-display text-2xl font-semibold text-slate-950">Темы пока не добавлены</p>
+          <div className="ui-panel-soft rounded-[28px] border-dashed px-5 py-10 text-center">
+            <p className="font-display text-2xl font-semibold text-[var(--theme-text-strong)]">Темы пока не добавлены</p>
           </div>
         ) : (
           <TeacherStudentProgressBoard

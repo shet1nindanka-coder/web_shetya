@@ -186,11 +186,11 @@ const StudentNumberCard = memo(function StudentNumberCard({
   const notePreview = getNotePreview(number.note);
 
   return (
-    <div className="student-number-card rounded-[22px] border p-3.5 sm:rounded-[24px] sm:p-4">
-      <div className="student-number-header flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+    <div className="student-number-card rounded-[14px] border p-3 sm:rounded-[22px] sm:p-4">
+      <div className="student-number-header flex flex-col gap-2.5 lg:flex-row lg:items-start lg:justify-between">
         <div className="space-y-2">
-          <div className="flex flex-wrap items-center gap-3">
-            <h3 className="student-number-title font-display text-[1.9rem] font-semibold text-[var(--theme-text-strong)]">№ {number.number}</h3>
+          <div className="flex flex-wrap items-center gap-2.5">
+            <h3 className="student-number-title font-display text-[1.55rem] font-semibold text-[var(--theme-text-strong)] sm:text-[1.9rem]">№ {number.number}</h3>
             <HomeworkStatusBadge status={number.status} />
             {homeworkGroup ? (
               <Badge className="border-brand-200 bg-brand-50 text-brand-700">{homeworkGroup.label}</Badge>
@@ -199,7 +199,7 @@ const StudentNumberCard = memo(function StudentNumberCard({
           </div>
         </div>
 
-        <div className="student-status-grid grid gap-2 sm:grid-cols-3">
+        <div className="student-status-grid grid grid-cols-3 gap-1.5 sm:gap-2">
           {statusOptions.map((status) => {
             const isActive = number.status === status;
             const meta = homeworkStatusMeta[status];
@@ -211,14 +211,14 @@ const StudentNumberCard = memo(function StudentNumberCard({
                 aria-pressed={isActive}
                 onClick={() => onSelect(number.id, isActive ? null : status)}
                 className={cx(
-                  "ui-pressable w-full touch-manipulation rounded-[18px] px-4 py-3 text-left text-[13px] transition-colors duration-75 sm:min-w-[160px]",
+                  "ui-pressable w-full touch-manipulation rounded-[12px] px-2.5 py-2 text-center text-[12px] transition-colors duration-75 sm:min-w-[160px] sm:rounded-[16px] sm:px-4 sm:py-3 sm:text-left sm:text-[13px]",
                   isActive
                     ? meta.cardClassName
                     : "ui-button-secondary"
                 )}
               >
                 <p className="font-semibold">{meta.shortLabel}</p>
-                <p className="mt-1.5 leading-5">{meta.label}</p>
+                <p className="mt-1 hidden leading-5 sm:block">{meta.label}</p>
               </button>
             );
           })}
@@ -226,7 +226,7 @@ const StudentNumberCard = memo(function StudentNumberCard({
       </div>
 
       {notesEnabled ? (
-        <div className="student-note-panel mt-3 rounded-[18px] border px-3.5 py-3 sm:rounded-[20px] sm:px-4">
+        <div className="student-note-panel mt-2.5 rounded-[12px] border px-3 py-2.5 sm:mt-3 sm:rounded-[20px] sm:px-4 sm:py-3">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
               <p className="ui-copy-muted text-sm leading-5">
@@ -236,7 +236,7 @@ const StudentNumberCard = memo(function StudentNumberCard({
             <button
               type="button"
               onClick={() => setIsNoteOpen((current) => !current)}
-              className="ui-pressable ui-button-secondary w-full rounded-[14px] px-3.5 py-2 text-sm font-semibold transition sm:w-auto"
+              className="ui-pressable ui-button-secondary w-full rounded-[10px] px-3 py-1.5 text-sm font-semibold transition sm:w-auto sm:rounded-[14px] sm:px-3.5 sm:py-2"
             >
               {isNoteOpen ? "Скрыть заметку" : notePreview ? "Открыть заметку" : "Добавить заметку"}
             </button>
@@ -254,12 +254,12 @@ const StudentNumberCard = memo(function StudentNumberCard({
                 onChange={(event) => onNoteChange(number.id, event.target.value)}
                 onBlur={() => onNoteBlur(number.id)}
                 placeholder="Короткая заметка к этому номеру"
-                className="ui-input mt-2.5 min-h-[68px] w-full resize-none rounded-2xl px-3 py-3 text-sm"
+                className="ui-input mt-2.5 min-h-[64px] w-full resize-none rounded-[12px] px-3 py-2.5 text-sm sm:rounded-2xl sm:py-3"
               />
               <p className="ui-copy-soft mt-1.5 text-xs leading-5">Сохранится автоматически.</p>
             </>
           ) : notePreview ? (
-            <div className="ui-card-soft mt-2.5 rounded-2xl px-3 py-2.5 text-sm leading-5 text-[var(--theme-text-default)]">
+            <div className="ui-card-soft mt-2.5 rounded-[12px] px-3 py-2 text-sm leading-5 text-[var(--theme-text-default)] sm:rounded-2xl sm:py-2.5">
               {notePreview}
             </div>
           ) : null}
@@ -267,7 +267,7 @@ const StudentNumberCard = memo(function StudentNumberCard({
       ) : null}
 
       {number.answerLatex ? (
-        <div className="student-answer-panel mt-3 rounded-[18px] border p-3 sm:rounded-[20px]">
+        <div className="student-answer-panel mt-2.5 rounded-[12px] border p-2.5 sm:mt-3 sm:rounded-[20px] sm:p-3">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
               <p className="ui-copy-muted text-sm leading-5">Ответ откроется только по вашему клику.</p>
@@ -275,20 +275,20 @@ const StudentNumberCard = memo(function StudentNumberCard({
             <button
               type="button"
               onClick={() => setIsAnswerVisible((current) => !current)}
-              className="ui-pressable ui-button-secondary w-full rounded-[14px] px-3.5 py-2 text-sm font-semibold transition sm:w-auto"
+              className="ui-pressable ui-button-secondary w-full rounded-[10px] px-3 py-1.5 text-sm font-semibold transition sm:w-auto sm:rounded-[14px] sm:px-3.5 sm:py-2"
             >
               {isAnswerVisible ? "Скрыть ответ" : "Открыть ответ"}
             </button>
           </div>
 
           {isAnswerVisible ? (
-            <div className="ui-card-soft mt-2.5 overflow-hidden rounded-[18px]">
-              <div className="px-4 py-3.5">
+            <div className="ui-card-soft mt-2.5 overflow-hidden rounded-[12px] sm:rounded-[18px]">
+              <div className="px-3 py-2.5 sm:px-4 sm:py-3.5">
                 <LatexAnswerPreview value={number.answerLatex} />
               </div>
             </div>
           ) : (
-            <div className="ui-card-soft ui-copy-muted mt-2.5 rounded-[18px] border border-dashed px-4 py-3 text-sm leading-5">
+            <div className="ui-card-soft ui-copy-muted mt-2.5 rounded-[12px] border border-dashed px-3 py-2.5 text-sm leading-5 sm:rounded-[18px] sm:px-4 sm:py-3">
               Ответ скрыт, пока вы его не откроете.
             </div>
           )}
@@ -516,10 +516,10 @@ function StudentNumberList({
   }, []);
 
   return (
-    <div className="student-virtual-shell rounded-[28px] border border-slate-200 bg-slate-50/45 p-3">
+    <div className="student-virtual-shell rounded-[14px] border border-slate-200 bg-slate-50/45 p-2 sm:rounded-[24px] sm:p-3">
       <div
         ref={scrollRef}
-        className="student-virtual-scroll rounded-[22px]"
+        className="student-virtual-scroll rounded-[12px] sm:rounded-[18px]"
         style={{
           maxHeight: "72vh"
         }}
@@ -986,23 +986,23 @@ export function StudentTopicStatusBoard({
         }
       >
         {saveError ? (
-          <div className="mb-5 rounded-[18px] border border-rose-200 bg-rose-50 px-4 py-4 text-sm font-medium text-rose-900">
+          <div className="mb-4 rounded-[12px] border border-rose-200 bg-rose-50 px-3.5 py-3 text-sm font-medium text-rose-900 sm:mb-5 sm:rounded-[18px] sm:px-4 sm:py-4">
             {saveError}
           </div>
         ) : null}
 
         {hasHomeworkFilters ? (
-          <div className="mb-5 space-y-3">
-            <p className="text-sm font-medium text-slate-500">Выберите ДЗ</p>
+          <div className="mb-4 space-y-2.5 sm:mb-5 sm:space-y-3">
+            <p className="text-sm font-medium text-[var(--theme-text-muted)]">Выберите ДЗ</p>
 
             <div className="grid gap-2 sm:flex sm:flex-wrap sm:gap-2">
               {homeworkGroups.map((group) => {
                 const isActive = activeFilter === group.id;
                 const isCompleted = group.isCompleted;
                 const baseFilterClassName =
-                  "ui-pressable w-full rounded-[16px] border px-4 py-2.5 text-left text-sm font-medium transition sm:inline-flex sm:w-auto sm:shrink-0 sm:items-center sm:gap-2 sm:px-5 sm:py-2.5";
+                  "ui-pressable w-full rounded-[12px] border px-3 py-2 text-left text-sm font-medium transition sm:inline-flex sm:w-auto sm:shrink-0 sm:items-center sm:gap-2 sm:rounded-[16px] sm:px-5 sm:py-2.5";
                 const activeFilterClassName =
-                  "border-[var(--theme-border-soft)] bg-[var(--theme-tab-active)] text-[var(--theme-tab-text-active)] shadow-[0_8px_16px_rgba(15,23,42,0.08)]";
+                  "border-[var(--theme-border-soft)] bg-[var(--theme-tab-active)] text-[var(--theme-tab-text-active)] shadow-[0_4px_10px_rgba(15,23,42,0.06)]";
                 const inactiveFilterClassName =
                   "border-[var(--theme-border-soft)] bg-[var(--theme-surface-strong)] text-[var(--theme-text-default)] hover:border-[var(--theme-accent)]/45 hover:text-[var(--theme-text-strong)]";
 
@@ -1026,40 +1026,40 @@ export function StudentTopicStatusBoard({
                         {isCompleted ? <span className="text-[var(--theme-accent-text)]">✓</span> : null}
                         <span>{group.label}</span>
                       </span>
-                      <span className="ui-chip-count rounded-[10px] px-2 py-0.5 text-xs font-semibold">
+                      <span className="ui-chip-count rounded-[8px] px-1.5 py-0.5 text-xs font-semibold">
                         {group.solvedCount}/{group.count}
                       </span>
                     </span>
                     {group.deadlineLabel ? (
-                      <span className="mt-1.5 block text-xs text-slate-500 sm:hidden">{group.deadlineLabel}</span>
+                      <span className="mt-1 block text-xs text-[var(--theme-text-muted)] sm:hidden">{group.deadlineLabel}</span>
                     ) : null}
                     {group.deadlineLabel ? (
-                      <span className="hidden text-xs text-slate-500 sm:inline">{group.deadlineLabel}</span>
+                      <span className="hidden text-xs text-[var(--theme-text-muted)] sm:inline">{group.deadlineLabel}</span>
                     ) : null}
                   </button>
                 );
               })}
             </div>
 
-            <p className="ui-hint text-sm leading-6 text-slate-500">
+            <p className="ui-hint text-sm leading-6 text-[var(--theme-text-muted)]">
               Показаны номера выбранного ДЗ: {deferredFilteredNumbers.length}.
             </p>
           </div>
         ) : null}
 
         {isTopicCompleted ? (
-          <details className="rounded-[20px] border border-emerald-200 bg-emerald-50/70">
-            <summary className="ui-pressable flex cursor-pointer list-none items-center justify-between gap-4 px-4 py-4 [&::-webkit-details-marker]:hidden">
+          <details className="rounded-[12px] border border-emerald-200 bg-emerald-50/70 sm:rounded-[20px]">
+            <summary className="ui-pressable flex cursor-pointer list-none items-center justify-between gap-3 px-3 py-3 sm:gap-4 sm:px-4 sm:py-4 [&::-webkit-details-marker]:hidden">
               <div>
                 <p className="text-sm font-semibold text-emerald-900">Тема полностью решена</p>
                 <p className="ui-hint mt-1 text-sm leading-6 text-emerald-800">Подробности можно открыть в любой момент.</p>
               </div>
-              <span className="rounded-[12px] border border-emerald-200 bg-white px-4 py-2 text-sm font-semibold text-emerald-800">
+              <span className="rounded-[9px] border border-emerald-200 bg-white px-3 py-1.5 text-sm font-semibold text-emerald-800 sm:rounded-[12px] sm:px-4 sm:py-2">
                 Показать номера
               </span>
             </summary>
 
-            <div className="border-t border-emerald-100 px-4 py-4">
+            <div className="border-t border-emerald-100 px-3 py-3 sm:px-4 sm:py-4">
               {deferredFilteredNumbers.length > 0 ? (
                 <StudentNumberList
                   numbers={deferredFilteredNumbers}
@@ -1071,7 +1071,7 @@ export function StudentTopicStatusBoard({
                   onNoteBlur={flushNumberNote}
                 />
               ) : (
-                <div className="rounded-[22px] border border-dashed border-emerald-200 bg-white/70 px-4 py-8 text-center text-sm text-emerald-900">
+                <div className="rounded-[12px] border border-dashed border-emerald-200 bg-white/70 px-3.5 py-6 text-center text-sm text-emerald-900 sm:rounded-[22px] sm:px-4 sm:py-8">
                   По выбранному фильтру здесь пока ничего нет.
                 </div>
               )}
@@ -1090,9 +1090,9 @@ export function StudentTopicStatusBoard({
                 onNoteBlur={flushNumberNote}
               />
             ) : (
-              <div className="rounded-[24px] border border-dashed border-slate-200 bg-slate-50/70 px-4 py-10 text-center">
-                <p className="font-display text-2xl font-semibold text-slate-950">Ничего не найдено</p>
-                <p className="ui-hint mt-2 text-sm leading-6 text-slate-600">Попробуйте другой фильтр.</p>
+              <div className="rounded-[14px] border border-dashed border-slate-200 bg-slate-50/70 px-4 py-8 text-center sm:rounded-[24px] sm:py-10">
+                <p className="font-display text-[1.45rem] font-semibold text-[var(--theme-text-strong)] sm:text-2xl">Ничего не найдено</p>
+                <p className="ui-hint mt-1.5 text-sm leading-6 text-[var(--theme-text-muted)] sm:mt-2">Попробуйте другой фильтр.</p>
               </div>
             )}
           </>
@@ -1101,16 +1101,16 @@ export function StudentTopicStatusBoard({
 
       <SectionCard title="Прогресс по теме" description="Здесь учитываются только зелёные и жёлтые номера.">
         <div className="space-y-3">
-          <div className="flex items-center justify-between text-sm text-slate-600">
+          <div className="flex items-center justify-between text-sm text-[var(--theme-text-muted)]">
             <span>Прорешано номеров</span>
-            <span className="font-semibold text-slate-950">
+            <span className="font-semibold text-[var(--theme-text-strong)]">
               {summary.solvedCount} / {totalNumbers}
             </span>
           </div>
           <ProgressBar value={summary.solvedProgressPercent} size="md" />
         </div>
         {hasIssuedHomeworkGroups ? (
-          <p className="ui-hint mt-4 text-sm leading-6 text-slate-600">Дедлайны указаны в фильтрах ДЗ.</p>
+          <p className="ui-hint mt-3.5 text-sm leading-6 text-[var(--theme-text-muted)] sm:mt-4">Дедлайны указаны в фильтрах ДЗ.</p>
         ) : null}
       </SectionCard>
     </div>
