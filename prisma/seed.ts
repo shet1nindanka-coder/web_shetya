@@ -228,28 +228,45 @@ async function main() {
   const topicOneNumbers = new Map(topicOne.homeworkNumbers.map((number) => [number.number, number.id]));
   const topicTwoNumbers = new Map(topicTwo.homeworkNumbers.map((number) => [number.number, number.id]));
   const topicThreeNumbers = new Map(topicThree.homeworkNumbers.map((number) => [number.number, number.id]));
+  const now = new Date();
+  const atHourWithOffset = (daysOffset: number, hour: number) => {
+    const date = new Date(now);
+    date.setDate(date.getDate() + daysOffset);
+    date.setHours(hour, 0, 0, 0);
+    return date;
+  };
 
   await prisma.studentTopicNumberStatus.createMany({
     data: [
       {
         studentId: ilya.id,
         homeworkNumberId: topicOneNumbers.get(112)!,
-        status: HomeworkNumberStatus.GREEN
+        status: HomeworkNumberStatus.GREEN,
+        deadlineAt: atHourWithOffset(-2, 18)
       },
       {
         studentId: ilya.id,
         homeworkNumberId: topicOneNumbers.get(113)!,
-        status: HomeworkNumberStatus.YELLOW
+        status: HomeworkNumberStatus.YELLOW,
+        deadlineAt: atHourWithOffset(1, 18)
       },
       {
         studentId: ilya.id,
         homeworkNumberId: topicOneNumbers.get(118)!,
-        status: HomeworkNumberStatus.RED
+        status: HomeworkNumberStatus.RED,
+        deadlineAt: atHourWithOffset(-1, 18)
+      },
+      {
+        studentId: ilya.id,
+        homeworkNumberId: topicOneNumbers.get(120)!,
+        status: null,
+        deadlineAt: atHourWithOffset(2, 19)
       },
       {
         studentId: ilya.id,
         homeworkNumberId: topicTwoNumbers.get(204)!,
-        status: HomeworkNumberStatus.GREEN
+        status: HomeworkNumberStatus.GREEN,
+        deadlineAt: atHourWithOffset(4, 19)
       },
       {
         studentId: ilya.id,
@@ -258,8 +275,21 @@ async function main() {
       },
       {
         studentId: ilya.id,
+        homeworkNumberId: topicTwoNumbers.get(211)!,
+        status: null,
+        deadlineAt: atHourWithOffset(7, 19)
+      },
+      {
+        studentId: ilya.id,
         homeworkNumberId: topicThreeNumbers.get(301)!,
-        status: HomeworkNumberStatus.YELLOW
+        status: HomeworkNumberStatus.YELLOW,
+        deadlineAt: atHourWithOffset(9, 20)
+      },
+      {
+        studentId: ilya.id,
+        homeworkNumberId: topicThreeNumbers.get(302)!,
+        status: null,
+        deadlineAt: atHourWithOffset(12, 20)
       },
       {
         studentId: maria.id,
@@ -269,12 +299,14 @@ async function main() {
       {
         studentId: maria.id,
         homeworkNumberId: topicOneNumbers.get(113)!,
-        status: HomeworkNumberStatus.GREEN
+        status: HomeworkNumberStatus.GREEN,
+        deadlineAt: atHourWithOffset(3, 18)
       },
       {
         studentId: maria.id,
         homeworkNumberId: topicOneNumbers.get(120)!,
-        status: HomeworkNumberStatus.RED
+        status: HomeworkNumberStatus.RED,
+        deadlineAt: atHourWithOffset(1, 19)
       },
       {
         studentId: maria.id,
@@ -284,12 +316,14 @@ async function main() {
       {
         studentId: maria.id,
         homeworkNumberId: topicTwoNumbers.get(215)!,
-        status: HomeworkNumberStatus.RED
+        status: HomeworkNumberStatus.RED,
+        deadlineAt: atHourWithOffset(-3, 19)
       },
       {
         studentId: maria.id,
         homeworkNumberId: topicThreeNumbers.get(305)!,
-        status: HomeworkNumberStatus.GREEN
+        status: HomeworkNumberStatus.GREEN,
+        deadlineAt: atHourWithOffset(6, 20)
       }
     ]
   });

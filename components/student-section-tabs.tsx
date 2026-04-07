@@ -13,6 +13,11 @@ const items = [
     match: (pathname: string) => pathname === "/student/topics" || pathname.startsWith("/student/topics/")
   },
   {
+    href: "/student/deadlines",
+    label: "Дедлайны",
+    match: (pathname: string) => pathname === "/student/deadlines" || pathname.startsWith("/student/deadlines/")
+  },
+  {
     href: "/student/info",
     label: "Общая инфа",
     match: (pathname: string) => pathname === "/student/info" || pathname.startsWith("/student/info/")
