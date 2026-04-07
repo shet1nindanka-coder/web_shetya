@@ -989,6 +989,12 @@ export function StudentTopicStatusBoard({
               {homeworkGroups.map((group) => {
                 const isActive = activeFilter === group.id;
                 const isCompleted = group.isCompleted;
+                const baseFilterClassName =
+                  "ui-pressable w-full rounded-[16px] border px-4 py-2.5 text-left text-sm font-medium transition sm:inline-flex sm:w-auto sm:shrink-0 sm:items-center sm:gap-2 sm:px-5 sm:py-2.5";
+                const activeFilterClassName =
+                  "border-[var(--theme-border-soft)] bg-[var(--theme-tab-active)] text-[var(--theme-tab-text-active)] shadow-[0_8px_16px_rgba(15,23,42,0.08)]";
+                const inactiveFilterClassName =
+                  "border-[var(--theme-border-soft)] bg-[var(--theme-surface-strong)] text-[var(--theme-text-default)] hover:border-[var(--theme-accent)]/45 hover:text-[var(--theme-text-strong)]";
 
                 return (
                   <button
@@ -1001,19 +1007,13 @@ export function StudentTopicStatusBoard({
                     }}
                     data-active={isActive}
                     className={cx(
-                      "ui-pressable w-full rounded-[16px] border px-4 py-2.5 text-left text-sm font-medium transition sm:inline-flex sm:w-auto sm:shrink-0 sm:items-center sm:gap-2 sm:px-5 sm:py-2.5",
-                      isActive && isCompleted
-                        ? "border-emerald-200 bg-emerald-50 text-emerald-700 shadow-[0_12px_24px_rgba(16,185,129,0.14)]"
-                        : isActive
-                        ? "border-brand-200 bg-[linear-gradient(180deg,rgba(239,246,255,1),rgba(219,234,254,0.92))] text-brand-700 shadow-[0_12px_24px_rgba(59,130,246,0.14)]"
-                        : isCompleted
-                        ? "border-emerald-200 bg-white text-emerald-700 hover:border-emerald-300 hover:bg-emerald-50"
-                        : "border-slate-200 bg-white text-slate-700 hover:border-brand-300 hover:text-brand-700"
+                      baseFilterClassName,
+                      isActive ? activeFilterClassName : inactiveFilterClassName
                     )}
                   >
                     <span className="flex items-center justify-between gap-3 sm:contents">
                       <span className="flex items-center gap-2">
-                        {isCompleted ? <span>✓</span> : null}
+                        {isCompleted ? <span className="text-[var(--theme-accent-text)]">✓</span> : null}
                         <span>{group.label}</span>
                       </span>
                       <span className="ui-chip-count rounded-[10px] px-2 py-0.5 text-xs font-semibold">
