@@ -417,7 +417,7 @@ export function TopicAnswerManager({ topicId, numbers }: TopicAnswerManagerProps
                 type="button"
                 onClick={() => void saveAnswer(item.id)}
                 disabled={item.isSaving || item.isDeleting || !item.draftAnswerLatex.trim()}
-                className="ui-pressable rounded-[14px] bg-slate-950 px-3.5 py-2 text-sm font-semibold text-white transition hover:bg-brand-700 disabled:cursor-not-allowed disabled:opacity-60"
+                className="ui-pressable ui-button-primary rounded-[14px] px-3.5 py-2 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-60 disabled:shadow-none"
               >
                 {item.isSaving ? "Сохраняем..." : "Сохранить ответ"}
               </button>

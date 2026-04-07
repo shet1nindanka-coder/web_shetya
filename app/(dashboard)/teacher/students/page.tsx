@@ -135,7 +135,7 @@ export default async function TeacherStudentsPage({ searchParams }: TeacherStude
 
             <button
               type="submit"
-              className="ui-pressable w-full rounded-[16px] bg-slate-950 px-5 py-3 text-sm font-semibold text-white transition hover:bg-brand-700 sm:w-auto"
+              className="ui-pressable ui-button-primary w-full rounded-[16px] px-5 py-3 text-sm font-semibold transition sm:w-auto"
             >
               Добавить ученика
             </button>

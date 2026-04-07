@@ -10,7 +10,7 @@ export function TopicEditSubmitButton() {
       <button
         type="submit"
         disabled={pending}
-        className="ui-pressable rounded-2xl bg-slate-950 px-5 py-3 text-sm font-semibold text-white transition hover:bg-brand-700 disabled:cursor-not-allowed disabled:bg-slate-400"
+        className="ui-pressable ui-button-primary rounded-2xl px-5 py-3 text-sm font-semibold transition disabled:cursor-not-allowed disabled:bg-slate-400 disabled:shadow-none"
       >
         {pending ? "Сохраняем изменения..." : "Сохранить изменения"}
       </button>

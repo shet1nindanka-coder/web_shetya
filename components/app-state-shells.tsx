@@ -114,7 +114,7 @@ export function RouteErrorState({ title, description, reset, homeHref, homeLabel
           <button
             type="button"
             onClick={reset}
-            className="ui-pressable rounded-full bg-slate-950 px-5 py-3 text-sm font-semibold text-white transition hover:bg-brand-700"
+            className="ui-pressable ui-button-primary rounded-full px-5 py-3 text-sm font-semibold transition"
           >
             Попробовать снова
           </button>

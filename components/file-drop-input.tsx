@@ -105,7 +105,7 @@ export function FileDropInput({
           <button
             type="button"
             onClick={() => inputRef.current?.click()}
-            className="ui-pressable inline-flex shrink-0 justify-center rounded-[14px] border border-slate-200 bg-slate-950 px-4 py-2 text-sm font-semibold text-white transition hover:bg-brand-700"
+            className="ui-pressable ui-button-primary inline-flex shrink-0 justify-center rounded-[14px] px-4 py-2 text-sm font-semibold transition"
           >
             {selectedFileName ? "Выбрать другой файл" : "Выбрать файл"}
           </button>
