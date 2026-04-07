@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { ProgressBar } from "@/components/progress-bar";
 import { type StudentDeadlineAssignment } from "@/lib/student-deadline-groups";
 import { formatDateTime } from "@/lib/utils";
 
@@ -9,21 +10,6 @@ type DeadlineListProps = {
   emptyMessage?: string;
   compact?: boolean;
 };
-
-function getNumberWord(value: number) {
-  const mod10 = value % 10;
-  const mod100 = value % 100;
-
-  if (mod10 === 1 && mod100 !== 11) {
-    return "номер";
-  }
-
-  if (mod10 >= 2 && mod10 <= 4 && (mod100 < 12 || mod100 > 14)) {
-    return "номера";
-  }
-
-  return "номеров";
-}
 
 function getDeadlineUi(item: StudentDeadlineAssignment, now: number) {
   const deadlineTime = new Date(item.deadlineAt).getTime();
@@ -73,15 +59,19 @@ export function DeadlineList({ items, emptyMessage = "На эту дату де�
     <ul className={compact ? "space-y-2" : "space-y-3"}>
       {items.map((item) => {
         const ui = getDeadlineUi(item, now);
+        const progressPercent = item.totalNumbers > 0 ? Math.round((item.solvedNumbers / item.totalNumbers) * 100) : 0;
 
         return (
           <li key={item.id} className="ui-surface rounded-[14px] border p-3">
             <div className="flex flex-wrap items-start justify-between gap-2">
               <div className="min-w-0">
                 <p className="font-medium text-[var(--theme-text-strong)]">{item.topicTitle}</p>
-                <p className="text-sm text-[var(--theme-text-muted)]">
-                  ДЗ: {item.solvedNumbers} из {item.totalNumbers} выполнено ({item.totalNumbers} {getNumberWord(item.totalNumbers)})
-                </p>
+                <div className="mt-1.5 space-y-1">
+                  <div className="h-2">
+                    <ProgressBar value={progressPercent} />
+                  </div>
+                  <p className="text-xs text-[var(--theme-text-muted)]">Прогресс ДЗ: {progressPercent}%</p>
+                </div>
               </div>
               <span className={`inline-flex rounded-[10px] border px-2.5 py-1 text-xs font-semibold ${ui.statusClassName}`}>
                 {ui.statusLabel}
