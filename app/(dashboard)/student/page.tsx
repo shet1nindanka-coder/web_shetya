@@ -5,20 +5,20 @@ import { ProgressBar } from "@/components/progress-bar";
 import { SectionCard } from "@/components/section-card";
 import { UpcomingDeadlinesCard } from "@/components/upcoming-deadlines-card";
 import { requireUser } from "@/lib/auth";
-import { getStudentDeadlines, getStudentTopicsOverview } from "@/lib/platform-data";
+import { getStudentDeadlines } from "@/lib/platform-data";
 import { groupStudentDeadlinesAsAssignments } from "@/lib/student-deadline-groups";
 
 export default async function StudentPage() {
   const user = await requireUser(UserRole.STUDENT);
-  const [overview, deadlines] = await Promise.all([getStudentTopicsOverview(user.id), getStudentDeadlines(user.id)]);
+  const deadlines = await getStudentDeadlines(user.id);
   const assignmentDeadlines = groupStudentDeadlinesAsAssignments(deadlines);
-
-  const topicToContinue =
-    overview.topics.find(
-      (topic) => topic.totalNumbers > 0 && topic.greenCount + topic.yellowCount < topic.totalNumbers
-    ) ?? overview.topics[0];
-  const solvedCount = overview.stats.totalSolved;
-  const totalCount = overview.stats.totalNumbers;
+  const pendingAssignments = assignmentDeadlines.filter((assignment) => assignment.status !== "DONE");
+  const completedAssignments = assignmentDeadlines.filter((assignment) => assignment.status === "DONE");
+  const totalHomeworkNumbers = assignmentDeadlines.reduce((sum, assignment) => sum + assignment.totalNumbers, 0);
+  const solvedHomeworkNumbers = assignmentDeadlines.reduce((sum, assignment) => sum + assignment.solvedNumbers, 0);
+  const homeworkProgressPercent = totalHomeworkNumbers > 0 ? Math.round((solvedHomeworkNumbers / totalHomeworkNumbers) * 100) : 0;
+  const nextAssignment = pendingAssignments[0] ?? null;
+  const assignmentScopeLabel = assignmentDeadlines.length > 0 ? `${completedAssignments.length} из ${assignmentDeadlines.length} ДЗ закрыто` : "Пока нет выданных ДЗ";
 
   return (
     <div className="space-y-5 sm:space-y-6">
@@ -31,52 +31,52 @@ export default async function StudentPage() {
       <UpcomingDeadlinesCard deadlines={assignmentDeadlines} limit={4} />
 
       <div className="grid gap-4 lg:grid-cols-2">
-        <SectionCard title="Продолжить работу" description="Откройте тему и продолжайте с текущего места.">
+        <SectionCard title="Фокус на ближайшее ДЗ" description="Главный приоритет — закрывать выданные домашки в срок.">
           <div className="space-y-3">
-            {topicToContinue ? (
+            {nextAssignment ? (
               <>
                 <div className="ui-surface rounded-[14px] border px-3.5 py-3">
-                  <p className="font-medium text-[var(--theme-text-strong)]">{topicToContinue.title}</p>
+                  <p className="font-medium text-[var(--theme-text-strong)]">{nextAssignment.topicTitle}</p>
                   <p className="mt-1 text-sm text-[var(--theme-text-muted)]">
-                    {topicToContinue.greenCount + topicToContinue.yellowCount} из {topicToContinue.totalNumbers} задач выполнено
+                    {nextAssignment.solvedNumbers} из {nextAssignment.totalNumbers} номеров готово по текущему ДЗ
                   </p>
                 </div>
                 <div className="flex flex-wrap gap-2">
                   <Link
-                    href={`/student/topics/${topicToContinue.id}`}
+                    href="/student/deadlines"
                     className="ui-pressable ui-button-primary inline-flex rounded-[10px] px-3.5 py-2 text-sm font-semibold"
                   >
-                    Открыть тему
+                    Доделать ДЗ
                   </Link>
                   <Link
                     href="/student/topics"
                     className="ui-pressable ui-button-secondary inline-flex rounded-[10px] px-3.5 py-2 text-sm font-semibold"
                   >
-                    Все темы
+                    Номера по ДЗ
                   </Link>
                 </div>
               </>
             ) : (
-              <p className="text-sm text-[var(--theme-text-muted)]">Темы пока не добавлены.</p>
+              <p className="text-sm text-[var(--theme-text-muted)]">Сейчас нет выданных домашних заданий.</p>
             )}
           </div>
         </SectionCard>
 
-        <SectionCard title="Короткий прогресс" description="Без лишней аналитики, только общий ориентир.">
+        <SectionCard title="Прогресс по выданным ДЗ" description="Ориентир только по текущим домашним заданиям.">
           <div className="space-y-3">
             <div className="flex items-center justify-between text-sm text-[var(--theme-text-muted)]">
-              <span>Решено</span>
+              <span>{assignmentScopeLabel}</span>
               <span className="font-semibold text-[var(--theme-text-strong)]">
-                {solvedCount} / {totalCount}
+                {solvedHomeworkNumbers} / {totalHomeworkNumbers}
               </span>
             </div>
-            <ProgressBar value={overview.stats.solvedPercent} size="md" />
+            <ProgressBar value={homeworkProgressPercent} size="md" />
             <div className="flex flex-wrap gap-2">
               <Link
                 href="/student/deadlines"
                 className="ui-pressable ui-button-secondary inline-flex rounded-[10px] px-3 py-2 text-sm font-semibold"
               >
-                Открыть дедлайны
+                Все дедлайны
               </Link>
               <Link
                 href="/student/info"
