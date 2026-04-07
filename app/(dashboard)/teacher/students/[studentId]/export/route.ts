@@ -6,7 +6,7 @@ import { formatDateTime } from "@/lib/utils";
 
 export const runtime = "nodejs";
 
-const TAB = "\t";
+const SEP = ";";
 
 const statusLabels: Record<string, string> = {
   GREEN: "Зеленый",
@@ -14,17 +14,27 @@ const statusLabels: Record<string, string> = {
   RED: "Красный"
 };
 
-function sanitizeCell(value: string | number | null | undefined): string {
-  const text = String(value ?? "");
+function cell(value: string | number | null | undefined): string {
+  let text = String(value ?? "");
 
   if (/^[=+\-@]/.test(text)) {
-    return `'${text}`;
+    text = `'${text}`;
   }
 
-  return text.replace(/\t/g, " ").replace(/\r?\n/g, " ");
+  text = text.replace(/"/g, '""');
+
+  return `"${text}"`;
 }
 
-function isMissingStudentStatusColumnError(error: unknown, column: "note" | "deadlineAt") {
+function row(...values: Array<string | number | null | undefined>): string {
+  return values.map((v) => cell(v)).join(SEP);
+}
+
+function emptyRow(): string {
+  return "";
+}
+
+function isMissingColumn(error: unknown, column: "note" | "deadlineAt") {
   return (
     error instanceof Prisma.PrismaClientKnownRequestError &&
     error.code === "P2022" &&
@@ -33,32 +43,23 @@ function isMissingStudentStatusColumnError(error: unknown, column: "note" | "dea
   );
 }
 
-async function loadStudentExportData(studentId: string) {
+async function loadExportData(studentId: string) {
   const student = await prisma.user.findFirstOrThrow({
-    where: {
-      id: studentId,
-      role: UserRole.STUDENT
-    },
-    select: {
-      id: true,
-      name: true,
-      email: true
-    }
+    where: { id: studentId, role: UserRole.STUDENT },
+    select: { id: true, name: true, email: true }
   });
 
   let notesEnabled = true;
   let deadlinesEnabled = true;
 
-  const fetchTopics = () =>
+  const query = () =>
     prisma.topic.findMany({
       orderBy: [{ displayOrder: "asc" }, { createdAt: "asc" }],
       select: {
-        id: true,
         title: true,
         homeworkNumbers: {
           orderBy: { displayOrder: "asc" },
           select: {
-            id: true,
             number: true,
             statuses: {
               where: { studentId },
@@ -74,13 +75,13 @@ async function loadStudentExportData(studentId: string) {
       }
     });
 
-  let topics: Awaited<ReturnType<typeof fetchTopics>>;
+  let topics: Awaited<ReturnType<typeof query>>;
 
   try {
-    topics = await fetchTopics();
+    topics = await query();
   } catch (error) {
-    const noteMissing = isMissingStudentStatusColumnError(error, "note");
-    const deadlineMissing = isMissingStudentStatusColumnError(error, "deadlineAt");
+    const noteMissing = isMissingColumn(error, "note");
+    const deadlineMissing = isMissingColumn(error, "deadlineAt");
 
     if (!noteMissing && !deadlineMissing) {
       throw error;
@@ -88,15 +89,10 @@ async function loadStudentExportData(studentId: string) {
 
     notesEnabled = !noteMissing;
     deadlinesEnabled = !deadlineMissing;
-    topics = await fetchTopics();
+    topics = await query();
   }
 
-  return {
-    student,
-    topics,
-    notesEnabled,
-    deadlinesEnabled
-  };
+  return { student, topics, notesEnabled, deadlinesEnabled };
 }
 
 export async function GET(
@@ -111,68 +107,94 @@ export async function GET(
     }
 
     const { studentId } = await params;
-    const data = await loadStudentExportData(studentId);
+    const data = await loadExportData(studentId);
+    const exportDate = new Date();
 
     let totalNumbers = 0;
     let totalMarked = 0;
     let totalSolved = 0;
+    let totalGreen = 0;
+    let totalYellow = 0;
+    let totalRed = 0;
 
-    const dataRows: string[][] = [];
+    const topicBlocks: string[][] = [];
 
     for (const topic of data.topics) {
-      for (const number of topic.homeworkNumbers) {
-        totalNumbers += 1;
-        const studentStatus = number.statuses[0] ?? null;
-        const statusValue = studentStatus?.status ?? null;
+      const topicRows: string[] = [];
 
-        if (statusValue) {
+      for (const num of topic.homeworkNumbers) {
+        totalNumbers += 1;
+        const st = num.statuses[0] ?? null;
+        const sv = st?.status ?? null;
+
+        if (sv) {
           totalMarked += 1;
         }
 
-        if (statusValue === "GREEN" || statusValue === "YELLOW") {
+        if (sv === "GREEN") {
+          totalGreen += 1;
           totalSolved += 1;
+        } else if (sv === "YELLOW") {
+          totalYellow += 1;
+          totalSolved += 1;
+        } else if (sv === "RED") {
+          totalRed += 1;
         }
 
-        dataRows.push([
-          sanitizeCell(topic.title),
-          sanitizeCell(number.number),
-          sanitizeCell(statusValue ? statusLabels[statusValue] ?? statusValue : "Не отмечено"),
-          sanitizeCell(data.notesEnabled ? (studentStatus as { note?: string | null })?.note : ""),
-          sanitizeCell(
-            data.deadlinesEnabled && (studentStatus as { deadlineAt?: Date | null })?.deadlineAt
-              ? formatDateTime((studentStatus as { deadlineAt?: Date | null }).deadlineAt ?? null)
-              : ""
-          ),
-          sanitizeCell(studentStatus?.updatedAt ? formatDateTime(studentStatus.updatedAt) : "")
-        ]);
+        const note = data.notesEnabled ? ((st as { note?: string | null })?.note ?? "") : "";
+        const deadline =
+          data.deadlinesEnabled && (st as { deadlineAt?: Date | null })?.deadlineAt
+            ? formatDateTime((st as { deadlineAt?: Date | null }).deadlineAt ?? null)
+            : "";
+        const updated = st?.updatedAt ? formatDateTime(st.updatedAt) : "";
+
+        topicRows.push(
+          row(topic.title, num.number, statusLabels[sv ?? ""] ?? "Не отмечено", note, deadline, updated)
+        );
       }
+
+      topicBlocks.push(topicRows);
     }
 
+    const percent = totalNumbers > 0 ? Math.round((totalSolved / totalNumbers) * 100) : 0;
+
     const lines: string[] = [
-      ["ПРОГРЕСС УЧЕНИКА"].join(TAB),
-      "",
-      ["Ученик", sanitizeCell(data.student.name)].join(TAB),
-      ["Логин", sanitizeCell(data.student.email)].join(TAB),
-      ["Тем", String(data.topics.length)].join(TAB),
-      ["Решено", `${totalSolved} из ${totalNumbers}`].join(TAB),
-      ["Отмечено", `${totalMarked} из ${totalNumbers}`].join(TAB),
-      "",
-      ["Тема", "Номер", "Статус", "Заметка", "Дедлайн", "Последнее обновление"].join(TAB),
-      ...dataRows.map((row) => row.join(TAB))
+      `sep=${SEP}`,
+
+      row("ПРОГРЕСС УЧЕНИКА"),
+      emptyRow(),
+
+      row("Ученик", data.student.name),
+      row("Логин", data.student.email),
+      row("Дата экспорта", formatDateTime(exportDate)),
+      emptyRow(),
+
+      row("СВОДКА"),
+      row("Всего тем", data.topics.length),
+      row("Всего номеров", totalNumbers),
+      row("Решено (зел. + жел.)", `${totalSolved} из ${totalNumbers}`, `${percent}%`),
+      row("Зеленых", totalGreen),
+      row("Желтых", totalYellow),
+      row("Красных", totalRed),
+      row("Не отмечено", totalNumbers - totalMarked),
+      emptyRow(),
+
+      row("ДЕТАЛИЗАЦИЯ ПО НОМЕРАМ"),
+      row("Тема", "Номер", "Статус", "Заметка", "Дедлайн", "Обновлено"),
+      ...topicBlocks.flat()
     ];
 
-    const tsvString = lines.join("\r\n");
-
+    const csvString = lines.join("\r\n");
     const encoder = new TextEncoder();
     const bom = new Uint8Array([0xef, 0xbb, 0xbf]);
-    const body = encoder.encode(tsvString);
-    const result = new Uint8Array(bom.length + body.length);
-    result.set(bom);
-    result.set(body, bom.length);
+    const body = encoder.encode(csvString);
+    const output = new Uint8Array(bom.length + body.length);
+    output.set(bom);
+    output.set(body, bom.length);
 
-    const datePart = new Date().toISOString().slice(0, 10);
+    const datePart = exportDate.toISOString().slice(0, 10);
 
-    return new NextResponse(result, {
+    return new NextResponse(output, {
       status: 200,
       headers: {
         "Content-Type": "text/csv; charset=utf-8",
