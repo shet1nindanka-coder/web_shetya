@@ -1,10 +1,11 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { DeadlineList, type DeadlineListItem } from "@/components/deadline-list";
+import { DeadlineList } from "@/components/deadline-list";
+import { type StudentDeadlineAssignment } from "@/lib/student-deadline-groups";
 
 type DeadlinesCalendarProps = {
-  deadlines: DeadlineListItem[];
+  deadlines: StudentDeadlineAssignment[];
 };
 
 const weekDayLabels = ["Пн", "Вт", "Ср", "Чт", "Пт", "Сб", "Вс"];
@@ -53,13 +54,10 @@ function getMonthDays(monthStart: Date) {
 export function DeadlinesCalendar({ deadlines }: DeadlinesCalendarProps) {
   const [currentMonth, setCurrentMonth] = useState(() => startOfMonth(new Date()));
   const [previewDayKey, setPreviewDayKey] = useState<string | null>(null);
-  const openPreviewTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const closePreviewTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const PREVIEW_OPEN_DELAY_MS = 240;
-  const PREVIEW_CLOSE_DELAY_MS = 80;
+  const calendarRef = useRef<HTMLDivElement | null>(null);
 
   const deadlinesByDay = useMemo(() => {
-    const grouped = new Map<string, DeadlineListItem[]>();
+    const grouped = new Map<string, StudentDeadlineAssignment[]>();
     for (const deadline of deadlines) {
       const key = toDayKey(new Date(deadline.deadlineAt));
       const list = grouped.get(key) ?? [];
@@ -73,51 +71,35 @@ export function DeadlinesCalendar({ deadlines }: DeadlinesCalendarProps) {
   const todayKey = toDayKey(new Date());
 
   useEffect(() => {
-    return () => {
-      if (openPreviewTimerRef.current) {
-        clearTimeout(openPreviewTimerRef.current);
+    const onDocumentClick = (event: MouseEvent) => {
+      const target = event.target as Node | null;
+
+      if (!target || !calendarRef.current) {
+        return;
       }
 
-      if (closePreviewTimerRef.current) {
-        clearTimeout(closePreviewTimerRef.current);
+      if (!calendarRef.current.contains(target)) {
+        setPreviewDayKey(null);
       }
+    };
+
+    const onEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setPreviewDayKey(null);
+      }
+    };
+
+    document.addEventListener("mousedown", onDocumentClick);
+    document.addEventListener("keydown", onEscape);
+
+    return () => {
+      document.removeEventListener("mousedown", onDocumentClick);
+      document.removeEventListener("keydown", onEscape);
     };
   }, []);
 
-  const schedulePreviewOpen = (dayKey: string) => {
-    if (closePreviewTimerRef.current) {
-      clearTimeout(closePreviewTimerRef.current);
-      closePreviewTimerRef.current = null;
-    }
-
-    if (openPreviewTimerRef.current) {
-      clearTimeout(openPreviewTimerRef.current);
-    }
-
-    openPreviewTimerRef.current = setTimeout(() => {
-      setPreviewDayKey(dayKey);
-      openPreviewTimerRef.current = null;
-    }, PREVIEW_OPEN_DELAY_MS);
-  };
-
-  const schedulePreviewClose = () => {
-    if (openPreviewTimerRef.current) {
-      clearTimeout(openPreviewTimerRef.current);
-      openPreviewTimerRef.current = null;
-    }
-
-    if (closePreviewTimerRef.current) {
-      clearTimeout(closePreviewTimerRef.current);
-    }
-
-    closePreviewTimerRef.current = setTimeout(() => {
-      setPreviewDayKey(null);
-      closePreviewTimerRef.current = null;
-    }, PREVIEW_CLOSE_DELAY_MS);
-  };
-
   return (
-    <div className="ui-surface rounded-[16px] border p-3 sm:p-4">
+    <div ref={calendarRef} className="ui-surface rounded-[16px] border p-3 sm:p-4">
       <div className="mb-3 flex items-center justify-between gap-2">
         <button
           type="button"
@@ -151,7 +133,7 @@ export function DeadlinesCalendar({ deadlines }: DeadlinesCalendarProps) {
           const hasDeadlines = dayItems.length > 0;
           const dayTime = fromDayKey(dayKey).getTime();
           const hasOverdue = dayItems.some((item) => {
-            const isSolved = item.status === "GREEN" || item.status === "YELLOW";
+            const isSolved = item.status === "DONE";
             return !isSolved && dayTime < Date.now();
           });
           const hasSoon = !hasOverdue && dayItems.length > 0 && dayTime - Date.now() <= 1000 * 60 * 60 * 24 * 2;
@@ -161,13 +143,12 @@ export function DeadlinesCalendar({ deadlines }: DeadlinesCalendarProps) {
             <div
               key={dayKey}
               className="relative"
-              onMouseEnter={() => schedulePreviewOpen(dayKey)}
-              onMouseLeave={schedulePreviewClose}
-              onFocus={() => schedulePreviewOpen(dayKey)}
-              onBlur={schedulePreviewClose}
             >
               <button
                 type="button"
+                onClick={() => {
+                  setPreviewDayKey((current) => (current === dayKey ? null : dayKey));
+                }}
                 className={`relative flex h-12 w-full flex-col items-center justify-center rounded-[10px] border text-sm transition ${
                   isCurrentMonth
                     ? "border-slate-200 bg-white text-[var(--theme-text-strong)] hover:border-brand-300"
@@ -178,11 +159,27 @@ export function DeadlinesCalendar({ deadlines }: DeadlinesCalendarProps) {
               >
                 <span>{day.getDate()}</span>
                 {hasDeadlines ? (
-                  <span className={`mt-1 h-1.5 w-1.5 rounded-full ${hasOverdue ? "bg-rose-500" : hasSoon ? "bg-amber-500" : "bg-brand-500"}`} />
+                  <span
+                    className={`mt-1 inline-flex min-w-4 items-center justify-center rounded-full px-1 text-[10px] font-semibold leading-4 ${
+                      hasOverdue
+                        ? "bg-rose-500 text-white"
+                        : hasSoon
+                        ? "bg-amber-500 text-white"
+                        : "bg-brand-500 text-white"
+                    }`}
+                  >
+                    {dayItems.length}
+                  </span>
                 ) : null}
               </button>
 
-              <div className={`pointer-events-none absolute left-1/2 top-[calc(100%+8px)] z-20 w-64 -translate-x-1/2 rounded-[12px] border bg-white p-2 shadow-lg ${isPreviewOpen ? "block" : "hidden"}`}>
+              <div
+                className={`absolute left-1/2 top-[calc(100%+8px)] z-20 w-64 -translate-x-1/2 rounded-[12px] border bg-white p-2 shadow-lg transition-all duration-200 ease-out ${
+                  isPreviewOpen
+                    ? "pointer-events-auto translate-y-0 scale-100 opacity-100"
+                    : "pointer-events-none -translate-y-1 scale-[0.98] opacity-0"
+                }`}
+              >
                 <p className="mb-1 text-xs font-semibold text-[var(--theme-text-muted)]">
                   {new Intl.DateTimeFormat("ru-RU", { day: "numeric", month: "long" }).format(day)}
                 </p>

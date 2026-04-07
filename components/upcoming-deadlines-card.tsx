@@ -1,7 +1,8 @@
-import { DeadlineList, type DeadlineListItem } from "@/components/deadline-list";
+import { DeadlineList } from "@/components/deadline-list";
+import { type StudentDeadlineAssignment } from "@/lib/student-deadline-groups";
 
 type UpcomingDeadlinesCardProps = {
-  deadlines: DeadlineListItem[];
+  deadlines: StudentDeadlineAssignment[];
   title?: string;
   description?: string;
   limit?: number;

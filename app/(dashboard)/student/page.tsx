@@ -6,24 +6,12 @@ import { SectionCard } from "@/components/section-card";
 import { UpcomingDeadlinesCard } from "@/components/upcoming-deadlines-card";
 import { requireUser } from "@/lib/auth";
 import { getStudentDeadlines, getStudentTopicsOverview } from "@/lib/platform-data";
-import { toIsoDateTimeString } from "@/lib/utils";
+import { groupStudentDeadlinesAsAssignments } from "@/lib/student-deadline-groups";
 
 export default async function StudentPage() {
   const user = await requireUser(UserRole.STUDENT);
   const [overview, deadlines] = await Promise.all([getStudentTopicsOverview(user.id), getStudentDeadlines(user.id)]);
-  const normalizedDeadlines = deadlines
-    .map((deadline) => {
-      const deadlineAt = toIsoDateTimeString(deadline.deadlineAt);
-      if (!deadlineAt) {
-        return null;
-      }
-
-      return {
-        ...deadline,
-        deadlineAt
-      };
-    })
-    .filter((deadline): deadline is NonNullable<typeof deadline> => Boolean(deadline));
+  const assignmentDeadlines = groupStudentDeadlinesAsAssignments(deadlines);
 
   const topicToContinue =
     overview.topics.find(
@@ -40,7 +28,7 @@ export default async function StudentPage() {
         description="Только то, что помогает понять следующий шаг в учебе."
       />
 
-      <UpcomingDeadlinesCard deadlines={normalizedDeadlines} limit={4} />
+      <UpcomingDeadlinesCard deadlines={assignmentDeadlines} limit={4} />
 
       <div className="grid gap-4 lg:grid-cols-2">
         <SectionCard title="Продолжить работу" description="Откройте тему и продолжайте с текущего места.">

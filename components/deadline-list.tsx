@@ -1,27 +1,33 @@
 "use client";
 
 import Link from "next/link";
-import { HomeworkNumberStatus } from "@prisma/client";
+import { type StudentDeadlineAssignment } from "@/lib/student-deadline-groups";
 import { formatDateTime } from "@/lib/utils";
 
-export type DeadlineListItem = {
-  id: string;
-  deadlineAt: string;
-  status: HomeworkNumberStatus | null;
-  topicId: string;
-  topicTitle: string;
-  homeworkNumber: number;
-};
-
 type DeadlineListProps = {
-  items: DeadlineListItem[];
+  items: StudentDeadlineAssignment[];
   emptyMessage?: string;
   compact?: boolean;
 };
 
-function getDeadlineUi(item: DeadlineListItem, now: number) {
+function getNumberWord(value: number) {
+  const mod10 = value % 10;
+  const mod100 = value % 100;
+
+  if (mod10 === 1 && mod100 !== 11) {
+    return "номер";
+  }
+
+  if (mod10 >= 2 && mod10 <= 4 && (mod100 < 12 || mod100 > 14)) {
+    return "номера";
+  }
+
+  return "номеров";
+}
+
+function getDeadlineUi(item: StudentDeadlineAssignment, now: number) {
   const deadlineTime = new Date(item.deadlineAt).getTime();
-  const isSolved = item.status === HomeworkNumberStatus.GREEN || item.status === HomeworkNumberStatus.YELLOW;
+  const isSolved = item.status === "DONE";
   const isOverdue = !isSolved && deadlineTime < now;
   const isSoon = !isOverdue && deadlineTime - now <= 1000 * 60 * 60 * 24 * 2;
 
@@ -32,14 +38,14 @@ function getDeadlineUi(item: DeadlineListItem, now: number) {
     };
   }
 
-  if (item.status === HomeworkNumberStatus.GREEN || item.status === HomeworkNumberStatus.YELLOW) {
+  if (item.status === "DONE") {
     return {
       statusLabel: "Сдано",
       statusClassName: "border-emerald-200 bg-emerald-50 text-emerald-700"
     };
   }
 
-  if (item.status === HomeworkNumberStatus.RED) {
+  if (item.status === "IN_PROGRESS") {
     return {
       statusLabel: isSoon ? "Скоро дедлайн" : "В работе",
       statusClassName: isSoon ? "border-amber-200 bg-amber-50 text-amber-700" : "border-slate-200 bg-slate-100 text-slate-700"
@@ -73,7 +79,9 @@ export function DeadlineList({ items, emptyMessage = "На эту дату де�
             <div className="flex flex-wrap items-start justify-between gap-2">
               <div className="min-w-0">
                 <p className="font-medium text-[var(--theme-text-strong)]">{item.topicTitle}</p>
-                <p className="text-sm text-[var(--theme-text-muted)]">Номер {item.homeworkNumber}</p>
+                <p className="text-sm text-[var(--theme-text-muted)]">
+                  ДЗ: {item.solvedNumbers} из {item.totalNumbers} выполнено ({item.totalNumbers} {getNumberWord(item.totalNumbers)})
+                </p>
               </div>
               <span className={`inline-flex rounded-[10px] border px-2.5 py-1 text-xs font-semibold ${ui.statusClassName}`}>
                 {ui.statusLabel}
