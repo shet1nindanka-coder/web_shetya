@@ -44,7 +44,7 @@ export function TeacherSectionTabs() {
   }, [router]);
 
   return (
-    <nav className="ui-fade-slide ui-tab-shell ui-tab-strip mb-6 flex gap-1.5 rounded-[20px] p-1.5 sm:mb-8 sm:flex-wrap sm:overflow-visible sm:rounded-[22px] sm:p-2">
+    <nav className="ui-fade-slide ui-tab-shell ui-tab-strip mb-4 flex gap-1 rounded-[12px] p-1 sm:mb-6 sm:gap-1.5 sm:rounded-[16px] sm:p-1.5">
       {items.map((item) => {
         const isActive = item.match(pathname);
 
@@ -56,7 +56,7 @@ export function TeacherSectionTabs() {
             onMouseEnter={() => router.prefetch(item.href)}
             onFocus={() => router.prefetch(item.href)}
             data-active={isActive}
-            className={cx("ui-pressable ui-tab shrink-0 rounded-[14px] px-4 py-2.5 text-sm font-medium sm:px-4.5")}
+            className={cx("ui-pressable ui-tab shrink-0 scroll-snap-align-start rounded-[10px] px-3 py-2 text-[0.8rem] font-medium sm:rounded-[12px] sm:px-4 sm:py-2.5 sm:text-sm")}
           >
             {item.label}
           </Link>

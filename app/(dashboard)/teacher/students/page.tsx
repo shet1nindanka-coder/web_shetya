@@ -51,13 +51,13 @@ export default async function TeacherStudentsPage({ searchParams }: TeacherStude
   const notice = noticeKey ? studentNotices[noticeKey] : null;
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-5 sm:space-y-6">
       {notice ? (
         <div
           className={
             notice.tone === "success"
-              ? "rounded-[28px] border border-emerald-200 bg-emerald-50 px-5 py-4 text-sm font-medium text-emerald-900"
-              : "rounded-[28px] border border-rose-200 bg-rose-50 px-5 py-4 text-sm font-medium text-rose-900"
+              ? "rounded-[14px] border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-900 sm:rounded-[16px]"
+              : "rounded-[14px] border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-medium text-rose-900 sm:rounded-[16px]"
           }
         >
           {notice.message}
@@ -70,21 +70,21 @@ export default async function TeacherStudentsPage({ searchParams }: TeacherStude
         description="Создавайте доступы ученикам и открывайте их личные результаты из одного списка."
         metrics={[
           { label: "Ученики", value: data.students.length },
-          { label: "Темы в системе", value: data.stats.totalTopics },
-          { label: "Номера в системе", value: data.stats.totalNumbers }
+          { label: "Темы", value: data.stats.totalTopics },
+          { label: "Номера", value: data.stats.totalNumbers }
         ]}
         aside={
-          <div className="ui-page-header-panel rounded-[18px] p-4 sm:p-5">
+          <div className="ui-page-header-panel rounded-[14px] p-3.5 sm:rounded-[16px] sm:p-4">
             <p className="ui-kicker">Работа с учениками</p>
-            <p className="mt-2 font-display text-[1.65rem] font-semibold text-[var(--theme-text-strong)]">
+            <p className="mt-1.5 font-display text-[1.3rem] font-semibold text-[var(--theme-text-strong)] sm:text-[1.5rem]">
               {data.students.length} аккаунтов
             </p>
-            <p className="mt-2 text-sm leading-6 text-[var(--theme-text-muted)]">Новые логины создаются здесь же, без отдельной панели администратора.</p>
+            <p className="mt-1.5 text-sm leading-relaxed text-[var(--theme-text-muted)]">Новые логины создаются здесь же.</p>
           </div>
         }
       />
 
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+      <div className="grid grid-cols-2 gap-2.5 sm:gap-3 xl:grid-cols-4">
         <StatCard label="Ученики" value={data.students.length} />
         <StatCard label="Темы" value={data.stats.totalTopics} />
         <StatCard label="Номера" value={data.stats.totalNumbers} />
@@ -92,80 +92,80 @@ export default async function TeacherStudentsPage({ searchParams }: TeacherStude
       </div>
 
       <SectionCard title="Добавить ученика" description="Создайте логин и пароль для нового ученика.">
-        <div className="grid gap-6 xl:grid-cols-[0.88fr_1.12fr]">
-          <form action={createStudentAction} className="space-y-4 rounded-[20px] border border-slate-200 bg-slate-50/80 p-4 sm:p-5">
-            <div className="space-y-2">
-              <h3 className="font-display text-[1.35rem] font-semibold text-slate-950 sm:text-[1.55rem]">Создать доступ ученику</h3>
-              <p className="ui-hint text-sm leading-6 text-slate-600">Можно использовать e-mail как логин.</p>
+        <div className="grid gap-4 xl:grid-cols-[0.88fr_1.12fr]">
+          <form action={createStudentAction} className="space-y-3 rounded-[14px] border border-slate-200 bg-slate-50/80 p-3.5 sm:space-y-4 sm:rounded-[16px] sm:p-4">
+            <div className="space-y-1.5">
+              <h3 className="font-display text-base font-semibold text-slate-950 sm:text-lg">Создать доступ ученику</h3>
+              <p className="ui-hint text-sm leading-relaxed text-slate-600">Можно использовать e-mail как логин.</p>
             </div>
 
-            <label className="block space-y-2">
+            <label className="block space-y-1.5">
               <span className="text-sm font-medium text-slate-700">Имя ученика</span>
               <input
                 type="text"
                 name="name"
                 placeholder="Например, Мария Смирнова"
-              className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-slate-950 outline-none transition focus:border-brand-400 focus:bg-white"
+                className="ui-input w-full rounded-[12px] px-3.5 py-2.5 sm:rounded-[14px]"
                 required
               />
             </label>
 
-            <label className="block space-y-2">
+            <label className="block space-y-1.5">
               <span className="text-sm font-medium text-slate-700">Логин ученика</span>
               <input
                 type="text"
                 name="login"
                 placeholder="maria@example.com"
-              className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-slate-950 outline-none transition focus:border-brand-400 focus:bg-white"
+                className="ui-input w-full rounded-[12px] px-3.5 py-2.5 sm:rounded-[14px]"
                 required
               />
             </label>
 
-            <label className="block space-y-2">
+            <label className="block space-y-1.5">
               <span className="text-sm font-medium text-slate-700">Пароль</span>
               <input
                 type="password"
                 name="password"
                 placeholder="Минимум 8 символов"
                 minLength={8}
-                className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 text-slate-950 outline-none transition focus:border-brand-400 focus:bg-white"
+                className="ui-input w-full rounded-[12px] px-3.5 py-2.5 sm:rounded-[14px]"
                 required
               />
             </label>
 
             <button
               type="submit"
-              className="ui-pressable ui-button-primary w-full rounded-[16px] px-5 py-3 text-sm font-semibold transition sm:w-auto"
+              className="ui-pressable ui-button-primary w-full rounded-[10px] px-4 py-2.5 text-sm font-semibold transition sm:w-auto sm:rounded-[12px]"
             >
               Добавить ученика
             </button>
           </form>
 
-          <div className="ui-fade-slide ui-surface rounded-[20px] border p-4 sm:p-5">
-            <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="ui-fade-slide ui-surface rounded-[14px] border p-3.5 sm:rounded-[16px] sm:p-4">
+            <div className="flex flex-wrap items-center justify-between gap-2">
               <div>
                 <p className="ui-kicker">Текущие ученики</p>
-                <h3 className="font-display mt-2 text-[1.35rem] font-semibold text-slate-950 sm:text-[1.55rem]">
+                <h3 className="font-display mt-1.5 text-base font-semibold text-slate-950 sm:text-lg">
                   {data.students.length} аккаунтов ученика
                 </h3>
               </div>
             </div>
 
             {data.students.length === 0 ? (
-              <div className="mt-5 rounded-2xl border border-dashed border-slate-200 bg-white/70 px-4 py-8 text-center text-sm text-slate-600">
+              <div className="mt-4 rounded-[14px] border border-dashed border-slate-200 bg-white/70 px-4 py-6 text-center text-sm text-slate-600">
                 Пока ни одного ученика не добавлено.
               </div>
             ) : (
-              <div className="mt-5 grid gap-3 md:grid-cols-2">
+              <div className="mt-4 grid gap-2.5 sm:gap-3 md:grid-cols-2">
                 {data.students.map((student) => (
-                  <article key={student.id} className="ui-surface rounded-[18px] border border-white bg-white px-4 py-4">
+                  <article key={student.id} className="ui-surface rounded-[12px] border bg-white px-3.5 py-3 sm:rounded-[14px] sm:px-4 sm:py-3.5">
                     <p className="font-semibold text-slate-950">{student.name}</p>
-                    <p className="mt-2 text-sm text-slate-500">Логин</p>
+                    <p className="mt-1.5 text-xs text-slate-500">Логин</p>
                     <p className="text-sm font-medium text-slate-700">{student.email}</p>
-                    <div className="mt-4">
+                    <div className="mt-3">
                       <Link
                         href={`/teacher/students/${student.id}`}
-                        className="ui-pressable inline-flex w-full justify-center rounded-[14px] border border-slate-200 bg-slate-50 px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-brand-300 hover:text-brand-700 sm:w-auto"
+                        className="ui-pressable ui-button-secondary inline-flex w-full justify-center rounded-[10px] px-3.5 py-1.5 text-sm font-semibold transition sm:w-auto"
                       >
                         Смотреть прогресс
                       </Link>

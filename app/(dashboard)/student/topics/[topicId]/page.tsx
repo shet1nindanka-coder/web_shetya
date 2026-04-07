@@ -19,7 +19,7 @@ export default async function StudentTopicPage({ params }: StudentTopicPageProps
   const topic = await getStudentTopicDetail(user.id, topicId);
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-5 sm:space-y-6">
       <PageHeader
         backHref="/student/topics"
         backLabel="← Ко всем темам"

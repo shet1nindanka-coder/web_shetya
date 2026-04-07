@@ -17,7 +17,7 @@ const taskScoring = [
 
 export default function StudentInfoPage() {
   return (
-    <div className="space-y-8">
+    <div className="space-y-5 sm:space-y-6">
       <PageHeader
         eyebrow="Общая инфа"
         title="Баллы и разбалловка"
@@ -27,25 +27,25 @@ export default function StudentInfoPage() {
           { label: "100 тестовых", value: "от 30", tone: "accent" }
         ]}
         aside={
-          <div className="ui-page-header-panel rounded-[18px] p-4 sm:p-5">
+          <div className="ui-page-header-panel rounded-[14px] p-3.5 sm:rounded-[16px] sm:p-4">
             <p className="ui-kicker">Коротко</p>
-            <p className="mt-2 font-display text-[1.7rem] font-semibold text-[var(--theme-text-strong)]">30+ = 100</p>
-            <p className="mt-2 text-sm leading-6 text-[var(--theme-text-muted)]">Начиная с 30 первичных баллов тестовый результат уже равен 100.</p>
+            <p className="mt-1.5 font-display text-[1.3rem] font-semibold text-[var(--theme-text-strong)] sm:text-[1.5rem]">30+ = 100</p>
+            <p className="mt-1.5 text-sm leading-relaxed text-[var(--theme-text-muted)]">Начиная с 30 первичных баллов тестовый результат уже равен 100.</p>
           </div>
         }
       />
 
       <SectionCard title="Соответствие баллов">
-        <div className="overflow-hidden rounded-[20px] border border-slate-200 bg-white">
-          <div className="grid grid-cols-2 border-b border-slate-200 bg-slate-50 text-sm font-semibold text-slate-700">
-            <div className="px-4 py-3 sm:px-5">Первичный балл</div>
-            <div className="border-l border-slate-200 px-4 py-3 sm:px-5">Тестовый балл</div>
+        <div className="overflow-hidden rounded-[12px] border border-slate-200 bg-white sm:rounded-[16px]">
+          <div className="grid grid-cols-2 border-b border-slate-200 bg-slate-50 text-xs font-semibold text-slate-700 sm:text-sm">
+            <div className="px-3 py-2.5 sm:px-4 sm:py-3">Первичный балл</div>
+            <div className="border-l border-slate-200 px-3 py-2.5 sm:px-4 sm:py-3">Тестовый балл</div>
           </div>
           <div className="divide-y divide-slate-200">
             {scoreTable.map(([primary, test]) => (
-              <div key={primary} className="grid grid-cols-2 text-sm text-slate-700 odd:bg-white even:bg-slate-50/60">
-                <div className="px-4 py-3 font-semibold text-slate-950 sm:px-5">{primary}</div>
-                <div className="border-l border-slate-100 px-4 py-3 sm:px-5">{test}</div>
+              <div key={primary} className="grid grid-cols-2 text-xs text-slate-700 odd:bg-white even:bg-slate-50/60 sm:text-sm">
+                <div className="px-3 py-2 font-semibold text-slate-950 sm:px-4 sm:py-2.5">{primary}</div>
+                <div className="border-l border-slate-100 px-3 py-2 sm:px-4 sm:py-2.5">{test}</div>
               </div>
             ))}
           </div>
@@ -53,10 +53,10 @@ export default function StudentInfoPage() {
       </SectionCard>
 
       <SectionCard title="Разбалловка номеров ЕГЭ">
-        <div className="grid gap-3 md:grid-cols-2">
+        <div className="grid gap-2.5 sm:gap-3 md:grid-cols-2">
           {taskScoring.map((item) => (
             <article key={item} className="ui-mini-stat-card">
-              <p className="text-sm leading-6 text-slate-700 sm:text-[0.95rem]">{item}</p>
+              <p className="text-sm leading-relaxed text-slate-700">{item}</p>
             </article>
           ))}
         </div>

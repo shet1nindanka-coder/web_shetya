@@ -42,10 +42,10 @@ export function PageHeader({
   className
 }: PageHeaderProps) {
   return (
-    <section className={cx("ui-page-header ui-surface rounded-[18px] border p-5 sm:rounded-[20px] sm:p-6 lg:rounded-[22px]", className)}>
-      <div className="flex flex-col gap-5 xl:flex-row xl:items-start xl:justify-between">
-        <div className="min-w-0 flex-1 space-y-4">
-          <div className="space-y-3">
+    <section className={cx("ui-page-header ui-surface rounded-[14px] border p-3.5 sm:rounded-[18px] sm:p-5 lg:rounded-[20px]", className)}>
+      <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
+        <div className="min-w-0 flex-1 space-y-3">
+          <div className="space-y-2">
             {backHref && backLabel ? (
               <Link href={backHref} className="inline-flex text-sm font-semibold text-brand-700 transition hover:text-brand-900">
                 {backLabel}
@@ -54,12 +54,12 @@ export function PageHeader({
 
             {eyebrow ? <p className="ui-kicker">{eyebrow}</p> : null}
 
-            <div className="space-y-2">
-              <h1 className="font-display text-[2rem] font-semibold leading-tight text-[var(--theme-text-strong)] sm:text-[2.25rem]">
+            <div className="space-y-1.5">
+              <h1 className="font-display text-[1.5rem] font-semibold leading-tight text-[var(--theme-text-strong)] sm:text-[1.75rem] lg:text-[2rem]">
                 {title}
               </h1>
               {description ? (
-                <p className="ui-hint max-w-3xl text-sm leading-6 text-[var(--theme-text-muted)] sm:text-[0.95rem] sm:leading-7">
+                <p className="ui-hint max-w-2xl text-sm leading-relaxed text-[var(--theme-text-muted)]">
                   {description}
                 </p>
               ) : null}
@@ -67,7 +67,7 @@ export function PageHeader({
           </div>
 
           {metrics?.length ? (
-            <div className="ui-page-header-metrics flex flex-wrap gap-2.5">
+            <div className="ui-page-header-metrics flex flex-wrap gap-2">
               {metrics.map((metric) => (
                 <div key={metric.label} className={metricToneClassNames[metric.tone ?? "default"]}>
                   <span className="ui-metric-pill-label">{metric.label}</span>
@@ -77,10 +77,10 @@ export function PageHeader({
             </div>
           ) : null}
 
-          {actions ? <div className="flex flex-wrap gap-3">{actions}</div> : null}
+          {actions ? <div className="flex flex-wrap gap-2.5">{actions}</div> : null}
         </div>
 
-        {aside ? <div className="ui-page-header-aside w-full xl:w-[320px] xl:flex-none">{aside}</div> : null}
+        {aside ? <div className="ui-page-header-aside w-full xl:w-[300px] xl:flex-none">{aside}</div> : null}
       </div>
     </section>
   );

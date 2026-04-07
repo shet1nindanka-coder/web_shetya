@@ -75,13 +75,13 @@ export default async function TeacherTopicPage({ params, searchParams }: Teacher
   const numbersInput = data.topic.homeworkNumbers.map((number) => number.number).join(", ");
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-5 sm:space-y-6">
       {notice ? (
         <div
           className={
             notice.tone === "success"
-              ? "rounded-[28px] border border-emerald-200 bg-emerald-50 px-5 py-4 text-sm font-medium text-emerald-900"
-              : "rounded-[28px] border border-rose-200 bg-rose-50 px-5 py-4 text-sm font-medium text-rose-900"
+              ? "rounded-[14px] border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm font-medium text-emerald-900 sm:rounded-[16px]"
+              : "rounded-[14px] border border-rose-200 bg-rose-50 px-4 py-3 text-sm font-medium text-rose-900 sm:rounded-[16px]"
           }
         >
           {notice.message}
@@ -101,9 +101,9 @@ export default async function TeacherTopicPage({ params, searchParams }: Teacher
         ]}
         aside={
           <div className="ui-page-header-aside">
-            <div className="ui-page-header-panel rounded-[18px] p-4 sm:p-5">
+            <div className="ui-page-header-panel rounded-[14px] p-3.5 sm:rounded-[16px] sm:p-4">
               <p className="ui-kicker">Готовность темы</p>
-              <div className="mt-3 flex flex-wrap gap-2">
+              <div className="mt-2.5 flex flex-wrap gap-1.5">
                 <Badge className="border-slate-200 bg-white text-slate-700">Теория {data.stats.theoryAttached ? "есть" : "нет"}</Badge>
                 <Badge className="border-slate-200 bg-white text-slate-700">Задания {data.stats.homeworkAttached ? "есть" : "нет"}</Badge>
               </div>
@@ -112,87 +112,67 @@ export default async function TeacherTopicPage({ params, searchParams }: Teacher
               topicId={data.topic.id}
               topicTitle={data.topic.title}
               triggerLabel="Удалить тему"
-              triggerClassName="ui-pressable rounded-[14px] border border-rose-200 bg-rose-50 px-4 py-2.5 text-sm font-semibold text-rose-700 transition hover:bg-rose-100"
+              triggerClassName="ui-pressable rounded-[10px] border border-rose-200 bg-rose-50 px-3.5 py-2 text-sm font-semibold text-rose-700 transition hover:bg-rose-100 sm:rounded-[12px]"
             />
           </div>
         }
       />
 
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+      <div className="grid grid-cols-2 gap-2.5 sm:gap-3 xl:grid-cols-4">
         <StatCard label="Номера" value={data.stats.totalNumbers} />
-        <StatCard
-          label="Файл теории"
-          value={data.stats.theoryAttached ? "Есть" : "Нет"}
-        />
-        <StatCard
-          label="Файл заданий"
-          value={data.stats.homeworkAttached ? "Есть" : "Нет"}
-        />
-        <StatCard
-          label="Ответы"
-          value={`${data.stats.answersCount}/${data.stats.totalNumbers}`}
-        />
+        <StatCard label="Теория" value={data.stats.theoryAttached ? "Есть" : "Нет"} />
+        <StatCard label="Задания" value={data.stats.homeworkAttached ? "Есть" : "Нет"} />
+        <StatCard label="Ответы" value={`${data.stats.answersCount}/${data.stats.totalNumbers}`} />
       </div>
 
       <SectionCard title="Редактирование темы">
-        <form action={updateTopicAction} className="space-y-6" encType="multipart/form-data">
+        <form action={updateTopicAction} className="space-y-4 sm:space-y-5" encType="multipart/form-data">
           <input type="hidden" name="topicId" value={data.topic.id} />
 
-          <div className="space-y-4 rounded-[26px] border border-slate-200 bg-slate-50/70 p-5">
-            <div className="space-y-1">
-              <h3 className="text-lg font-semibold text-slate-950">Основная информация</h3>
-            </div>
+          <div className="space-y-3 rounded-[14px] border border-slate-200 bg-slate-50/70 p-3.5 sm:space-y-4 sm:rounded-[18px] sm:p-4">
+            <h3 className="text-base font-semibold text-slate-950 sm:text-lg">Основная информация</h3>
 
-            <div className="grid gap-4">
-              <label className="block space-y-2">
+            <div className="grid gap-3 sm:gap-4">
+              <label className="block space-y-1.5">
                 <span className="text-sm font-medium text-slate-700">Название темы</span>
                 <input
                   type="text"
                   name="title"
                   defaultValue={data.topic.title}
-                  className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 outline-none transition focus:border-brand-400 focus:bg-white"
+                  className="ui-input w-full rounded-[12px] px-3.5 py-2.5 sm:rounded-[14px]"
                   required
                 />
               </label>
 
-              <label className="block space-y-2">
+              <label className="block space-y-1.5">
                 <span className="text-sm font-medium text-slate-700">Описание</span>
                 <textarea
                   name="description"
-                  rows={4}
+                  rows={3}
                   defaultValue={data.topic.description}
-                  className="w-full rounded-2xl border border-slate-200 bg-white px-4 py-3 outline-none transition focus:border-brand-400 focus:bg-white"
+                  className="ui-input w-full rounded-[12px] px-3.5 py-2.5 sm:rounded-[14px]"
                   required
                 />
               </label>
             </div>
           </div>
 
-          <div className="space-y-4 rounded-[26px] border border-slate-200 bg-slate-50/70 p-5">
-            <div className="space-y-1">
-              <h3 className="text-lg font-semibold text-slate-950">Номера</h3>
-            </div>
-
+          <div className="space-y-3 rounded-[14px] border border-slate-200 bg-slate-50/70 p-3.5 sm:space-y-4 sm:rounded-[18px] sm:p-4">
+            <h3 className="text-base font-semibold text-slate-950 sm:text-lg">Номера</h3>
             <TopicNumbersField
               name="numbers"
               initialValue={numbersInput}
-              rows={6}
+              rows={5}
               description="Можно вставлять длинные списки в несколько строк."
             />
           </div>
 
-          <div className="space-y-4 rounded-[26px] border border-slate-200 bg-slate-50/70 p-5">
-            <div className="space-y-1">
-              <h3 className="text-lg font-semibold text-slate-950">Файлы</h3>
-            </div>
+          <div className="space-y-3 rounded-[14px] border border-slate-200 bg-slate-50/70 p-3.5 sm:space-y-4 sm:rounded-[18px] sm:p-4">
+            <h3 className="text-base font-semibold text-slate-950 sm:text-lg">Файлы</h3>
 
-            <div className="grid gap-6 xl:grid-cols-2">
-              <div className="space-y-4 rounded-[24px] border border-slate-200 bg-white p-4">
-                <FileResourceCard
-                  title="Теория"
-                  file={data.topic.theoryFile}
-                  showPreview={false}
-                />
+            <div className="grid gap-4 xl:grid-cols-2">
+              <div className="space-y-3 rounded-[12px] border border-slate-200 bg-white p-3 sm:space-y-4 sm:rounded-[16px] sm:p-3.5">
+                <FileResourceCard title="Теория" file={data.topic.theoryFile} showPreview={false} />
                 <FileDropInput
                   name="theoryFile"
                   label="Заменить файл теории"
@@ -207,19 +187,15 @@ export default async function TeacherTopicPage({ params, searchParams }: Teacher
                     formEncType="application/x-www-form-urlencoded"
                     name="fileKind"
                     value="theory"
-                    className="ui-pressable rounded-[14px] border border-rose-200 bg-rose-50 px-4 py-2 text-sm font-semibold text-rose-700 transition hover:bg-rose-100"
+                    className="ui-pressable rounded-[10px] border border-rose-200 bg-rose-50 px-3.5 py-1.5 text-sm font-semibold text-rose-700 transition hover:bg-rose-100"
                   >
                     Удалить файл теории
                   </button>
                 ) : null}
               </div>
 
-              <div className="space-y-4 rounded-[24px] border border-slate-200 bg-white p-4">
-                <FileResourceCard
-                  title="Задания"
-                  file={data.topic.homeworkFile}
-                  showPreview={false}
-                />
+              <div className="space-y-3 rounded-[12px] border border-slate-200 bg-white p-3 sm:space-y-4 sm:rounded-[16px] sm:p-3.5">
+                <FileResourceCard title="Задания" file={data.topic.homeworkFile} showPreview={false} />
                 <FileDropInput
                   name="homeworkFile"
                   label="Заменить файл заданий"
@@ -234,7 +210,7 @@ export default async function TeacherTopicPage({ params, searchParams }: Teacher
                     formEncType="application/x-www-form-urlencoded"
                     name="fileKind"
                     value="homework"
-                    className="ui-pressable rounded-[14px] border border-rose-200 bg-rose-50 px-4 py-2 text-sm font-semibold text-rose-700 transition hover:bg-rose-100"
+                    className="ui-pressable rounded-[10px] border border-rose-200 bg-rose-50 px-3.5 py-1.5 text-sm font-semibold text-rose-700 transition hover:bg-rose-100"
                   >
                     Удалить файл заданий
                   </button>
@@ -243,10 +219,8 @@ export default async function TeacherTopicPage({ params, searchParams }: Teacher
             </div>
           </div>
 
-          <div className="space-y-3 rounded-[26px] border border-slate-200 bg-white p-5">
-            <div className="space-y-1">
-              <h3 className="text-lg font-semibold text-slate-950">Сохранение</h3>
-            </div>
+          <div className="space-y-2.5 rounded-[14px] border border-slate-200 bg-white p-3.5 sm:rounded-[18px] sm:p-4">
+            <h3 className="text-base font-semibold text-slate-950 sm:text-lg">Сохранение</h3>
             <TopicEditSubmitButton />
           </div>
         </form>

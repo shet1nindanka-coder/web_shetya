@@ -12,46 +12,48 @@ type LoginFormProps = {
 
 export function LoginForm({ error }: LoginFormProps) {
   return (
-    <div className="ui-fade-slide ui-surface w-full max-w-md rounded-[32px] border p-8">
-      <div className="mb-8 flex flex-col items-center text-center">
-        <span className="app-logo-mark mb-4 flex h-12 w-12 items-center justify-center rounded-[18px] text-base font-semibold text-white shadow-[0_10px_24px_rgba(15,23,42,0.14)]">
+    <div className="ui-fade-slide ui-surface w-full max-w-[380px] rounded-[20px] border p-6 sm:max-w-md sm:rounded-[24px] sm:p-8">
+      <div className="mb-6 flex flex-col items-center text-center sm:mb-8">
+        <span className="app-logo-mark mb-3 flex h-11 w-11 items-center justify-center rounded-[14px] text-base font-semibold text-white shadow-sm sm:mb-4 sm:h-12 sm:w-12 sm:rounded-[16px]">
           T
         </span>
-        <h1 className="font-display text-4xl font-semibold leading-tight text-[var(--theme-text-strong)]">Вход</h1>
+        <h1 className="font-display text-2xl font-semibold text-[var(--theme-text-strong)] sm:text-3xl">Вход</h1>
       </div>
 
-      <form action={loginAction} className="space-y-4">
-        <label className="block space-y-2">
+      <form action={loginAction} className="space-y-3.5">
+        <label className="block space-y-1.5">
           <span className="text-sm font-medium text-[var(--theme-text-default)]">Логин</span>
           <input
             type="text"
             name="login"
             placeholder="teacher@example.com"
-            className="ui-input w-full rounded-2xl px-4 py-3"
+            className="ui-input w-full rounded-[12px] px-3.5 py-2.5 text-sm sm:rounded-[14px] sm:px-4 sm:py-3"
             required
+            autoComplete="username"
           />
         </label>
 
-        <label className="block space-y-2">
+        <label className="block space-y-1.5">
           <span className="text-sm font-medium text-[var(--theme-text-default)]">Пароль</span>
           <input
             type="password"
             name="password"
             placeholder="Введите пароль"
-            className="ui-input w-full rounded-2xl px-4 py-3"
+            className="ui-input w-full rounded-[12px] px-3.5 py-2.5 text-sm sm:rounded-[14px] sm:px-4 sm:py-3"
             required
+            autoComplete="current-password"
           />
         </label>
 
         {error && errorMap[error] ? (
-          <div className="ui-notice-error rounded-2xl px-4 py-3 text-sm">
+          <div className="ui-notice-error rounded-[12px] px-3.5 py-2.5 text-sm">
             {errorMap[error]}
           </div>
         ) : null}
 
         <button
           type="submit"
-          className="ui-pressable ui-button-primary w-full rounded-2xl px-4 py-3 text-sm font-semibold transition"
+          className="ui-pressable ui-button-primary w-full rounded-[12px] px-4 py-2.5 text-sm font-semibold transition sm:rounded-[14px] sm:py-3"
         >
           Войти
         </button>
