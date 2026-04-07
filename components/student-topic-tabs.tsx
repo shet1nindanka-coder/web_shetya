@@ -58,9 +58,19 @@ export function StudentTopicTabs({
         })}
       </nav>
 
-      <div key={activeTab} className="ui-fade-slide">
-        {contentByTab[activeTab]}
-      </div>
+      {tabMeta.map((tab) => {
+        const isActive = activeTab === tab.id;
+
+        return (
+          <section
+            key={tab.id}
+            aria-hidden={!isActive}
+            className={cx(isActive ? "ui-fade-slide block" : "hidden")}
+          >
+            {contentByTab[tab.id]}
+          </section>
+        );
+      })}
     </div>
   );
 }
