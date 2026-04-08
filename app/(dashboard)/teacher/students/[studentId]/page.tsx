@@ -4,7 +4,6 @@ import { PageHeader } from "@/components/page-header";
 import { ProgressBar } from "@/components/progress-bar";
 import { SectionCard } from "@/components/section-card";
 import { StatCard } from "@/components/stat-card";
-import { CsvImportButton } from "@/components/csv-import-button";
 import { DeleteStudentDialog } from "@/components/delete-student-dialog";
 import { TeacherStudentProgressBoard } from "@/components/teacher-student-progress-board";
 import { requireUser } from "@/lib/auth";
@@ -57,7 +56,6 @@ export default async function TeacherStudentPage({ params }: TeacherStudentPageP
             >
               Экспорт прогресса Excel
             </a>
-            <CsvImportButton studentId={data.student.id} />
             <DeleteStudentDialog
               studentId={data.student.id}
               studentName={data.student.name}
