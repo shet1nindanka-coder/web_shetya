@@ -1,9 +1,11 @@
 import { UserRole } from "@prisma/client";
+import { notFound } from "next/navigation";
 import { PageHeader } from "@/components/page-header";
 import { ProgressBar } from "@/components/progress-bar";
 import { SectionCard } from "@/components/section-card";
 import { StatCard } from "@/components/stat-card";
 import { CsvImportButton } from "@/components/csv-import-button";
+import { DeleteStudentDialog } from "@/components/delete-student-dialog";
 import { TeacherStudentProgressBoard } from "@/components/teacher-student-progress-board";
 import { requireUser } from "@/lib/auth";
 import { getTeacherStudentDetail } from "@/lib/platform-data";
@@ -18,7 +20,17 @@ type TeacherStudentPageProps = {
 export default async function TeacherStudentPage({ params }: TeacherStudentPageProps) {
   await requireUser(UserRole.TEACHER);
   const { studentId } = await params;
-  const data = await getTeacherStudentDetail(studentId);
+  let data: Awaited<ReturnType<typeof getTeacherStudentDetail>>;
+
+  try {
+    data = await getTeacherStudentDetail(studentId);
+  } catch (error) {
+    if (error instanceof Error && error.message.startsWith("Student not found:")) {
+      notFound();
+    }
+
+    throw error;
+  }
 
   return (
     <div className="space-y-8">
@@ -46,6 +58,11 @@ export default async function TeacherStudentPage({ params }: TeacherStudentPageP
               Экспорт прогресса CSV
             </a>
             <CsvImportButton studentId={data.student.id} />
+            <DeleteStudentDialog
+              studentId={data.student.id}
+              studentName={data.student.name}
+              triggerLabel="Удалить ученика"
+            />
           </div>
         }
       />

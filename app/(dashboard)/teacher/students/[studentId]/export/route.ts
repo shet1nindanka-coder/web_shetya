@@ -44,10 +44,14 @@ function isMissingColumn(error: unknown, column: "note" | "deadlineAt") {
 }
 
 async function loadExportData(studentId: string) {
-  const student = await prisma.user.findUniqueOrThrow({
-    where: { id: studentId },
+  const student = await prisma.user.findFirst({
+    where: { id: studentId, role: UserRole.STUDENT },
     select: { id: true, name: true, email: true }
   });
+
+  if (!student) {
+    return null;
+  }
 
   let notesEnabled = true;
   let deadlinesEnabled = true;
@@ -108,6 +112,11 @@ export async function GET(
 
     const { studentId } = await params;
     const data = await loadExportData(studentId);
+
+    if (!data) {
+      return new NextResponse("Student not found", { status: 404 });
+    }
+
     const exportDate = new Date();
 
     let totalNumbers = 0;
@@ -117,11 +126,9 @@ export async function GET(
     let totalYellow = 0;
     let totalRed = 0;
 
-    const topicBlocks: string[][] = [];
+    const detailRows: Array<[string, number, string, string, string, string]> = [];
 
     for (const topic of data.topics) {
-      const topicRows: string[] = [];
-
       for (const num of topic.homeworkNumbers) {
         totalNumbers += 1;
         const st = num.statuses[0] ?? null;
@@ -148,57 +155,55 @@ export async function GET(
             : "";
         const updated = st?.updatedAt ? formatDateTime(st.updatedAt) : "";
 
-        topicRows.push(
-          row(topic.title, num.number, statusLabels[sv ?? ""] ?? "Не отмечено", note, deadline, updated)
-        );
+        detailRows.push([
+          topic.title,
+          num.number,
+          statusLabels[sv ?? ""] ?? "Не отмечено",
+          deadline,
+          note,
+          updated
+        ]);
       }
-
-      topicBlocks.push(topicRows);
     }
 
     const percent = totalNumbers > 0 ? Math.round((totalSolved / totalNumbers) * 100) : 0;
 
     const lines: string[] = [
       `sep=${SEP}`,
-
-      row("ПРОГРЕСС УЧЕНИКА"),
+      row("Отчёт по прогрессу ученика"),
       emptyRow(),
-
       row("Ученик", data.student.name),
       row("Логин", data.student.email),
       row("Дата экспорта", formatDateTime(exportDate)),
       emptyRow(),
-
-      row("СВОДКА"),
+      row("Сводка"),
+      row("Показатель", "Значение"),
       row("Всего тем", data.topics.length),
       row("Всего номеров", totalNumbers),
-      row("Решено (зел. + жел.)", `${totalSolved} из ${totalNumbers}`, `${percent}%`),
-      row("Зеленых", totalGreen),
-      row("Желтых", totalYellow),
+      row("Решено", `${totalSolved} из ${totalNumbers}`),
+      row("Прогресс", `${percent}%`),
+      row("Зелёных", totalGreen),
+      row("Жёлтых", totalYellow),
       row("Красных", totalRed),
-      row("Не отмечено", totalNumbers - totalMarked),
+      row("Без статуса", totalNumbers - totalMarked),
       emptyRow(),
-
-      row("ДЕТАЛИЗАЦИЯ ПО НОМЕРАМ"),
-      row("Тема", "Номер", "Статус", "Заметка", "Дедлайн", "Обновлено"),
-      ...topicBlocks.flat()
+      row("Детализация по номерам"),
+      row("Тема", "Номер", "Статус", "Дедлайн", "Заметка", "Обновлено"),
+      ...detailRows.map((detailRow) => row(...detailRow))
     ];
 
     const csvString = lines.join("\r\n");
-    const encoder = new TextEncoder();
-    const bom = new Uint8Array([0xef, 0xbb, 0xbf]);
-    const body = encoder.encode(csvString);
-    const output = new Uint8Array(bom.length + body.length);
-    output.set(bom);
-    output.set(body, bom.length);
+    const bom = Buffer.from([0xff, 0xfe]);
+    const body = Buffer.from(csvString, "utf16le");
+    const output = Buffer.concat([bom, body]);
 
     const datePart = exportDate.toISOString().slice(0, 10);
 
     return new NextResponse(output, {
       status: 200,
       headers: {
-        "Content-Type": "text/csv; charset=utf-8",
-        "Content-Disposition": `attachment; filename="progress-${datePart}.csv"`,
+        "Content-Type": "text/csv; charset=utf-16le",
+        "Content-Disposition": `attachment; filename="progress-${datePart}.csv"; filename*=UTF-8''progress-${datePart}.csv`,
         "Cache-Control": "no-store"
       }
     });

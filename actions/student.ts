@@ -58,5 +58,50 @@ export async function createStudentAction(formData: FormData) {
   revalidatePath("/dashboard");
   revalidatePath("/teacher");
   revalidatePath("/teacher/students");
+  revalidatePath("/teacher/statistics");
   redirectTeacherWithStudentStatus(new URLSearchParams({ studentCreated: "1" }));
+}
+
+export async function deleteStudentAction(formData: FormData) {
+  await requireUser(UserRole.TEACHER);
+
+  const studentId = String(formData.get("studentId") ?? "").trim();
+
+  if (!studentId) {
+    redirectTeacherWithStudentStatus(new URLSearchParams({ studentError: "delete" }));
+  }
+
+  const student = await prisma.user.findFirst({
+    where: {
+      id: studentId,
+      role: UserRole.STUDENT
+    },
+    select: {
+      id: true
+    }
+  });
+
+  if (!student) {
+    redirectTeacherWithStudentStatus(new URLSearchParams({ studentError: "deleteMissing" }));
+  }
+
+  try {
+    await prisma.user.delete({
+      where: {
+        id: studentId
+      }
+    });
+  } catch (error) {
+    console.error("Failed to delete student.", error);
+    redirectTeacherWithStudentStatus(new URLSearchParams({ studentError: "delete" }));
+  }
+
+  revalidateTeacherStudentsData();
+  revalidateTeacherTopicsData();
+  revalidatePath("/dashboard");
+  revalidatePath("/teacher");
+  revalidatePath("/teacher/students");
+  revalidatePath("/teacher/statistics");
+  revalidatePath(`/teacher/students/${studentId}`);
+  redirectTeacherWithStudentStatus(new URLSearchParams({ studentDeleted: "1" }));
 }

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { UserRole } from "@prisma/client";
 import { createStudentAction } from "@/actions/student";
+import { DeleteStudentDialog } from "@/components/delete-student-dialog";
 import { PageHeader } from "@/components/page-header";
 import { SectionCard } from "@/components/section-card";
 import { requireUser } from "@/lib/auth";
@@ -26,6 +27,18 @@ const studentNotices = {
   studentSave: {
     tone: "error",
     message: "Не удалось создать ученика. Проверьте подключение к PostgreSQL и повторите попытку."
+  },
+  studentDeleted: {
+    tone: "success",
+    message: "Ученик удалён. Список и статистика уже обновлены."
+  },
+  studentDelete: {
+    tone: "error",
+    message: "Не удалось удалить ученика. Повторите попытку ещё раз."
+  },
+  studentDeleteMissing: {
+    tone: "error",
+    message: "Такого ученика уже нет в системе."
   }
 } as const;
 
@@ -40,12 +53,18 @@ export default async function TeacherStudentsPage({ searchParams }: TeacherStude
   const noticeKey =
     studentCreated === "1"
       ? "studentCreated"
+      : typeof resolvedSearchParams.studentDeleted === "string" && resolvedSearchParams.studentDeleted === "1"
+        ? "studentDeleted"
       : studentError === "invalid"
         ? "studentInvalid"
         : studentError === "exists"
           ? "studentExists"
           : studentError === "save"
             ? "studentSave"
+            : studentError === "delete"
+              ? "studentDelete"
+              : studentError === "deleteMissing"
+                ? "studentDeleteMissing"
             : null;
   const notice = noticeKey ? studentNotices[noticeKey] : null;
 
@@ -155,13 +174,18 @@ export default async function TeacherStudentsPage({ searchParams }: TeacherStude
                     <p className="font-semibold text-[var(--theme-text-strong)]">{student.name}</p>
                     <p className="mt-1.5 text-xs text-[var(--theme-text-muted)]">Логин</p>
                     <p className="text-sm font-medium text-[var(--theme-text-default)]">{student.email}</p>
-                    <div className="mt-3">
+                    <div className="mt-3 flex flex-wrap gap-2">
                       <Link
                         href={`/teacher/students/${student.id}`}
                         className="ui-pressable ui-button-secondary inline-flex w-full justify-center rounded-[10px] px-3.5 py-1.5 text-sm font-semibold transition sm:w-auto"
                       >
                         Смотреть прогресс
                       </Link>
+                      <DeleteStudentDialog
+                        studentId={student.id}
+                        studentName={student.name}
+                        triggerClassName="w-full sm:w-auto"
+                      />
                     </div>
                   </article>
                 ))}
