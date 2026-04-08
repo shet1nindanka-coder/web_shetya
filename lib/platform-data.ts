@@ -462,7 +462,7 @@ export async function getStudentTopicDetail(
 }
 
 async function getTeacherTopicsOverviewUncached() {
-  const [students, topics, totalFiles] = await Promise.all([
+  const [students, topicsResult, totalFiles] = await Promise.all([
     prisma.user.findMany({
       where: { role: UserRole.STUDENT },
       orderBy: { name: "asc" },
@@ -472,27 +472,30 @@ async function getTeacherTopicsOverviewUncached() {
         email: true
       }
     }),
-    prisma.topic.findMany({
-      include: {
-        theoryFile: true,
-        homeworkFile: true,
-        homeworkNumbers: {
-          orderBy: { displayOrder: "asc" },
-          select: {
-            id: true,
-            number: true,
-            displayOrder: true,
-            statuses: {
-              select: {
-                studentId: true,
-                status: true
+    resolveTopicDataCapabilities(({ deadlinesEnabled }) =>
+      prisma.topic.findMany({
+        include: {
+          theoryFile: true,
+          homeworkFile: true,
+          homeworkNumbers: {
+            orderBy: { displayOrder: "asc" },
+            select: {
+              id: true,
+              number: true,
+              displayOrder: true,
+              statuses: {
+                select: {
+                  studentId: true,
+                  status: true,
+                  ...(deadlinesEnabled ? { deadlineAt: true } : {})
+                }
               }
             }
           }
-        }
-      },
-      orderBy: [{ displayOrder: "asc" }, { createdAt: "asc" }]
-    }),
+        },
+        orderBy: [{ displayOrder: "asc" }, { createdAt: "asc" }]
+      })
+    ),
     prisma.storedFile.count({
       where: {
         OR: [
@@ -515,6 +518,7 @@ async function getTeacherTopicsOverviewUncached() {
       }
     })
   ]);
+  const { result: topics, deadlinesEnabled } = topicsResult;
 
   const topicCards = topics.map((topic) => {
     const allStatuses = topic.homeworkNumbers.flatMap((number) => number.statuses.map((status) => status.status));
@@ -527,6 +531,15 @@ async function getTeacherTopicsOverviewUncached() {
 
     return {
       ...topic,
+      homeworkNumbers: topic.homeworkNumbers.map((number) => ({
+        ...number,
+        statuses: number.statuses.map((status) => ({
+          ...status,
+          deadlineAt: deadlinesEnabled
+            ? (status as { deadlineAt?: Date | null }).deadlineAt ?? null
+            : null
+        }))
+      })),
       greenCount: counts.GREEN,
       yellowCount: counts.YELLOW,
       redCount: counts.RED,

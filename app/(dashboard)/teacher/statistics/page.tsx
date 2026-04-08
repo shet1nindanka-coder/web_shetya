@@ -291,12 +291,11 @@ export default async function TeacherStatisticsPage({ searchParams }: TeacherSta
     homeworkNumbers: topic.homeworkNumbers.map((number) => ({
       id: number.id,
       number: number.number,
-      statuses: number.statuses
-        .filter((status) => status.status)
-        .map((status) => ({
-          studentId: status.studentId,
-          status: status.status as HomeworkNumberStatus
-        }))
+      statuses: number.statuses.map((status) => ({
+        studentId: status.studentId,
+        status: status.status as HomeworkNumberStatus | null,
+        deadlineAt: status.deadlineAt ? status.deadlineAt.toISOString() : null
+      }))
     }))
   }));
   const drilldownStudents = data.students.map((student) => ({

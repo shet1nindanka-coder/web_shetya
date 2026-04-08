@@ -2,9 +2,9 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { ProgressBar } from "@/components/progress-bar";
-import { completionPercent, cx } from "@/lib/utils";
+import { completionPercent, cx, formatDate } from "@/lib/utils";
 
-type DrilldownStatus = "GREEN" | "YELLOW" | "RED";
+type DrilldownStatus = "GREEN" | "YELLOW" | "RED" | null;
 
 type DrilldownTopic = {
   id: string;
@@ -16,6 +16,7 @@ type DrilldownTopic = {
     statuses: Array<{
       studentId: string;
       status: DrilldownStatus;
+      deadlineAt: string | null;
     }>;
   }>;
 };
@@ -29,6 +30,13 @@ type DrilldownStudent = {
 type TeacherStatisticsDrilldownProps = {
   topics: DrilldownTopic[];
   students: DrilldownStudent[];
+};
+
+type AssignmentOption = {
+  id: string;
+  label: string;
+  deadlineLabel: string;
+  totalNumbers: number;
 };
 
 const statusCards = [
@@ -58,6 +66,7 @@ export function TeacherStatisticsDrilldown({
 }: TeacherStatisticsDrilldownProps) {
   const [selectedTopicId, setSelectedTopicId] = useState(topics[0]?.id ?? "");
   const [selectedStudentId, setSelectedStudentId] = useState(students[0]?.id ?? "");
+  const [selectedAssignmentId, setSelectedAssignmentId] = useState("__all__");
 
   useEffect(() => {
     if (topics.length && !topics.some((topic) => topic.id === selectedTopicId)) {
@@ -79,6 +88,47 @@ export function TeacherStatisticsDrilldown({
     () => students.find((student) => student.id === selectedStudentId) ?? students[0] ?? null,
     [selectedStudentId, students]
   );
+  const assignmentOptions = useMemo<AssignmentOption[]>(() => {
+    if (!selectedTopic || !selectedStudent) {
+      return [];
+    }
+
+    const grouped = new Map<string, number>();
+
+    for (const number of selectedTopic.homeworkNumbers) {
+      const statusEntry = number.statuses.find((status) => status.studentId === selectedStudent.id);
+
+      if (!statusEntry?.deadlineAt) {
+        continue;
+      }
+
+      grouped.set(statusEntry.deadlineAt, (grouped.get(statusEntry.deadlineAt) ?? 0) + 1);
+    }
+
+    return Array.from(grouped.entries())
+      .sort((left, right) => new Date(left[0]).getTime() - new Date(right[0]).getTime())
+      .map(([deadlineAt, totalNumbers], index) => ({
+        id: deadlineAt,
+        label: `ДЗ ${index + 1}`,
+        deadlineLabel: formatDate(deadlineAt),
+        totalNumbers
+      }));
+  }, [selectedStudent, selectedTopic]);
+
+  useEffect(() => {
+    if (selectedAssignmentId === "__all__") {
+      return;
+    }
+
+    if (!assignmentOptions.some((assignment) => assignment.id === selectedAssignmentId)) {
+      setSelectedAssignmentId("__all__");
+    }
+  }, [assignmentOptions, selectedAssignmentId]);
+
+  const selectedAssignment = useMemo(
+    () => assignmentOptions.find((assignment) => assignment.id === selectedAssignmentId) ?? null,
+    [assignmentOptions, selectedAssignmentId]
+  );
 
   const metrics = useMemo(() => {
     if (!selectedTopic || !selectedStudent) {
@@ -95,11 +145,19 @@ export function TeacherStatisticsDrilldown({
       };
     }
 
+    const scopedNumbers =
+      selectedAssignmentId === "__all__"
+        ? selectedTopic.homeworkNumbers
+        : selectedTopic.homeworkNumbers.filter((number) => {
+            const statusEntry = number.statuses.find((status) => status.studentId === selectedStudent.id);
+            return statusEntry?.deadlineAt === selectedAssignmentId;
+          });
+
     let greenCount = 0;
     let yellowCount = 0;
     let redCount = 0;
 
-    for (const number of selectedTopic.homeworkNumbers) {
+    for (const number of scopedNumbers) {
       const statusEntry = number.statuses.find((status) => status.studentId === selectedStudent.id);
 
       if (statusEntry?.status === "GREEN") {
@@ -111,7 +169,7 @@ export function TeacherStatisticsDrilldown({
       }
     }
 
-    const totalNumbers = selectedTopic.totalNumbers;
+    const totalNumbers = scopedNumbers.length;
     const markedCount = greenCount + yellowCount + redCount;
     const solvedCount = greenCount + yellowCount;
     const unmarkedCount = Math.max(totalNumbers - markedCount, 0);
@@ -125,33 +183,41 @@ export function TeacherStatisticsDrilldown({
       solvedCount,
       unmarkedCount,
       solvedPercent: completionPercent(solvedCount, totalNumbers),
-      markedPercent: completionPercent(markedCount, totalNumbers)
-    };
-  }, [selectedStudent, selectedTopic]);
+        markedPercent: completionPercent(markedCount, totalNumbers)
+      };
+  }, [selectedAssignmentId, selectedStudent, selectedTopic]);
 
   const insight = useMemo(() => {
     if (!selectedTopic || !selectedStudent) {
       return "Сначала выберите тему и ученика.";
     }
 
+    const scopeLabel = selectedAssignment ? `в ${selectedAssignment.label.toLowerCase()}` : "в теме";
+
     if (metrics.totalNumbers === 0) {
-      return "В выбранной теме пока нет номеров, поэтому сравнивать прогресс еще рано.";
+      return selectedAssignment
+        ? `В выбранном ДЗ пока нет номеров, поэтому сравнивать прогресс еще рано.`
+        : "В выбранной теме пока нет номеров, поэтому сравнивать прогресс еще рано.";
     }
 
     if (metrics.redCount > 0) {
-      return `В теме уже есть ${metrics.redCount} красн. статусов. Это хороший кандидат на ближайший разбор с ${selectedStudent.name}.`;
+      return `${selectedStudent.name} сейчас имеет ${metrics.redCount} красн. статусов ${scopeLabel}. Это хороший кандидат на ближайший разбор.`;
     }
 
     if (metrics.solvedCount === metrics.totalNumbers) {
-      return `${selectedStudent.name} полностью закрыл эту тему: все номера отмечены зеленым или желтым.`;
+      return selectedAssignment
+        ? `${selectedStudent.name} полностью закрыл ${selectedAssignment.label.toLowerCase()}: все номера отмечены зеленым или желтым.`
+        : `${selectedStudent.name} полностью закрыл эту тему: все номера отмечены зеленым или желтым.`;
     }
 
     if (metrics.markedCount === 0) {
-      return `${selectedStudent.name} еще не начал эту тему. Здесь можно быстро увидеть стартовую точку перед выдачей задания.`;
+      return selectedAssignment
+        ? `${selectedStudent.name} еще не начал ${selectedAssignment.label.toLowerCase()}.`
+        : `${selectedStudent.name} еще не начал эту тему. Здесь можно быстро увидеть стартовую точку перед выдачей задания.`;
     }
 
-    return `${selectedStudent.name} уже разобрал ${metrics.solvedCount} из ${metrics.totalNumbers} номеров в теме. Осталось добрать еще ${metrics.totalNumbers - metrics.solvedCount}.`;
-  }, [metrics, selectedStudent, selectedTopic]);
+    return `${selectedStudent.name} уже разобрал ${metrics.solvedCount} из ${metrics.totalNumbers} номеров ${scopeLabel}. Осталось добрать еще ${metrics.totalNumbers - metrics.solvedCount}.`;
+  }, [metrics, selectedAssignment, selectedStudent, selectedTopic]);
 
   if (!topics.length || !students.length) {
     return (
@@ -194,6 +260,22 @@ export function TeacherStatisticsDrilldown({
               ))}
             </select>
           </label>
+
+          <label className="space-y-2">
+            <span className="text-sm font-medium text-slate-600">ДЗ</span>
+            <select
+              value={selectedAssignmentId}
+              onChange={(event) => setSelectedAssignmentId(event.target.value)}
+              className="ui-input w-full rounded-[16px] px-4 py-3 text-sm font-medium"
+            >
+              <option value="__all__">Вся тема</option>
+              {assignmentOptions.map((assignment) => (
+                <option key={assignment.id} value={assignment.id}>
+                  {assignment.label} · {assignment.deadlineLabel}
+                </option>
+              ))}
+            </select>
+          </label>
         </div>
 
         <div className="ui-card-soft mt-5 rounded-[18px] px-4 py-4">
@@ -202,6 +284,9 @@ export function TeacherStatisticsDrilldown({
           <p className="mt-1 text-sm text-slate-500">
             {selectedStudent?.name ?? "Ученик не выбран"}
             {selectedStudent ? ` · ${selectedStudent.email}` : ""}
+          </p>
+          <p className="mt-2 text-sm font-medium text-slate-700">
+            {selectedAssignment ? `${selectedAssignment.label} · ${selectedAssignment.deadlineLabel}` : "Вся тема"}
           </p>
         </div>
 
