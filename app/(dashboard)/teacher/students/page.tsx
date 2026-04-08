@@ -183,7 +183,7 @@ export default async function TeacherStudentsPage({ searchParams }: TeacherStude
                     <div className="mt-3 flex flex-wrap gap-2">
                       <Link
                         href={`/teacher/students/${student.id}`}
-                        className="ui-pressable ui-button-secondary inline-flex w-full justify-center rounded-[10px] px-3.5 py-1.5 text-sm font-semibold transition sm:w-auto"
+                        className="ui-pressable ui-button-primary inline-flex w-full justify-center rounded-[10px] px-3.5 py-1.5 text-sm font-semibold transition sm:w-auto"
                       >
                         Смотреть прогресс
                       </Link>

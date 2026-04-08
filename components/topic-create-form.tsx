@@ -439,7 +439,7 @@ export function TopicCreateForm({
         <button
           type="submit"
           disabled={isSubmitDisabled}
-          className="ui-pressable ui-button-primary rounded-2xl px-5 py-3 text-sm font-semibold transition disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-600 disabled:shadow-none"
+          className="ui-pressable ui-button-primary rounded-2xl px-5 py-3 text-sm font-semibold transition"
         >
           {isSubmitting ? "Создаем тему..." : "Создать тему"}
         </button>
