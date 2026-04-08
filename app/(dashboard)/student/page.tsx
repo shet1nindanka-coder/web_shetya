@@ -7,7 +7,7 @@ import { UpcomingDeadlinesCard } from "@/components/upcoming-deadlines-card";
 import { requireUser } from "@/lib/auth";
 import { getStudentDeadlines } from "@/lib/platform-data";
 import { groupStudentDeadlinesAsAssignments } from "@/lib/student-deadline-groups";
-import { formatDate } from "@/lib/utils";
+import { completionPercent, formatDate } from "@/lib/utils";
 
 export default async function StudentPage() {
   const user = await requireUser(UserRole.STUDENT);
@@ -19,6 +19,9 @@ export default async function StudentPage() {
   const solvedHomeworkNumbers = assignmentDeadlines.reduce((sum, assignment) => sum + assignment.solvedNumbers, 0);
   const homeworkProgressPercent = totalHomeworkNumbers > 0 ? Math.round((solvedHomeworkNumbers / totalHomeworkNumbers) * 100) : 0;
   const nextAssignment = pendingAssignments[0] ?? null;
+  const nextAssignmentProgressPercent = nextAssignment
+    ? completionPercent(nextAssignment.solvedNumbers, nextAssignment.totalNumbers)
+    : 0;
   const assignmentScopeLabel = assignmentDeadlines.length > 0 ? `${completedAssignments.length} из ${assignmentDeadlines.length} ДЗ закрыто` : "Пока нет выданных ДЗ";
   const continueHomeworkHref = nextAssignment
     ? `/student/topics/${nextAssignment.topicId}?homework=${encodeURIComponent(nextAssignment.deadlineAt)}`
@@ -39,13 +42,19 @@ export default async function StudentPage() {
           <div className="space-y-3">
             {nextAssignment ? (
               <>
-                <div className="ui-card-soft rounded-[14px] px-3.5 py-3.5">
+                <div className="ui-card-soft space-y-3 rounded-[14px] px-3.5 py-3.5">
                   <p className="ui-kicker">{nextAssignment.topicTitle}</p>
-                  <p className="mt-1 font-medium text-[var(--theme-text-strong)]">Текущее домашнее задание</p>
-                  <p className="mt-1 text-sm text-[var(--theme-text-muted)]">
-                    {nextAssignment.solvedNumbers} из {nextAssignment.totalNumbers} номеров выполнено
-                  </p>
-                  <p className="mt-1 text-xs text-[var(--theme-text-muted)]">Дедлайн: {formatDate(nextAssignment.deadlineAt)}</p>
+                  <p className="font-medium text-[var(--theme-text-strong)]">Текущее домашнее задание</p>
+                  <div className="flex items-center justify-between gap-3 text-sm text-[var(--theme-text-muted)]">
+                    <span>
+                      {nextAssignment.solvedNumbers} из {nextAssignment.totalNumbers} номеров выполнено
+                    </span>
+                    <span className="font-semibold text-[var(--theme-text-strong)]">
+                      {nextAssignment.solvedNumbers} / {nextAssignment.totalNumbers}
+                    </span>
+                  </div>
+                  <ProgressBar value={nextAssignmentProgressPercent} size="md" />
+                  <p className="text-xs text-[var(--theme-text-muted)]">Дедлайн: {formatDate(nextAssignment.deadlineAt)}</p>
                 </div>
                 <div className="flex flex-wrap gap-2">
                   <Link
@@ -70,17 +79,24 @@ export default async function StudentPage() {
 
         <SectionCard title="Прогресс по выданным ДЗ" description="Ориентир только по текущим домашним заданиям.">
           <div className="space-y-3">
-            <div className="flex items-center justify-between text-sm text-[var(--theme-text-muted)]">
-              <span>{assignmentScopeLabel}</span>
-              <span className="font-semibold text-[var(--theme-text-strong)]">
-                {solvedHomeworkNumbers} / {totalHomeworkNumbers}
-              </span>
+            <div className="ui-card-soft space-y-3 rounded-[14px] px-3.5 py-3.5">
+              <p className="ui-kicker">По текущим ДЗ</p>
+              <p className="font-medium text-[var(--theme-text-strong)]">{assignmentScopeLabel}</p>
+              <div className="flex items-center justify-between text-sm text-[var(--theme-text-muted)]">
+                <span>Выполнено номеров</span>
+                <span className="font-semibold text-[var(--theme-text-strong)]">
+                  {solvedHomeworkNumbers} / {totalHomeworkNumbers}
+                </span>
+              </div>
+              <ProgressBar value={homeworkProgressPercent} size="md" />
+              <p className="text-sm text-[var(--theme-text-muted)]">
+                {homeworkProgressPercent}% по всем выданным домашним заданиям
+              </p>
             </div>
-            <ProgressBar value={homeworkProgressPercent} size="md" />
             <div className="flex flex-wrap gap-2">
               <Link
                 href="/student/deadlines"
-                className="ui-pressable ui-button-secondary inline-flex rounded-[10px] px-3 py-2 text-sm font-semibold"
+                className="ui-pressable ui-button-primary inline-flex rounded-[10px] px-3 py-2 text-sm font-semibold"
               >
                 Открыть все ДЗ
               </Link>

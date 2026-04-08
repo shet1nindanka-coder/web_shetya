@@ -30,11 +30,6 @@ export default async function StudentTopicPage({ params, searchParams }: Student
         eyebrow="Тема"
         title={topic.title}
         description={topic.description}
-        metrics={[
-          { label: "Номера", value: topic.totalNumbers },
-          { label: "Теория", value: topic.theoryFile ? "Есть" : "Нет", tone: topic.theoryFile ? "accent" : "default" },
-          { label: "Задания", value: topic.homeworkFile ? "Есть" : "Нет", tone: topic.homeworkFile ? "accent" : "default" }
-        ]}
       />
 
       <StudentTopicTabs

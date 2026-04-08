@@ -109,31 +109,6 @@ export function AccountSettingsView({ user, notice }: AccountSettingsViewProps) 
       <PageHeader
         eyebrow="Настройки"
         title="Настройки"
-        description="Интерфейс, профиль и безопасность в одном месте."
-        metrics={[
-          { label: "Роль", value: roleLabel },
-          { label: "На платформе", value: formatDate(user.createdAt) }
-        ]}
-        aside={
-          <div className="ui-page-header-panel page-header-panel rounded-[18px] p-4 sm:p-5">
-            <p className="ui-kicker">Сейчас в профиле</p>
-            <p className="mt-1 text-lg font-semibold text-[var(--theme-text-strong)]">{user.name}</p>
-            <div className="ui-key-value-grid mt-2">
-              <div className="ui-key-value-item">
-                <span className="ui-key-value-label">Логин</span>
-                <span className="ui-key-value-value">{user.email}</span>
-              </div>
-              <div className="ui-key-value-item">
-                <span className="ui-key-value-label">Роль</span>
-                <span className="ui-key-value-value">{roleLabel}</span>
-              </div>
-              <div className="ui-key-value-item">
-                <span className="ui-key-value-label">На платформе</span>
-                <span className="ui-key-value-value">{formatDate(user.createdAt)}</span>
-              </div>
-            </div>
-          </div>
-        }
       />
 
       <InterfaceSettingsPanel />
@@ -222,6 +197,22 @@ export function AccountSettingsView({ user, notice }: AccountSettingsViewProps) 
             <p className="ui-hint ui-copy-muted text-sm leading-6">Текущая сессия сохранится.</p>
           </div>
         </form>
+      </SectionCard>
+
+      <SectionCard
+        title="Статус профиля"
+        description="Короткая служебная информация по аккаунту."
+      >
+        <div className="ui-mini-stat-grid md:grid-cols-2">
+          <article className="ui-mini-stat-card">
+            <span className="ui-mini-stat-card-label">Роль</span>
+            <span className="ui-mini-stat-card-value">{roleLabel}</span>
+          </article>
+          <article className="ui-mini-stat-card">
+            <span className="ui-mini-stat-card-label">На платформе</span>
+            <span className="ui-mini-stat-card-value">{formatDate(user.createdAt)}</span>
+          </article>
+        </div>
       </SectionCard>
     </div>
   );

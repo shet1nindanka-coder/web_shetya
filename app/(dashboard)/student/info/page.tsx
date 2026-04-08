@@ -21,18 +21,6 @@ export default function StudentInfoPage() {
       <PageHeader
         eyebrow="Общая инфа"
         title="Баллы и разбалловка"
-        description="Краткая справка по первичным и тестовым баллам ЕГЭ."
-        metrics={[
-          { label: "Максимум", value: "32 первичных" },
-          { label: "100 тестовых", value: "от 30", tone: "accent" }
-        ]}
-        aside={
-          <div className="ui-page-header-panel rounded-[14px] p-3.5 sm:rounded-[16px] sm:p-4">
-            <p className="ui-kicker">Коротко</p>
-            <p className="mt-1.5 font-display text-[1.3rem] font-semibold text-[var(--theme-text-strong)] sm:text-[1.5rem]">30+ = 100</p>
-            <p className="mt-1.5 text-sm leading-relaxed text-[var(--theme-text-muted)]">Начиная с 30 первичных баллов тестовый результат уже равен 100.</p>
-          </div>
-        }
       />
 
       <SectionCard title="Соответствие баллов">
