@@ -96,65 +96,60 @@ export default async function TeacherStudentsPage({ searchParams }: TeacherStude
 
       <SectionCard
         title="Добавить ученика"
-        description="Создайте логин и пароль для нового ученика."
-        className="max-w-4xl"
+        description="Создайте логин и пароль для нового ученика. Можно использовать e-mail как логин."
       >
         <form
           action={createStudentAction}
           className="ui-panel-soft space-y-3 rounded-[14px] p-3.5 sm:space-y-4 sm:rounded-[16px] sm:p-4"
         >
-          <div className="space-y-1.5">
-            <h3 className="font-display text-base font-semibold text-[var(--theme-text-strong)] sm:text-lg">Создать доступ ученику</h3>
-            <p className="ui-hint text-sm leading-relaxed text-[var(--theme-text-muted)]">Можно использовать e-mail как логин.</p>
+          <div className="grid gap-3 xl:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)_minmax(0,0.85fr)_auto] xl:items-end">
+            <label className="block space-y-1.5">
+              <span className="ui-form-label">Имя ученика</span>
+              <input
+                type="text"
+                name="name"
+                placeholder="Например, Мария Смирнова"
+                className="ui-input w-full rounded-[12px] px-3.5 py-2.5 sm:rounded-[14px]"
+                required
+              />
+            </label>
+
+            <label className="block space-y-1.5">
+              <span className="ui-form-label">Логин ученика</span>
+              <input
+                type="text"
+                name="login"
+                placeholder="maria@example.com"
+                className="ui-input w-full rounded-[12px] px-3.5 py-2.5 sm:rounded-[14px]"
+                required
+              />
+            </label>
+
+            <label className="block space-y-1.5">
+              <span className="ui-form-label">Пароль</span>
+              <input
+                type="password"
+                name="password"
+                placeholder="Минимум 8 символов"
+                minLength={8}
+                className="ui-input w-full rounded-[12px] px-3.5 py-2.5 sm:rounded-[14px]"
+                required
+              />
+            </label>
+
+            <button
+              type="submit"
+              className="ui-pressable ui-button-primary w-full rounded-[10px] px-4 py-2.5 text-sm font-semibold transition xl:min-w-[12.5rem] xl:w-auto sm:rounded-[12px]"
+            >
+              Добавить ученика
+            </button>
           </div>
-
-          <label className="block space-y-1.5">
-            <span className="ui-form-label">Имя ученика</span>
-            <input
-              type="text"
-              name="name"
-              placeholder="Например, Мария Смирнова"
-              className="ui-input w-full rounded-[12px] px-3.5 py-2.5 sm:rounded-[14px]"
-              required
-            />
-          </label>
-
-          <label className="block space-y-1.5">
-            <span className="ui-form-label">Логин ученика</span>
-            <input
-              type="text"
-              name="login"
-              placeholder="maria@example.com"
-              className="ui-input w-full rounded-[12px] px-3.5 py-2.5 sm:rounded-[14px]"
-              required
-            />
-          </label>
-
-          <label className="block space-y-1.5">
-            <span className="ui-form-label">Пароль</span>
-            <input
-              type="password"
-              name="password"
-              placeholder="Минимум 8 символов"
-              minLength={8}
-              className="ui-input w-full rounded-[12px] px-3.5 py-2.5 sm:rounded-[14px]"
-              required
-            />
-          </label>
-
-          <button
-            type="submit"
-            className="ui-pressable ui-button-primary w-full rounded-[10px] px-4 py-2.5 text-sm font-semibold transition sm:w-auto sm:rounded-[12px]"
-          >
-            Добавить ученика
-          </button>
         </form>
       </SectionCard>
 
       <SectionCard
         title="Текущие ученики"
         description={`${data.students.length} аккаунтов ученика`}
-        className="max-w-6xl"
       >
         {data.students.length === 0 ? (
           <div className="ui-panel-soft rounded-[14px] border-dashed px-4 py-6 text-center text-sm text-[var(--theme-text-muted)]">
@@ -162,6 +157,12 @@ export default async function TeacherStudentsPage({ searchParams }: TeacherStude
           </div>
         ) : (
           <div className="overflow-hidden rounded-[14px] border border-[var(--theme-border-soft)] bg-[color-mix(in_srgb,var(--theme-surface-soft)_90%,white_10%)] sm:rounded-[16px]">
+            <div className="hidden lg:grid lg:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)_auto] lg:items-center lg:gap-4 lg:border-b lg:border-[var(--theme-border-soft)] lg:bg-[color-mix(in_srgb,var(--theme-surface)_96%,white_4%)] lg:px-4 lg:py-2.5">
+              <p className="ui-kicker">Ученик</p>
+              <p className="ui-kicker">Логин</p>
+              <p className="ui-kicker text-right">Действия</p>
+            </div>
+
             <div className="max-h-[36rem] overflow-y-auto">
               <div className="divide-y divide-[var(--theme-border-soft)]">
                 {data.students.map((student) => (
@@ -169,11 +170,11 @@ export default async function TeacherStudentsPage({ searchParams }: TeacherStude
                     <div className="flex flex-col gap-3 lg:grid lg:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)_auto] lg:items-center lg:gap-4">
                       <div className="min-w-0">
                         <p className="truncate font-semibold text-[var(--theme-text-strong)]">{student.name}</p>
-                        <p className="mt-1 text-sm text-[var(--theme-text-muted)]">Ученик</p>
+                        <p className="mt-1 text-xs text-[var(--theme-text-muted)] lg:hidden">Ученик</p>
                       </div>
 
                       <div className="min-w-0">
-                        <p className="text-xs text-[var(--theme-text-muted)]">Логин</p>
+                        <p className="text-xs text-[var(--theme-text-muted)] lg:hidden">Логин</p>
                         <p className="truncate text-sm font-medium text-[var(--theme-text-default)]">{student.email}</p>
                       </div>
 
