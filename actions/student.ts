@@ -4,6 +4,7 @@ import { UserRole } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireUser } from "@/lib/auth";
+import { publishDashboardRealtimeEvent } from "@/lib/dashboard-realtime";
 import { revalidateTeacherStudentsData, revalidateTeacherTopicsData } from "@/lib/platform-data-cache";
 import { hashPassword } from "@/lib/password";
 import { prisma } from "@/lib/prisma";
@@ -55,6 +56,7 @@ export async function createStudentAction(formData: FormData) {
 
   revalidateTeacherStudentsData();
   revalidateTeacherTopicsData();
+  publishDashboardRealtimeEvent({ kind: "students-changed" });
   revalidatePath("/dashboard");
   revalidatePath("/teacher");
   revalidatePath("/teacher/students");
@@ -98,6 +100,7 @@ export async function deleteStudentAction(formData: FormData) {
 
   revalidateTeacherStudentsData();
   revalidateTeacherTopicsData();
+  publishDashboardRealtimeEvent({ kind: "students-changed" });
   revalidatePath("/dashboard");
   revalidatePath("/teacher");
   revalidatePath("/teacher/students");

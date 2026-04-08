@@ -2,6 +2,7 @@ import { UserRole } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { NextResponse } from "next/server";
 import { tryGetCurrentUser } from "@/lib/auth";
+import { publishDashboardRealtimeEvent } from "@/lib/dashboard-realtime";
 import { revalidateAllPlatformData } from "@/lib/platform-data-cache";
 import { prisma } from "@/lib/prisma";
 import { deleteStoredFileRecordIfUnused } from "@/lib/stored-files";
@@ -70,6 +71,10 @@ export async function POST(request: Request) {
   }
 
   revalidateTopicRoutes(homeworkNumber.topicId);
+  publishDashboardRealtimeEvent({
+    kind: "topic-content-changed",
+    topicId: homeworkNumber.topicId
+  });
 
   return NextResponse.json({
     answerLatex
@@ -128,6 +133,10 @@ export async function DELETE(request: Request) {
 
   await deleteStoredFileRecordIfUnused(homeworkNumber.answerFileId);
   revalidateTopicRoutes(homeworkNumber.topicId);
+  publishDashboardRealtimeEvent({
+    kind: "topic-content-changed",
+    topicId: homeworkNumber.topicId
+  });
 
   return NextResponse.json({ success: true });
 }
