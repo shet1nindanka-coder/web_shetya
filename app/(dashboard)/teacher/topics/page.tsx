@@ -76,14 +76,6 @@ export default async function TeacherTopicsPage({ searchParams }: TeacherTopicsP
         eyebrow="Темы"
         title="Материалы и номера"
         description="Создание тем, загрузка файлов и настройка ответов в одном рабочем разделе."
-        actions={
-          <a
-            href="#create-topic"
-            className="ui-pressable ui-button-primary inline-flex rounded-[10px] px-3.5 py-2 text-sm font-semibold transition sm:rounded-[12px]"
-          >
-            Создать тему
-          </a>
-        }
       />
 
       <SectionCard title="Создать новую тему" description="Название, файлы и список номеров сохраняются одной формой." className="scroll-mt-20">
