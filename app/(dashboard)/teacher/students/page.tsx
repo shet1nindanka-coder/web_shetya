@@ -95,10 +95,10 @@ export default async function TeacherStudentsPage({ searchParams }: TeacherStude
       />
 
       <SectionCard title="Добавить ученика" description="Создайте логин и пароль для нового ученика.">
-        <div className="grid items-start gap-4 xl:grid-cols-[minmax(0,0.82fr)_minmax(0,1.18fr)]">
+        <div className="max-w-3xl">
           <form
             action={createStudentAction}
-            className="ui-panel-soft self-start space-y-3 rounded-[14px] p-3.5 sm:space-y-4 sm:rounded-[16px] sm:p-4"
+            className="ui-panel-soft space-y-3 rounded-[14px] p-3.5 sm:space-y-4 sm:rounded-[16px] sm:p-4"
           >
             <div className="space-y-1.5">
               <h3 className="font-display text-base font-semibold text-[var(--theme-text-strong)] sm:text-lg">Создать доступ ученику</h3>
@@ -146,59 +146,52 @@ export default async function TeacherStudentsPage({ searchParams }: TeacherStude
               Добавить ученика
             </button>
           </form>
+        </div>
+      </SectionCard>
 
-          <div className="ui-fade-slide ui-surface self-start rounded-[14px] border p-3.5 sm:rounded-[16px] sm:p-4">
-            <div className="flex flex-wrap items-center justify-between gap-2">
-              <div>
-                <p className="ui-kicker">Текущие ученики</p>
-                <h3 className="font-display mt-1.5 text-base font-semibold text-[var(--theme-text-strong)] sm:text-lg">
-                  {data.students.length} аккаунтов ученика
-                </h3>
-              </div>
+      <SectionCard title="Текущие ученики" description={`${data.students.length} аккаунтов ученика`}>
+        <div className="ui-fade-slide ui-surface rounded-[14px] border p-3.5 sm:rounded-[16px] sm:p-4">
+          {data.students.length === 0 ? (
+            <div className="ui-panel-soft rounded-[14px] border-dashed px-4 py-6 text-center text-sm text-[var(--theme-text-muted)]">
+              Пока ни одного ученика не добавлено.
             </div>
-
-            {data.students.length === 0 ? (
-              <div className="ui-panel-soft mt-4 rounded-[14px] border-dashed px-4 py-6 text-center text-sm text-[var(--theme-text-muted)]">
-                Пока ни одного ученика не добавлено.
-              </div>
-            ) : (
-              <div className="mt-4 overflow-hidden rounded-[14px] border border-[var(--theme-border-soft)] bg-[color-mix(in_srgb,var(--theme-surface-soft)_90%,white_10%)] sm:rounded-[16px]">
-                <div className="max-h-[36rem] overflow-y-auto">
-                  <div className="divide-y divide-[var(--theme-border-soft)]">
-                    {data.students.map((student) => (
-                      <article key={student.id} className="px-3.5 py-3 sm:px-4 sm:py-3.5">
-                        <div className="flex flex-col gap-3 lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] lg:items-center">
-                          <div className="min-w-0">
-                            <p className="truncate font-semibold text-[var(--theme-text-strong)]">{student.name}</p>
-                            <p className="mt-1 text-sm text-[var(--theme-text-muted)]">Ученик</p>
-                          </div>
-
-                          <div className="min-w-0">
-                            <p className="text-xs text-[var(--theme-text-muted)]">Логин</p>
-                            <p className="truncate text-sm font-medium text-[var(--theme-text-default)]">{student.email}</p>
-                          </div>
-
-                          <div className="flex flex-wrap gap-2 lg:justify-end">
-                            <Link
-                              href={`/teacher/students/${student.id}`}
-                              className="ui-pressable ui-button-primary inline-flex w-full justify-center rounded-[10px] px-3.5 py-1.5 text-sm font-semibold transition sm:w-auto"
-                            >
-                              Смотреть прогресс
-                            </Link>
-                            <DeleteStudentDialog
-                              studentId={student.id}
-                              studentName={student.name}
-                              triggerClassName="w-full sm:w-auto"
-                            />
-                          </div>
+          ) : (
+            <div className="overflow-hidden rounded-[14px] border border-[var(--theme-border-soft)] bg-[color-mix(in_srgb,var(--theme-surface-soft)_90%,white_10%)] sm:rounded-[16px]">
+              <div className="max-h-[36rem] overflow-y-auto">
+                <div className="divide-y divide-[var(--theme-border-soft)]">
+                  {data.students.map((student) => (
+                    <article key={student.id} className="px-3.5 py-3 sm:px-4 sm:py-3.5">
+                      <div className="flex flex-col gap-3 lg:grid lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)_auto] lg:items-center">
+                        <div className="min-w-0">
+                          <p className="truncate font-semibold text-[var(--theme-text-strong)]">{student.name}</p>
+                          <p className="mt-1 text-sm text-[var(--theme-text-muted)]">Ученик</p>
                         </div>
-                      </article>
-                    ))}
-                  </div>
+
+                        <div className="min-w-0">
+                          <p className="text-xs text-[var(--theme-text-muted)]">Логин</p>
+                          <p className="truncate text-sm font-medium text-[var(--theme-text-default)]">{student.email}</p>
+                        </div>
+
+                        <div className="flex flex-wrap gap-2 lg:justify-end">
+                          <Link
+                            href={`/teacher/students/${student.id}`}
+                            className="ui-pressable ui-button-primary inline-flex w-full justify-center rounded-[10px] px-3.5 py-1.5 text-sm font-semibold transition sm:w-auto"
+                          >
+                            Смотреть прогресс
+                          </Link>
+                          <DeleteStudentDialog
+                            studentId={student.id}
+                            studentName={student.name}
+                            triggerClassName="w-full sm:w-auto"
+                          />
+                        </div>
+                      </div>
+                    </article>
+                  ))}
                 </div>
               </div>
-            )}
-          </div>
+            </div>
+          )}
         </div>
       </SectionCard>
     </div>
