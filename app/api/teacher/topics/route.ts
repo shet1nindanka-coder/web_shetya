@@ -3,9 +3,10 @@ import { revalidatePath } from "next/cache";
 import { NextResponse } from "next/server";
 import { tryGetCurrentUser } from "@/lib/auth";
 import { publishDashboardRealtimeEvent } from "@/lib/dashboard-realtime";
-import { getRequestLogContext, logError } from "@/lib/logger";
+import { getRequestLogContext } from "@/lib/logger";
 import { revalidateAllPlatformData } from "@/lib/platform-data-cache";
 import { prisma } from "@/lib/prisma";
+import { reportServerError } from "@/lib/server-monitoring";
 import { createTopicHomeworkNumbersInBatches } from "@/lib/topic-homework-numbers";
 import { parseNumbersInput } from "@/lib/utils";
 
@@ -116,7 +117,7 @@ export async function POST(request: Request) {
       redirectTo: "/teacher/topics?created=1"
     });
   } catch (error) {
-    logError(
+    reportServerError(
       "Failed to create topic from API route.",
       {
         ...requestContext,

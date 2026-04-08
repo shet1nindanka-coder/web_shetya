@@ -3,13 +3,14 @@
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { signIn, signOut } from "@/lib/auth";
-import { getHeadersLogContext, logError, logWarn } from "@/lib/logger";
+import { getHeadersLogContext, logWarn } from "@/lib/logger";
 import {
   assertRateLimit,
   getClientIpFromHeaders,
   RateLimitExceededError,
   resetRateLimit
 } from "@/lib/rate-limit";
+import { reportServerError } from "@/lib/server-monitoring";
 import { roleHome } from "@/lib/utils";
 
 export async function loginAction(formData: FormData) {
@@ -64,7 +65,7 @@ export async function loginAction(formData: FormData) {
   try {
     user = await signIn(login, password);
   } catch (error) {
-    logError(
+    reportServerError(
       "Failed to sign in.",
       getHeadersLogContext(requestHeaders, {
         login: normalizedLogin,

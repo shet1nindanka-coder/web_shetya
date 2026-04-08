@@ -5,9 +5,9 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireUser } from "@/lib/auth";
 import { publishDashboardRealtimeEvent } from "@/lib/dashboard-realtime";
-import { logError } from "@/lib/logger";
 import { revalidateAllPlatformData } from "@/lib/platform-data-cache";
 import { prisma } from "@/lib/prisma";
+import { reportServerError } from "@/lib/server-monitoring";
 import { deleteStoredFileRecordIfUnused } from "@/lib/stored-files";
 import { removeStoredFile, saveUploadedFile } from "@/lib/storage";
 import { createTopicHomeworkNumbersInBatches } from "@/lib/topic-homework-numbers";
@@ -56,7 +56,7 @@ async function cleanupUploadedStorageKeys(
 
   cleanupResults.forEach((result, index) => {
     if (result.status === "rejected") {
-      logError(
+      reportServerError(
         "Failed to cleanup uploaded file from storage.",
         {
           ...context,
@@ -74,7 +74,7 @@ async function cleanupStoredFileIds(fileIds: Iterable<string>, context: Record<s
 
   cleanupResults.forEach((result, index) => {
     if (result.status === "rejected") {
-      logError(
+      reportServerError(
         "Failed to cleanup stored file record after topic update.",
         {
           ...context,
@@ -139,7 +139,7 @@ export async function createTopicAction(formData: FormData) {
       theoryUpload = await saveUploadedFile(validTheoryFile);
       homeworkUpload = await saveUploadedFile(validHomeworkFile);
     } catch (error) {
-      logError("Failed to upload files while creating topic.", { teacherId: user.id, title }, error);
+      reportServerError("Failed to upload files while creating topic.", { teacherId: user.id, title }, error);
       await cleanupUploadedStorageKeys([theoryUpload?.storageKey, homeworkUpload?.storageKey], {
         teacherId: user.id,
         title,
@@ -198,7 +198,7 @@ export async function createTopicAction(formData: FormData) {
       );
     });
   } catch (error) {
-    logError(
+    reportServerError(
       "Failed to create topic in database.",
       {
         teacherId: user.id,
@@ -269,7 +269,11 @@ export async function updateTopicAction(formData: FormData) {
     homeworkUpload =
       homeworkFile instanceof File && homeworkFile.size > 0 ? await saveUploadedFile(homeworkFile) : null;
   } catch (error) {
-    logError("Failed to upload replacement file while updating topic.", { teacherId: user.id, topicId }, error);
+    reportServerError(
+      "Failed to upload replacement file while updating topic.",
+      { teacherId: user.id, topicId },
+      error
+    );
     await cleanupUploadedStorageKeys([theoryUpload?.storageKey, homeworkUpload?.storageKey], {
       teacherId: user.id,
       topicId,
@@ -383,7 +387,7 @@ export async function updateTopicAction(formData: FormData) {
       await createTopicHomeworkNumbersInBatches(tx, topicId, numbersToCreate);
     });
   } catch (error) {
-    logError(
+    reportServerError(
       "Failed to update topic in database.",
       {
         teacherId: user.id,
@@ -449,7 +453,7 @@ export async function deleteTopicFileAction(formData: FormData) {
       data: targetFileKind === "theory" ? { theoryFileId: null } : { homeworkFileId: null }
     });
   } catch (error) {
-    logError(
+    reportServerError(
       "Failed to delete topic file reference.",
       { teacherId: user.id, topicId, fileKind: targetFileKind },
       error
@@ -517,7 +521,7 @@ export async function deleteTopicAction(formData: FormData) {
       });
     });
   } catch (error) {
-    logError("Failed to delete topic.", { teacherId: user.id, topicId }, error);
+    reportServerError("Failed to delete topic.", { teacherId: user.id, topicId }, error);
     redirectTeacherTopicsWithStatus(new URLSearchParams({ error: "delete" }));
   }
 
