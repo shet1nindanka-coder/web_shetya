@@ -2,8 +2,8 @@ import ExcelJS from "exceljs";
 import { Prisma, UserRole } from "@prisma/client";
 import { NextResponse } from "next/server";
 import { tryGetCurrentUser } from "@/lib/auth";
+import { getRequestLogContext, logError, logWarn } from "@/lib/logger";
 import { prisma } from "@/lib/prisma";
-import { reportServerError } from "@/lib/server-monitoring";
 import { formatDateTime } from "@/lib/utils";
 
 export const runtime = "nodejs";
@@ -567,6 +567,13 @@ export async function GET(
     const data = await loadExportData(studentId);
 
     if (!data) {
+      logWarn("Student progress export requested for missing student.", {
+        userId: user.id,
+        studentId,
+        method: request.method,
+        path: new URL(request.url).pathname,
+        scope: "student-export-missing"
+      });
       return new NextResponse("Student not found", { status: 404 });
     }
 
@@ -801,13 +808,11 @@ export async function GET(
       }
     });
   } catch (error) {
-    reportServerError(
+    logError(
       "Failed to export student progress file.",
-      {
-        method: request.method,
-        path: new URL(request.url).pathname,
+      getRequestLogContext(request, {
         studentId
-      },
+      }),
       error
     );
     return new NextResponse("Export failed", { status: 500 });

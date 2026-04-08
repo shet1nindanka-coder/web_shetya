@@ -696,6 +696,10 @@ async function getTeacherStudentDetailUncached(studentId: string) {
   });
 
   if (!student) {
+    logWarn("Teacher student detail requested for missing student.", {
+      studentId,
+      scope: "teacher-student-detail-missing"
+    });
     throw new Error(`Student not found: ${studentId}`);
   }
   const {

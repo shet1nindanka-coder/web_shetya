@@ -1,7 +1,5 @@
 "use client";
 
-import { useEffect } from "react";
-import * as Sentry from "@sentry/nextjs";
 import { RouteErrorState } from "@/components/app-state-shells";
 
 type AuthErrorPageProps = {
@@ -9,11 +7,7 @@ type AuthErrorPageProps = {
   reset: () => void;
 };
 
-export default function AuthErrorPage({ error, reset }: AuthErrorPageProps) {
-  useEffect(() => {
-    Sentry.captureException(error);
-  }, [error]);
-
+export default function AuthErrorPage({ reset }: AuthErrorPageProps) {
   return (
     <main className="soft-grid min-h-screen">
       <RouteErrorState

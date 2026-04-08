@@ -2,7 +2,7 @@ import { handleUpload, type HandleUploadBody } from "@vercel/blob/client";
 import { UserRole } from "@prisma/client";
 import { NextResponse } from "next/server";
 import { tryGetCurrentUser } from "@/lib/auth";
-import { getRequestLogContext, logWarn } from "@/lib/logger";
+import { getRequestLogContext, logError, logWarn } from "@/lib/logger";
 import { prisma } from "@/lib/prisma";
 import {
   assertRateLimit,
@@ -10,7 +10,6 @@ import {
   getRetryAfterSeconds,
   RateLimitExceededError
 } from "@/lib/rate-limit";
-import { reportServerError } from "@/lib/server-monitoring";
 import { deleteOwnedStoredFileIfUnused } from "@/lib/stored-files";
 import { saveUploadedFile } from "@/lib/storage";
 import { allowedUploadExtensions, allowedUploadMimeTypes, getFileExtension } from "@/lib/utils";
@@ -113,7 +112,7 @@ export async function POST(request: Request) {
 
         return NextResponse.json(jsonResponse);
       } catch (error) {
-        reportServerError(
+        logError(
           "Failed to generate Vercel Blob upload token.",
           {
             ...requestContext,
@@ -170,7 +169,7 @@ export async function POST(request: Request) {
           }
         });
       } catch (error) {
-        reportServerError(
+        logError(
           "Failed to register Vercel Blob upload in database.",
           {
             ...requestContext,
@@ -230,7 +229,7 @@ export async function POST(request: Request) {
       }
     });
   } catch (error) {
-    reportServerError(
+    logError(
       "Failed to upload file for teacher topic form.",
       {
         ...requestContext,

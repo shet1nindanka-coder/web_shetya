@@ -3,10 +3,9 @@ import { revalidatePath } from "next/cache";
 import { NextResponse } from "next/server";
 import { tryGetCurrentUser } from "@/lib/auth";
 import { publishDashboardRealtimeEvent } from "@/lib/dashboard-realtime";
-import { getRequestLogContext } from "@/lib/logger";
+import { getRequestLogContext, logError } from "@/lib/logger";
 import { revalidateAllPlatformData } from "@/lib/platform-data-cache";
 import { prisma } from "@/lib/prisma";
-import { reportServerError } from "@/lib/server-monitoring";
 import { deleteStoredFileRecordIfUnused } from "@/lib/stored-files";
 
 export const runtime = "nodejs";
@@ -65,7 +64,7 @@ export async function POST(request: Request) {
       }
     });
   } catch (error) {
-    reportServerError(
+    logError(
       "Failed to save homework answer.",
       {
         ...requestContext,
@@ -140,7 +139,7 @@ export async function DELETE(request: Request) {
       }
     });
   } catch (error) {
-    reportServerError(
+    logError(
       "Failed to remove homework answer.",
       {
         ...requestContext,

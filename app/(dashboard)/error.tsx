@@ -1,7 +1,5 @@
 "use client";
 
-import { useEffect } from "react";
-import * as Sentry from "@sentry/nextjs";
 import { RouteErrorState } from "@/components/app-state-shells";
 
 type DashboardErrorPageProps = {
@@ -9,11 +7,7 @@ type DashboardErrorPageProps = {
   reset: () => void;
 };
 
-export default function DashboardErrorPage({ error, reset }: DashboardErrorPageProps) {
-  useEffect(() => {
-    Sentry.captureException(error);
-  }, [error]);
-
+export default function DashboardErrorPage({ reset }: DashboardErrorPageProps) {
   return (
     <div className="soft-grid min-h-screen">
       <RouteErrorState

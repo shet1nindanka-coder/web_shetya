@@ -6,12 +6,11 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { requireUser } from "@/lib/auth";
 import { publishDashboardRealtimeEvent } from "@/lib/dashboard-realtime";
-import { getHeadersLogContext, logWarn } from "@/lib/logger";
+import { getHeadersLogContext, logError, logWarn } from "@/lib/logger";
 import { revalidateTeacherStudentsData, revalidateTeacherTopicsData } from "@/lib/platform-data-cache";
 import { hashPassword } from "@/lib/password";
 import { prisma } from "@/lib/prisma";
 import { assertRateLimit, getClientIpFromHeaders, RateLimitExceededError } from "@/lib/rate-limit";
-import { reportServerError } from "@/lib/server-monitoring";
 
 function redirectTeacherWithStudentStatus(params: URLSearchParams) {
   const query = params.toString();
@@ -67,6 +66,14 @@ export async function createStudentAction(formData: FormData) {
   });
 
   if (existingStudent) {
+    logWarn(
+      "Student creation skipped because login already exists.",
+      getHeadersLogContext(requestHeaders, {
+        teacherId: teacher.id,
+        studentLogin: login,
+        scope: "student-create-exists"
+      })
+    );
     redirectTeacherWithStudentStatus(new URLSearchParams({ studentError: "exists" }));
   }
 
@@ -82,7 +89,7 @@ export async function createStudentAction(formData: FormData) {
       }
     });
   } catch (error) {
-    reportServerError(
+    logError(
       "Failed to create student.",
       {
         teacherId: teacher.id,
@@ -125,6 +132,11 @@ export async function deleteStudentAction(formData: FormData) {
   });
 
   if (!student) {
+    logWarn("Student deletion skipped because student was not found.", {
+      teacherId: teacher.id,
+      studentId,
+      scope: "student-delete-missing"
+    });
     redirectTeacherWithStudentStatus(new URLSearchParams({ studentError: "deleteMissing" }));
   }
 
@@ -135,7 +147,7 @@ export async function deleteStudentAction(formData: FormData) {
       }
     });
   } catch (error) {
-    reportServerError("Failed to delete student.", { teacherId: teacher.id, studentId }, error);
+    logError("Failed to delete student.", { teacherId: teacher.id, studentId }, error);
     redirectTeacherWithStudentStatus(new URLSearchParams({ studentError: "delete" }));
   }
 

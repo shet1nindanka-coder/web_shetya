@@ -50,3 +50,23 @@ test("getRequestLogContext adds method and path to structured request context", 
     path: "/api/teacher/uploads"
   });
 });
+
+test("getRequestLogContext normalizes Date and bigint values for safe structured logs", () => {
+  const request = new Request("https://shetya.ru/api/teacher/students", {
+    method: "DELETE"
+  });
+  const createdAt = new Date("2026-04-08T12:00:00.000Z");
+
+  const result = getRequestLogContext(request, {
+    createdAt,
+    count: 4n
+  });
+
+  assert.deepEqual(result, {
+    clientIp: "unknown",
+    method: "DELETE",
+    path: "/api/teacher/students",
+    createdAt: "2026-04-08T12:00:00.000Z",
+    count: "4"
+  });
+});

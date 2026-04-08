@@ -4,10 +4,10 @@ import { UserRole } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireUser } from "@/lib/auth";
+import { logError } from "@/lib/logger";
 import { revalidateAllPlatformData } from "@/lib/platform-data-cache";
 import { hashPassword, verifyPassword } from "@/lib/password";
 import { prisma } from "@/lib/prisma";
-import { reportServerError } from "@/lib/server-monitoring";
 import { roleHome } from "@/lib/utils";
 
 function redirectAccountWithStatus(role: UserRole, params: URLSearchParams) {
@@ -53,7 +53,7 @@ export async function updateProfileInfoAction(formData: FormData) {
       }
     });
   } catch (error) {
-    reportServerError("Failed to update profile info.", { userId: user.id, role: user.role }, error);
+    logError("Failed to update profile info.", { userId: user.id, role: user.role }, error);
     redirectAccountWithStatus(user.role, new URLSearchParams({ infoError: "save" }));
   }
 
@@ -104,7 +104,7 @@ export async function updatePasswordAction(formData: FormData) {
       }
     });
   } catch (error) {
-    reportServerError("Failed to update password.", { userId: user.id, role: user.role }, error);
+    logError("Failed to update password.", { userId: user.id, role: user.role }, error);
     redirectAccountWithStatus(user.role, new URLSearchParams({ passwordError: "save" }));
   }
 

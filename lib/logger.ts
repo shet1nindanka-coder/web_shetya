@@ -1,3 +1,4 @@
+import { hostname } from "node:os";
 import pino from "pino";
 import { getClientIpFromHeaders } from "@/lib/rate-limit";
 
@@ -8,10 +9,35 @@ type HeaderSource = {
 type LogContext = Record<string, unknown>;
 
 const loggerLevel = process.env.LOG_LEVEL ?? (process.env.NODE_ENV === "production" ? "info" : "debug");
+const loggerHostname = hostname();
+
+function normalizeLogValue(value: unknown): unknown {
+  if (value instanceof Date) {
+    return value.toISOString();
+  }
+
+  if (typeof value === "bigint") {
+    return value.toString();
+  }
+
+  if (Array.isArray(value)) {
+    return value.map((entry) => normalizeLogValue(entry));
+  }
+
+  if (value && typeof value === "object") {
+    return Object.fromEntries(
+      Object.entries(value).map(([entryKey, entryValue]) => [entryKey, normalizeLogValue(entryValue)])
+    );
+  }
+
+  return value;
+}
 
 function compactContext<T extends LogContext>(context: T): T {
   return Object.fromEntries(
-    Object.entries(context).filter(([, value]) => value !== undefined && value !== null && value !== "")
+    Object.entries(context)
+      .filter(([, value]) => value !== undefined && value !== null && value !== "")
+      .map(([key, value]) => [key, normalizeLogValue(value)])
   ) as T;
 }
 
@@ -28,6 +54,8 @@ function getRequestId(headers: HeaderSource) {
 export const logger = pino({
   level: loggerLevel,
   base: {
+    hostname: loggerHostname,
+    pid: process.pid,
     service: "tutorflow",
     env: process.env.NODE_ENV ?? "development"
   },
