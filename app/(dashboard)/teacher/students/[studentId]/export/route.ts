@@ -6,33 +6,11 @@ import { formatDateTime } from "@/lib/utils";
 
 export const runtime = "nodejs";
 
-const SEP = ";";
-
 const statusLabels: Record<string, string> = {
-  GREEN: "Зеленый",
-  YELLOW: "Желтый",
+  GREEN: "Зелёный",
+  YELLOW: "Жёлтый",
   RED: "Красный"
 };
-
-function cell(value: string | number | null | undefined): string {
-  let text = String(value ?? "");
-
-  if (/^[=+\-@]/.test(text)) {
-    text = `'${text}`;
-  }
-
-  text = text.replace(/"/g, '""');
-
-  return `"${text}"`;
-}
-
-function row(...values: Array<string | number | null | undefined>): string {
-  return values.map((v) => cell(v)).join(SEP);
-}
-
-function emptyRow(): string {
-  return "";
-}
 
 function isMissingColumn(error: unknown, column: "note" | "deadlineAt") {
   return (
@@ -41,6 +19,37 @@ function isMissingColumn(error: unknown, column: "note" | "deadlineAt") {
     error.message.includes("StudentTopicNumberStatus") &&
     error.message.includes(column)
   );
+}
+
+function escapeXml(value: string | number | null | undefined) {
+  return String(value ?? "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&apos;");
+}
+
+function xmlCell(
+  value: string | number | null | undefined,
+  {
+    styleId,
+    type = typeof value === "number" ? "Number" : "String",
+    mergeAcross
+  }: {
+    styleId?: string;
+    type?: "String" | "Number";
+    mergeAcross?: number;
+  } = {}
+) {
+  const styleAttr = styleId ? ` ss:StyleID="${styleId}"` : "";
+  const mergeAttr = typeof mergeAcross === "number" ? ` ss:MergeAcross="${mergeAcross}"` : "";
+
+  return `<Cell${styleAttr}${mergeAttr}><Data ss:Type="${type}">${escapeXml(value)}</Data></Cell>`;
+}
+
+function xmlRow(cells: string[]) {
+  return `<Row>${cells.join("")}</Row>`;
 }
 
 async function loadExportData(studentId: string) {
@@ -168,47 +177,168 @@ export async function GET(
 
     const percent = totalNumbers > 0 ? Math.round((totalSolved / totalNumbers) * 100) : 0;
 
-    const lines: string[] = [
-      `sep=${SEP}`,
-      row("Отчёт по прогрессу ученика"),
-      emptyRow(),
-      row("Ученик", data.student.name),
-      row("Логин", data.student.email),
-      row("Дата экспорта", formatDateTime(exportDate)),
-      emptyRow(),
-      row("Сводка"),
-      row("Показатель", "Значение"),
-      row("Всего тем", data.topics.length),
-      row("Всего номеров", totalNumbers),
-      row("Решено", `${totalSolved} из ${totalNumbers}`),
-      row("Прогресс", `${percent}%`),
-      row("Зелёных", totalGreen),
-      row("Жёлтых", totalYellow),
-      row("Красных", totalRed),
-      row("Без статуса", totalNumbers - totalMarked),
-      emptyRow(),
-      row("Детализация по номерам"),
-      row("Тема", "Номер", "Статус", "Дедлайн", "Заметка", "Обновлено"),
-      ...detailRows.map((detailRow) => row(...detailRow))
+    const summaryRows = [
+      ["Ученик", data.student.name],
+      ["Логин", data.student.email],
+      ["Дата экспорта", formatDateTime(exportDate)],
+      ["Всего тем", data.topics.length],
+      ["Всего номеров", totalNumbers],
+      ["Решено", `${totalSolved} из ${totalNumbers}`],
+      ["Прогресс", `${percent}%`],
+      ["Зелёных", totalGreen],
+      ["Жёлтых", totalYellow],
+      ["Красных", totalRed],
+      ["Без статуса", totalNumbers - totalMarked]
+    ] as const;
+
+    const summarySheetRows = [
+      xmlRow([xmlCell("Отчёт по прогрессу ученика", { styleId: "Title", mergeAcross: 1 })]),
+      xmlRow([xmlCell("", { mergeAcross: 1 })]),
+      ...summaryRows.map(([label, value]) =>
+        xmlRow([xmlCell(label, { styleId: "Label" }), xmlCell(value, { styleId: "Value" })])
+      )
     ];
 
-    const csvString = lines.join("\r\n");
-    const bom = Buffer.from([0xff, 0xfe]);
-    const body = Buffer.from(csvString, "utf16le");
-    const output = Buffer.concat([bom, body]);
+    const detailsSheetRows = [
+      xmlRow([xmlCell("Детализация по номерам", { styleId: "Title", mergeAcross: 5 })]),
+      xmlRow([
+        xmlCell("Тема", { styleId: "Header" }),
+        xmlCell("Номер", { styleId: "Header" }),
+        xmlCell("Статус", { styleId: "Header" }),
+        xmlCell("Дедлайн", { styleId: "Header" }),
+        xmlCell("Заметка", { styleId: "Header" }),
+        xmlCell("Обновлено", { styleId: "Header" })
+      ]),
+      ...detailRows.map(([topic, number, status, deadline, note, updated]) =>
+        xmlRow([
+          xmlCell(topic, { styleId: "Cell" }),
+          xmlCell(number, { styleId: "Cell", type: "Number" }),
+          xmlCell(status, {
+            styleId:
+              status === "Зелёный"
+                ? "StatusGreen"
+                : status === "Жёлтый"
+                  ? "StatusYellow"
+                  : status === "Красный"
+                    ? "StatusRed"
+                    : "Cell"
+          }),
+          xmlCell(deadline, { styleId: "Cell" }),
+          xmlCell(note, { styleId: "CellWrap" }),
+          xmlCell(updated, { styleId: "Cell" })
+        ])
+      )
+    ];
+
+    const workbook = `<?xml version="1.0" encoding="UTF-8"?>
+<?mso-application progid="Excel.Sheet"?>
+<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet"
+ xmlns:o="urn:schemas-microsoft-com:office:office"
+ xmlns:x="urn:schemas-microsoft-com:office:excel"
+ xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet"
+ xmlns:html="http://www.w3.org/TR/REC-html40">
+ <Styles>
+  <Style ss:ID="Default" ss:Name="Normal">
+   <Alignment ss:Vertical="Center"/>
+   <Borders/>
+   <Font ss:FontName="Calibri" ss:Size="11" ss:Color="#1E293B"/>
+   <Interior/>
+   <NumberFormat/>
+   <Protection/>
+  </Style>
+  <Style ss:ID="Title">
+   <Font ss:FontName="Calibri" ss:Size="16" ss:Bold="1" ss:Color="#0F172A"/>
+   <Interior ss:Color="#E8F0FF" ss:Pattern="Solid"/>
+   <Alignment ss:Vertical="Center"/>
+  </Style>
+  <Style ss:ID="Header">
+   <Font ss:FontName="Calibri" ss:Size="11" ss:Bold="1" ss:Color="#0F172A"/>
+   <Interior ss:Color="#EEF2FF" ss:Pattern="Solid"/>
+   <Borders>
+    <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/>
+    <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#E2E8F0"/>
+    <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#E2E8F0"/>
+    <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#E2E8F0"/>
+   </Borders>
+  </Style>
+  <Style ss:ID="Label">
+   <Font ss:FontName="Calibri" ss:Size="11" ss:Bold="1" ss:Color="#334155"/>
+   <Interior ss:Color="#F8FAFC" ss:Pattern="Solid"/>
+   <Borders>
+    <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#E2E8F0"/>
+   </Borders>
+  </Style>
+  <Style ss:ID="Value">
+   <Font ss:FontName="Calibri" ss:Size="11" ss:Color="#0F172A"/>
+   <Borders>
+    <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#E2E8F0"/>
+   </Borders>
+  </Style>
+  <Style ss:ID="Cell">
+   <Borders>
+    <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#E2E8F0"/>
+   </Borders>
+  </Style>
+  <Style ss:ID="CellWrap">
+   <Alignment ss:Vertical="Top" ss:WrapText="1"/>
+   <Borders>
+    <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#E2E8F0"/>
+   </Borders>
+  </Style>
+  <Style ss:ID="StatusGreen">
+   <Font ss:FontName="Calibri" ss:Size="11" ss:Bold="1" ss:Color="#166534"/>
+   <Interior ss:Color="#DCFCE7" ss:Pattern="Solid"/>
+   <Borders>
+    <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#BBF7D0"/>
+   </Borders>
+  </Style>
+  <Style ss:ID="StatusYellow">
+   <Font ss:FontName="Calibri" ss:Size="11" ss:Bold="1" ss:Color="#854D0E"/>
+   <Interior ss:Color="#FEF3C7" ss:Pattern="Solid"/>
+   <Borders>
+    <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#FDE68A"/>
+   </Borders>
+  </Style>
+  <Style ss:ID="StatusRed">
+   <Font ss:FontName="Calibri" ss:Size="11" ss:Bold="1" ss:Color="#991B1B"/>
+   <Interior ss:Color="#FEE2E2" ss:Pattern="Solid"/>
+   <Borders>
+    <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#FECACA"/>
+   </Borders>
+  </Style>
+ </Styles>
+ <Worksheet ss:Name="Сводка">
+  <Table>
+   <Column ss:Width="180"/>
+   <Column ss:Width="260"/>
+   ${summarySheetRows.join("")}
+  </Table>
+ </Worksheet>
+ <Worksheet ss:Name="Номера">
+  <Table>
+   <Column ss:Width="210"/>
+   <Column ss:Width="70"/>
+   <Column ss:Width="110"/>
+   <Column ss:Width="125"/>
+   <Column ss:Width="260"/>
+   <Column ss:Width="130"/>
+   ${detailsSheetRows.join("")}
+  </Table>
+ </Worksheet>
+</Workbook>`;
 
     const datePart = exportDate.toISOString().slice(0, 10);
 
-    return new NextResponse(output, {
+    return new NextResponse(workbook, {
       status: 200,
       headers: {
-        "Content-Type": "text/csv; charset=utf-16le",
-        "Content-Disposition": `attachment; filename="progress-${datePart}.csv"; filename*=UTF-8''progress-${datePart}.csv`,
+        "Content-Type": "application/vnd.ms-excel; charset=utf-8",
+        "Content-Disposition": `attachment; filename="progress-${datePart}.xml"; filename*=UTF-8''progress-${datePart}.xml`,
         "Cache-Control": "no-store"
       }
     });
   } catch (error) {
-    console.error("Failed to export student progress CSV", error);
+    console.error("Failed to export student progress file", error);
     return new NextResponse("Export failed", { status: 500 });
   }
 }

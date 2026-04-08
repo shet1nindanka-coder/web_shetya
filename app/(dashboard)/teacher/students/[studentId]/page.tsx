@@ -55,7 +55,7 @@ export default async function TeacherStudentPage({ params }: TeacherStudentPageP
               href={`/teacher/students/${data.student.id}/export`}
               className="ui-pressable ui-button-secondary inline-flex justify-center rounded-[14px] px-4 py-2.5 text-sm font-semibold transition"
             >
-              Экспорт прогресса CSV
+              Экспорт прогресса Excel
             </a>
             <CsvImportButton studentId={data.student.id} />
             <DeleteStudentDialog

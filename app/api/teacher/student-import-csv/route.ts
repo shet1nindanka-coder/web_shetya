@@ -17,6 +17,24 @@ const STATUS_MAP: Record<string, HomeworkNumberStatus> = {
   "red": HomeworkNumberStatus.RED
 };
 
+async function readUploadedText(file: File): Promise<string> {
+  const buffer = Buffer.from(await file.arrayBuffer());
+
+  if (buffer.length >= 2 && buffer[0] === 0xff && buffer[1] === 0xfe) {
+    return new TextDecoder("utf-16le").decode(buffer.subarray(2));
+  }
+
+  if (buffer.length >= 2 && buffer[0] === 0xfe && buffer[1] === 0xff) {
+    return new TextDecoder("utf-16be").decode(buffer.subarray(2));
+  }
+
+  if (buffer.length >= 3 && buffer[0] === 0xef && buffer[1] === 0xbb && buffer[2] === 0xbf) {
+    return new TextDecoder("utf-8").decode(buffer.subarray(3));
+  }
+
+  return new TextDecoder("utf-8").decode(buffer);
+}
+
 function parseCsvLines(text: string): string[][] {
   const lines = text.split(/\r?\n/);
   const result: string[][] = [];
@@ -24,12 +42,11 @@ function parseCsvLines(text: string): string[][] {
   for (const line of lines) {
     const trimmed = line.trim();
 
-    if (!trimmed) {
+    if (!trimmed || /^sep\s*=/i.test(trimmed)) {
       continue;
     }
 
-    // Detect separator: semicolon or comma
-    const sep = trimmed.includes(";") ? ";" : ",";
+    const sep = trimmed.includes("\t") ? "\t" : trimmed.includes(";") ? ";" : ",";
     const cells: string[] = [];
     let current = "";
     let inQuotes = false;
@@ -209,7 +226,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Ученик не найден." }, { status: 404 });
     }
 
-    const text = await file.text();
+    const text = await readUploadedText(file);
     const allRows = parseCsvLines(text);
 
     if (allRows.length < 2) {
