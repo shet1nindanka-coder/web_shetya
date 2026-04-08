@@ -360,20 +360,12 @@ async function getStudentTopicDetailUncached(studentId: string, topicId: string)
   };
 }
 
-const getStudentTopicDetailCached = unstable_cache(
-  getStudentTopicDetailUncached,
-  ["student-topic-detail"],
-  {
-    tags: [PLATFORM_DATA_TAGS.studentTopics]
-  }
-);
-
 export async function getStudentTopicDetail(
   studentId: string,
   topicId: string
 ): Promise<Awaited<ReturnType<typeof getStudentTopicDetailUncached>>> {
   try {
-    return await getStudentTopicDetailCached(studentId, topicId);
+    return await getStudentTopicDetailUncached(studentId, topicId);
   } catch (error) {
     if (!isRecoverablePlatformDataError(error)) {
       throw error;
@@ -764,29 +756,10 @@ async function getTeacherStudentDetailUncached(studentId: string) {
   };
 }
 
-const getTeacherStudentDetailCached = unstable_cache(
-  getTeacherStudentDetailUncached,
-  ["teacher-student-detail"],
-  {
-    tags: [PLATFORM_DATA_TAGS.teacherTopics, PLATFORM_DATA_TAGS.teacherStudents]
-  }
-);
-
 export async function getTeacherStudentDetail(
   studentId: string
 ): Promise<Awaited<ReturnType<typeof getTeacherStudentDetailUncached>>> {
-  try {
-    return await getTeacherStudentDetailCached(studentId);
-  } catch (error) {
-    console.error("getTeacherStudentDetail cache error, falling back to uncached.", {
-      studentId,
-      errorMessage: error instanceof Error ? error.message : String(error)
-    });
-
-    // Always fall back to the uncached version on any cache-related error.
-    // This handles incrementalCache issues, stale cache, and Prisma schema mismatches.
-    return getTeacherStudentDetailUncached(studentId);
-  }
+  return getTeacherStudentDetailUncached(studentId);
 }
 
 
@@ -829,17 +802,9 @@ async function getStudentDeadlinesUncached(studentId: string) {
   }));
 }
 
-const getStudentDeadlinesCached = unstable_cache(
-  getStudentDeadlinesUncached,
-  ["student-deadlines"],
-  {
-    tags: [PLATFORM_DATA_TAGS.studentTopics]
-  }
-);
-
 export async function getStudentDeadlines(studentId: string) {
   try {
-    return await getStudentDeadlinesCached(studentId);
+    return await getStudentDeadlinesUncached(studentId);
   } catch (error) {
     if (!isRecoverablePlatformDataError(error)) {
       throw error;
