@@ -34,7 +34,7 @@ function applyPreferences(themeMode: ThemeMode, hintsMode: HintsMode, densityMod
 
 export function InterfaceSettingsPanel() {
   const [themeMode, setThemeMode] = useState<ThemeMode>("system");
-  const [hintsMode, setHintsMode] = useState<HintsMode>("on");
+  const [hintsMode, setHintsMode] = useState<HintsMode>("off");
   const [densityMode, setDensityMode] = useState<DensityMode>("comfortable");
 
   useEffect(() => {
@@ -44,7 +44,7 @@ export function InterfaceSettingsPanel() {
 
     const nextTheme =
       storedTheme === "light" || storedTheme === "dark" || storedTheme === "system" ? storedTheme : "system";
-    const nextHints = storedHints === "off" ? "off" : "on";
+    const nextHints = storedHints === "on" ? "on" : "off";
     const nextDensity = storedDensity === "compact" ? "compact" : "comfortable";
 
     setThemeMode(nextTheme);

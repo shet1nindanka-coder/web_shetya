@@ -18,18 +18,18 @@ export default function RootLayout({ children }: Readonly<{ children: ReactNode 
               (() => {
                 try {
                   const storedTheme = localStorage.getItem("tutorflow-theme") || "system";
-                  const storedHints = localStorage.getItem("tutorflow-hints") || "on";
+                  const storedHints = localStorage.getItem("tutorflow-hints") || "off";
                   const storedDensity = localStorage.getItem("tutorflow-density") || "comfortable";
                   const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
                   const resolvedTheme = storedTheme === "system" ? (prefersDark ? "dark" : "light") : storedTheme;
                   document.documentElement.dataset.themeMode = storedTheme;
                   document.documentElement.dataset.theme = resolvedTheme;
-                  document.documentElement.dataset.hints = storedHints === "off" ? "off" : "on";
+                  document.documentElement.dataset.hints = storedHints === "on" ? "on" : "off";
                   document.documentElement.dataset.density = storedDensity === "compact" ? "compact" : "comfortable";
                 } catch {
                   document.documentElement.dataset.themeMode = "system";
                   document.documentElement.dataset.theme = "light";
-                  document.documentElement.dataset.hints = "on";
+                  document.documentElement.dataset.hints = "off";
                   document.documentElement.dataset.density = "comfortable";
                 }
               })();
