@@ -585,6 +585,12 @@ html[data-theme="dark"] .ui-pressable:hover {
    Buttons
    ─────────────────────────────────────────────── */
 .ui-button-primary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1.1;
+  text-align: center;
+  vertical-align: middle;
   background: linear-gradient(135deg, var(--theme-accent-strong), var(--theme-accent));
   color: white;
   box-shadow: 0 4px 14px rgba(37, 99, 235, 0.18);
@@ -595,6 +601,12 @@ html[data-theme="dark"] .ui-pressable:hover {
 }
 
 .ui-button-secondary {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1.1;
+  text-align: center;
+  vertical-align: middle;
   border: 1px solid var(--theme-border);
   background: var(--theme-surface-strong);
   color: var(--theme-text-default);
@@ -605,6 +617,12 @@ html[data-theme="dark"] .ui-pressable:hover {
 }
 
 .ui-button-tonal {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1.1;
+  text-align: center;
+  vertical-align: middle;
   border: 1px solid var(--theme-accent-border);
   background: var(--theme-accent-soft);
   color: var(--theme-accent-text);
@@ -614,6 +632,12 @@ html[data-theme="dark"] .ui-pressable:hover {
 }
 
 .ui-button-danger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1.1;
+  text-align: center;
+  vertical-align: middle;
   border: 1px solid var(--theme-danger-border);
   background: var(--theme-danger-soft);
   color: var(--theme-danger-text);

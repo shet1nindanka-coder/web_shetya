@@ -149,7 +149,11 @@ export default async function TeacherTopicsPage({ searchParams }: TeacherTopicsP
                   >
                     Открыть и редактировать
                   </Link>
-                  <DeleteTopicDialog topicId={topic.id} topicTitle={topic.title} />
+                  <DeleteTopicDialog
+                    topicId={topic.id}
+                    topicTitle={topic.title}
+                    triggerClassName="ui-pressable ui-button-danger inline-flex w-full justify-center rounded-[10px] px-3.5 py-2 text-sm font-semibold transition sm:w-auto sm:rounded-[12px]"
+                  />
                 </div>
               </article>
             ))}

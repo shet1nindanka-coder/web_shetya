@@ -81,7 +81,7 @@ export default async function TeacherPage() {
             <div className="ui-action-card-footer">
               <Link
                 href="/teacher/students"
-                className="ui-pressable ui-button-secondary inline-flex w-full justify-center rounded-[10px] px-3.5 py-2 text-sm font-semibold transition sm:w-auto sm:rounded-[12px]"
+                className="ui-pressable ui-button-primary inline-flex w-full justify-center rounded-[10px] px-3.5 py-2 text-sm font-semibold transition sm:w-auto sm:rounded-[12px]"
               >
                 Перейти к ученикам
               </Link>
@@ -107,7 +107,7 @@ export default async function TeacherPage() {
             <div className="ui-action-card-footer">
               <Link
                 href="/teacher/statistics"
-                className="ui-pressable ui-button-secondary inline-flex w-full justify-center rounded-[10px] px-3.5 py-2 text-sm font-semibold transition sm:w-auto sm:rounded-[12px]"
+                className="ui-pressable ui-button-primary inline-flex w-full justify-center rounded-[10px] px-3.5 py-2 text-sm font-semibold transition sm:w-auto sm:rounded-[12px]"
               >
                 Открыть статистику
               </Link>
