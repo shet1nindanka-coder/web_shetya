@@ -28,6 +28,10 @@ const studentNotices = {
     tone: "error",
     message: "Не удалось создать ученика. Проверьте подключение к PostgreSQL и повторите попытку."
   },
+  studentRateLimited: {
+    tone: "error",
+    message: "Слишком много попыток создать учеников за короткое время. Подождите несколько минут."
+  },
   studentDeleted: {
     tone: "success",
     message: "Ученик удалён. Список и статистика уже обновлены."
@@ -61,6 +65,8 @@ export default async function TeacherStudentsPage({ searchParams }: TeacherStude
           ? "studentExists"
           : studentError === "save"
             ? "studentSave"
+            : studentError === "rateLimited"
+              ? "studentRateLimited"
             : studentError === "delete"
               ? "studentDelete"
               : studentError === "deleteMissing"

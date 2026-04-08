@@ -3,7 +3,8 @@ import { loginAction } from "@/actions/auth";
 const errorMap: Record<string, string> = {
   empty: "Введите логин и пароль.",
   invalid: "Неверный логин или пароль.",
-  database: "Не удалось подключиться к базе данных. Проверьте DATABASE_URL и запустите PostgreSQL."
+  database: "Не удалось подключиться к базе данных. Проверьте DATABASE_URL и запустите PostgreSQL.",
+  rateLimited: "Слишком много попыток входа. Подождите несколько минут и попробуйте снова."
 };
 
 type LoginFormProps = {

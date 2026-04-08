@@ -3,6 +3,12 @@ import { UserRole } from "@prisma/client";
 import { NextResponse } from "next/server";
 import { tryGetCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import {
+  assertRateLimit,
+  getClientIpFromHeaders,
+  getRetryAfterSeconds,
+  RateLimitExceededError
+} from "@/lib/rate-limit";
 import { deleteOwnedStoredFileIfUnused } from "@/lib/stored-files";
 import { saveUploadedFile } from "@/lib/storage";
 import { allowedUploadExtensions, allowedUploadMimeTypes, getFileExtension } from "@/lib/utils";
@@ -27,6 +33,34 @@ function validateUploadedMetadata(fileName: string, mimeType: string, size: numb
 }
 
 export async function POST(request: Request) {
+  try {
+    assertRateLimit(
+      {
+        scope: "teacher-uploads",
+        identifier: getClientIpFromHeaders(request.headers),
+        limit: 60,
+        windowMs: 10 * 60 * 1000
+      },
+      "Слишком много запросов к загрузке файлов."
+    );
+  } catch (error) {
+    if (error instanceof RateLimitExceededError) {
+      return NextResponse.json(
+        {
+          error: "Слишком много запросов к загрузке файлов. Подождите пару минут и попробуйте снова."
+        },
+        {
+          status: 429,
+          headers: {
+            "Retry-After": String(getRetryAfterSeconds(error.retryAfterMs))
+          }
+        }
+      );
+    }
+
+    throw error;
+  }
+
   const contentType = request.headers.get("content-type") ?? "";
 
   if (contentType.includes("application/json")) {

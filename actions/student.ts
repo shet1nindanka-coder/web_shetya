@@ -2,12 +2,14 @@
 
 import { UserRole } from "@prisma/client";
 import { revalidatePath } from "next/cache";
+import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { requireUser } from "@/lib/auth";
 import { publishDashboardRealtimeEvent } from "@/lib/dashboard-realtime";
 import { revalidateTeacherStudentsData, revalidateTeacherTopicsData } from "@/lib/platform-data-cache";
 import { hashPassword } from "@/lib/password";
 import { prisma } from "@/lib/prisma";
+import { assertRateLimit, getClientIpFromHeaders, RateLimitExceededError } from "@/lib/rate-limit";
 
 function redirectTeacherWithStudentStatus(params: URLSearchParams) {
   const query = params.toString();
@@ -15,7 +17,7 @@ function redirectTeacherWithStudentStatus(params: URLSearchParams) {
 }
 
 export async function createStudentAction(formData: FormData) {
-  await requireUser(UserRole.TEACHER);
+  const teacher = await requireUser(UserRole.TEACHER);
 
   const name = String(formData.get("name") ?? "").trim();
   const login = String(formData.get("login") ?? "").trim().toLowerCase();
@@ -23,6 +25,26 @@ export async function createStudentAction(formData: FormData) {
 
   if (!name || !login || password.trim().length < 8) {
     redirectTeacherWithStudentStatus(new URLSearchParams({ studentError: "invalid" }));
+  }
+
+  try {
+    const clientIp = getClientIpFromHeaders(await headers());
+
+    assertRateLimit(
+      {
+        scope: "create-student",
+        identifier: `${teacher.id}:${clientIp}`,
+        limit: 20,
+        windowMs: 10 * 60 * 1000
+      },
+      "Слишком много попыток создать учеников."
+    );
+  } catch (error) {
+    if (error instanceof RateLimitExceededError) {
+      redirectTeacherWithStudentStatus(new URLSearchParams({ studentError: "rateLimited" }));
+    }
+
+    throw error;
   }
 
   const existingStudent = await prisma.user.findUnique({
