@@ -39,8 +39,9 @@ export default async function StudentPage() {
           <div className="space-y-3">
             {nextAssignment ? (
               <>
-                <div className="ui-surface rounded-[14px] border px-3.5 py-3">
-                  <p className="font-medium text-[var(--theme-text-strong)]">Текущее домашнее задание</p>
+                <div className="ui-card-soft rounded-[14px] px-3.5 py-3.5">
+                  <p className="ui-kicker">{nextAssignment.topicTitle}</p>
+                  <p className="mt-1 font-medium text-[var(--theme-text-strong)]">Текущее домашнее задание</p>
                   <p className="mt-1 text-sm text-[var(--theme-text-muted)]">
                     {nextAssignment.solvedNumbers} из {nextAssignment.totalNumbers} номеров выполнено
                   </p>

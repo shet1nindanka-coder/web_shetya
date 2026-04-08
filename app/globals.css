@@ -248,22 +248,33 @@ html[data-theme="dark"] .soft-grid::after {
   border: 1px solid var(--theme-border-soft);
   background: color-mix(in srgb, var(--theme-surface-soft) 90%, white 10%);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.2);
+  display: flex;
+  min-height: 100%;
+  flex-direction: column;
+  gap: 0.45rem;
 }
 
-.ui-page-header-metrics { align-items: stretch; }
+.ui-page-header-metrics {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(136px, 1fr));
+  gap: 0.55rem;
+  align-items: stretch;
+}
 
 /* ───────────────────────────────────────────────
    Metric pills
    ─────────────────────────────────────────────── */
 .ui-metric-pill {
-  display: inline-flex;
+  display: flex;
   min-width: 120px;
+  min-height: 72px;
   flex-direction: column;
-  gap: 0.15rem;
+  justify-content: space-between;
+  gap: 0.4rem;
   border: 1px solid var(--theme-border-soft);
   background: color-mix(in srgb, var(--theme-surface-soft) 88%, white 12%);
   border-radius: var(--radius-md);
-  padding: 0.6rem 0.75rem;
+  padding: 0.7rem 0.85rem;
 }
 .ui-metric-pill-label {
   color: var(--theme-text-muted);
@@ -274,9 +285,9 @@ html[data-theme="dark"] .soft-grid::after {
 }
 .ui-metric-pill-value {
   color: var(--theme-text-strong);
-  font-size: 0.95rem;
+  font-size: 1rem;
   font-weight: 700;
-  line-height: 1.2;
+  line-height: 1.15;
 }
 .ui-metric-pill-accent { border-color: var(--theme-accent-border); background: color-mix(in srgb, var(--theme-accent-soft) 80%, white 20%); }
 .ui-metric-pill-success { border-color: var(--theme-success-border); background: color-mix(in srgb, var(--theme-success-soft) 80%, white 20%); }
@@ -288,10 +299,14 @@ html[data-theme="dark"] .soft-grid::after {
    ─────────────────────────────────────────────── */
 .ui-mini-stat-grid { display: grid; gap: 0.5rem; }
 .ui-mini-stat-card {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 0.35rem;
   border: 1px solid var(--theme-border-soft);
   background: color-mix(in srgb, var(--theme-surface-soft) 85%, white 15%);
   border-radius: var(--radius-md);
-  padding: 0.7rem 0.8rem;
+  padding: 0.8rem 0.9rem;
 }
 .ui-mini-stat-card-label {
   color: var(--theme-text-muted);
@@ -441,13 +456,52 @@ html[data-theme="dark"] .ui-pressable:hover {
   background: var(--theme-surface-soft);
 }
 
+.ui-action-card {
+  display: flex;
+  min-height: 100%;
+  flex-direction: column;
+  gap: 0.9rem;
+  border: 1px solid var(--theme-border-soft);
+  background: color-mix(in srgb, var(--theme-surface-soft) 86%, white 14%);
+  border-radius: var(--radius-lg);
+  padding: 0.95rem 1rem;
+}
+
+.ui-action-card-header {
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.ui-action-card-title {
+  color: var(--theme-text-strong);
+  font-size: 1.05rem;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.ui-action-card-copy {
+  color: var(--theme-text-muted);
+  font-size: 0.875rem;
+  line-height: 1.55;
+}
+
+.ui-action-card-footer {
+  margin-top: auto;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.55rem;
+}
+
 .ui-settings-card {
   display: flex;
   flex-direction: column;
+  gap: 0.8rem;
   border: 1px solid var(--theme-border-soft);
   background: color-mix(in srgb, var(--theme-surface-soft) 88%, white 12%);
 }
-.ui-settings-option { min-height: 3.75rem; align-content: start; }
+.ui-settings-option { min-height: 3.4rem; align-content: start; }
 .ui-settings-option-copy { display: flex; min-height: 100%; flex-direction: column; justify-content: center; }
 
 .settings-summary-card {
@@ -455,13 +509,42 @@ html[data-theme="dark"] .ui-pressable:hover {
 }
 .settings-summary-item {
   display: flex;
-  min-height: 4rem;
+  min-height: 3.5rem;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   border: 1px solid var(--theme-border-soft);
   background: color-mix(in srgb, var(--theme-surface-soft) 88%, white 12%);
   text-align: center;
+}
+
+.ui-key-value-grid {
+  display: grid;
+  gap: 0.6rem;
+}
+
+.ui-key-value-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.75rem;
+  border-top: 1px solid var(--theme-border-soft);
+  padding-top: 0.7rem;
+}
+
+.ui-key-value-label {
+  color: var(--theme-text-muted);
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.ui-key-value-value {
+  color: var(--theme-text-strong);
+  font-size: 0.95rem;
+  font-weight: 600;
+  text-align: right;
 }
 
 .ui-readonly-field {
@@ -613,15 +696,19 @@ html[data-theme="dark"] .ui-button-danger:hover {
 .ui-table-row {
   border-bottom: 1px solid var(--theme-border-soft);
   background: color-mix(in srgb, var(--theme-surface-strong) 94%, white 6%);
+  transition: background-color 140ms ease;
 }
 .ui-table-row:nth-child(even) {
   background: color-mix(in srgb, var(--theme-surface-soft) 90%, white 10%);
+}
+.ui-table-row:hover {
+  background: color-mix(in srgb, var(--theme-accent-soft) 36%, var(--theme-surface-strong) 64%);
 }
 
 .ui-table-cell {
   color: var(--theme-text-default);
   font-size: 0.875rem;
-  padding: 0.6rem 0.85rem;
+  padding: 0.72rem 0.95rem;
 }
 
 .ui-section-card-header,
@@ -705,6 +792,10 @@ html[data-theme="dark"] .ui-page-header {
 html[data-theme="dark"] .ui-page-header-panel,
 html[data-theme="dark"] .ui-mini-stat-card,
 html[data-theme="dark"] .ui-metric-pill {
+  background: color-mix(in srgb, var(--theme-surface-soft) 92%, rgba(0, 0, 0, 0.08) 8%);
+}
+html[data-theme="dark"] .ui-action-card,
+html[data-theme="dark"] .settings-summary-item {
   background: color-mix(in srgb, var(--theme-surface-soft) 92%, rgba(0, 0, 0, 0.08) 8%);
 }
 
@@ -887,10 +978,12 @@ html[data-theme="dark"] .ui-tab[data-active="true"] {
   }
   .ui-page-header-aside { width: 100%; }
   .ui-metric-pill { min-width: calc(50% - 0.4rem); flex: 1 1 calc(50% - 0.4rem); }
+  .ui-page-header-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 
   /* Tighter spacing on mobile */
   .ui-mini-stat-card { padding: 0.55rem 0.65rem; }
   .ui-mini-stat-card-value { font-size: 1rem; }
+  .ui-action-card { padding: 0.8rem 0.85rem; }
 
   html[data-density="compact"] .content-shell { padding-top: 0.5rem; padding-bottom: 0.6rem; }
   html[data-density="compact"] .ui-surface,

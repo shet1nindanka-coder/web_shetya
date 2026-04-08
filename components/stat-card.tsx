@@ -17,15 +17,15 @@ export function StatCard({ label, value, hint, accent, className }: StatCardProp
         className
       )}
     >
-      <div className="flex items-start justify-between gap-2">
-        <div className="space-y-0.5">
+      <div className="space-y-3">
+        <div className="space-y-1">
           <p className="ui-stat-card-label ui-copy-muted text-xs font-medium sm:text-sm">{label}</p>
           <p className="ui-stat-card-value font-display text-[1.35rem] font-semibold leading-none text-[var(--theme-text-strong)] sm:text-[1.5rem] lg:text-[1.65rem]">
             {value}
           </p>
           {hint ? <p className="ui-hint ui-copy-muted text-xs leading-relaxed sm:text-sm">{hint}</p> : null}
         </div>
-        {accent ? <div className="ui-copy-soft text-right text-sm">{accent}</div> : null}
+        {accent ? <div className="border-t border-[var(--theme-border-soft)] pt-3 text-sm">{accent}</div> : null}
       </div>
     </article>
   );

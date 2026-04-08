@@ -115,10 +115,23 @@ export function AccountSettingsView({ user, notice }: AccountSettingsViewProps) 
           { label: "На платформе", value: formatDate(user.createdAt) }
         ]}
         aside={
-          <div className="ui-page-header-panel rounded-[18px] p-4 sm:p-5">
+          <div className="ui-page-header-panel page-header-panel rounded-[18px] p-4 sm:p-5">
             <p className="ui-kicker">Сейчас в профиле</p>
-            <p className="mt-2 text-lg font-semibold text-[var(--theme-text-strong)]">{user.name}</p>
-            <p className="mt-2 text-sm leading-6 text-[var(--theme-text-muted)]">{user.email}</p>
+            <p className="mt-1 text-lg font-semibold text-[var(--theme-text-strong)]">{user.name}</p>
+            <div className="ui-key-value-grid mt-2">
+              <div className="ui-key-value-item">
+                <span className="ui-key-value-label">Логин</span>
+                <span className="ui-key-value-value">{user.email}</span>
+              </div>
+              <div className="ui-key-value-item">
+                <span className="ui-key-value-label">Роль</span>
+                <span className="ui-key-value-value">{roleLabel}</span>
+              </div>
+              <div className="ui-key-value-item">
+                <span className="ui-key-value-label">На платформе</span>
+                <span className="ui-key-value-value">{formatDate(user.createdAt)}</span>
+              </div>
+            </div>
           </div>
         }
       />

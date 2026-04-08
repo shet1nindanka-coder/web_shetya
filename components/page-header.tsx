@@ -67,7 +67,7 @@ export function PageHeader({
           </div>
 
           {metrics?.length ? (
-            <div className="ui-page-header-metrics flex flex-wrap gap-2">
+            <div className="ui-page-header-metrics">
               {metrics.map((metric) => (
                 <div key={metric.label} className={metricToneClassNames[metric.tone ?? "default"]}>
                   <span className="ui-metric-pill-label">{metric.label}</span>

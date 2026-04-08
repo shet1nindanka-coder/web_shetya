@@ -105,6 +105,27 @@ export function InterfaceSettingsPanel() {
         <p className="ui-hint ui-copy-muted max-w-2xl text-sm leading-6">Тема, подсказки и плотность на этом устройстве.</p>
       </div>
 
+      <div className="settings-summary-card mb-4 grid gap-2 rounded-[18px] border p-2 sm:grid-cols-3">
+        <div className="settings-summary-item rounded-[14px] px-3 py-2">
+          <span className="ui-kicker">Тема</span>
+          <span className="mt-1 text-sm font-semibold text-[var(--theme-text-strong)]">
+            {themeOptions.find((option) => option.value === themeMode)?.label ?? "Системная"}
+          </span>
+        </div>
+        <div className="settings-summary-item rounded-[14px] px-3 py-2">
+          <span className="ui-kicker">Подсказки</span>
+          <span className="mt-1 text-sm font-semibold text-[var(--theme-text-strong)]">
+            {hintsMode === "on" ? "Включены" : "Скрыты"}
+          </span>
+        </div>
+        <div className="settings-summary-item rounded-[14px] px-3 py-2">
+          <span className="ui-kicker">Плотность</span>
+          <span className="mt-1 text-sm font-semibold text-[var(--theme-text-strong)]">
+            {densityMode === "compact" ? "Компактная" : "Обычная"}
+          </span>
+        </div>
+      </div>
+
       <div className="grid gap-4 xl:grid-cols-[1.15fr_0.95fr_0.95fr]">
         <div className="ui-settings-card rounded-[18px] p-4 sm:rounded-[20px] sm:p-5">
           <div className="flex items-start justify-between gap-3">

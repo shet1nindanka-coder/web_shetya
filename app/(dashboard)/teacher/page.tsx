@@ -36,13 +36,23 @@ export default async function TeacherPage() {
 
       <SectionCard title="Быстрые переходы" description="Основные рабочие разделы преподавателя.">
         <div className="grid gap-3 sm:gap-4 md:grid-cols-2 xl:grid-cols-3">
-          <article className="ui-fade-slide ui-surface rounded-[14px] border p-3.5 sm:rounded-[16px] sm:p-4">
-            <div className="space-y-1.5">
+          <article className="ui-action-card ui-fade-slide">
+            <div className="ui-action-card-header">
               <p className="ui-kicker">Темы</p>
-              <h2 className="font-display text-lg font-semibold text-[var(--theme-text-strong)] sm:text-xl">Материалы и ответы</h2>
-              <p className="ui-hint text-sm leading-relaxed text-[var(--theme-text-muted)]">Редактирование тем, файлов и номеров.</p>
+              <h2 className="ui-action-card-title font-display">Материалы и ответы</h2>
+              <p className="ui-hint ui-action-card-copy">Редактирование тем, файлов и номеров.</p>
             </div>
-            <div className="mt-3">
+            <div className="ui-mini-stat-grid grid-cols-2">
+              <div className="ui-mini-stat-card">
+                <span className="ui-mini-stat-card-label">Темы</span>
+                <span className="ui-mini-stat-card-value">{data.stats.totalTopics}</span>
+              </div>
+              <div className="ui-mini-stat-card">
+                <span className="ui-mini-stat-card-label">Номера</span>
+                <span className="ui-mini-stat-card-value">{data.stats.totalNumbers}</span>
+              </div>
+            </div>
+            <div className="ui-action-card-footer">
               <Link
                 href="/teacher/topics"
                 className="ui-pressable ui-button-primary inline-flex w-full justify-center rounded-[10px] px-3.5 py-2 text-sm font-semibold transition sm:w-auto sm:rounded-[12px]"
@@ -52,13 +62,23 @@ export default async function TeacherPage() {
             </div>
           </article>
 
-          <article className="ui-fade-slide ui-surface rounded-[14px] border p-3.5 sm:rounded-[16px] sm:p-4">
-            <div className="space-y-1.5">
+          <article className="ui-action-card ui-fade-slide">
+            <div className="ui-action-card-header">
               <p className="ui-kicker">Ученики</p>
-              <h2 className="font-display text-lg font-semibold text-[var(--theme-text-strong)] sm:text-xl">Аккаунты и прогресс</h2>
-              <p className="ui-hint text-sm leading-relaxed text-[var(--theme-text-muted)]">Создание доступов и просмотр личного прогресса.</p>
+              <h2 className="ui-action-card-title font-display">Аккаунты и прогресс</h2>
+              <p className="ui-hint ui-action-card-copy">Создание доступов и просмотр личного прогресса.</p>
             </div>
-            <div className="mt-3">
+            <div className="ui-mini-stat-grid grid-cols-2">
+              <div className="ui-mini-stat-card">
+                <span className="ui-mini-stat-card-label">Ученики</span>
+                <span className="ui-mini-stat-card-value">{data.stats.totalStudents}</span>
+              </div>
+              <div className="ui-mini-stat-card">
+                <span className="ui-mini-stat-card-label">Файлы</span>
+                <span className="ui-mini-stat-card-value">{data.stats.totalFiles}</span>
+              </div>
+            </div>
+            <div className="ui-action-card-footer">
               <Link
                 href="/teacher/students"
                 className="ui-pressable ui-button-secondary inline-flex w-full justify-center rounded-[10px] px-3.5 py-2 text-sm font-semibold transition sm:w-auto sm:rounded-[12px]"
@@ -68,13 +88,23 @@ export default async function TeacherPage() {
             </div>
           </article>
 
-          <article className="ui-fade-slide ui-surface rounded-[14px] border p-3.5 sm:rounded-[16px] sm:p-4">
-            <div className="space-y-1.5">
+          <article className="ui-action-card ui-fade-slide">
+            <div className="ui-action-card-header">
               <p className="ui-kicker">Статистика</p>
-              <h2 className="font-display text-lg font-semibold text-[var(--theme-text-strong)] sm:text-xl">Разбор и аналитика</h2>
-              <p className="ui-hint text-sm leading-relaxed text-[var(--theme-text-muted)]">Как идут темы по ученикам.</p>
+              <h2 className="ui-action-card-title font-display">Разбор и аналитика</h2>
+              <p className="ui-hint ui-action-card-copy">Кого разбирать, какие темы проседают и где есть быстрые победы.</p>
             </div>
-            <div className="mt-3">
+            <div className="ui-mini-stat-grid grid-cols-2">
+              <div className="ui-mini-stat-card">
+                <span className="ui-mini-stat-card-label">Темы</span>
+                <span className="ui-mini-stat-card-value">{data.stats.totalTopics}</span>
+              </div>
+              <div className="ui-mini-stat-card">
+                <span className="ui-mini-stat-card-label">Ученики</span>
+                <span className="ui-mini-stat-card-value">{data.stats.totalStudents}</span>
+              </div>
+            </div>
+            <div className="ui-action-card-footer">
               <Link
                 href="/teacher/statistics"
                 className="ui-pressable ui-button-secondary inline-flex w-full justify-center rounded-[10px] px-3.5 py-2 text-sm font-semibold transition sm:w-auto sm:rounded-[12px]"
