@@ -8,7 +8,7 @@ import { DeleteStudentDialog } from "@/components/delete-student-dialog";
 import { TeacherStudentProgressBoard } from "@/components/teacher-student-progress-board";
 import { requireUser } from "@/lib/auth";
 import { getTeacherStudentDetail } from "@/lib/platform-data";
-import { formatDate, toIsoDateTimeString } from "@/lib/utils";
+import { toIsoDateTimeString } from "@/lib/utils";
 
 type TeacherStudentPageProps = {
   params: Promise<{
@@ -39,17 +39,8 @@ export default async function TeacherStudentPage({ params }: TeacherStudentPageP
         eyebrow="Ученик"
         title={data.student.name}
         description={data.student.email}
-        metrics={[
-          { label: "Темы", value: data.stats.totalTopics },
-          { label: "Решено", value: `${data.stats.totalSolved} / ${data.stats.totalNumbers}` },
-          { label: "Отмечено", value: `${data.stats.totalMarked} / ${data.stats.totalNumbers}` }
-        ]}
-        aside={
-          <div className="ui-page-header-aside">
-            <div className="ui-page-header-panel rounded-[18px] p-4 sm:p-5">
-              <p className="ui-kicker">Ученик в системе</p>
-              <p className="mt-2 text-sm font-semibold text-[var(--theme-text-strong)]">{formatDate(data.student.createdAt)}</p>
-            </div>
+        actions={
+          <>
             <a
               href={`/teacher/students/${data.student.id}/export`}
               className="ui-pressable ui-button-secondary inline-flex justify-center rounded-[14px] px-4 py-2.5 text-sm font-semibold transition"
@@ -61,7 +52,7 @@ export default async function TeacherStudentPage({ params }: TeacherStudentPageP
               studentName={data.student.name}
               triggerLabel="Удалить ученика"
             />
-          </div>
+          </>
         }
       />
 

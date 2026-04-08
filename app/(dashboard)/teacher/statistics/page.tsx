@@ -310,35 +310,6 @@ export default async function TeacherStatisticsPage({ searchParams }: TeacherSta
         eyebrow="Статистика"
         title={headlineTitle}
         description={headlineDescription}
-        metrics={[
-          { label: "Темы", value: data.stats.totalTopics },
-          { label: "Ученики", value: data.stats.totalStudents },
-          { label: "Номера", value: data.stats.totalNumbers },
-          { label: "Файлы", value: data.stats.totalFiles }
-        ]}
-        aside={
-          <div className="ui-page-header-panel rounded-[12px] sm:rounded-[14px] p-4 sm:p-4">
-            <p className="ui-kicker">{view === "teacher" ? "Главный приоритет" : "Лидер по прогрессу"}</p>
-            <p className="mt-2 text-lg font-semibold text-[var(--theme-text-strong)]">
-              {view === "teacher"
-                ? firstReviewStudent
-                  ? firstReviewStudent.name
-                  : "Пока без красных"
-                : leadStudent
-                  ? leadStudent.name
-                  : "Пока нет активности"}
-            </p>
-            <p className="mt-2 text-sm leading-relaxed text-[var(--theme-text-muted)]">
-              {view === "teacher"
-                ? firstReviewStudent
-                  ? `${firstReviewStudent.totalRed} красных номеров в ${firstReviewStudent.topicCount} темах.`
-                  : "Как только появятся красные статусы, здесь будет первый кандидат на разбор."
-                : leadStudent
-                  ? `${leadStudent.solvedCount} решенных номеров и ${leadStudent.markedCount} отмеченных статусов.`
-                  : "Когда появится активность, здесь будет виден ученик с самым сильным прогрессом."}
-            </p>
-          </div>
-        }
       />
 
       <div className="grid gap-4 sm:grid-cols-3">

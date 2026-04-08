@@ -92,22 +92,7 @@ export default async function TeacherStudentsPage({ searchParams }: TeacherStude
         eyebrow="Ученики"
         title="Аккаунты и прогресс"
         description="Создавайте доступы ученикам и открывайте их личные результаты из одного списка."
-        metrics={[
-          { label: "Ученики", value: data.students.length },
-          { label: "Темы", value: data.stats.totalTopics },
-          { label: "Номера", value: data.stats.totalNumbers }
-        ]}
-        aside={
-          <div className="ui-page-header-panel rounded-[14px] p-3.5 sm:rounded-[16px] sm:p-4">
-            <p className="ui-kicker">Работа с учениками</p>
-            <p className="mt-1.5 font-display text-[1.3rem] font-semibold text-[var(--theme-text-strong)] sm:text-[1.5rem]">
-              {data.students.length} аккаунтов
-            </p>
-            <p className="mt-1.5 text-sm leading-relaxed text-[var(--theme-text-muted)]">Новые логины создаются здесь же.</p>
-          </div>
-        }
       />
-
 
       <SectionCard title="Добавить ученика" description="Создайте логин и пароль для нового ученика.">
         <div className="grid gap-4 xl:grid-cols-[0.88fr_1.12fr]">

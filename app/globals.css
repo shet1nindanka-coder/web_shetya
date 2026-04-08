@@ -756,7 +756,8 @@ html[data-theme="dark"] .ui-button-danger:disabled {
   color: var(--theme-text-muted);
 }
 
-.ui-status-surface { border-width: 1px; }
+.ui-status-surface,
+.ui-status-option { border-width: 1px; }
 .ui-status-button {
   border-width: 1px;
   border-color: var(--theme-border-soft);
@@ -767,6 +768,21 @@ html[data-theme="dark"] .ui-button-danger:disabled {
   border-color: var(--theme-accent-border);
   background: color-mix(in srgb, var(--theme-surface-soft) 86%, white 14%);
   color: var(--theme-text-strong);
+}
+.ui-status-button.ui-status-green:hover {
+  border-color: color-mix(in srgb, var(--theme-success-border) 78%, var(--theme-success-text) 22%);
+  background: color-mix(in srgb, var(--theme-success-soft) 92%, white 8%);
+  color: var(--theme-success-text);
+}
+.ui-status-button.ui-status-yellow:hover {
+  border-color: color-mix(in srgb, var(--theme-warning-border) 78%, var(--theme-warning-text) 22%);
+  background: color-mix(in srgb, var(--theme-warning-soft) 92%, white 8%);
+  color: var(--theme-warning-text);
+}
+.ui-status-button.ui-status-red:hover {
+  border-color: color-mix(in srgb, var(--theme-danger-border) 78%, var(--theme-danger-text) 22%);
+  background: color-mix(in srgb, var(--theme-danger-soft) 92%, white 8%);
+  color: var(--theme-danger-text);
 }
 .ui-status-green { border-color: var(--theme-success-border); background: var(--theme-success-soft); color: var(--theme-success-text); }
 .ui-status-yellow { border-color: var(--theme-warning-border); background: var(--theme-warning-soft); color: var(--theme-warning-text); }
@@ -781,6 +797,21 @@ html[data-theme="dark"] .ui-status-button:hover {
   border-color: rgba(96, 165, 250, 0.24);
   background: color-mix(in srgb, var(--theme-surface) 88%, rgba(30, 64, 175, 0.08) 12%);
   color: var(--theme-text-strong);
+}
+html[data-theme="dark"] .ui-status-button.ui-status-green:hover {
+  border-color: color-mix(in srgb, var(--theme-success-border) 78%, var(--theme-success-text) 22%);
+  background: color-mix(in srgb, var(--theme-success-soft) 90%, rgba(0, 0, 0, 0.1) 10%);
+  color: var(--theme-success-text);
+}
+html[data-theme="dark"] .ui-status-button.ui-status-yellow:hover {
+  border-color: color-mix(in srgb, var(--theme-warning-border) 78%, var(--theme-warning-text) 22%);
+  background: color-mix(in srgb, var(--theme-warning-soft) 90%, rgba(0, 0, 0, 0.1) 10%);
+  color: var(--theme-warning-text);
+}
+html[data-theme="dark"] .ui-status-button.ui-status-red:hover {
+  border-color: color-mix(in srgb, var(--theme-danger-border) 78%, var(--theme-danger-text) 22%);
+  background: color-mix(in srgb, var(--theme-danger-soft) 90%, rgba(0, 0, 0, 0.1) 10%);
+  color: var(--theme-danger-text);
 }
 
 .ui-table-shell {

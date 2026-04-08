@@ -1,7 +1,5 @@
-import Link from "next/link";
 import { UserRole } from "@prisma/client";
 import { deleteTopicFileAction, updateTopicAction } from "@/actions/topic";
-import { Badge } from "@/components/badge";
 import { DeleteTopicDialog } from "@/components/delete-topic-dialog";
 import { FileDropInput } from "@/components/file-drop-input";
 import { FileResourceCard } from "@/components/file-resource-card";
@@ -93,30 +91,17 @@ export default async function TeacherTopicPage({ params, searchParams }: Teacher
         eyebrow="Тема"
         title={data.topic.title}
         description={data.topic.description}
-        metrics={[
-          { label: "Номера", value: data.stats.totalNumbers },
-          { label: "Ответы", value: `${data.stats.answersCount} / ${data.stats.totalNumbers}` },
-          { label: "Файлы", value: `${Number(data.stats.theoryAttached) + Number(data.stats.homeworkAttached)} / 2` }
-        ]}
-        aside={
-          <div className="ui-page-header-aside">
-            <div className="ui-page-header-panel rounded-[14px] p-3.5 sm:rounded-[16px] sm:p-4">
-              <p className="ui-kicker">Готовность темы</p>
-              <div className="mt-2.5 flex flex-wrap gap-1.5">
-                <Badge className="ui-badge-soft">Теория {data.stats.theoryAttached ? "есть" : "нет"}</Badge>
-                <Badge className="ui-badge-soft">Задания {data.stats.homeworkAttached ? "есть" : "нет"}</Badge>
-              </div>
-            </div>
+        actions={
+          <>
             <DeleteTopicDialog
               topicId={data.topic.id}
               topicTitle={data.topic.title}
               triggerLabel="Удалить тему"
               triggerClassName="ui-pressable ui-button-danger rounded-[10px] px-3.5 py-2 text-sm font-semibold transition sm:rounded-[12px]"
             />
-          </div>
+          </>
         }
       />
-
 
       <SectionCard title="Редактирование темы">
         <form action={updateTopicAction} className="space-y-4 sm:space-y-5" encType="multipart/form-data">

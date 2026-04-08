@@ -14,21 +14,21 @@ export const homeworkStatusMeta: Record<
     label: "Решен с первого раза",
     shortLabel: "Зеленый",
     cardClassName: "ui-status-surface ui-status-green",
-    buttonClassName: "ui-status-button ui-status-green",
+    buttonClassName: "ui-status-option ui-status-green",
     subtleClassName: "ui-status-surface ui-status-green"
   },
   YELLOW: {
     label: "Исправлен после самопроверки",
     shortLabel: "Желтый",
     cardClassName: "ui-status-surface ui-status-yellow",
-    buttonClassName: "ui-status-button ui-status-yellow",
+    buttonClassName: "ui-status-option ui-status-yellow",
     subtleClassName: "ui-status-surface ui-status-yellow"
   },
   RED: {
     label: "Нужна помощь преподавателя",
     shortLabel: "Красный",
     cardClassName: "ui-status-surface ui-status-red",
-    buttonClassName: "ui-status-button ui-status-red",
+    buttonClassName: "ui-status-option ui-status-red",
     subtleClassName: "ui-status-surface ui-status-red"
   }
 };

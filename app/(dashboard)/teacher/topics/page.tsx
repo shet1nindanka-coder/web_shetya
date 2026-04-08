@@ -76,11 +76,6 @@ export default async function TeacherTopicsPage({ searchParams }: TeacherTopicsP
         eyebrow="Темы"
         title="Материалы и номера"
         description="Создание тем, загрузка файлов и настройка ответов в одном рабочем разделе."
-        metrics={[
-          { label: "Темы", value: data.stats.totalTopics },
-          { label: "Файлы", value: data.stats.totalFiles },
-          { label: "Номера", value: data.stats.totalNumbers }
-        ]}
         actions={
           <a
             href="#create-topic"
@@ -89,17 +84,7 @@ export default async function TeacherTopicsPage({ searchParams }: TeacherTopicsP
             Создать тему
           </a>
         }
-        aside={
-          <div className="ui-page-header-panel rounded-[14px] p-3.5 sm:rounded-[16px] sm:p-4">
-            <p className="ui-kicker">Содержимое раздела</p>
-            <p className="mt-1.5 font-display text-[1.3rem] font-semibold text-[var(--theme-text-strong)] sm:text-[1.5rem]">
-              {data.topics.length} тем
-            </p>
-            <p className="mt-1.5 text-sm leading-relaxed text-[var(--theme-text-muted)]">Каждая тема объединяет материалы, номера и ответы.</p>
-          </div>
-        }
       />
-
 
       <SectionCard title="Создать новую тему" description="Название, файлы и список номеров сохраняются одной формой." className="scroll-mt-20">
         <div id="create-topic" className="scroll-mt-20">

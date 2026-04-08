@@ -15,24 +15,7 @@ export default async function TeacherPage() {
         eyebrow="Обзор"
         title="Кабинет преподавателя"
         description="Темы, ученики и статистика собраны в единую рабочую панель."
-        metrics={[
-          { label: "Темы", value: data.stats.totalTopics },
-          { label: "Ученики", value: data.stats.totalStudents },
-          { label: "Номера", value: data.stats.totalNumbers }
-        ]}
-        aside={
-          <div className="ui-page-header-aside">
-            <div className="ui-page-header-panel rounded-[14px] p-3.5 sm:rounded-[16px] sm:p-4">
-              <p className="ui-kicker">Сейчас в системе</p>
-              <p className="mt-1.5 font-display text-[1.3rem] font-semibold text-[var(--theme-text-strong)] sm:text-[1.5rem]">
-                {data.stats.totalFiles} файлов
-              </p>
-              <p className="mt-1.5 text-sm leading-relaxed text-[var(--theme-text-muted)]">Материалы тем и ответы уже загружены.</p>
-            </div>
-          </div>
-        }
       />
-
 
       <SectionCard title="Быстрые переходы" description="Основные рабочие разделы преподавателя.">
         <div className="grid gap-3 sm:gap-4 md:grid-cols-2 xl:grid-cols-3">
