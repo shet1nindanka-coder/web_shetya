@@ -213,8 +213,8 @@ const StudentNumberCard = memo(function StudentNumberCard({
                 className={cx(
                   "ui-pressable w-full touch-manipulation rounded-[12px] px-2.5 py-2 text-center text-[12px] transition-colors duration-75 sm:min-w-[160px] sm:rounded-[16px] sm:px-4 sm:py-3 sm:text-left sm:text-[13px]",
                   isActive
-                    ? meta.cardClassName
-                    : "ui-button-secondary"
+                    ? meta.buttonClassName
+                    : "ui-status-button"
                 )}
               >
                 <p className="font-semibold">{meta.shortLabel}</p>

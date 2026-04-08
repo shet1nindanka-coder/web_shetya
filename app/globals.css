@@ -757,10 +757,31 @@ html[data-theme="dark"] .ui-button-danger:disabled {
 }
 
 .ui-status-surface { border-width: 1px; }
-.ui-status-button { border-width: 1px; }
+.ui-status-button {
+  border-width: 1px;
+  border-color: var(--theme-border-soft);
+  background: color-mix(in srgb, var(--theme-surface-strong) 94%, white 6%);
+  color: var(--theme-text-default);
+}
+.ui-status-button:hover {
+  border-color: var(--theme-accent-border);
+  background: color-mix(in srgb, var(--theme-surface-soft) 86%, white 14%);
+  color: var(--theme-text-strong);
+}
 .ui-status-green { border-color: var(--theme-success-border); background: var(--theme-success-soft); color: var(--theme-success-text); }
 .ui-status-yellow { border-color: var(--theme-warning-border); background: var(--theme-warning-soft); color: var(--theme-warning-text); }
 .ui-status-red { border-color: var(--theme-danger-border); background: var(--theme-danger-soft); color: var(--theme-danger-text); }
+
+html[data-theme="dark"] .ui-status-button {
+  border-color: var(--theme-border);
+  background: color-mix(in srgb, var(--theme-surface-soft) 92%, rgba(0, 0, 0, 0.08) 8%);
+  color: var(--theme-text-default);
+}
+html[data-theme="dark"] .ui-status-button:hover {
+  border-color: rgba(96, 165, 250, 0.24);
+  background: color-mix(in srgb, var(--theme-surface) 88%, rgba(30, 64, 175, 0.08) 12%);
+  color: var(--theme-text-strong);
+}
 
 .ui-table-shell {
   overflow: hidden;
