@@ -7,7 +7,7 @@ import { StatCard } from "@/components/stat-card";
 import { TeacherStatisticsDrilldown } from "@/components/teacher-statistics-drilldown";
 import { requireUser } from "@/lib/auth";
 import { getTeacherTopicsOverview } from "@/lib/platform-data";
-import { completionPercent, cx } from "@/lib/utils";
+import { completionPercent, cx, toIsoDateTimeString } from "@/lib/utils";
 
 type TeacherTopicsOverview = Awaited<ReturnType<typeof getTeacherTopicsOverview>>;
 type TopicOverview = TeacherTopicsOverview["topics"][number];
@@ -294,7 +294,7 @@ export default async function TeacherStatisticsPage({ searchParams }: TeacherSta
       statuses: number.statuses.map((status) => ({
         studentId: status.studentId,
         status: status.status as HomeworkNumberStatus | null,
-        deadlineAt: status.deadlineAt ? status.deadlineAt.toISOString() : null
+        deadlineAt: toIsoDateTimeString(status.deadlineAt ?? null)
       }))
     }))
   }));
