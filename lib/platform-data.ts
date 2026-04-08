@@ -678,10 +678,8 @@ async function getTeacherStudentDetailUncached(studentId: string) {
       orderBy: [{ displayOrder: "asc" }, { createdAt: "asc" }]
     });
 
-  const studentPromise = prisma.user.findFirstOrThrow({
-    where: {
-      id: studentId
-    },
+  const student = await prisma.user.findFirst({
+    where: { id: studentId },
     select: {
       id: true,
       name: true,
@@ -690,7 +688,9 @@ async function getTeacherStudentDetailUncached(studentId: string) {
     }
   });
 
-  const student = await studentPromise;
+  if (!student) {
+    throw new Error(`Student not found: ${studentId}`);
+  }
   const {
     result: topics,
     notesEnabled,
@@ -765,22 +765,14 @@ export async function getTeacherStudentDetail(
   try {
     return await getTeacherStudentDetailCached(studentId);
   } catch (error) {
-    // Some runtime contexts (e.g. route handlers on specific deployments)
-    // may not provide incremental cache internals for unstable_cache.
-    if (error instanceof Error && error.message.includes("incrementalCache")) {
-      return getTeacherStudentDetailUncached(studentId);
-    }
+    console.error("getTeacherStudentDetail cache error, falling back to uncached.", {
+      studentId,
+      errorMessage: error instanceof Error ? error.message : String(error)
+    });
 
-    // Gracefully handle Prisma schema mismatches (e.g. missing columns after migration).
-    if (isRecoverablePlatformDataError(error)) {
-      console.error("Falling back to uncached teacher student detail due to Prisma schema mismatch.", {
-        studentId,
-        error
-      });
-      return getTeacherStudentDetailUncached(studentId);
-    }
-
-    throw error;
+    // Always fall back to the uncached version on any cache-related error.
+    // This handles incrementalCache issues, stale cache, and Prisma schema mismatches.
+    return getTeacherStudentDetailUncached(studentId);
   }
 }
 
