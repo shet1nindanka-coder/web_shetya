@@ -103,8 +103,8 @@ export default async function TeacherTopicPage({ params, searchParams }: Teacher
             <div className="ui-page-header-panel rounded-[14px] p-3.5 sm:rounded-[16px] sm:p-4">
               <p className="ui-kicker">Готовность темы</p>
               <div className="mt-2.5 flex flex-wrap gap-1.5">
-                <Badge className="border-slate-200 bg-white text-slate-700">Теория {data.stats.theoryAttached ? "есть" : "нет"}</Badge>
-                <Badge className="border-slate-200 bg-white text-slate-700">Задания {data.stats.homeworkAttached ? "есть" : "нет"}</Badge>
+                <Badge className="ui-badge-soft">Теория {data.stats.theoryAttached ? "есть" : "нет"}</Badge>
+                <Badge className="ui-badge-soft">Задания {data.stats.homeworkAttached ? "есть" : "нет"}</Badge>
               </div>
             </div>
             <DeleteTopicDialog

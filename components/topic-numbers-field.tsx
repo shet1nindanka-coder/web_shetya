@@ -93,7 +93,7 @@ export function TopicNumbersField({
   return (
     <div className="space-y-3">
       <div className="space-y-2">
-        <span className="text-sm font-medium text-slate-700">{label}</span>
+        <span className="text-sm font-medium text-[var(--theme-text-default)]">{label}</span>
         <textarea
           name={name}
           value={resolvedValue}
@@ -101,19 +101,19 @@ export function TopicNumbersField({
           rows={rows}
           placeholder={placeholder}
           className={cx(
-            "w-full rounded-2xl border bg-slate-50 px-4 py-3 outline-none transition focus:-translate-y-[1px] focus:border-brand-400 focus:bg-white",
-            hasInput && !hasParsedNumbers ? "border-rose-300 bg-rose-50/60" : "border-slate-200"
+            "ui-input w-full rounded-2xl px-4 py-3 outline-none transition focus:-translate-y-[1px]",
+            hasInput && !hasParsedNumbers ? "border-rose-300 bg-rose-50/60" : ""
           )}
           required
         />
       </div>
 
       <div className="flex flex-wrap gap-2">
-        <Badge className="border-slate-200 bg-white text-slate-700">
+        <Badge className="ui-badge-soft">
           {hasParsedNumbers ? pluralizeNumbers(parsedNumbers.length) : "Пока нет номеров"}
         </Badge>
         {hasParsedNumbers ? (
-          <Badge className="border-slate-200 bg-white text-slate-700">
+          <Badge className="ui-badge-soft">
             {`Диапазон ${parsedNumbers[0]}-${parsedNumbers[parsedNumbers.length - 1]}`}
           </Badge>
         ) : null}
@@ -125,7 +125,7 @@ export function TopicNumbersField({
             "rounded-2xl border px-4 py-4 text-sm leading-6",
             hasInput && !hasParsedNumbers
               ? "border-rose-200 bg-rose-50 text-rose-900"
-              : "border-slate-200 bg-slate-50/80 text-slate-600"
+              : "ui-panel-soft text-[var(--theme-text-muted)]"
           )}
         >
           {isComputing ? (
@@ -135,7 +135,7 @@ export function TopicNumbersField({
           ) : (
             <div className="ui-hint space-y-2">
               <p>{description}</p>
-              <p className="text-slate-700">
+              <p className="text-[var(--theme-text-default)]">
                 Будет сохранено как: <span className="font-medium">{truncatePreview(normalizedRanges)}</span>
               </p>
             </div>

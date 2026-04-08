@@ -318,11 +318,11 @@ const TeacherTopicCard = memo(function TeacherTopicCard({
         </div>
 
         {homeworkGroups.length > 0 ? (
-          <div className="mt-4 rounded-[20px] border border-slate-200 bg-slate-50/70 px-3 py-3">
-            <p className="text-sm font-medium text-slate-500">Выданные ДЗ</p>
+          <div className="ui-panel-soft mt-4 rounded-[20px] px-3 py-3">
+            <p className="text-sm font-medium text-[var(--theme-text-muted)]">Выданные ДЗ</p>
             <div className="mt-3 flex flex-wrap gap-2">
               {homeworkGroups.map((group) => (
-                <Badge key={group.id} className="border-slate-200 bg-white text-slate-700">
+                <Badge key={group.id} className="ui-badge-soft">
                   {group.label} · {group.count}
                   {group.deadlineLabel ? ` · ${group.deadlineLabel}` : ""}
                 </Badge>

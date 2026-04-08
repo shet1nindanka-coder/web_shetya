@@ -416,26 +416,26 @@ export default async function TeacherStatisticsPage({ searchParams }: TeacherSta
           <SectionCard title="Кому нужен разбор сейчас">
             {studentsNeedingReview.length === 0 ? (
               <div className="rounded-[14px] sm:rounded-[16px] border border-dashed border-slate-200 bg-slate-50/60 px-4 py-10 text-center">
-                <p className="font-display text-lg sm:text-xl font-semibold text-slate-950">Сейчас нет учеников с красными номерами</p>
+                <p className="font-display text-lg sm:text-xl font-semibold text-[var(--theme-text-strong)]">Сейчас нет учеников с красными номерами</p>
               </div>
             ) : (
               <div className="grid gap-3 sm:gap-4 xl:grid-cols-2">
                 {studentsNeedingReview.map((student, index) => (
                   <article
                     key={student.id}
-                    className="ui-surface rounded-[14px] sm:rounded-[16px] border border-slate-200 bg-slate-50/80 p-3.5 sm:rounded-[14px] sm:rounded-[16px] sm:p-6"
+                    className="ui-surface ui-panel-soft rounded-[14px] sm:rounded-[16px] p-3.5 sm:rounded-[14px] sm:rounded-[16px] sm:p-6"
                   >
                     <div className="flex flex-wrap items-start justify-between gap-3">
                       <div>
                         <div className="flex flex-wrap items-center gap-2">
-                          <span className="rounded-[10px] border border-slate-200 bg-white px-2.5 py-1 text-xs font-medium text-slate-500">
+                          <span className="ui-badge-soft rounded-[10px] px-2.5 py-1 text-xs font-medium">
                             #{index + 1}
                           </span>
-                          <h2 className="font-display text-[1.1rem] sm:text-[1.25rem] font-semibold text-slate-950 sm:text-[1.15rem] sm:text-[1.35rem]">
+                          <h2 className="font-display text-[1.1rem] sm:text-[1.25rem] font-semibold text-[var(--theme-text-strong)] sm:text-[1.15rem] sm:text-[1.35rem]">
                             {student.name}
                           </h2>
                         </div>
-                        <p className="mt-2 text-sm leading-relaxed text-slate-500">
+                        <p className="mt-2 text-sm leading-relaxed text-[var(--theme-text-muted)]">
                           {student.totalRed} красных номеров в {student.topicCount}{" "}
                           {student.topicCount === 1 ? "теме" : "темах"}
                         </p>
@@ -443,7 +443,7 @@ export default async function TeacherStatisticsPage({ searchParams }: TeacherSta
 
                       <Link
                         href={`/teacher/students/${student.id}`}
-                        className="ui-pressable inline-flex rounded-[14px] border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-brand-300 hover:text-brand-700"
+                        className="ui-pressable ui-button-secondary inline-flex rounded-[14px] px-4 py-2 text-sm font-semibold transition"
                       >
                         Открыть ученика
                       </Link>
@@ -451,9 +451,9 @@ export default async function TeacherStatisticsPage({ searchParams }: TeacherSta
 
                     <div className="mt-5 space-y-3">
                       {student.topics.map((topic) => (
-                        <div key={topic.topicId} className="rounded-[14px] sm:rounded-[16px] border border-slate-200 bg-white px-4 py-4">
+                        <div key={topic.topicId} className="ui-card-soft rounded-[14px] sm:rounded-[16px] px-4 py-4">
                           <div className="flex flex-wrap items-center justify-between gap-3">
-                            <p className="text-base font-semibold text-slate-950">{topic.title}</p>
+                            <p className="text-base font-semibold text-[var(--theme-text-strong)]">{topic.title}</p>
                             <span className="rounded-[10px] border border-rose-200 bg-rose-50 px-3 py-1 text-xs font-medium text-rose-800">
                               {topic.numbers.length} красн.
                             </span>
@@ -510,23 +510,23 @@ export default async function TeacherStatisticsPage({ searchParams }: TeacherSta
 
           <SectionCard title="Как распределяется прогресс">
             <div className="grid gap-4 xl:grid-cols-[0.9fr_1.1fr]">
-              <article className="ui-surface rounded-[14px] sm:rounded-[16px] border border-slate-200 bg-slate-50/80 p-3.5 sm:rounded-[14px] sm:rounded-[16px] sm:p-6">
+              <article className="ui-surface ui-panel-soft rounded-[14px] sm:rounded-[16px] p-3.5 sm:rounded-[14px] sm:rounded-[16px] sm:p-6">
                 <div className="flex flex-col items-center gap-6 lg:flex-row">
                   <DonutChart segments={distributionSegments} total={totalStatusSlots} centerValue={`${solvedPercent}%`} centerLabel="решено" />
                   <div className="w-full space-y-3">
                     {distributionSegments.map((segment) => (
-                      <div key={segment.key} className="rounded-2xl border border-slate-200 bg-white px-4 py-3">
+                      <div key={segment.key} className="ui-card-soft rounded-2xl px-4 py-3">
                         <div className="flex items-center justify-between gap-3">
                           <div className="flex items-center gap-3">
                             <span className="h-3 w-3 rounded-full" style={{ backgroundColor: segment.color }} />
                             <div>
-                              <p className="text-sm font-semibold text-slate-950">{segment.label}</p>
-                              <p className="text-xs leading-5 text-slate-500">{segment.note}</p>
+                              <p className="text-sm font-semibold text-[var(--theme-text-strong)]">{segment.label}</p>
+                              <p className="text-xs leading-5 text-[var(--theme-text-muted)]">{segment.note}</p>
                             </div>
                           </div>
                           <div className="text-right">
-                            <p className="text-sm font-semibold text-slate-950">{segment.value}</p>
-                            <p className="text-xs text-slate-500">{completionPercent(segment.value, totalStatusSlots)}%</p>
+                            <p className="text-sm font-semibold text-[var(--theme-text-strong)]">{segment.value}</p>
+                            <p className="text-xs text-[var(--theme-text-muted)]">{completionPercent(segment.value, totalStatusSlots)}%</p>
                           </div>
                         </div>
                       </div>
@@ -535,12 +535,12 @@ export default async function TeacherStatisticsPage({ searchParams }: TeacherSta
                 </div>
               </article>
 
-              <article className="ui-surface rounded-[14px] sm:rounded-[16px] border border-slate-200 bg-slate-50/80 p-3.5 sm:rounded-[14px] sm:rounded-[16px] sm:p-6">
+              <article className="ui-surface ui-panel-soft rounded-[14px] sm:rounded-[16px] p-3.5 sm:rounded-[14px] sm:rounded-[16px] sm:p-6">
                 <div className="space-y-5">
                   <div>
-                    <div className="mb-2 flex items-center justify-between gap-3 text-sm text-slate-600">
+                    <div className="mb-2 flex items-center justify-between gap-3 text-sm text-[var(--theme-text-muted)]">
                       <span>Решено уверенно</span>
-                      <span className="font-semibold text-slate-950">
+                      <span className="font-semibold text-[var(--theme-text-strong)]">
                         {totalSolved} / {totalStatusSlots}
                       </span>
                     </div>
@@ -548,9 +548,9 @@ export default async function TeacherStatisticsPage({ searchParams }: TeacherSta
                   </div>
 
                   <div>
-                    <div className="mb-2 flex items-center justify-between gap-3 text-sm text-slate-600">
+                    <div className="mb-2 flex items-center justify-between gap-3 text-sm text-[var(--theme-text-muted)]">
                       <span>Темы с активностью</span>
-                      <span className="font-semibold text-slate-950">
+                      <span className="font-semibold text-[var(--theme-text-strong)]">
                         {activeTopics.length} / {data.stats.totalTopics}
                       </span>
                     </div>
@@ -558,18 +558,18 @@ export default async function TeacherStatisticsPage({ searchParams }: TeacherSta
                   </div>
 
                   <div>
-                    <div className="mb-2 flex items-center justify-between gap-3 text-sm text-slate-600">
+                    <div className="mb-2 flex items-center justify-between gap-3 text-sm text-[var(--theme-text-muted)]">
                       <span>Ученики в работе</span>
-                      <span className="font-semibold text-slate-950">
+                      <span className="font-semibold text-[var(--theme-text-strong)]">
                         {activeStudents.length} / {data.stats.totalStudents}
                       </span>
                     </div>
                     <ProgressBar value={activeStudentsPercent} size="sm" />
                   </div>
 
-                  <div className="rounded-[14px] sm:rounded-[16px] border border-slate-200 bg-white px-4 py-4">
-                    <p className="text-sm font-medium text-slate-500">Ключевой вывод</p>
-                    <p className="mt-2 text-base font-semibold text-slate-950">
+                  <div className="ui-card-soft rounded-[14px] sm:rounded-[16px] px-4 py-4">
+                    <p className="text-sm font-medium text-[var(--theme-text-muted)]">Ключевой вывод</p>
+                    <p className="mt-2 text-base font-semibold text-[var(--theme-text-strong)]">
                       {totalUnfilled > totalSolved
                         ? "Неотмеченных номеров пока больше, чем реально решенных. Здесь главный резерв роста."
                         : totalRed > 0
@@ -657,12 +657,12 @@ function InsightCard({
   hint: string;
 }) {
   return (
-    <article className="ui-surface rounded-[14px] sm:rounded-[16px] border border-slate-200 bg-white/94 p-4 shadow-[0_10px_22px_rgba(15,23,42,0.04)] sm:rounded-[14px] sm:rounded-[16px] sm:p-4">
-      <p className="text-sm font-medium text-slate-500">{label}</p>
-      <p className="mt-3 font-display text-[1.45rem] font-semibold leading-tight text-slate-950 sm:text-[1.6rem]">
+    <article className="ui-surface ui-panel-soft rounded-[14px] sm:rounded-[16px] p-4 shadow-[0_10px_22px_rgba(15,23,42,0.04)] sm:rounded-[14px] sm:rounded-[16px] sm:p-4">
+      <p className="text-sm font-medium text-[var(--theme-text-muted)]">{label}</p>
+      <p className="mt-3 font-display text-[1.45rem] font-semibold leading-tight text-[var(--theme-text-strong)] sm:text-[1.6rem]">
         {value}
       </p>
-      <p className="ui-hint mt-2.5 text-sm leading-relaxed text-slate-600">{hint}</p>
+      <p className="ui-hint mt-2.5 text-sm leading-relaxed text-[var(--theme-text-muted)]">{hint}</p>
     </article>
   );
 }
@@ -683,15 +683,15 @@ function DonutChart({
   return (
     <div className="relative mx-auto h-52 w-52 shrink-0 sm:h-56 sm:w-56">
       <div
-        className="h-full w-full rounded-full border border-white/70 shadow-inner"
+        className="h-full w-full rounded-full border border-[var(--theme-border-soft)] shadow-inner"
         style={{
           background: backgroundImage
         }}
       />
-      <div className="absolute inset-6 rounded-full border border-slate-200 bg-white shadow-[inset_0_1px_0_rgba(255,255,255,0.9)]" />
+      <div className="absolute inset-6 rounded-full border border-[var(--theme-border)] bg-[var(--theme-surface-strong)] shadow-[inset_0_1px_0_rgba(255,255,255,0.9)]" />
       <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
-        <span className="font-display text-xl sm:text-2xl font-semibold text-slate-950">{centerValue}</span>
-        <span className="mt-1 text-sm text-slate-500">{centerLabel}</span>
+        <span className="font-display text-xl sm:text-2xl font-semibold text-[var(--theme-text-strong)]">{centerValue}</span>
+        <span className="mt-1 text-sm text-[var(--theme-text-muted)]">{centerLabel}</span>
       </div>
     </div>
   );
@@ -714,28 +714,28 @@ function RankingCard({
   }>;
 }) {
   return (
-    <article className="ui-surface rounded-[14px] sm:rounded-[16px] border border-slate-200 bg-slate-50/80 p-3.5 sm:rounded-[14px] sm:rounded-[16px] sm:p-6">
-      <h2 className="font-display text-[1.4rem] font-semibold text-slate-950 sm:text-[1.15rem] sm:text-[1.1rem] sm:text-[1.25rem]">{title}</h2>
+    <article className="ui-surface ui-panel-soft rounded-[14px] sm:rounded-[16px] p-3.5 sm:rounded-[14px] sm:rounded-[16px] sm:p-6">
+      <h2 className="font-display text-[1.4rem] font-semibold text-[var(--theme-text-strong)] sm:text-[1.15rem] sm:text-[1.1rem] sm:text-[1.25rem]">{title}</h2>
 
       {items.length === 0 ? (
-        <div className="mt-5 rounded-[14px] sm:rounded-[16px] border border-dashed border-slate-200 bg-white/80 px-4 py-8 text-center text-sm text-slate-600">
+        <div className="ui-panel-soft mt-5 rounded-[14px] sm:rounded-[16px] border-dashed px-4 py-8 text-center text-sm text-[var(--theme-text-muted)]">
           {emptyMessage}
         </div>
       ) : (
         <div className="mt-5 space-y-3">
           {items.map((item, index) => (
-            <article key={item.key} className="rounded-[14px] sm:rounded-[16px] border border-slate-200 bg-white px-4 py-4">
+            <article key={item.key} className="ui-card-soft rounded-[14px] sm:rounded-[16px] px-4 py-4">
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <div className="flex items-center gap-2">
-                    <span className="rounded-[10px] border border-slate-200 bg-slate-50 px-2.5 py-1 text-xs font-medium text-slate-500">
+                    <span className="ui-badge-soft rounded-[10px] px-2.5 py-1 text-xs font-medium">
                       #{index + 1}
                     </span>
-                    <h3 className="text-base font-semibold text-slate-950">{item.title}</h3>
+                    <h3 className="text-base font-semibold text-[var(--theme-text-strong)]">{item.title}</h3>
                   </div>
-                  <p className="mt-2 text-sm leading-relaxed text-slate-500">{item.subtitle}</p>
+                  <p className="mt-2 text-sm leading-relaxed text-[var(--theme-text-muted)]">{item.subtitle}</p>
                 </div>
-                <span className="text-sm font-semibold text-slate-950">{item.valueLabel}</span>
+                <span className="text-sm font-semibold text-[var(--theme-text-strong)]">{item.valueLabel}</span>
               </div>
 
               <div className="mt-4">

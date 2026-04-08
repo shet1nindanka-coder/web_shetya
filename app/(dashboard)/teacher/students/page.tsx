@@ -163,7 +163,7 @@ export default async function TeacherStudentsPage({ searchParams }: TeacherStude
             <div className="flex flex-wrap items-center justify-between gap-2">
               <div>
                 <p className="ui-kicker">Текущие ученики</p>
-                <h3 className="font-display mt-1.5 text-base font-semibold text-slate-950 sm:text-lg">
+                <h3 className="font-display mt-1.5 text-base font-semibold text-[var(--theme-text-strong)] sm:text-lg">
                   {data.students.length} аккаунтов ученика
                 </h3>
               </div>

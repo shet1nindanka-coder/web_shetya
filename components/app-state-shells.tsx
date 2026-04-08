@@ -15,7 +15,7 @@ export function AuthLoadingState() {
       <div className="pointer-events-none absolute left-1/2 top-24 h-72 w-72 -translate-x-1/2 rounded-full bg-brand-300/18 blur-3xl" />
 
       <div className="content-shell mx-auto flex min-h-screen w-full max-w-7xl items-center justify-center px-4 py-8 sm:px-6 lg:px-8">
-        <div className="w-full max-w-md rounded-[36px] border border-white/75 bg-white/92 p-8 shadow-[0_24px_70px_rgba(15,23,42,0.12)] backdrop-blur">
+        <div className="ui-surface w-full max-w-md rounded-[36px] border p-8 backdrop-blur">
           <div className="mb-8 flex flex-col items-center text-center">
             <div className="ui-skeleton h-14 w-14 rounded-2xl" />
             <div className="ui-skeleton mt-4 h-3 w-28 rounded-full" />
@@ -42,7 +42,7 @@ export function AuthLoadingState() {
 export function DashboardLoadingState({ showSectionTabs = false }: { showSectionTabs?: boolean }) {
   return (
     <div className="soft-grid min-h-screen">
-      <header className="sticky top-0 z-20 border-b border-white/60 bg-[rgba(246,251,255,0.82)] backdrop-blur-xl">
+      <header className="sticky top-0 z-20 border-b border-[var(--theme-border-soft)] bg-[var(--theme-header)] backdrop-blur-xl">
         <div className="mx-auto flex w-full max-w-7xl flex-col gap-4 px-4 py-4 sm:px-6 lg:flex-row lg:items-center lg:justify-between lg:px-8">
           <div className="space-y-3">
             <div className="flex items-center gap-3">
@@ -54,7 +54,7 @@ export function DashboardLoadingState({ showSectionTabs = false }: { showSection
             </div>
           </div>
 
-          <div className="rounded-[24px] border border-white/80 bg-white/85 px-5 py-4 shadow-sm">
+          <div className="ui-surface rounded-[24px] border px-5 py-4 shadow-sm">
             <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">
               <div className="space-y-2">
                 <div className="ui-skeleton h-4 w-32 rounded-full" />
@@ -77,7 +77,7 @@ export function DashboardSectionLoadingState({ showSectionTabs = false }: { show
   return (
     <>
       {showSectionTabs ? (
-        <div className="mb-8 flex flex-wrap gap-2 rounded-[28px] border border-white/70 bg-white/85 p-3 shadow-sm backdrop-blur">
+        <div className="ui-surface mb-8 flex flex-wrap gap-2 rounded-[28px] border p-3 shadow-sm backdrop-blur">
           <div className="ui-skeleton h-11 w-28 rounded-full" />
           <div className="ui-skeleton h-11 w-28 rounded-full" />
           <div className="ui-skeleton h-11 w-32 rounded-full" />
@@ -102,13 +102,13 @@ export function DashboardSectionLoadingState({ showSectionTabs = false }: { show
 
 export function RouteErrorState({ title, description, reset, homeHref, homeLabel }: RouteErrorStateProps) {
   return (
-    <div className="mx-auto flex min-h-[60vh] w-full max-w-3xl items-center justify-center px-4 py-10">
-      <div className="ui-pop-in w-full rounded-[36px] border border-white/75 bg-white/92 p-8 text-center shadow-[0_24px_70px_rgba(15,23,42,0.12)] backdrop-blur">
+      <div className="mx-auto flex min-h-[60vh] w-full max-w-3xl items-center justify-center px-4 py-10">
+      <div className="ui-pop-in ui-surface w-full rounded-[36px] border p-8 text-center backdrop-blur">
         <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-rose-50 text-lg font-semibold text-rose-700 shadow-sm">
           !
         </div>
-        <h1 className="font-display mt-5 text-3xl font-semibold text-slate-950">{title}</h1>
-        <p className="mx-auto mt-3 max-w-xl text-sm leading-7 text-slate-600">{description}</p>
+        <h1 className="font-display mt-5 text-3xl font-semibold text-[var(--theme-text-strong)]">{title}</h1>
+        <p className="mx-auto mt-3 max-w-xl text-sm leading-7 text-[var(--theme-text-muted)]">{description}</p>
 
         <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
           <button
@@ -120,7 +120,7 @@ export function RouteErrorState({ title, description, reset, homeHref, homeLabel
           </button>
           <Link
             href={homeHref}
-            className="ui-pressable rounded-full border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-700 transition hover:border-brand-300 hover:text-brand-700"
+            className="ui-pressable ui-button-secondary rounded-full px-5 py-3 text-sm font-semibold transition"
           >
             {homeLabel}
           </Link>

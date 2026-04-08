@@ -267,26 +267,26 @@ export function TopicAnswerManager({ topicId, numbers }: TopicAnswerManagerProps
 
   return (
     <div className="space-y-5">
-      <div className="topic-answer-nav ui-surface rounded-[20px] border border-slate-200 bg-slate-50/80 p-4 sm:rounded-[22px] sm:p-5">
+      <div className="topic-answer-nav ui-surface ui-panel-soft rounded-[20px] p-4 sm:rounded-[22px] sm:p-5">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div>
-            <p className="text-sm font-medium text-slate-500">Навигация по ответам</p>
-            <p className="mt-2 text-base font-semibold text-slate-950">
+            <p className="text-sm font-medium text-[var(--theme-text-muted)]">Навигация по ответам</p>
+            <p className="mt-2 text-base font-semibold text-[var(--theme-text-strong)]">
               Показаны номера {rangeStart}-{rangeEnd} из {items.length}
             </p>
-            <p className="mt-1 text-sm leading-6 text-slate-600">
+            <p className="mt-1 text-sm leading-6 text-[var(--theme-text-muted)]">
               Сохранено ответов: {savedAnswersCount} из {items.length}. Для больших тем ответы разбиты на страницы по{" "}
               {ANSWERS_PAGE_SIZE} номеров.
             </p>
           </div>
 
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
-            <label className="flex items-center gap-3 text-sm text-slate-600">
+            <label className="flex items-center gap-3 text-sm text-[var(--theme-text-muted)]">
               <span>Страница</span>
               <select
                 value={currentPage}
                 onChange={(event) => setCurrentPage(Number(event.target.value))}
-                className="rounded-[14px] border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-950 outline-none transition focus:border-brand-400"
+                className="ui-input rounded-[14px] px-4 py-2 text-sm font-medium"
               >
                 {Array.from({ length: pageCount }, (_, index) => index + 1).map((page) => (
                   <option key={page} value={page}>
@@ -301,7 +301,7 @@ export function TopicAnswerManager({ topicId, numbers }: TopicAnswerManagerProps
                 type="button"
                 onClick={() => setCurrentPage((page) => Math.max(1, page - 1))}
                 disabled={currentPage === 1}
-                className="ui-pressable rounded-[14px] border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-brand-300 hover:text-brand-700 disabled:cursor-not-allowed disabled:opacity-50"
+                className="ui-pressable ui-button-secondary rounded-[14px] px-4 py-2 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-50"
               >
                 Назад
               </button>
@@ -309,7 +309,7 @@ export function TopicAnswerManager({ topicId, numbers }: TopicAnswerManagerProps
                 type="button"
                 onClick={() => setCurrentPage((page) => Math.min(pageCount, page + 1))}
                 disabled={currentPage === pageCount}
-                className="ui-pressable rounded-[14px] border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-brand-300 hover:text-brand-700 disabled:cursor-not-allowed disabled:opacity-50"
+                className="ui-pressable ui-button-secondary rounded-[14px] px-4 py-2 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-50"
               >
                 Вперед
               </button>
@@ -324,15 +324,13 @@ export function TopicAnswerManager({ topicId, numbers }: TopicAnswerManagerProps
 
             return (
               <div key={page} className="flex items-center gap-2">
-                {showGap ? <span className="px-1 text-sm text-slate-400">...</span> : null}
+                {showGap ? <span className="px-1 text-sm text-[var(--theme-text-soft)]">...</span> : null}
                 <button
                   type="button"
                   onClick={() => setCurrentPage(page)}
                   className={cx(
-                    "ui-pressable rounded-[14px] border px-4 py-2 text-sm font-semibold transition",
-                    page === currentPage
-                      ? "border-brand-200 bg-brand-50 text-brand-800"
-                      : "border-slate-200 bg-white text-slate-700 hover:border-brand-300 hover:text-brand-700"
+                    "ui-pressable rounded-[14px] px-4 py-2 text-sm font-semibold transition",
+                    page === currentPage ? "ui-button-tonal" : "ui-button-secondary"
                   )}
                 >
                   {page}
@@ -347,18 +345,18 @@ export function TopicAnswerManager({ topicId, numbers }: TopicAnswerManagerProps
         {currentPageItems.map((item) => (
         <article
           key={item.id}
-          className="topic-answer-card ui-fade-slide ui-surface rounded-[20px] border border-slate-200 bg-slate-50/70 p-4 shadow-[0_10px_24px_rgba(15,23,42,0.05)] sm:p-4.5"
+          className="topic-answer-card ui-fade-slide ui-surface ui-panel-soft rounded-[20px] p-4 shadow-[0_10px_24px_rgba(15,23,42,0.05)] sm:p-4.5"
         >
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>
-              <p className="text-xs font-medium tracking-[0.18em] text-slate-400">Ответ к номеру</p>
-              <h3 className="topic-answer-card-title font-display mt-1.5 text-[1.45rem] font-semibold text-slate-950">№ {item.number}</h3>
+              <p className="text-xs font-medium tracking-[0.18em] text-[var(--theme-text-soft)]">Ответ к номеру</p>
+              <h3 className="topic-answer-card-title font-display mt-1.5 text-[1.45rem] font-semibold text-[var(--theme-text-strong)]">№ {item.number}</h3>
             </div>
             <Badge
               className={
                 item.savedAnswerLatex
                   ? "border-emerald-200 bg-emerald-50 text-emerald-700"
-                  : "border-slate-200 bg-white text-slate-600"
+                  : "ui-badge-soft"
               }
             >
               {item.savedAnswerLatex ? "Сохранен" : "Пусто"}
@@ -367,7 +365,7 @@ export function TopicAnswerManager({ topicId, numbers }: TopicAnswerManagerProps
 
           <div className="mt-4 space-y-3">
             <label className="block space-y-2">
-              <span className="text-sm font-medium text-slate-700">LaTeX-ответ</span>
+              <span className="text-sm font-medium text-[var(--theme-text-default)]">LaTeX-ответ</span>
               <textarea
                 rows={5}
                 value={item.draftAnswerLatex}
@@ -385,23 +383,23 @@ export function TopicAnswerManager({ topicId, numbers }: TopicAnswerManagerProps
                   )
                 }
                 placeholder={"Например:\n$$x = \\frac{-b \\pm \\sqrt{D}}{2a}$$\n\nИли с текстом:\nПодставим в формулу: $D=b^2-4ac$"}
-                className="min-h-[138px] w-full rounded-[20px] border border-slate-200 bg-white px-4 py-3 text-sm text-slate-950 outline-none transition focus:-translate-y-[1px] focus:border-brand-400 focus:bg-white"
+                className="ui-input min-h-[138px] w-full rounded-[20px] px-4 py-3 text-sm outline-none transition focus:-translate-y-[1px]"
                 disabled={item.isSaving || item.isDeleting}
               />
-              <p className="text-xs leading-5 text-slate-500">
+              <p className="text-xs leading-5 text-[var(--theme-text-muted)]">
                 Поддерживаются inline-формулы через <code>$...$</code> и отдельные блоки через <code>$$...$$</code>.
               </p>
             </label>
 
             {item.draftAnswerLatex.trim() ? (
-              <div className="rounded-[20px] border border-slate-200 bg-white p-3">
-                <p className="text-xs font-medium tracking-[0.18em] text-slate-400">Предпросмотр</p>
+              <div className="ui-panel-soft rounded-[20px] p-3">
+                <p className="text-xs font-medium tracking-[0.18em] text-[var(--theme-text-soft)]">Предпросмотр</p>
                 <div className="mt-2.5">
                   <LatexAnswerPreview value={item.draftAnswerLatex} />
                 </div>
               </div>
             ) : (
-              <div className="rounded-[20px] border border-dashed border-slate-200 bg-white px-4 py-5 text-sm leading-6 text-slate-500">
+              <div className="ui-panel-soft rounded-[20px] border-dashed px-4 py-5 text-sm leading-6 text-[var(--theme-text-muted)]">
                 Пока ответ к этому номеру не добавлен.
               </div>
             )}
@@ -427,7 +425,7 @@ export function TopicAnswerManager({ topicId, numbers }: TopicAnswerManagerProps
                   type="button"
                   onClick={() => void removeAnswer(item.id)}
                   disabled={item.isDeleting || item.isSaving}
-                  className="ui-pressable rounded-[14px] border border-rose-200 bg-rose-50 px-3.5 py-2 text-sm font-semibold text-rose-700 transition hover:bg-rose-100 disabled:cursor-not-allowed disabled:opacity-60"
+                  className="ui-pressable ui-button-danger rounded-[14px] px-3.5 py-2 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-60"
                 >
                   {item.isDeleting ? "Удаляем..." : "Удалить ответ"}
                 </button>
@@ -439,8 +437,8 @@ export function TopicAnswerManager({ topicId, numbers }: TopicAnswerManagerProps
       </div>
 
       {pageCount > 1 ? (
-        <div className="flex flex-wrap items-center justify-between gap-3 rounded-[24px] border border-slate-200 bg-slate-50/80 px-4 py-4">
-          <p className="text-sm text-slate-600">
+        <div className="ui-panel-soft flex flex-wrap items-center justify-between gap-3 rounded-[24px] px-4 py-4">
+          <p className="text-sm text-[var(--theme-text-muted)]">
             Страница {currentPage} из {pageCount}
           </p>
           <div className="flex flex-wrap gap-2">
@@ -448,7 +446,7 @@ export function TopicAnswerManager({ topicId, numbers }: TopicAnswerManagerProps
               type="button"
               onClick={() => setCurrentPage((page) => Math.max(1, page - 1))}
               disabled={currentPage === 1}
-              className="ui-pressable rounded-[14px] border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-brand-300 hover:text-brand-700 disabled:cursor-not-allowed disabled:opacity-50"
+              className="ui-pressable ui-button-secondary rounded-[14px] px-4 py-2 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-50"
             >
               Предыдущая страница
             </button>
@@ -456,7 +454,7 @@ export function TopicAnswerManager({ topicId, numbers }: TopicAnswerManagerProps
               type="button"
               onClick={() => setCurrentPage((page) => Math.min(pageCount, page + 1))}
               disabled={currentPage === pageCount}
-              className="ui-pressable rounded-[14px] border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:border-brand-300 hover:text-brand-700 disabled:cursor-not-allowed disabled:opacity-50"
+              className="ui-pressable ui-button-secondary rounded-[14px] px-4 py-2 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-50"
             >
               Следующая страница
             </button>

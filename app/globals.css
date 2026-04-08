@@ -588,6 +588,8 @@ html[data-theme="dark"] .ui-pressable:hover {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  gap: 0.35rem;
+  min-height: 2.75rem;
   line-height: 1.1;
   text-align: center;
   vertical-align: middle;
@@ -614,28 +616,33 @@ html[data-theme="dark"] .ui-pressable:hover {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  gap: 0.35rem;
+  min-height: 2.75rem;
   line-height: 1.1;
   text-align: center;
   vertical-align: middle;
-  border: 1px solid var(--theme-border);
-  background: var(--theme-surface-strong);
-  color: var(--theme-text-default);
+  border: 1px solid var(--theme-accent-border);
+  background: color-mix(in srgb, var(--theme-accent-soft) 78%, white 22%);
+  color: var(--theme-accent-text);
 }
 .ui-button-secondary:hover {
-  border-color: var(--theme-accent-border);
-  color: var(--theme-text-strong);
+  border-color: color-mix(in srgb, var(--theme-accent-border) 70%, var(--theme-accent) 30%);
+  background: color-mix(in srgb, var(--theme-accent-soft-hover) 82%, white 18%);
+  color: var(--theme-accent-text);
 }
 .ui-button-secondary:disabled {
   cursor: not-allowed;
-  border-color: var(--theme-border-soft);
-  background: color-mix(in srgb, var(--theme-surface-strong) 75%, var(--theme-surface-soft) 25%);
-  color: var(--theme-text-soft);
+  border-color: color-mix(in srgb, var(--theme-accent-border) 60%, transparent 40%);
+  background: color-mix(in srgb, var(--theme-accent-soft) 45%, white 55%);
+  color: color-mix(in srgb, var(--theme-accent-text) 65%, var(--theme-text-soft) 35%);
 }
 
 .ui-button-tonal {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  gap: 0.35rem;
+  min-height: 2.75rem;
   line-height: 1.1;
   text-align: center;
   vertical-align: middle;
@@ -657,6 +664,8 @@ html[data-theme="dark"] .ui-pressable:hover {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  gap: 0.35rem;
+  min-height: 2.75rem;
   line-height: 1.1;
   text-align: center;
   vertical-align: middle;
@@ -877,13 +886,29 @@ html[data-theme="dark"] [class*="bg-slate-50"],
 html[data-theme="dark"] [class*="bg-slate-100"] { background-color: var(--theme-surface-soft) !important; }
 html[data-theme="dark"] [class*="border-slate-200"],
 html[data-theme="dark"] [class*="border-slate-100"],
+html[data-theme="dark"] [class*="border-slate-300"],
 html[data-theme="dark"] [class*="border-white"] { border-color: var(--theme-border) !important; }
 html[data-theme="dark"] [class*="text-slate-950"],
-html[data-theme="dark"] [class*="text-slate-900"] { color: var(--theme-text-strong) !important; }
+html[data-theme="dark"] [class*="text-slate-900"],
+html[data-theme="dark"] [class*="text-slate-800"] { color: var(--theme-text-strong) !important; }
 html[data-theme="dark"] [class*="text-slate-700"],
 html[data-theme="dark"] [class*="text-slate-600"] { color: var(--theme-text-default) !important; }
 html[data-theme="dark"] [class*="text-slate-500"],
 html[data-theme="dark"] [class*="text-slate-400"] { color: var(--theme-text-muted) !important; }
+html[data-theme="dark"] [class*="border-emerald-200"] { border-color: var(--theme-success-border) !important; }
+html[data-theme="dark"] [class*="bg-emerald-50"] { background: var(--theme-success-soft) !important; }
+html[data-theme="dark"] [class*="text-emerald-900"],
+html[data-theme="dark"] [class*="text-emerald-800"],
+html[data-theme="dark"] [class*="text-emerald-700"] { color: var(--theme-success-text) !important; }
+html[data-theme="dark"] [class*="border-amber-200"] { border-color: var(--theme-warning-border) !important; }
+html[data-theme="dark"] [class*="bg-amber-50"] { background: var(--theme-warning-soft) !important; }
+html[data-theme="dark"] [class*="text-amber-900"],
+html[data-theme="dark"] [class*="text-amber-800"] { color: var(--theme-warning-text) !important; }
+html[data-theme="dark"] [class*="border-rose-200"] { border-color: var(--theme-danger-border) !important; }
+html[data-theme="dark"] [class*="bg-rose-50"] { background: var(--theme-danger-soft) !important; }
+html[data-theme="dark"] [class*="text-rose-900"],
+html[data-theme="dark"] [class*="text-rose-800"],
+html[data-theme="dark"] [class*="text-rose-700"] { color: var(--theme-danger-text) !important; }
 html[data-theme="dark"] [class*="bg-slate-950"] { background: var(--theme-hero) !important; color: var(--theme-text-strong) !important; }
 
 /* ───────────────────────────────────────────────

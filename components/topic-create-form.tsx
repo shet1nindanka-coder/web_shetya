@@ -97,7 +97,7 @@ function FileUploadField({
   onFileSelect: (file: File | null) => void;
 }) {
   const uploadBadgeClassName =
-    "inline-flex items-center rounded-[12px] border border-emerald-200 bg-white px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-emerald-700";
+    "inline-flex items-center rounded-[12px] border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-emerald-700";
 
   return (
     <div className="space-y-3">
@@ -111,7 +111,7 @@ function FileUploadField({
 
       {state.status === "uploading" ? (
         <div className="space-y-2 rounded-2xl border border-brand-100 bg-brand-50/70 px-4 py-4">
-          <div className="flex items-center justify-between text-sm text-slate-700">
+          <div className="flex items-center justify-between text-sm text-[var(--theme-text-default)]">
             <span>Загрузка файла...</span>
             <span className="font-semibold">{state.progress}%</span>
           </div>
@@ -422,7 +422,7 @@ export function TopicCreateForm({
       </div>
 
       <div className="space-y-3 lg:col-span-2">
-        <div className="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 text-sm text-slate-600">
+        <div className="ui-panel-soft rounded-2xl px-4 py-4 text-sm text-[var(--theme-text-muted)]">
           {isUploading
             ? "Дождитесь окончания загрузки файлов. Кнопка создания станет доступной автоматически."
             : isReadyToCreate

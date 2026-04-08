@@ -221,8 +221,8 @@ export function TeacherStatisticsDrilldown({
 
   if (!topics.length || !students.length) {
     return (
-      <div className="rounded-[28px] border border-dashed border-slate-200 bg-slate-50/60 px-5 py-10 text-center">
-        <p className="font-display text-2xl font-semibold text-slate-950">Пока недостаточно данных для персонального среза</p>
+      <div className="ui-panel-soft rounded-[28px] border-dashed px-5 py-10 text-center">
+        <p className="font-display text-2xl font-semibold text-[var(--theme-text-strong)]">Пока недостаточно данных для персонального среза</p>
       </div>
     );
   }
@@ -232,7 +232,7 @@ export function TeacherStatisticsDrilldown({
       <article className="ui-surface rounded-[20px] border p-4 sm:p-5">
         <div className="grid gap-4">
           <label className="space-y-2">
-            <span className="text-sm font-medium text-slate-600">Тема</span>
+            <span className="text-sm font-medium text-[var(--theme-text-muted)]">Тема</span>
             <select
               value={selectedTopic?.id ?? ""}
               onChange={(event) => setSelectedTopicId(event.target.value)}
@@ -247,7 +247,7 @@ export function TeacherStatisticsDrilldown({
           </label>
 
           <label className="space-y-2">
-            <span className="text-sm font-medium text-slate-600">Ученик</span>
+            <span className="text-sm font-medium text-[var(--theme-text-muted)]">Ученик</span>
             <select
               value={selectedStudent?.id ?? ""}
               onChange={(event) => setSelectedStudentId(event.target.value)}
@@ -262,7 +262,7 @@ export function TeacherStatisticsDrilldown({
           </label>
 
           <label className="space-y-2">
-            <span className="text-sm font-medium text-slate-600">ДЗ</span>
+            <span className="text-sm font-medium text-[var(--theme-text-muted)]">ДЗ</span>
             <select
               value={selectedAssignmentId}
               onChange={(event) => setSelectedAssignmentId(event.target.value)}
@@ -279,22 +279,22 @@ export function TeacherStatisticsDrilldown({
         </div>
 
         <div className="ui-card-soft mt-5 rounded-[18px] px-4 py-4">
-          <p className="text-sm font-medium text-slate-500">Выбрано</p>
-          <p className="mt-2 text-lg font-semibold text-slate-950">{selectedTopic?.title ?? "Тема не выбрана"}</p>
-          <p className="mt-1 text-sm text-slate-500">
+          <p className="text-sm font-medium text-[var(--theme-text-muted)]">Выбрано</p>
+          <p className="mt-2 text-lg font-semibold text-[var(--theme-text-strong)]">{selectedTopic?.title ?? "Тема не выбрана"}</p>
+          <p className="mt-1 text-sm text-[var(--theme-text-muted)]">
             {selectedStudent?.name ?? "Ученик не выбран"}
             {selectedStudent ? ` · ${selectedStudent.email}` : ""}
           </p>
-          <p className="mt-2 text-sm font-medium text-slate-700">
+          <p className="mt-2 text-sm font-medium text-[var(--theme-text-default)]">
             {selectedAssignment ? `${selectedAssignment.label} · ${selectedAssignment.deadlineLabel}` : "Вся тема"}
           </p>
         </div>
 
         <div className="mt-5 space-y-4">
           <div>
-            <div className="mb-2 flex items-center justify-between gap-3 text-sm text-slate-600">
+            <div className="mb-2 flex items-center justify-between gap-3 text-sm text-[var(--theme-text-muted)]">
               <span>Решено в теме</span>
-              <span className="font-semibold text-slate-950">
+              <span className="font-semibold text-[var(--theme-text-strong)]">
                 {metrics.solvedCount} / {metrics.totalNumbers}
               </span>
             </div>
@@ -302,9 +302,9 @@ export function TeacherStatisticsDrilldown({
           </div>
 
           <div>
-            <div className="mb-2 flex items-center justify-between gap-3 text-sm text-slate-600">
+            <div className="mb-2 flex items-center justify-between gap-3 text-sm text-[var(--theme-text-muted)]">
               <span>Отмечено вообще</span>
-              <span className="font-semibold text-slate-950">
+              <span className="font-semibold text-[var(--theme-text-strong)]">
                 {metrics.markedCount} / {metrics.totalNumbers}
               </span>
             </div>
@@ -344,14 +344,14 @@ export function TeacherStatisticsDrilldown({
           <span className="rounded-[12px] border border-rose-200 bg-rose-50 px-3 py-1.5 text-rose-900">
             Красных: {metrics.redCount}
           </span>
-          <span className="rounded-[12px] border border-slate-200 bg-white px-3 py-1.5 text-slate-700">
+          <span className="ui-badge-soft rounded-[12px] px-3 py-1.5">
             Без статуса: {metrics.unmarkedCount}
           </span>
         </div>
 
-        <div className="mt-5 rounded-[24px] border border-slate-200 bg-white px-4 py-4">
-          <p className="text-sm font-medium text-slate-500">Сейчас</p>
-          <p className="mt-2 text-base font-semibold leading-7 text-slate-950">{insight}</p>
+        <div className="ui-panel-soft mt-5 rounded-[24px] px-4 py-4">
+          <p className="text-sm font-medium text-[var(--theme-text-muted)]">Сейчас</p>
+          <p className="mt-2 text-base font-semibold leading-7 text-[var(--theme-text-strong)]">{insight}</p>
         </div>
       </article>
     </div>
