@@ -1,3 +1,4 @@
+import ExcelJS from "exceljs";
 import { Prisma, UserRole } from "@prisma/client";
 import { NextResponse } from "next/server";
 import { tryGetCurrentUser } from "@/lib/auth";
@@ -12,6 +13,61 @@ const statusLabels: Record<string, string> = {
   RED: "Нужен разбор с преподавателем"
 };
 
+const colors = {
+  navy: "0F172A",
+  text: "1E293B",
+  muted: "64748B",
+  border: "DCE6F2",
+  softBorder: "E8EEF6",
+  headerBg: "EEF4FF",
+  titleBg: "E6F0FF",
+  blue: "2F80ED",
+  blueSoft: "DBEAFE",
+  green: "166534",
+  greenSoft: "DCFCE7",
+  yellow: "854D0E",
+  yellowSoft: "FEF3C7",
+  red: "991B1B",
+  redSoft: "FEE2E2",
+  slateSoft: "F8FAFC",
+  track: "EDF2F7"
+} as const;
+
+type AssignmentRow = {
+  number: number;
+  statusLabel: string;
+  statusKey: string;
+  note: string;
+  updated: string;
+};
+
+type DetailRow = {
+  topicTitle: string;
+  assignmentKey: string;
+  number: number;
+  statusKey: string;
+  statusLabel: string;
+  deadline: string;
+  note: string;
+  updated: string;
+};
+
+type AssignmentSummary = {
+  topicTitle: string;
+  label: string;
+  assignmentKey: string;
+  deadlineAt: string | null;
+  totalNumbers: number;
+  solvedNumbers: number;
+  greenCount: number;
+  yellowCount: number;
+  redCount: number;
+  unmarkedCount: number;
+  state: string;
+  stateKind: "done" | "progress" | "attention" | "muted";
+  note: string;
+};
+
 function isMissingColumn(error: unknown, column: "note" | "deadlineAt") {
   return (
     error instanceof Prisma.PrismaClientKnownRequestError &&
@@ -19,37 +75,6 @@ function isMissingColumn(error: unknown, column: "note" | "deadlineAt") {
     error.message.includes("StudentTopicNumberStatus") &&
     error.message.includes(column)
   );
-}
-
-function escapeXml(value: string | number | null | undefined) {
-  return String(value ?? "")
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&apos;");
-}
-
-function xmlCell(
-  value: string | number | null | undefined,
-  {
-    styleId,
-    type = typeof value === "number" ? "Number" : "String",
-    mergeAcross
-  }: {
-    styleId?: string;
-    type?: "String" | "Number";
-    mergeAcross?: number;
-  } = {}
-) {
-  const styleAttr = styleId ? ` ss:StyleID="${styleId}"` : "";
-  const mergeAttr = typeof mergeAcross === "number" ? ` ss:MergeAcross="${mergeAcross}"` : "";
-
-  return `<Cell${styleAttr}${mergeAttr}><Data ss:Type="${type}">${escapeXml(value)}</Data></Cell>`;
-}
-
-function xmlRow(cells: string[]) {
-  return `<Row>${cells.join("")}</Row>`;
 }
 
 async function loadExportData(studentId: string) {
@@ -108,22 +133,6 @@ async function loadExportData(studentId: string) {
   return { student, topics, notesEnabled, deadlinesEnabled };
 }
 
-type AssignmentSummary = {
-  topicTitle: string;
-  label: string;
-  assignmentKey: string;
-  deadlineAt: string | null;
-  totalNumbers: number;
-  solvedNumbers: number;
-  greenCount: number;
-  yellowCount: number;
-  redCount: number;
-  unmarkedCount: number;
-  state: string;
-  stateStyleId: string;
-  note: string;
-};
-
 function buildAssignmentState(summary: {
   totalNumbers: number;
   solvedNumbers: number;
@@ -133,34 +142,28 @@ function buildAssignmentState(summary: {
   if (summary.redCount > 0) {
     return {
       label: "Нужен разбор",
-      styleId: "StateAttention"
+      kind: "attention" as const
     };
   }
 
   if (summary.totalNumbers > 0 && summary.solvedNumbers === summary.totalNumbers) {
     return {
       label: "Выполнено",
-      styleId: "StateDone"
+      kind: "done" as const
     };
   }
 
   if (summary.markedCount > 0) {
     return {
       label: "В работе",
-      styleId: "StateProgress"
+      kind: "progress" as const
     };
   }
 
   return {
     label: "Пока не начато",
-    styleId: "StateMuted"
+    kind: "muted" as const
   };
-}
-
-function encodeUtf16LeWithBom(value: string) {
-  const body = Buffer.from(value, "utf16le");
-  const bom = Buffer.from([0xff, 0xfe]);
-  return Buffer.concat([bom, body]);
 }
 
 function buildAssignmentNote(summary: {
@@ -172,7 +175,7 @@ function buildAssignmentNote(summary: {
 }) {
   if (!summary.deadlineAt) {
     if (summary.solvedNumbers === 0 && summary.redCount === 0) {
-      return "Эти номера пока не были выданы отдельным домашним заданием.";
+      return "Эти номера пока не были оформлены как отдельное домашнее задание.";
     }
 
     return `Свободная работа по теме: выполнено ${summary.solvedNumbers} из ${summary.totalNumbers}.`;
@@ -195,6 +198,357 @@ function buildAssignmentNote(summary: {
   return "К этому домашнему заданию ученик пока не приступал.";
 }
 
+function applyBaseCellStyle(cell: ExcelJS.Cell) {
+  cell.font = { name: "Calibri", size: 11, color: { argb: colors.text } };
+  cell.alignment = { vertical: "middle" };
+  cell.border = {
+    bottom: { style: "thin", color: { argb: colors.border } }
+  };
+}
+
+function setTitleRow(worksheet: ExcelJS.Worksheet, rowNumber: number, title: string, columnsCount: number) {
+  worksheet.mergeCells(rowNumber, 1, rowNumber, columnsCount);
+  const cell = worksheet.getCell(rowNumber, 1);
+  cell.value = title;
+  cell.font = { name: "Calibri", size: 16, bold: true, color: { argb: colors.navy } };
+  cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: colors.titleBg } };
+  cell.alignment = { vertical: "middle" };
+  cell.border = {
+    top: { style: "thin", color: { argb: colors.softBorder } },
+    bottom: { style: "thin", color: { argb: colors.softBorder } },
+    left: { style: "thin", color: { argb: colors.softBorder } },
+    right: { style: "thin", color: { argb: colors.softBorder } }
+  };
+  worksheet.getRow(rowNumber).height = 28;
+}
+
+function setSectionLabel(worksheet: ExcelJS.Worksheet, rowNumber: number, label: string) {
+  const cell = worksheet.getCell(rowNumber, 1);
+  cell.value = label;
+  cell.font = { name: "Calibri", size: 12, bold: true, color: { argb: colors.navy } };
+}
+
+function setTableHeader(row: ExcelJS.Row) {
+  row.eachCell((cell) => {
+    cell.font = { name: "Calibri", size: 11, bold: true, color: { argb: colors.navy } };
+    cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: colors.headerBg } };
+    cell.alignment = { vertical: "middle", horizontal: "center" };
+    cell.border = {
+      top: { style: "thin", color: { argb: colors.border } },
+      bottom: { style: "thin", color: { argb: colors.border } },
+      left: { style: "thin", color: { argb: colors.softBorder } },
+      right: { style: "thin", color: { argb: colors.softBorder } }
+    };
+  });
+  row.height = 22;
+}
+
+function setDataRow(row: ExcelJS.Row) {
+  row.eachCell((cell) => {
+    applyBaseCellStyle(cell);
+  });
+  row.height = 22;
+}
+
+function setStatusCellStyle(cell: ExcelJS.Cell, statusKey: string) {
+  applyBaseCellStyle(cell);
+
+  if (statusKey === "GREEN") {
+    cell.font = { name: "Calibri", size: 11, bold: true, color: { argb: colors.green } };
+    cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: colors.greenSoft } };
+    cell.border = {
+      bottom: { style: "thin", color: { argb: "BBF7D0" } }
+    };
+    return;
+  }
+
+  if (statusKey === "YELLOW") {
+    cell.font = { name: "Calibri", size: 11, bold: true, color: { argb: colors.yellow } };
+    cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: colors.yellowSoft } };
+    cell.border = {
+      bottom: { style: "thin", color: { argb: "FDE68A" } }
+    };
+    return;
+  }
+
+  if (statusKey === "RED") {
+    cell.font = { name: "Calibri", size: 11, bold: true, color: { argb: colors.red } };
+    cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: colors.redSoft } };
+    cell.border = {
+      bottom: { style: "thin", color: { argb: "FECACA" } }
+    };
+  }
+}
+
+function setAssignmentStateStyle(cell: ExcelJS.Cell, kind: AssignmentSummary["stateKind"]) {
+  applyBaseCellStyle(cell);
+  cell.font = { name: "Calibri", size: 11, bold: true };
+  cell.alignment = { horizontal: "center", vertical: "middle" };
+
+  if (kind === "done") {
+    cell.font.color = { argb: colors.green };
+    cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: colors.greenSoft } };
+    return;
+  }
+
+  if (kind === "progress") {
+    cell.font.color = { argb: colors.blue };
+    cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: colors.blueSoft } };
+    return;
+  }
+
+  if (kind === "attention") {
+    cell.font.color = { argb: colors.red };
+    cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: colors.redSoft } };
+    return;
+  }
+
+  cell.font.color = { argb: colors.muted };
+  cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: colors.slateSoft } };
+}
+
+function addProgressBarRow(
+  worksheet: ExcelJS.Worksheet,
+  rowNumber: number,
+  label: string,
+  count: number,
+  total: number,
+  fillColor: string
+) {
+  const row = worksheet.getRow(rowNumber);
+  const percent = total > 0 ? Math.round((count / total) * 100) : 0;
+  const segments = 12;
+  const filledSegments = total > 0 ? Math.round((count / total) * segments) : 0;
+
+  worksheet.getCell(rowNumber, 1).value = label;
+  worksheet.getCell(rowNumber, 2).value = `${count} из ${total}`;
+  worksheet.getCell(rowNumber, 3).value = `${percent}%`;
+
+  for (let index = 0; index < segments; index += 1) {
+    const cell = worksheet.getCell(rowNumber, 4 + index);
+    cell.value = "";
+    cell.fill = {
+      type: "pattern",
+      pattern: "solid",
+      fgColor: { argb: index < filledSegments ? fillColor : colors.track }
+    };
+    cell.border = {
+      top: { style: "thin", color: { argb: colors.softBorder } },
+      bottom: { style: "thin", color: { argb: colors.softBorder } },
+      left: { style: "thin", color: { argb: colors.softBorder } },
+      right: { style: "thin", color: { argb: colors.softBorder } }
+    };
+  }
+
+  [1, 2, 3].forEach((column) => applyBaseCellStyle(worksheet.getCell(rowNumber, column)));
+  worksheet.getCell(rowNumber, 3).alignment = { horizontal: "right", vertical: "middle" };
+  row.height = 20;
+}
+
+function setSummarySheet(
+  worksheet: ExcelJS.Worksheet,
+  {
+    studentName,
+    studentEmail,
+    exportDateLabel,
+    totalNumbers,
+    totalSolved,
+    totalGreen,
+    totalYellow,
+    totalRed,
+    totalMarked,
+    issuedAssignments,
+    doneAssignments,
+    inProgressAssignments,
+    attentionAssignments
+  }: {
+    studentName: string;
+    studentEmail: string;
+    exportDateLabel: string;
+    totalNumbers: number;
+    totalSolved: number;
+    totalGreen: number;
+    totalYellow: number;
+    totalRed: number;
+    totalMarked: number;
+    issuedAssignments: number;
+    doneAssignments: number;
+    inProgressAssignments: number;
+    attentionAssignments: number;
+  }
+) {
+  worksheet.views = [{ showGridLines: false }];
+  worksheet.columns = [
+    { width: 28 },
+    { width: 18 },
+    { width: 12 },
+    ...Array.from({ length: 12 }, () => ({ width: 4 }))
+  ];
+
+  setTitleRow(worksheet, 1, "Отчёт по прогрессу ученика", 15);
+
+  setSectionLabel(worksheet, 3, "Ученик");
+  const infoRows = [
+    ["Имя", studentName],
+    ["Логин", studentEmail],
+    ["Дата экспорта", exportDateLabel]
+  ];
+
+  infoRows.forEach(([label, value], index) => {
+    const rowNumber = 4 + index;
+    worksheet.getCell(rowNumber, 1).value = label;
+    worksheet.getCell(rowNumber, 2).value = value;
+    worksheet.getCell(rowNumber, 1).font = {
+      name: "Calibri",
+      size: 11,
+      bold: true,
+      color: { argb: colors.muted }
+    };
+    applyBaseCellStyle(worksheet.getCell(rowNumber, 1));
+    applyBaseCellStyle(worksheet.getCell(rowNumber, 2));
+  });
+
+  setSectionLabel(worksheet, 8, "Домашние задания");
+  const assignmentRows = [
+    ["Выдано ДЗ", issuedAssignments],
+    ["Выполнено", doneAssignments],
+    ["В работе", inProgressAssignments],
+    ["Нужен разбор", attentionAssignments]
+  ];
+
+  assignmentRows.forEach(([label, value], index) => {
+    const rowNumber = 9 + index;
+    worksheet.getCell(rowNumber, 1).value = label;
+    worksheet.getCell(rowNumber, 2).value = value;
+    applyBaseCellStyle(worksheet.getCell(rowNumber, 1));
+    applyBaseCellStyle(worksheet.getCell(rowNumber, 2));
+    worksheet.getCell(rowNumber, 2).font = {
+      name: "Calibri",
+      size: 12,
+      bold: true,
+      color: { argb: colors.navy }
+    };
+  });
+
+  setSectionLabel(worksheet, 15, "Наглядный прогресс по номерам");
+  addProgressBarRow(worksheet, 16, "Решены с первого раза", totalGreen, totalNumbers, colors.green);
+  addProgressBarRow(worksheet, 17, "Решены после самопроверки", totalYellow, totalNumbers, colors.yellow);
+  addProgressBarRow(worksheet, 18, "Требуют разбора", totalRed, totalNumbers, colors.red);
+  addProgressBarRow(
+    worksheet,
+    19,
+    "Пока без отметки",
+    totalNumbers - totalMarked,
+    totalNumbers,
+    colors.muted
+  );
+  addProgressBarRow(worksheet, 20, "Общий прогресс", totalSolved, totalNumbers, colors.blue);
+
+  setSectionLabel(worksheet, 22, "Как читать отчёт");
+  const explanations = [
+    "Решён сразу и верно: ученик выполнил номер без ошибок.",
+    "Решён после самопроверки: номер удалось довести до правильного решения после доработки.",
+    "Нужен разбор с преподавателем: по этому номеру сейчас нужна помощь на занятии."
+  ];
+
+  explanations.forEach((text, index) => {
+    const rowNumber = 23 + index;
+    worksheet.mergeCells(rowNumber, 1, rowNumber, 15);
+    const cell = worksheet.getCell(rowNumber, 1);
+    cell.value = text;
+    cell.font = { name: "Calibri", size: 11, color: { argb: colors.text } };
+    cell.alignment = { wrapText: true, vertical: "middle" };
+    cell.border = {
+      bottom: { style: "thin", color: { argb: colors.softBorder } }
+    };
+  });
+}
+
+function setHomeworkSheet(worksheet: ExcelJS.Worksheet, assignments: AssignmentSummary[]) {
+  worksheet.views = [{ state: "frozen", ySplit: 2 }];
+  worksheet.columns = [
+    { width: 28 },
+    { width: 16 },
+    { width: 18 },
+    { width: 14 },
+    { width: 14 },
+    { width: 16 },
+    { width: 16 },
+    { width: 44 }
+  ];
+
+  setTitleRow(worksheet, 1, "Домашние задания", 8);
+  const headerRow = worksheet.getRow(2);
+  headerRow.values = [
+    "Тема",
+    "Домашнее задание",
+    "Дедлайн",
+    "Выполнено",
+    "Нужен разбор",
+    "Без отметки",
+    "Итог",
+    "Пояснение для родителей"
+  ];
+  setTableHeader(headerRow);
+
+  assignments.forEach((assignment, index) => {
+    const rowNumber = index + 3;
+    const row = worksheet.getRow(rowNumber);
+    row.values = [
+      assignment.topicTitle,
+      assignment.label,
+      assignment.deadlineAt ?? "Без дедлайна",
+      `${assignment.solvedNumbers} из ${assignment.totalNumbers}`,
+      assignment.redCount,
+      assignment.unmarkedCount,
+      assignment.state,
+      assignment.note
+    ];
+    setDataRow(row);
+    worksheet.getCell(rowNumber, 7).alignment = { horizontal: "center", vertical: "middle" };
+    worksheet.getCell(rowNumber, 8).alignment = { wrapText: true, vertical: "middle" };
+    setAssignmentStateStyle(worksheet.getCell(rowNumber, 7), assignment.stateKind);
+  });
+}
+
+function setDetailsSheet(
+  worksheet: ExcelJS.Worksheet,
+  detailRows: Array<DetailRow & { assignmentLabel: string }>
+) {
+  worksheet.views = [{ state: "frozen", ySplit: 2 }];
+  worksheet.columns = [
+    { width: 28 },
+    { width: 16 },
+    { width: 10 },
+    { width: 26 },
+    { width: 18 },
+    { width: 42 },
+    { width: 18 }
+  ];
+
+  setTitleRow(worksheet, 1, "Номера по домашним заданиям", 7);
+  const headerRow = worksheet.getRow(2);
+  headerRow.values = ["Тема", "ДЗ", "Номер", "Результат", "Дедлайн", "Комментарий ученика", "Обновлено"];
+  setTableHeader(headerRow);
+
+  detailRows.forEach((rowData, index) => {
+    const rowNumber = index + 3;
+    const row = worksheet.getRow(rowNumber);
+    row.values = [
+      rowData.topicTitle,
+      rowData.assignmentLabel,
+      rowData.number,
+      rowData.statusLabel,
+      rowData.deadline || "Без дедлайна",
+      rowData.note || "—",
+      rowData.updated
+    ];
+    setDataRow(row);
+    worksheet.getCell(rowNumber, 6).alignment = { wrapText: true, vertical: "middle" };
+    setStatusCellStyle(worksheet.getCell(rowNumber, 4), rowData.statusKey);
+  });
+}
+
 export async function GET(
   _request: Request,
   { params }: { params: Promise<{ studentId: string }> }
@@ -214,6 +568,7 @@ export async function GET(
     }
 
     const exportDate = new Date();
+    const exportDateLabel = formatDateTime(exportDate);
 
     let totalNumbers = 0;
     let totalMarked = 0;
@@ -221,81 +576,56 @@ export async function GET(
     let totalGreen = 0;
     let totalYellow = 0;
     let totalRed = 0;
+
     const assignmentGroupsByTopic = new Map<
       string,
       {
-        titled: Map<
-          string,
-          {
-            deadlineAt: string;
-            rows: Array<{
-              number: number;
-              statusLabel: string;
-              statusKey: string;
-              note: string;
-              updated: string;
-            }>;
-          }
-        >;
-        undated: Array<{
-          number: number;
-          statusLabel: string;
-          statusKey: string;
-          note: string;
-          updated: string;
-        }>;
+        titled: Map<string, { deadlineAt: string; rows: AssignmentRow[] }>;
+        undated: AssignmentRow[];
       }
     >();
-
-    const detailRows: Array<{
-      topicTitle: string;
-      assignmentKey: string;
-      number: number;
-      status: string;
-      deadline: string;
-      note: string;
-      updated: string;
-    }> = [];
+    const detailRows: DetailRow[] = [];
 
     for (const topic of data.topics) {
       const topicGroups = assignmentGroupsByTopic.get(topic.title) ?? {
-        titled: new Map<string, { deadlineAt: string; rows: Array<{ number: number; statusLabel: string; statusKey: string; note: string; updated: string }> }>(),
+        titled: new Map<string, { deadlineAt: string; rows: AssignmentRow[] }>(),
         undated: []
       };
 
-      for (const num of topic.homeworkNumbers) {
+      for (const numberEntry of topic.homeworkNumbers) {
         totalNumbers += 1;
-        const st = num.statuses[0] ?? null;
-        const sv = st?.status ?? null;
+        const statusEntry = numberEntry.statuses[0] ?? null;
+        const statusKey = statusEntry?.status ?? null;
 
-        if (sv) {
+        if (statusKey) {
           totalMarked += 1;
         }
 
-        if (sv === "GREEN") {
+        if (statusKey === "GREEN") {
           totalGreen += 1;
           totalSolved += 1;
-        } else if (sv === "YELLOW") {
+        } else if (statusKey === "YELLOW") {
           totalYellow += 1;
           totalSolved += 1;
-        } else if (sv === "RED") {
+        } else if (statusKey === "RED") {
           totalRed += 1;
         }
 
-        const note = data.notesEnabled ? ((st as { note?: string | null })?.note ?? "") : "";
+        const note = data.notesEnabled ? ((statusEntry as { note?: string | null })?.note ?? "") : "";
         const deadlineAt =
-          data.deadlinesEnabled && (st as { deadlineAt?: Date | null })?.deadlineAt
-            ? (st as { deadlineAt?: Date | null }).deadlineAt ?? null
+          data.deadlinesEnabled && (statusEntry as { deadlineAt?: Date | null })?.deadlineAt
+            ? (statusEntry as { deadlineAt?: Date | null }).deadlineAt ?? null
             : null;
-        const deadline = deadlineAt ? formatDateTime(deadlineAt) : "";
-        const updated = st?.updatedAt ? formatDateTime(st.updatedAt) : "";
-        const statusLabel = statusLabels[sv ?? ""] ?? "Пока без отметки";
-        const assignmentRow = {
-          number: num.number,
+        const deadlineLabel = deadlineAt ? formatDateTime(deadlineAt) : "";
+        const updatedLabel = statusEntry?.updatedAt ? formatDateTime(statusEntry.updatedAt) : "";
+        const statusLabel = statusLabels[statusKey ?? ""] ?? "Пока без отметки";
+
+        const assignmentRow: AssignmentRow = {
+          number: numberEntry.number,
           statusLabel,
-          statusKey: sv ?? "UNMARKED",
+          statusKey: statusKey ?? "UNMARKED",
           note,
-          updated
+          updated: updatedLabel
         };
 
         if (deadlineAt) {
@@ -313,21 +643,20 @@ export async function GET(
         detailRows.push({
           topicTitle: topic.title,
           assignmentKey: deadlineAt ? deadlineAt.toISOString() : "__undated__",
-          number: num.number,
-          status: statusLabel,
-          deadline,
+          number: numberEntry.number,
+          statusKey: statusKey ?? "UNMARKED",
+          statusLabel,
+          deadline: deadlineLabel,
           note,
-          updated
+          updated: updatedLabel
         });
       }
 
       assignmentGroupsByTopic.set(topic.title, topicGroups);
     }
 
-    const percent = totalNumbers > 0 ? Math.round((totalSolved / totalNumbers) * 100) : 0;
-    const assignmentSummaries: AssignmentSummary[] = [];
-
     const assignmentLabels = new Map<string, string>();
+    const assignmentSummaries: AssignmentSummary[] = [];
 
     for (const [topicTitle, topicGroups] of assignmentGroupsByTopic.entries()) {
       const titledGroups = Array.from(topicGroups.titled.values()).sort(
@@ -348,8 +677,8 @@ export async function GET(
         });
         const assignmentKey = `${topicTitle}::${group.deadlineAt}`;
         const label = `ДЗ ${index + 1}`;
-        assignmentLabels.set(assignmentKey, label);
 
+        assignmentLabels.set(assignmentKey, label);
         assignmentSummaries.push({
           topicTitle,
           label,
@@ -362,7 +691,7 @@ export async function GET(
           redCount,
           unmarkedCount,
           state: state.label,
-          stateStyleId: state.styleId,
+          stateKind: state.kind,
           note: buildAssignmentNote({
             totalNumbers: group.rows.length,
             solvedNumbers,
@@ -386,8 +715,8 @@ export async function GET(
           markedCount: topicGroups.undated.length - unmarkedCount
         });
         const assignmentKey = `${topicTitle}::__undated__`;
-        assignmentLabels.set(assignmentKey, "Без дедлайна");
 
+        assignmentLabels.set(assignmentKey, "Без дедлайна");
         assignmentSummaries.push({
           topicTitle,
           label: "Без дедлайна",
@@ -400,7 +729,7 @@ export async function GET(
           redCount,
           unmarkedCount,
           state: state.label,
-          stateStyleId: state.styleId,
+          stateKind: state.kind,
           note: buildAssignmentNote({
             totalNumbers: topicGroups.undated.length,
             solvedNumbers,
@@ -413,247 +742,58 @@ export async function GET(
     }
 
     const issuedAssignments = assignmentSummaries.filter((assignment) => assignment.deadlineAt);
-    const doneAssignments = issuedAssignments.filter((assignment) => assignment.state === "Выполнено");
-    const attentionAssignments = issuedAssignments.filter((assignment) => assignment.state === "Нужен разбор");
-    const inProgressAssignments = issuedAssignments.filter((assignment) => assignment.state === "В работе");
+    const doneAssignments = issuedAssignments.filter((assignment) => assignment.stateKind === "done");
+    const attentionAssignments = issuedAssignments.filter(
+      (assignment) => assignment.stateKind === "attention"
+    );
+    const inProgressAssignments = issuedAssignments.filter(
+      (assignment) => assignment.stateKind === "progress"
+    );
 
-    const summaryRows = [
-      ["Ученик", data.student.name],
-      ["Логин", data.student.email],
-      ["Дата экспорта", formatDateTime(exportDate)],
-      ["Выдано домашних заданий", issuedAssignments.length],
-      ["Домашних заданий выполнено", doneAssignments.length],
-      ["Домашних заданий в работе", inProgressAssignments.length],
-      ["Домашних заданий, где нужен разбор", attentionAssignments.length],
-      ["Всего номеров в темах", totalNumbers],
-      ["Решено с первого раза", totalGreen],
-      ["Решено после самопроверки", totalYellow],
-      ["Требуют разбора", totalRed],
-      ["Пока без отметки", totalNumbers - totalMarked],
-      ["Общий прогресс по номерам", `${totalSolved} из ${totalNumbers} (${percent}%)`]
-    ] as const;
+    const workbook = new ExcelJS.Workbook();
+    workbook.creator = "TutorFlow";
+    workbook.created = exportDate;
+    workbook.modified = exportDate;
+    workbook.company = "TutorFlow";
 
-    const summarySheetRows = [
-      xmlRow([xmlCell("Отчёт по прогрессу ученика", { styleId: "Title", mergeAcross: 1 })]),
-      xmlRow([xmlCell("", { mergeAcross: 1 })]),
-      ...summaryRows.map(([label, value]) =>
-        xmlRow([xmlCell(label, { styleId: "Label" }), xmlCell(value, { styleId: "Value" })])
-      )
-    ];
+    const summarySheet = workbook.addWorksheet("Сводка");
+    setSummarySheet(summarySheet, {
+      studentName: data.student.name,
+      studentEmail: data.student.email,
+      exportDateLabel,
+      totalNumbers,
+      totalSolved,
+      totalGreen,
+      totalYellow,
+      totalRed,
+      totalMarked,
+      issuedAssignments: issuedAssignments.length,
+      doneAssignments: doneAssignments.length,
+      inProgressAssignments: inProgressAssignments.length,
+      attentionAssignments: attentionAssignments.length
+    });
 
-    const homeworkSheetRows = [
-      xmlRow([xmlCell("Домашние задания", { styleId: "Title", mergeAcross: 7 })]),
-      xmlRow([
-        xmlCell("Тема", { styleId: "Header" }),
-        xmlCell("Домашнее задание", { styleId: "Header" }),
-        xmlCell("Дедлайн", { styleId: "Header" }),
-        xmlCell("Выполнено", { styleId: "Header" }),
-        xmlCell("Нужен разбор", { styleId: "Header" }),
-        xmlCell("Пока без отметки", { styleId: "Header" }),
-        xmlCell("Итог", { styleId: "Header" }),
-        xmlCell("Пояснение для родителей", { styleId: "Header" })
-      ]),
-      ...assignmentSummaries.map((assignment) =>
-        xmlRow([
-          xmlCell(assignment.topicTitle, { styleId: "Cell" }),
-          xmlCell(assignment.label, { styleId: "Cell" }),
-          xmlCell(assignment.deadlineAt ?? "Без дедлайна", { styleId: "Cell" }),
-          xmlCell(`${assignment.solvedNumbers} из ${assignment.totalNumbers}`, { styleId: "Cell" }),
-          xmlCell(assignment.redCount, { styleId: "Cell", type: "Number" }),
-          xmlCell(assignment.unmarkedCount, { styleId: "Cell", type: "Number" }),
-          xmlCell(assignment.state, { styleId: assignment.stateStyleId }),
-          xmlCell(assignment.note, { styleId: "CellWrap" })
-        ])
-      )
-    ];
+    const homeworkSheet = workbook.addWorksheet("Домашние задания");
+    setHomeworkSheet(homeworkSheet, assignmentSummaries);
 
-    const detailsSheetRows = [
-      xmlRow([xmlCell("Номера по домашним заданиям", { styleId: "Title", mergeAcross: 6 })]),
-      xmlRow([
-        xmlCell("Тема", { styleId: "Header" }),
-        xmlCell("ДЗ", { styleId: "Header" }),
-        xmlCell("Номер", { styleId: "Header" }),
-        xmlCell("Результат", { styleId: "Header" }),
-        xmlCell("Дедлайн", { styleId: "Header" }),
-        xmlCell("Комментарий ученика", { styleId: "Header" }),
-        xmlCell("Обновлено", { styleId: "Header" })
-      ]),
-      ...detailRows.map((row) =>
-        xmlRow([
-          xmlCell(row.topicTitle, { styleId: "Cell" }),
-          xmlCell(
-            assignmentLabels.get(`${row.topicTitle}::${row.assignmentKey}`) ?? "Без дедлайна",
-            { styleId: "Cell" }
-          ),
-          xmlCell(row.number, { styleId: "Cell", type: "Number" }),
-          xmlCell(row.status, {
-            styleId:
-              row.status === "Решён сразу и верно"
-                ? "StatusGreen"
-                : row.status === "Решён после самопроверки"
-                  ? "StatusYellow"
-                  : row.status === "Нужен разбор с преподавателем"
-                    ? "StatusRed"
-                    : "Cell"
-          }),
-          xmlCell(row.deadline || "Без дедлайна", { styleId: "Cell" }),
-          xmlCell(row.note || "—", { styleId: "CellWrap" }),
-          xmlCell(row.updated, { styleId: "Cell" })
-        ])
-      )
-    ];
+    const detailsSheet = workbook.addWorksheet("Номера");
+    setDetailsSheet(
+      detailsSheet,
+      detailRows.map((row) => ({
+        ...row,
+        assignmentLabel: assignmentLabels.get(`${row.topicTitle}::${row.assignmentKey}`) ?? "Без дедлайна"
+      }))
+    );
 
-    const workbook = `<?xml version="1.0" encoding="UTF-16"?>
-<?mso-application progid="Excel.Sheet"?>
-<Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet"
- xmlns:o="urn:schemas-microsoft-com:office:office"
- xmlns:x="urn:schemas-microsoft-com:office:excel"
- xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet"
- xmlns:html="http://www.w3.org/TR/REC-html40">
- <Styles>
-  <Style ss:ID="Default" ss:Name="Normal">
-   <Alignment ss:Vertical="Center"/>
-   <Borders/>
-   <Font ss:FontName="Calibri" ss:Size="11" ss:Color="#1E293B"/>
-   <Interior/>
-   <NumberFormat/>
-   <Protection/>
-  </Style>
-  <Style ss:ID="Title">
-   <Font ss:FontName="Calibri" ss:Size="16" ss:Bold="1" ss:Color="#0F172A"/>
-   <Interior ss:Color="#E8F0FF" ss:Pattern="Solid"/>
-   <Alignment ss:Vertical="Center"/>
-  </Style>
-  <Style ss:ID="Header">
-   <Font ss:FontName="Calibri" ss:Size="11" ss:Bold="1" ss:Color="#0F172A"/>
-   <Interior ss:Color="#EEF2FF" ss:Pattern="Solid"/>
-   <Borders>
-    <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/>
-    <Border ss:Position="Left" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#E2E8F0"/>
-    <Border ss:Position="Right" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#E2E8F0"/>
-    <Border ss:Position="Top" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#E2E8F0"/>
-   </Borders>
-  </Style>
-  <Style ss:ID="Label">
-   <Font ss:FontName="Calibri" ss:Size="11" ss:Bold="1" ss:Color="#334155"/>
-   <Interior ss:Color="#F8FAFC" ss:Pattern="Solid"/>
-   <Borders>
-    <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#E2E8F0"/>
-   </Borders>
-  </Style>
-  <Style ss:ID="Value">
-   <Font ss:FontName="Calibri" ss:Size="11" ss:Color="#0F172A"/>
-   <Borders>
-    <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#E2E8F0"/>
-   </Borders>
-  </Style>
-  <Style ss:ID="Cell">
-   <Borders>
-    <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#E2E8F0"/>
-   </Borders>
-  </Style>
-  <Style ss:ID="CellWrap">
-   <Alignment ss:Vertical="Top" ss:WrapText="1"/>
-   <Borders>
-    <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#E2E8F0"/>
-   </Borders>
-  </Style>
-  <Style ss:ID="StatusGreen">
-   <Font ss:FontName="Calibri" ss:Size="11" ss:Bold="1" ss:Color="#166534"/>
-   <Interior ss:Color="#DCFCE7" ss:Pattern="Solid"/>
-   <Borders>
-    <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#BBF7D0"/>
-   </Borders>
-  </Style>
-  <Style ss:ID="StatusYellow">
-   <Font ss:FontName="Calibri" ss:Size="11" ss:Bold="1" ss:Color="#854D0E"/>
-   <Interior ss:Color="#FEF3C7" ss:Pattern="Solid"/>
-   <Borders>
-    <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#FDE68A"/>
-   </Borders>
-  </Style>
-  <Style ss:ID="StatusRed">
-   <Font ss:FontName="Calibri" ss:Size="11" ss:Bold="1" ss:Color="#991B1B"/>
-   <Interior ss:Color="#FEE2E2" ss:Pattern="Solid"/>
-   <Borders>
-    <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#FECACA"/>
-   </Borders>
-  </Style>
-  <Style ss:ID="StateDone">
-   <Font ss:FontName="Calibri" ss:Size="11" ss:Bold="1" ss:Color="#166534"/>
-   <Interior ss:Color="#DCFCE7" ss:Pattern="Solid"/>
-   <Alignment ss:Horizontal="Center" ss:Vertical="Center"/>
-   <Borders>
-    <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#BBF7D0"/>
-   </Borders>
-  </Style>
-  <Style ss:ID="StateProgress">
-   <Font ss:FontName="Calibri" ss:Size="11" ss:Bold="1" ss:Color="#1D4ED8"/>
-   <Interior ss:Color="#DBEAFE" ss:Pattern="Solid"/>
-   <Alignment ss:Horizontal="Center" ss:Vertical="Center"/>
-   <Borders>
-    <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#BFDBFE"/>
-   </Borders>
-  </Style>
-  <Style ss:ID="StateAttention">
-   <Font ss:FontName="Calibri" ss:Size="11" ss:Bold="1" ss:Color="#991B1B"/>
-   <Interior ss:Color="#FEE2E2" ss:Pattern="Solid"/>
-   <Alignment ss:Horizontal="Center" ss:Vertical="Center"/>
-   <Borders>
-    <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#FECACA"/>
-   </Borders>
-  </Style>
-  <Style ss:ID="StateMuted">
-   <Font ss:FontName="Calibri" ss:Size="11" ss:Bold="1" ss:Color="#475569"/>
-   <Interior ss:Color="#F1F5F9" ss:Pattern="Solid"/>
-   <Alignment ss:Horizontal="Center" ss:Vertical="Center"/>
-   <Borders>
-    <Border ss:Position="Bottom" ss:LineStyle="Continuous" ss:Weight="1" ss:Color="#CBD5E1"/>
-   </Borders>
-  </Style>
- </Styles>
- <Worksheet ss:Name="Сводка">
-  <Table>
-   <Column ss:Width="180"/>
-   <Column ss:Width="260"/>
-   ${summarySheetRows.join("")}
-  </Table>
- </Worksheet>
- <Worksheet ss:Name="Домашние задания">
-  <Table>
-   <Column ss:Width="180"/>
-   <Column ss:Width="110"/>
-   <Column ss:Width="130"/>
-   <Column ss:Width="110"/>
-   <Column ss:Width="95"/>
-   <Column ss:Width="105"/>
-   <Column ss:Width="130"/>
-   <Column ss:Width="320"/>
-   ${homeworkSheetRows.join("")}
-  </Table>
- </Worksheet>
- <Worksheet ss:Name="Номера">
-  <Table>
-   <Column ss:Width="210"/>
-   <Column ss:Width="110"/>
-   <Column ss:Width="70"/>
-   <Column ss:Width="180"/>
-   <Column ss:Width="125"/>
-   <Column ss:Width="260"/>
-   <Column ss:Width="130"/>
-   ${detailsSheetRows.join("")}
-  </Table>
- </Worksheet>
-</Workbook>`;
-
+    const buffer = await workbook.xlsx.writeBuffer();
     const datePart = exportDate.toISOString().slice(0, 10);
-    const workbookBuffer = encodeUtf16LeWithBom(workbook);
 
-    return new NextResponse(workbookBuffer, {
+    return new NextResponse(buffer, {
       status: 200,
       headers: {
-        "Content-Type": "application/vnd.ms-excel; charset=utf-16le",
-        "Content-Disposition": `attachment; filename="progress-${datePart}.xls"; filename*=UTF-8''progress-${datePart}.xls`,
+        "Content-Type":
+          "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        "Content-Disposition": `attachment; filename="progress-${datePart}.xlsx"; filename*=UTF-8''progress-${datePart}.xlsx`,
         "Cache-Control": "no-store"
       }
     });
