@@ -116,11 +116,13 @@ export function completionPercent(done: number, total: number) {
 }
 
 export function parseNumbersInput(input: string) {
-  const matches = input
-    .replace(/[‐‑‒–—―−﹘﹣－]/g, "-")
-    .match(/\d+\s*-\s*\d+|\d+/g);
+  const normalizedInput = input.replace(/[‐‑‒–—―−﹘﹣－]/g, "-");
+  const matches = Array.from(
+    normalizedInput.matchAll(/(^|[\s,;]+)(\d+\s*-\s*\d+|\d+)(?=$|[\s,;]+)/g),
+    (match) => match[2]
+  );
 
-  if (!matches) {
+  if (!matches.length) {
     return [];
   }
 
