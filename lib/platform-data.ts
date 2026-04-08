@@ -678,7 +678,7 @@ async function getTeacherStudentDetailUncached(studentId: string) {
       orderBy: [{ displayOrder: "asc" }, { createdAt: "asc" }]
     });
 
-  const studentPromise = prisma.user.findUniqueOrThrow({
+  const studentPromise = prisma.user.findFirstOrThrow({
     where: {
       id: studentId
     },
