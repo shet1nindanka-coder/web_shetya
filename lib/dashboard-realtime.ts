@@ -1,5 +1,5 @@
 import { UserRole } from "@prisma/client";
-import { logWarn } from "@/lib/logger";
+import { logWarnEvent } from "@/lib/logger";
 
 export type DashboardRealtimeEvent =
   | {
@@ -42,7 +42,12 @@ export function publishDashboardRealtimeEvent(event: DashboardRealtimeEventInput
     try {
       listener(payload);
     } catch (error) {
-      logWarn("Dashboard realtime listener failed.", { eventKind: payload.kind }, error);
+      logWarnEvent(
+        "realtime.listener.failed",
+        { eventKind: payload.kind },
+        error,
+        "Dashboard realtime listener failed."
+      );
     }
   });
 }

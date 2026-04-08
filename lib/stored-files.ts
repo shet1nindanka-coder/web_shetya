@@ -1,10 +1,15 @@
-import { logError } from "@/lib/logger";
+import { logErrorEvent } from "@/lib/logger";
 import { prisma } from "@/lib/prisma";
 import { removeStoredFile } from "@/lib/storage";
 
 function scheduleStoredFileCleanup(storageKey: string) {
   void removeStoredFile(storageKey).catch((error) => {
-    logError("Failed to remove file from storage after deleting DB record.", { storageKey }, error);
+    logErrorEvent(
+      "storage.file_cleanup.failed",
+      { storageKey },
+      error,
+      "Failed to remove file from storage after deleting the DB record."
+    );
   });
 }
 

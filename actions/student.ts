@@ -6,7 +6,7 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { requireUser } from "@/lib/auth";
 import { publishDashboardRealtimeEvent } from "@/lib/dashboard-realtime";
-import { getHeadersLogContext, logError, logWarn } from "@/lib/logger";
+import { getHeadersLogContext, logErrorEvent, logInfoEvent, logWarnEvent } from "@/lib/logger";
 import { revalidateTeacherStudentsData, revalidateTeacherTopicsData } from "@/lib/platform-data-cache";
 import { hashPassword } from "@/lib/password";
 import { prisma } from "@/lib/prisma";
@@ -43,12 +43,13 @@ export async function createStudentAction(formData: FormData) {
     );
   } catch (error) {
     if (error instanceof RateLimitExceededError) {
-      logWarn(
-        "Student creation rate limit exceeded.",
+      logWarnEvent(
+        "student.create.rate_limited",
         getHeadersLogContext(requestHeaders, {
           teacherId: teacher.id
         }),
-        error
+        error,
+        "Student creation request was rate limited."
       );
       redirectTeacherWithStudentStatus(new URLSearchParams({ studentError: "rateLimited" }));
     }
@@ -66,13 +67,14 @@ export async function createStudentAction(formData: FormData) {
   });
 
   if (existingStudent) {
-    logWarn(
-      "Student creation skipped because login already exists.",
+    logWarnEvent(
+      "student.create.duplicate_login",
       getHeadersLogContext(requestHeaders, {
         teacherId: teacher.id,
-        studentLogin: login,
-        scope: "student-create-exists"
-      })
+        studentLogin: login
+      }),
+      undefined,
+      "Student creation was skipped because the login already exists."
     );
     redirectTeacherWithStudentStatus(new URLSearchParams({ studentError: "exists" }));
   }
@@ -89,19 +91,30 @@ export async function createStudentAction(formData: FormData) {
       }
     });
   } catch (error) {
-    logError(
-      "Failed to create student.",
+    logErrorEvent(
+      "student.create.failed",
       {
         teacherId: teacher.id,
         clientIp,
         studentLogin: login,
         studentName: name
       },
-      error
+      error,
+      "Failed to create student account."
     );
     redirectTeacherWithStudentStatus(new URLSearchParams({ studentError: "save" }));
   }
 
+  logInfoEvent(
+    "student.create.succeeded",
+    {
+      teacherId: teacher.id,
+      clientIp,
+      studentLogin: login,
+      studentName: name
+    },
+    "Student account was created."
+  );
   revalidateTeacherStudentsData();
   revalidateTeacherTopicsData();
   publishDashboardRealtimeEvent({ kind: "students-changed" });
@@ -132,11 +145,15 @@ export async function deleteStudentAction(formData: FormData) {
   });
 
   if (!student) {
-    logWarn("Student deletion skipped because student was not found.", {
-      teacherId: teacher.id,
-      studentId,
-      scope: "student-delete-missing"
-    });
+    logWarnEvent(
+      "student.delete.missing",
+      {
+        teacherId: teacher.id,
+        studentId
+      },
+      undefined,
+      "Student deletion was skipped because the student was not found."
+    );
     redirectTeacherWithStudentStatus(new URLSearchParams({ studentError: "deleteMissing" }));
   }
 
@@ -147,10 +164,23 @@ export async function deleteStudentAction(formData: FormData) {
       }
     });
   } catch (error) {
-    logError("Failed to delete student.", { teacherId: teacher.id, studentId }, error);
+    logErrorEvent(
+      "student.delete.failed",
+      { teacherId: teacher.id, studentId },
+      error,
+      "Failed to delete student account."
+    );
     redirectTeacherWithStudentStatus(new URLSearchParams({ studentError: "delete" }));
   }
 
+  logInfoEvent(
+    "student.delete.succeeded",
+    {
+      teacherId: teacher.id,
+      studentId
+    },
+    "Student account was deleted."
+  );
   revalidateTeacherStudentsData();
   revalidateTeacherTopicsData();
   publishDashboardRealtimeEvent({ kind: "students-changed" });

@@ -3,7 +3,7 @@ import { revalidatePath } from "next/cache";
 import { NextResponse } from "next/server";
 import { tryGetCurrentUser } from "@/lib/auth";
 import { publishDashboardRealtimeEvent } from "@/lib/dashboard-realtime";
-import { getRequestLogContext, logError } from "@/lib/logger";
+import { getRequestLogContext, logErrorEvent } from "@/lib/logger";
 import { revalidateAllPlatformData } from "@/lib/platform-data-cache";
 import { prisma } from "@/lib/prisma";
 import { deleteStoredFileRecordIfUnused } from "@/lib/stored-files";
@@ -64,15 +64,16 @@ export async function POST(request: Request) {
       }
     });
   } catch (error) {
-    logError(
-      "Failed to save homework answer.",
+    logErrorEvent(
+      "teacher.answer.save.failed",
       {
         ...requestContext,
         userId: user.id,
         homeworkNumberId,
         topicId: homeworkNumber.topicId
       },
-      error
+      error,
+      "Failed to save homework answer."
     );
     return NextResponse.json({ error: "Не удалось сохранить ответ к номеру." }, { status: 500 });
   }
@@ -139,15 +140,16 @@ export async function DELETE(request: Request) {
       }
     });
   } catch (error) {
-    logError(
-      "Failed to remove homework answer.",
+    logErrorEvent(
+      "teacher.answer.delete.failed",
       {
         ...requestContext,
         userId: user.id,
         homeworkNumberId,
         topicId: homeworkNumber.topicId
       },
-      error
+      error,
+      "Failed to remove homework answer."
     );
     return NextResponse.json({ error: "Не удалось удалить ответ к номеру." }, { status: 500 });
   }

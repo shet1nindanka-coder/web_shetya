@@ -1,6 +1,6 @@
 import { unstable_cache } from "next/cache";
 import { HomeworkNumberStatus, Prisma, UserRole } from "@prisma/client";
-import { logWarn } from "@/lib/logger";
+import { logWarnEvent } from "@/lib/logger";
 import { PLATFORM_DATA_TAGS } from "@/lib/platform-data-cache";
 import { prisma } from "@/lib/prisma";
 import { completionPercent, getStatusCounts } from "@/lib/utils";
@@ -192,10 +192,11 @@ export async function getStudentTopicsOverview(
       throw error;
     }
 
-    logWarn(
-      "Falling back to minimal student topics overview due to Prisma schema mismatch.",
+    logWarnEvent(
+      "platform.student_topics.schema_mismatch_fallback",
       { studentId },
-      error
+      error,
+      "Falling back to minimal student topics overview due to Prisma schema mismatch."
     );
 
     const [student, topics] = await Promise.all([
@@ -373,10 +374,11 @@ export async function getStudentTopicDetail(
       throw error;
     }
 
-    logWarn(
-      "Falling back to minimal student topic detail due to Prisma schema mismatch.",
+    logWarnEvent(
+      "platform.student_topic_detail.schema_mismatch_fallback",
       { studentId, topicId },
-      error
+      error,
+      "Falling back to minimal student topic detail due to Prisma schema mismatch."
     );
 
     const topic = await prisma.topic.findUniqueOrThrow({
@@ -696,10 +698,14 @@ async function getTeacherStudentDetailUncached(studentId: string) {
   });
 
   if (!student) {
-    logWarn("Teacher student detail requested for missing student.", {
-      studentId,
-      scope: "teacher-student-detail-missing"
-    });
+    logWarnEvent(
+      "platform.teacher_student_detail.missing",
+      {
+        studentId
+      },
+      undefined,
+      "Teacher student detail was requested for a missing student."
+    );
     throw new Error(`Student not found: ${studentId}`);
   }
   const {
@@ -816,7 +822,12 @@ export async function getStudentDeadlines(studentId: string) {
       throw error;
     }
 
-    logWarn("Falling back to empty deadlines due to Prisma schema mismatch.", { studentId }, error);
+    logWarnEvent(
+      "platform.student_deadlines.schema_mismatch_fallback",
+      { studentId },
+      error,
+      "Falling back to empty student deadlines due to Prisma schema mismatch."
+    );
 
     return [];
   }

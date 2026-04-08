@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { getHeadersLogContext, getRequestLogContext, serializeError } from "../lib/logger";
+import { getEventLogContext, getHeadersLogContext, getRequestLogContext, serializeError } from "../lib/logger";
 
 test("serializeError normalizes Error instances with common metadata", () => {
   const error = new Error("Boom") as Error & { code?: string; digest?: string };
@@ -68,5 +68,19 @@ test("getRequestLogContext normalizes Date and bigint values for safe structured
     path: "/api/teacher/students",
     createdAt: "2026-04-08T12:00:00.000Z",
     count: "4"
+  });
+});
+
+test("getEventLogContext derives stable scope, action and outcome fields", () => {
+  const result = getEventLogContext("student.create.duplicate_login", {
+    teacherId: "teacher-1"
+  });
+
+  assert.deepEqual(result, {
+    event: "student.create.duplicate_login",
+    scope: "student",
+    action: "create",
+    outcome: "duplicate_login",
+    teacherId: "teacher-1"
   });
 });

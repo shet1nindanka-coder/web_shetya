@@ -2,7 +2,7 @@ import ExcelJS from "exceljs";
 import { Prisma, UserRole } from "@prisma/client";
 import { NextResponse } from "next/server";
 import { tryGetCurrentUser } from "@/lib/auth";
-import { getRequestLogContext, logError, logWarn } from "@/lib/logger";
+import { getRequestLogContext, logErrorEvent, logInfoEvent, logWarnEvent } from "@/lib/logger";
 import { prisma } from "@/lib/prisma";
 import { formatDateTime } from "@/lib/utils";
 
@@ -567,13 +567,17 @@ export async function GET(
     const data = await loadExportData(studentId);
 
     if (!data) {
-      logWarn("Student progress export requested for missing student.", {
-        userId: user.id,
-        studentId,
-        method: request.method,
-        path: new URL(request.url).pathname,
-        scope: "student-export-missing"
-      });
+      logWarnEvent(
+        "student.export.missing",
+        {
+          userId: user.id,
+          studentId,
+          method: request.method,
+          path: new URL(request.url).pathname
+        },
+        undefined,
+        "Student progress export was requested for a missing student."
+      );
       return new NextResponse("Student not found", { status: 404 });
     }
 
@@ -798,6 +802,18 @@ export async function GET(
     const buffer = await workbook.xlsx.writeBuffer();
     const datePart = exportDate.toISOString().slice(0, 10);
 
+    logInfoEvent(
+      "student.export.succeeded",
+      getRequestLogContext(request, {
+        userId: user.id,
+        studentId,
+        totalNumbers,
+        issuedAssignments: issuedAssignments.length,
+        workbookBytes: buffer.byteLength
+      }),
+      "Student progress export was generated."
+    );
+
     return new NextResponse(buffer, {
       status: 200,
       headers: {
@@ -808,12 +824,13 @@ export async function GET(
       }
     });
   } catch (error) {
-    logError(
-      "Failed to export student progress file.",
+    logErrorEvent(
+      "student.export.failed",
       getRequestLogContext(request, {
         studentId
       }),
-      error
+      error,
+      "Failed to export student progress file."
     );
     return new NextResponse("Export failed", { status: 500 });
   }

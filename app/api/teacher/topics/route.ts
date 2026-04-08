@@ -3,7 +3,7 @@ import { revalidatePath } from "next/cache";
 import { NextResponse } from "next/server";
 import { tryGetCurrentUser } from "@/lib/auth";
 import { publishDashboardRealtimeEvent } from "@/lib/dashboard-realtime";
-import { getRequestLogContext, logError } from "@/lib/logger";
+import { getRequestLogContext, logErrorEvent, logInfoEvent } from "@/lib/logger";
 import { revalidateAllPlatformData } from "@/lib/platform-data-cache";
 import { prisma } from "@/lib/prisma";
 import { createTopicHomeworkNumbersInBatches } from "@/lib/topic-homework-numbers";
@@ -112,19 +112,32 @@ export async function POST(request: Request) {
 
     revalidateTopicRoutes(topic.id);
 
+    logInfoEvent(
+      "teacher.topic_api.create.succeeded",
+      {
+        ...requestContext,
+        userId: user.id,
+        topicId: topic.id,
+        title,
+        numberCount: numbers.length
+      },
+      "Topic was created through the teacher API route."
+    );
+
     return NextResponse.json({
       redirectTo: "/teacher/topics?created=1"
     });
   } catch (error) {
-    logError(
-      "Failed to create topic from API route.",
+    logErrorEvent(
+      "teacher.topic_api.create.failed",
       {
         ...requestContext,
         userId: user.id,
         title,
         numberCount: numbers.length
       },
-      error
+      error,
+      "Failed to create topic from the teacher API route."
     );
 
     return NextResponse.json(

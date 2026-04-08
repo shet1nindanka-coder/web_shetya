@@ -1,5 +1,5 @@
 import { tryGetCurrentUser } from "@/lib/auth";
-import { getRequestLogContext, logWarn } from "@/lib/logger";
+import { getRequestLogContext, logWarnEvent } from "@/lib/logger";
 import { prisma } from "@/lib/prisma";
 import { getBlobAccessMode, getPublicBlobUrl, getStorageBackend, readStoredFile } from "@/lib/storage";
 
@@ -23,11 +23,16 @@ export async function GET(request: Request, { params }: FileRouteProps) {
   });
 
   if (!file) {
-    logWarn("Stored file record not found.", {
-      ...requestContext,
-      storageBackend: getStorageBackend(),
-      blobAccess: getBlobAccessMode()
-    });
+    logWarnEvent(
+      "file.read.record_missing",
+      {
+        ...requestContext,
+        storageBackend: getStorageBackend(),
+        blobAccess: getBlobAccessMode()
+      },
+      undefined,
+      "Stored file record was not found."
+    );
     return new Response("Not found", { status: 404 });
   }
 
@@ -41,13 +46,18 @@ export async function GET(request: Request, { params }: FileRouteProps) {
   const storedFile = await readStoredFile(file.storageKey);
 
   if (!storedFile) {
-    logWarn("Stored file payload not found.", {
-      ...requestContext,
-      storageKey: file.storageKey,
-      storageBackend: getStorageBackend(),
-      blobAccess: getBlobAccessMode(),
-      download
-    });
+    logWarnEvent(
+      "file.read.payload_missing",
+      {
+        ...requestContext,
+        storageKey: file.storageKey,
+        storageBackend: getStorageBackend(),
+        blobAccess: getBlobAccessMode(),
+        download
+      },
+      undefined,
+      "Stored file payload was not found."
+    );
     return new Response("Not found", { status: 404 });
   }
 

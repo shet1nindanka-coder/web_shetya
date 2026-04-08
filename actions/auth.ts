@@ -3,7 +3,7 @@
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { signIn, signOut } from "@/lib/auth";
-import { getHeadersLogContext, logError, logWarn } from "@/lib/logger";
+import { getHeadersLogContext, logErrorEvent, logInfoEvent, logWarnEvent } from "@/lib/logger";
 import {
   assertRateLimit,
   getClientIpFromHeaders,
@@ -45,13 +45,13 @@ export async function loginAction(formData: FormData) {
     );
   } catch (error) {
     if (error instanceof RateLimitExceededError) {
-      logWarn(
-        "Login rate limit exceeded.",
+      logWarnEvent(
+        "auth.login.rate_limited",
         getHeadersLogContext(requestHeaders, {
-          login: normalizedLogin,
-          scope: "login"
+          login: normalizedLogin
         }),
-        error
+        error,
+        "Login request was rate limited."
       );
       redirect("/login?error=rateLimited");
     }
@@ -64,29 +64,39 @@ export async function loginAction(formData: FormData) {
   try {
     user = await signIn(login, password);
   } catch (error) {
-    logError(
-      "Failed to sign in.",
+    logErrorEvent(
+      "auth.login.failed",
       getHeadersLogContext(requestHeaders, {
-        login: normalizedLogin,
-        scope: "login"
+        login: normalizedLogin
       }),
-      error
+      error,
+      "Failed to create login session."
     );
     redirect("/login?error=database");
   }
 
   if (!user) {
-    logWarn(
-      "Login rejected due to invalid credentials.",
+    logWarnEvent(
+      "auth.login.invalid_credentials",
       getHeadersLogContext(requestHeaders, {
-        login: normalizedLogin,
-        scope: "login-invalid"
-      })
+        login: normalizedLogin
+      }),
+      undefined,
+      "Login was rejected due to invalid credentials."
     );
     redirect("/login?error=invalid");
   }
 
   resetRateLimit("login:ip-login", `${clientIp}:${normalizedLogin}`);
+  logInfoEvent(
+    "auth.login.succeeded",
+    getHeadersLogContext(requestHeaders, {
+      login: normalizedLogin,
+      userId: user.id,
+      role: user.role
+    }),
+    "Login session created successfully."
+  );
   redirect(roleHome(user.role));
 }
 

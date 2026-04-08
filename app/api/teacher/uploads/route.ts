@@ -2,7 +2,7 @@ import { handleUpload, type HandleUploadBody } from "@vercel/blob/client";
 import { UserRole } from "@prisma/client";
 import { NextResponse } from "next/server";
 import { tryGetCurrentUser } from "@/lib/auth";
-import { getRequestLogContext, logError, logWarn } from "@/lib/logger";
+import { getRequestLogContext, logErrorEvent, logInfoEvent, logWarnEvent } from "@/lib/logger";
 import { prisma } from "@/lib/prisma";
 import {
   assertRateLimit,
@@ -48,7 +48,12 @@ export async function POST(request: Request) {
     );
   } catch (error) {
     if (error instanceof RateLimitExceededError) {
-      logWarn("Teacher upload rate limit exceeded.", requestContext, error);
+      logWarnEvent(
+        "teacher.upload.rate_limited",
+        requestContext,
+        error,
+        "Teacher upload request was rate limited."
+      );
       return NextResponse.json(
         {
           error: "Слишком много запросов к загрузке файлов. Подождите пару минут и попробуйте снова."
@@ -112,14 +117,15 @@ export async function POST(request: Request) {
 
         return NextResponse.json(jsonResponse);
       } catch (error) {
-        logError(
-          "Failed to generate Vercel Blob upload token.",
+        logErrorEvent(
+          "teacher.upload.blob_token.failed",
           {
             ...requestContext,
             userId: blobUserId,
             uploadMode: body.type
           },
-          error
+          error,
+          "Failed to generate Vercel Blob upload token."
         );
         return NextResponse.json({ error: "Blob upload token generation failed" }, { status: 500 });
       }
@@ -159,6 +165,19 @@ export async function POST(request: Request) {
           await deleteOwnedStoredFileIfUnused(previousFileId, user.id);
         }
 
+        logInfoEvent(
+          "teacher.upload.blob_register.succeeded",
+          {
+            ...requestContext,
+            userId: user.id,
+            previousFileId: previousFileId || undefined,
+            pathname,
+            originalName,
+            storedFileId: storedFile.id
+          },
+          "Blob upload was registered successfully."
+        );
+
         return NextResponse.json({
           file: {
             id: storedFile.id,
@@ -169,15 +188,16 @@ export async function POST(request: Request) {
           }
         });
       } catch (error) {
-        logError(
-          "Failed to register Vercel Blob upload in database.",
+        logErrorEvent(
+          "teacher.upload.blob_register.failed",
           {
             ...requestContext,
             userId: user.id,
             previousFileId: previousFileId || undefined,
             pathname
           },
-          error
+          error,
+          "Failed to register uploaded blob in the database."
         );
 
         return NextResponse.json(
@@ -219,6 +239,19 @@ export async function POST(request: Request) {
       await deleteOwnedStoredFileIfUnused(previousFileId, user.id);
     }
 
+    logInfoEvent(
+      "teacher.upload.form.succeeded",
+      {
+        ...requestContext,
+        userId: user.id,
+        previousFileId: previousFileId || undefined,
+        fileName: file.name,
+        fileSize: file.size,
+        storedFileId: storedFile.id
+      },
+      "Teacher topic form upload completed."
+    );
+
     return NextResponse.json({
       file: {
         id: storedFile.id,
@@ -229,8 +262,8 @@ export async function POST(request: Request) {
       }
     });
   } catch (error) {
-    logError(
-      "Failed to upload file for teacher topic form.",
+    logErrorEvent(
+      "teacher.upload.form.failed",
       {
         ...requestContext,
         userId: user.id,
@@ -238,7 +271,8 @@ export async function POST(request: Request) {
         fileName: file.name,
         fileSize: file.size
       },
-      error
+      error,
+      "Failed to upload file for teacher topic form."
     );
     return NextResponse.json({ error: "Upload failed" }, { status: 500 });
   }

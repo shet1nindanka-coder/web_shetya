@@ -11,6 +11,13 @@ type LogContext = Record<string, unknown>;
 const loggerLevel = process.env.LOG_LEVEL ?? (process.env.NODE_ENV === "production" ? "info" : "debug");
 const loggerHostname = hostname();
 
+type LogEventDescriptor = {
+  event: string;
+  scope?: string;
+  action?: string;
+  outcome?: string;
+};
+
 function normalizeLogValue(value: unknown): unknown {
   if (value instanceof Date) {
     return value.toISOString();
@@ -41,6 +48,45 @@ function compactContext<T extends LogContext>(context: T): T {
   ) as T;
 }
 
+function splitLogEvent(event: string): LogEventDescriptor {
+  const normalizedEvent = event.trim();
+  const parts = normalizedEvent
+    .split(".")
+    .map((part) => part.trim())
+    .filter(Boolean);
+
+  if (parts.length === 0) {
+    return { event: normalizedEvent || "unknown" };
+  }
+
+  if (parts.length === 1) {
+    return {
+      event: normalizedEvent,
+      scope: parts[0]
+    };
+  }
+
+  if (parts.length === 2) {
+    return {
+      event: normalizedEvent,
+      scope: parts[0],
+      action: parts[1]
+    };
+  }
+
+  return {
+    event: normalizedEvent,
+    scope: parts[0],
+    action: parts.slice(1, -1).join("."),
+    outcome: parts.at(-1)
+  };
+}
+
+function buildLogMessage(event: string, message?: string) {
+  const normalizedMessage = message?.trim();
+  return normalizedMessage ? `${event} | ${normalizedMessage}` : event;
+}
+
 function getRequestId(headers: HeaderSource) {
   return (
     headers.get("x-request-id")?.trim() ??
@@ -59,6 +105,7 @@ export const logger = pino({
     service: "tutorflow",
     env: process.env.NODE_ENV ?? "development"
   },
+  messageKey: "message",
   timestamp: pino.stdTimeFunctions.isoTime,
   formatters: {
     level: (label) => ({ level: label })
@@ -126,6 +173,13 @@ export function getRequestLogContext(request: Request, extra: LogContext = {}) {
   });
 }
 
+export function getEventLogContext(event: string, context: LogContext = {}) {
+  return compactContext({
+    ...splitLogEvent(event),
+    ...context
+  });
+}
+
 export function logInfo(message: string, context: LogContext = {}) {
   logger.info(compactContext(context), message);
 }
@@ -147,5 +201,29 @@ export function logError(message: string, context: LogContext = {}, error?: unkn
       error: error === undefined ? undefined : serializeError(error)
     }),
     message
+  );
+}
+
+export function logInfoEvent(event: string, context: LogContext = {}, message?: string) {
+  logger.info(getEventLogContext(event, context), buildLogMessage(event, message));
+}
+
+export function logWarnEvent(event: string, context: LogContext = {}, error?: unknown, message?: string) {
+  logger.warn(
+    compactContext({
+      ...getEventLogContext(event, context),
+      error: error === undefined ? undefined : serializeError(error)
+    }),
+    buildLogMessage(event, message)
+  );
+}
+
+export function logErrorEvent(event: string, context: LogContext = {}, error?: unknown, message?: string) {
+  logger.error(
+    compactContext({
+      ...getEventLogContext(event, context),
+      error: error === undefined ? undefined : serializeError(error)
+    }),
+    buildLogMessage(event, message)
   );
 }

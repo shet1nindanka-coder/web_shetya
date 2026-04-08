@@ -2,7 +2,7 @@ import { UserRole } from "@prisma/client";
 import { cookies } from "next/headers";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
-import { logError } from "@/lib/logger";
+import { logErrorEvent } from "@/lib/logger";
 import { prisma } from "@/lib/prisma";
 import { createSessionToken, hashSessionToken, verifyPassword } from "@/lib/password";
 import { roleHome } from "@/lib/utils";
@@ -120,7 +120,7 @@ export async function tryGetCurrentUser() {
   try {
     return await getCurrentUser();
   } catch (error) {
-    logError("Failed to resolve current user.", {}, error);
+    logErrorEvent("auth.current_user.resolve_failed", {}, error, "Failed to resolve current user.");
     return null;
   }
 }
