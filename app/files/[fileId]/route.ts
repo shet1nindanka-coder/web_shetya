@@ -1,4 +1,5 @@
 import { tryGetCurrentUser } from "@/lib/auth";
+import { canAccessStoredFile, summarizeStoredFileAccess } from "@/lib/file-access";
 import { getRequestLogContext, logWarnEvent } from "@/lib/logger";
 import { prisma } from "@/lib/prisma";
 import { getBlobAccessMode, getPublicBlobUrl, getStorageBackend, readStoredFile } from "@/lib/storage";
@@ -19,7 +20,22 @@ export async function GET(request: Request, { params }: FileRouteProps) {
   const { fileId } = await params;
   const requestContext = getRequestLogContext(request, { userId: user.id, fileId });
   const file = await prisma.storedFile.findUnique({
-    where: { id: fileId }
+    where: { id: fileId },
+    select: {
+      id: true,
+      originalName: true,
+      mimeType: true,
+      size: true,
+      storageKey: true,
+      uploadedById: true,
+      _count: {
+        select: {
+          theoryForTopics: true,
+          homeworkForTopics: true,
+          answerForNumberEntries: true
+        }
+      }
+    }
   });
 
   if (!file) {
@@ -32,6 +48,29 @@ export async function GET(request: Request, { params }: FileRouteProps) {
       },
       undefined,
       "Stored file record was not found."
+    );
+    return new Response("Not found", { status: 404 });
+  }
+
+  const accessSnapshot = {
+    uploadedById: file.uploadedById,
+    counts: {
+      theoryForTopics: file._count.theoryForTopics,
+      homeworkForTopics: file._count.homeworkForTopics,
+      answerForNumberEntries: file._count.answerForNumberEntries
+    }
+  };
+
+  if (!canAccessStoredFile(user, accessSnapshot)) {
+    logWarnEvent(
+      "file.read.denied",
+      {
+        ...requestContext,
+        userRole: user.role,
+        ...summarizeStoredFileAccess(accessSnapshot)
+      },
+      undefined,
+      "Stored file access was denied."
     );
     return new Response("Not found", { status: 404 });
   }
