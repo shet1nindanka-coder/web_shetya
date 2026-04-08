@@ -3,6 +3,7 @@ import { PageHeader } from "@/components/page-header";
 import { ProgressBar } from "@/components/progress-bar";
 import { SectionCard } from "@/components/section-card";
 import { StatCard } from "@/components/stat-card";
+import { CsvImportButton } from "@/components/csv-import-button";
 import { TeacherStudentProgressBoard } from "@/components/teacher-student-progress-board";
 import { requireUser } from "@/lib/auth";
 import { getTeacherStudentDetail } from "@/lib/platform-data";
@@ -44,6 +45,7 @@ export default async function TeacherStudentPage({ params }: TeacherStudentPageP
             >
               Экспорт прогресса CSV
             </a>
+            <CsvImportButton studentId={data.student.id} />
           </div>
         }
       />
