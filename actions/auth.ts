@@ -3,6 +3,7 @@
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { signIn, signOut } from "@/lib/auth";
+import { getHeadersLogContext, logError, logWarn } from "@/lib/logger";
 import {
   assertRateLimit,
   getClientIpFromHeaders,
@@ -44,6 +45,14 @@ export async function loginAction(formData: FormData) {
     );
   } catch (error) {
     if (error instanceof RateLimitExceededError) {
+      logWarn(
+        "Login rate limit exceeded.",
+        getHeadersLogContext(requestHeaders, {
+          login: normalizedLogin,
+          scope: "login"
+        }),
+        error
+      );
       redirect("/login?error=rateLimited");
     }
 
@@ -55,7 +64,14 @@ export async function loginAction(formData: FormData) {
   try {
     user = await signIn(login, password);
   } catch (error) {
-    console.error("Failed to sign in.", error);
+    logError(
+      "Failed to sign in.",
+      getHeadersLogContext(requestHeaders, {
+        login: normalizedLogin,
+        scope: "login"
+      }),
+      error
+    );
     redirect("/login?error=database");
   }
 

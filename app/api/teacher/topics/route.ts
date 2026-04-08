@@ -3,6 +3,7 @@ import { revalidatePath } from "next/cache";
 import { NextResponse } from "next/server";
 import { tryGetCurrentUser } from "@/lib/auth";
 import { publishDashboardRealtimeEvent } from "@/lib/dashboard-realtime";
+import { getRequestLogContext, logError } from "@/lib/logger";
 import { revalidateAllPlatformData } from "@/lib/platform-data-cache";
 import { prisma } from "@/lib/prisma";
 import { createTopicHomeworkNumbersInBatches } from "@/lib/topic-homework-numbers";
@@ -26,6 +27,7 @@ function revalidateTopicRoutes(topicId?: string) {
 }
 
 export async function POST(request: Request) {
+  const requestContext = getRequestLogContext(request);
   const user = await tryGetCurrentUser();
 
   if (!user || user.role !== UserRole.TEACHER) {
@@ -114,7 +116,16 @@ export async function POST(request: Request) {
       redirectTo: "/teacher/topics?created=1"
     });
   } catch (error) {
-    console.error("Failed to create topic from API route.", error);
+    logError(
+      "Failed to create topic from API route.",
+      {
+        ...requestContext,
+        userId: user.id,
+        title,
+        numberCount: numbers.length
+      },
+      error
+    );
 
     return NextResponse.json(
       {

@@ -1,4 +1,5 @@
 import { tryGetCurrentUser } from "@/lib/auth";
+import { getRequestLogContext, logWarn } from "@/lib/logger";
 import { prisma } from "@/lib/prisma";
 import { getBlobAccessMode, getPublicBlobUrl, getStorageBackend, readStoredFile } from "@/lib/storage";
 
@@ -16,13 +17,14 @@ export async function GET(request: Request, { params }: FileRouteProps) {
   }
 
   const { fileId } = await params;
+  const requestContext = getRequestLogContext(request, { userId: user.id, fileId });
   const file = await prisma.storedFile.findUnique({
     where: { id: fileId }
   });
 
   if (!file) {
-    console.error("Stored file record not found.", {
-      fileId,
+    logWarn("Stored file record not found.", {
+      ...requestContext,
       storageBackend: getStorageBackend(),
       blobAccess: getBlobAccessMode()
     });
@@ -39,8 +41,8 @@ export async function GET(request: Request, { params }: FileRouteProps) {
   const storedFile = await readStoredFile(file.storageKey);
 
   if (!storedFile) {
-    console.error("Stored file payload not found.", {
-      fileId,
+    logWarn("Stored file payload not found.", {
+      ...requestContext,
       storageKey: file.storageKey,
       storageBackend: getStorageBackend(),
       blobAccess: getBlobAccessMode(),

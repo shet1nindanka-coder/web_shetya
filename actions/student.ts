@@ -6,6 +6,7 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import { requireUser } from "@/lib/auth";
 import { publishDashboardRealtimeEvent } from "@/lib/dashboard-realtime";
+import { getHeadersLogContext, logError, logWarn } from "@/lib/logger";
 import { revalidateTeacherStudentsData, revalidateTeacherTopicsData } from "@/lib/platform-data-cache";
 import { hashPassword } from "@/lib/password";
 import { prisma } from "@/lib/prisma";
@@ -27,9 +28,10 @@ export async function createStudentAction(formData: FormData) {
     redirectTeacherWithStudentStatus(new URLSearchParams({ studentError: "invalid" }));
   }
 
-  try {
-    const clientIp = getClientIpFromHeaders(await headers());
+  const requestHeaders = await headers();
+  const clientIp = getClientIpFromHeaders(requestHeaders);
 
+  try {
     assertRateLimit(
       {
         scope: "create-student",
@@ -41,6 +43,13 @@ export async function createStudentAction(formData: FormData) {
     );
   } catch (error) {
     if (error instanceof RateLimitExceededError) {
+      logWarn(
+        "Student creation rate limit exceeded.",
+        getHeadersLogContext(requestHeaders, {
+          teacherId: teacher.id
+        }),
+        error
+      );
       redirectTeacherWithStudentStatus(new URLSearchParams({ studentError: "rateLimited" }));
     }
 
@@ -72,7 +81,16 @@ export async function createStudentAction(formData: FormData) {
       }
     });
   } catch (error) {
-    console.error("Failed to create student.", error);
+    logError(
+      "Failed to create student.",
+      {
+        teacherId: teacher.id,
+        clientIp,
+        studentLogin: login,
+        studentName: name
+      },
+      error
+    );
     redirectTeacherWithStudentStatus(new URLSearchParams({ studentError: "save" }));
   }
 
@@ -87,7 +105,7 @@ export async function createStudentAction(formData: FormData) {
 }
 
 export async function deleteStudentAction(formData: FormData) {
-  await requireUser(UserRole.TEACHER);
+  const teacher = await requireUser(UserRole.TEACHER);
 
   const studentId = String(formData.get("studentId") ?? "").trim();
 
@@ -116,7 +134,7 @@ export async function deleteStudentAction(formData: FormData) {
       }
     });
   } catch (error) {
-    console.error("Failed to delete student.", error);
+    logError("Failed to delete student.", { teacherId: teacher.id, studentId }, error);
     redirectTeacherWithStudentStatus(new URLSearchParams({ studentError: "delete" }));
   }
 

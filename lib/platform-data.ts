@@ -1,5 +1,6 @@
 import { unstable_cache } from "next/cache";
 import { HomeworkNumberStatus, Prisma, UserRole } from "@prisma/client";
+import { logWarn } from "@/lib/logger";
 import { PLATFORM_DATA_TAGS } from "@/lib/platform-data-cache";
 import { prisma } from "@/lib/prisma";
 import { completionPercent, getStatusCounts } from "@/lib/utils";
@@ -191,10 +192,11 @@ export async function getStudentTopicsOverview(
       throw error;
     }
 
-    console.error("Falling back to minimal student topics overview due to Prisma schema mismatch.", {
-      studentId,
+    logWarn(
+      "Falling back to minimal student topics overview due to Prisma schema mismatch.",
+      { studentId },
       error
-    });
+    );
 
     const [student, topics] = await Promise.all([
       prisma.user.findUniqueOrThrow({
@@ -371,11 +373,11 @@ export async function getStudentTopicDetail(
       throw error;
     }
 
-    console.error("Falling back to minimal student topic detail due to Prisma schema mismatch.", {
-      studentId,
-      topicId,
+    logWarn(
+      "Falling back to minimal student topic detail due to Prisma schema mismatch.",
+      { studentId, topicId },
       error
-    });
+    );
 
     const topic = await prisma.topic.findUniqueOrThrow({
       where: { id: topicId },
@@ -810,10 +812,7 @@ export async function getStudentDeadlines(studentId: string) {
       throw error;
     }
 
-    console.error("Falling back to empty deadlines due to Prisma schema mismatch.", {
-      studentId,
-      error
-    });
+    logWarn("Falling back to empty deadlines due to Prisma schema mismatch.", { studentId }, error);
 
     return [];
   }

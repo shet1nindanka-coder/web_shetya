@@ -2,6 +2,7 @@ import ExcelJS from "exceljs";
 import { Prisma, UserRole } from "@prisma/client";
 import { NextResponse } from "next/server";
 import { tryGetCurrentUser } from "@/lib/auth";
+import { getRequestLogContext, logError } from "@/lib/logger";
 import { prisma } from "@/lib/prisma";
 import { formatDateTime } from "@/lib/utils";
 
@@ -550,9 +551,11 @@ function setDetailsSheet(
 }
 
 export async function GET(
-  _request: Request,
+  request: Request,
   { params }: { params: Promise<{ studentId: string }> }
 ) {
+  let studentId = "unknown";
+
   try {
     const user = await tryGetCurrentUser();
 
@@ -560,7 +563,7 @@ export async function GET(
       return new NextResponse("Unauthorized", { status: 401 });
     }
 
-    const { studentId } = await params;
+    ({ studentId } = await params);
     const data = await loadExportData(studentId);
 
     if (!data) {
@@ -798,7 +801,13 @@ export async function GET(
       }
     });
   } catch (error) {
-    console.error("Failed to export student progress file", error);
+    logError(
+      "Failed to export student progress file.",
+      getRequestLogContext(request, {
+        studentId
+      }),
+      error
+    );
     return new NextResponse("Export failed", { status: 500 });
   }
 }

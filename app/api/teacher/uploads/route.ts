@@ -2,6 +2,7 @@ import { handleUpload, type HandleUploadBody } from "@vercel/blob/client";
 import { UserRole } from "@prisma/client";
 import { NextResponse } from "next/server";
 import { tryGetCurrentUser } from "@/lib/auth";
+import { getRequestLogContext, logError, logWarn } from "@/lib/logger";
 import { prisma } from "@/lib/prisma";
 import {
   assertRateLimit,
@@ -33,6 +34,8 @@ function validateUploadedMetadata(fileName: string, mimeType: string, size: numb
 }
 
 export async function POST(request: Request) {
+  const requestContext = getRequestLogContext(request);
+
   try {
     assertRateLimit(
       {
@@ -45,6 +48,7 @@ export async function POST(request: Request) {
     );
   } catch (error) {
     if (error instanceof RateLimitExceededError) {
+      logWarn("Teacher upload rate limit exceeded.", requestContext, error);
       return NextResponse.json(
         {
           error: "Слишком много запросов к загрузке файлов. Подождите пару минут и попробуйте снова."
@@ -79,6 +83,8 @@ export async function POST(request: Request) {
       | null;
 
     if (body && "type" in body && (body.type === "blob.generate-client-token" || body.type === "blob.upload-completed")) {
+      let blobUserId: string | undefined;
+
       if (!process.env.BLOB_READ_WRITE_TOKEN?.trim()) {
         return NextResponse.json({ error: "Blob storage is not configured" }, { status: 400 });
       }
@@ -89,6 +95,8 @@ export async function POST(request: Request) {
         if (!user || user.role !== UserRole.TEACHER) {
           return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }
+
+        blobUserId = user.id;
       }
 
       try {
@@ -104,7 +112,15 @@ export async function POST(request: Request) {
 
         return NextResponse.json(jsonResponse);
       } catch (error) {
-        console.error("Failed to generate Vercel Blob upload token.", error);
+        logError(
+          "Failed to generate Vercel Blob upload token.",
+          {
+            ...requestContext,
+            userId: blobUserId,
+            uploadMode: body.type
+          },
+          error
+        );
         return NextResponse.json({ error: "Blob upload token generation failed" }, { status: 500 });
       }
     }
@@ -153,7 +169,16 @@ export async function POST(request: Request) {
           }
         });
       } catch (error) {
-        console.error("Failed to register Vercel Blob upload in database.", error);
+        logError(
+          "Failed to register Vercel Blob upload in database.",
+          {
+            ...requestContext,
+            userId: user.id,
+            previousFileId: previousFileId || undefined,
+            pathname
+          },
+          error
+        );
 
         return NextResponse.json(
           {
@@ -204,7 +229,17 @@ export async function POST(request: Request) {
       }
     });
   } catch (error) {
-    console.error("Failed to upload file for teacher topic form.", error);
+    logError(
+      "Failed to upload file for teacher topic form.",
+      {
+        ...requestContext,
+        userId: user.id,
+        previousFileId: previousFileId || undefined,
+        fileName: file.name,
+        fileSize: file.size
+      },
+      error
+    );
     return NextResponse.json({ error: "Upload failed" }, { status: 500 });
   }
 }

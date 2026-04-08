@@ -3,6 +3,7 @@ import { revalidatePath } from "next/cache";
 import { NextResponse } from "next/server";
 import { tryGetCurrentUser } from "@/lib/auth";
 import { publishDashboardRealtimeEvent } from "@/lib/dashboard-realtime";
+import { getRequestLogContext, logError } from "@/lib/logger";
 import { revalidateAllPlatformData } from "@/lib/platform-data-cache";
 import { prisma } from "@/lib/prisma";
 import { deleteStoredFileRecordIfUnused } from "@/lib/stored-files";
@@ -20,6 +21,7 @@ function revalidateTopicRoutes(topicId: string) {
 }
 
 export async function POST(request: Request) {
+  const requestContext = getRequestLogContext(request);
   const user = await tryGetCurrentUser();
 
   if (!user || user.role !== UserRole.TEACHER) {
@@ -62,7 +64,16 @@ export async function POST(request: Request) {
       }
     });
   } catch (error) {
-    console.error("Failed to attach answer file to homework number.", error);
+    logError(
+      "Failed to save homework answer.",
+      {
+        ...requestContext,
+        userId: user.id,
+        homeworkNumberId,
+        topicId: homeworkNumber.topicId
+      },
+      error
+    );
     return NextResponse.json({ error: "Не удалось сохранить ответ к номеру." }, { status: 500 });
   }
 
@@ -82,6 +93,7 @@ export async function POST(request: Request) {
 }
 
 export async function DELETE(request: Request) {
+  const requestContext = getRequestLogContext(request);
   const user = await tryGetCurrentUser();
 
   if (!user || user.role !== UserRole.TEACHER) {
@@ -127,7 +139,16 @@ export async function DELETE(request: Request) {
       }
     });
   } catch (error) {
-    console.error("Failed to remove answer file from homework number.", error);
+    logError(
+      "Failed to remove homework answer.",
+      {
+        ...requestContext,
+        userId: user.id,
+        homeworkNumberId,
+        topicId: homeworkNumber.topicId
+      },
+      error
+    );
     return NextResponse.json({ error: "Не удалось удалить ответ к номеру." }, { status: 500 });
   }
 
