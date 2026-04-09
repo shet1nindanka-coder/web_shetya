@@ -1,6 +1,11 @@
 import Link from "next/link";
 import { HomeworkNumberStatus, UserRole } from "@prisma/client";
 import { PageHeader } from "@/components/page-header";
+import {
+  buildTeacherProgressTimeline,
+  formatProgressTrend,
+  type ProgressTimelinePoint
+} from "@/lib/progress-timeline";
 import { ProgressBar } from "@/components/progress-bar";
 import { SectionCard } from "@/components/section-card";
 import { StatCard } from "@/components/stat-card";
@@ -40,19 +45,6 @@ type DistributionSegment = {
   value: number;
   color: string;
   badgeClassName: string;
-};
-
-type ReviewStudentSummary = {
-  id: string;
-  name: string;
-  email: string;
-  totalRed: number;
-  topicCount: number;
-  topics: Array<{
-    topicId: string;
-    title: string;
-    numbers: number[];
-  }>;
 };
 
 type TeacherStatisticsPageProps = {
@@ -133,78 +125,6 @@ export default async function TeacherStatisticsPage({ searchParams }: TeacherSta
     solvedPercent: completionPercent(student.solvedCount, data.stats.totalNumbers),
     redPercent: completionPercent(student.redCount, data.stats.totalNumbers)
   }));
-  const reviewStudentsMap = new Map<
-    string,
-    {
-      id: string;
-      name: string;
-      email: string;
-      totalRed: number;
-      topics: Map<
-        string,
-        {
-          topicId: string;
-          title: string;
-          numbers: number[];
-        }
-      >;
-    }
-  >(
-    data.students.map((student) => [
-      student.id,
-      {
-        id: student.id,
-        name: student.name,
-        email: student.email,
-        totalRed: 0,
-        topics: new Map()
-      }
-    ])
-  );
-
-  for (const topic of data.topics) {
-    for (const number of topic.homeworkNumbers) {
-      for (const status of number.statuses) {
-        if (status.status !== HomeworkNumberStatus.RED) {
-          continue;
-        }
-
-        const current = reviewStudentsMap.get(status.studentId);
-
-        if (!current) {
-          continue;
-        }
-
-        current.totalRed += 1;
-
-        const topicEntry = current.topics.get(topic.id) ?? {
-          topicId: topic.id,
-          title: topic.title,
-          numbers: []
-        };
-
-        topicEntry.numbers.push(number.number);
-        current.topics.set(topic.id, topicEntry);
-      }
-    }
-  }
-
-  const studentsNeedingReview: ReviewStudentSummary[] = Array.from(reviewStudentsMap.values())
-    .filter((student) => student.totalRed > 0)
-    .map((student) => ({
-      id: student.id,
-      name: student.name,
-      email: student.email,
-      totalRed: student.totalRed,
-      topicCount: student.topics.size,
-      topics: Array.from(student.topics.values())
-        .map((topic) => ({
-          ...topic,
-          numbers: [...topic.numbers].sort((left, right) => left - right)
-        }))
-        .sort((left, right) => left.title.localeCompare(right.title, "ru"))
-    }))
-    .sort((left, right) => right.totalRed - left.totalRed || right.topicCount - left.topicCount);
 
   const totalGreen = topicAnalytics.reduce((sum, topic) => sum + topic.greenCount, 0);
   const totalYellow = topicAnalytics.reduce((sum, topic) => sum + topic.yellowCount, 0);
@@ -271,8 +191,9 @@ export default async function TeacherStatisticsPage({ searchParams }: TeacherSta
     view === "teacher" ? "Статистика для подготовки к занятиям" : "Общая аналитика платформы";
   const headlineDescription =
     view === "teacher"
-      ? "Кого разбирать, где проблемы и что происходит по темам."
+      ? "Темп прогресса по времени и точечный срез по теме и ученику."
       : "Общие метрики и аналитика платформы.";
+  const progressTimeline = buildTeacherProgressTimeline(data.topics);
   const drilldownTopics = data.topics.map((topic) => ({
     id: topic.id,
     title: topic.title,
@@ -320,69 +241,53 @@ export default async function TeacherStatisticsPage({ searchParams }: TeacherSta
 
       {view === "teacher" ? (
         <>
-          <SectionCard title="Кому нужен разбор сейчас">
-            {studentsNeedingReview.length === 0 ? (
-              <div className="rounded-[14px] sm:rounded-[16px] border border-dashed border-slate-200 bg-slate-50/60 px-4 py-10 text-center">
-                <p className="font-display text-lg sm:text-xl font-semibold text-[var(--theme-text-strong)]">Сейчас нет учеников с красными номерами</p>
-              </div>
-            ) : (
-              <div className="grid gap-3 sm:gap-4 xl:grid-cols-2">
-                {studentsNeedingReview.map((student, index) => (
-                  <article
-                    key={student.id}
-                    className="ui-surface ui-panel-soft rounded-[14px] sm:rounded-[16px] p-3.5 sm:rounded-[14px] sm:rounded-[16px] sm:p-6"
-                  >
-                    <div className="flex flex-wrap items-start justify-between gap-3">
-                      <div>
-                        <div className="flex flex-wrap items-center gap-2">
-                          <span className="ui-badge-soft rounded-[10px] px-2.5 py-1 text-xs font-medium">
-                            #{index + 1}
-                          </span>
-                          <h2 className="font-display text-[1.1rem] sm:text-[1.25rem] font-semibold text-[var(--theme-text-strong)] sm:text-[1.15rem] sm:text-[1.35rem]">
-                            {student.name}
-                          </h2>
-                        </div>
-                        <p className="mt-2 text-sm leading-relaxed text-[var(--theme-text-muted)]">
-                          {student.totalRed} красных номеров в {student.topicCount}{" "}
-                          {student.topicCount === 1 ? "теме" : "темах"}
-                        </p>
-                      </div>
+          <SectionCard
+            title="Динамика прогресса"
+            description="По последним изменениям статусов видно, с каким темпом закрываются номера и где появляются новые сложные места."
+          >
+            <div className="grid grid-cols-2 gap-2.5 sm:gap-3 xl:grid-cols-4">
+              <StatCard
+                label="Решено за 7 дней"
+                value={progressTimeline.solvedLast7Days}
+                accent={
+                  <span className="font-semibold text-brand-700">
+                    {formatProgressTrend(progressTimeline.solvedLast7Days, progressTimeline.solvedLast7DaysPrevious)}
+                  </span>
+                }
+              />
+              <StatCard
+                label="Решено за 30 дней"
+                value={progressTimeline.solvedLast30Days}
+                accent={
+                  <span className="font-semibold text-emerald-700">
+                    {formatProgressTrend(progressTimeline.solvedLast30Days, progressTimeline.solvedLast30DaysPrevious)}
+                  </span>
+                }
+              />
+              <StatCard
+                label="Красных за 30 дней"
+                value={progressTimeline.reviewLast30Days}
+                hint="Новые точки, где ученикам понадобился разбор"
+              />
+              <StatCard
+                label="Активных учеников за 30 дней"
+                value={progressTimeline.activeStudentsLast30Days}
+                hint="У кого за месяц менялись статусы по номерам"
+              />
+            </div>
 
-                      <Link
-                        href={`/teacher/students/${student.id}`}
-                        className="ui-pressable ui-button-secondary inline-flex rounded-[14px] px-4 py-2 text-sm font-semibold transition"
-                      >
-                        Открыть ученика
-                      </Link>
-                    </div>
-
-                    <div className="mt-5 space-y-3">
-                      {student.topics.map((topic) => (
-                        <div key={topic.topicId} className="ui-card-soft rounded-[14px] sm:rounded-[16px] px-4 py-4">
-                          <div className="flex flex-wrap items-center justify-between gap-3">
-                            <p className="text-base font-semibold text-[var(--theme-text-strong)]">{topic.title}</p>
-                            <span className="rounded-[10px] border border-rose-200 bg-rose-50 px-3 py-1 text-xs font-medium text-rose-800">
-                              {topic.numbers.length} красн.
-                            </span>
-                          </div>
-
-                          <div className="mt-3 flex flex-wrap gap-2">
-                            {topic.numbers.map((number) => (
-                              <span
-                                key={`${topic.topicId}-${number}`}
-                                className="rounded-[12px] border border-rose-200 bg-rose-50 px-3 py-1.5 text-sm font-medium text-rose-900"
-                              >
-                                № {number}
-                              </span>
-                            ))}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  </article>
-                ))}
-              </div>
-            )}
+            <div className="mt-4 grid gap-3 sm:gap-4 xl:grid-cols-2">
+              <TimelineChartCard
+                title="За последние 14 дней"
+                description="Сколько номеров ученики закрывали по дням и где появлялись новые красные статусы."
+                points={progressTimeline.daily}
+              />
+              <TimelineChartCard
+                title="По неделям за 8 недель"
+                description="Помогает увидеть общий темп прохождения и моменты просадки по неделям."
+                points={progressTimeline.weekly}
+              />
+            </div>
           </SectionCard>
 
           <SectionCard title="Срез по теме и ученику">
@@ -659,6 +564,86 @@ function CompactBar({
           transform: `scaleX(${normalizedValue})`,
           transformOrigin: "left center"
         }}
+      />
+    </div>
+  );
+}
+
+function TimelineChartCard({
+  title,
+  description,
+  points
+}: {
+  title: string;
+  description: string;
+  points: ProgressTimelinePoint[];
+}) {
+  const maxValue = Math.max(1, ...points.map((point) => Math.max(point.solved, point.review)));
+  const solvedTotal = points.reduce((sum, point) => sum + point.solved, 0);
+  const reviewTotal = points.reduce((sum, point) => sum + point.review, 0);
+
+  return (
+    <article className="ui-surface ui-panel-soft rounded-[14px] sm:rounded-[16px] p-3.5 sm:p-6">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div className="space-y-1">
+          <h3 className="font-display text-[1.05rem] font-semibold text-[var(--theme-text-strong)] sm:text-[1.15rem]">
+            {title}
+          </h3>
+          <p className="max-w-xl text-sm leading-relaxed text-[var(--theme-text-muted)]">{description}</p>
+        </div>
+
+        <div className="flex flex-wrap items-center gap-3 text-xs font-medium text-[var(--theme-text-muted)]">
+          <span className="inline-flex items-center gap-2">
+            <span className="h-2.5 w-2.5 rounded-full bg-brand-500" />
+            Закрыто: {solvedTotal}
+          </span>
+          <span className="inline-flex items-center gap-2">
+            <span className="h-2.5 w-2.5 rounded-full bg-rose-400" />
+            Красных: {reviewTotal}
+          </span>
+        </div>
+      </div>
+
+      <div
+        className="mt-6 grid items-end gap-2"
+        style={{ gridTemplateColumns: `repeat(${points.length}, minmax(0, 1fr))` }}
+      >
+        {points.map((point) => (
+          <div key={point.key} className="min-w-0">
+            <div
+              className="flex h-44 items-end justify-center gap-1.5 rounded-[14px] border border-[var(--theme-border-soft)] bg-[var(--theme-surface-soft)] px-1.5 py-3"
+              title={`${point.tooltip}: закрыто ${point.solved}, красных ${point.review}`}
+            >
+              <TimelineBar value={point.solved} maxValue={maxValue} className="bg-brand-500" />
+              <TimelineBar value={point.review} maxValue={maxValue} className="bg-rose-400" />
+            </div>
+            <div className="mt-2 space-y-0.5 text-center">
+              <p className="truncate text-[11px] font-medium text-[var(--theme-text-strong)]">{point.label}</p>
+              <p className="text-[11px] text-[var(--theme-text-muted)]">{point.solved + point.review}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+    </article>
+  );
+}
+
+function TimelineBar({
+  value,
+  maxValue,
+  className
+}: {
+  value: number;
+  maxValue: number;
+  className: string;
+}) {
+  const normalizedHeight = value <= 0 ? 0 : Math.max(12, Math.round((value / maxValue) * 100));
+
+  return (
+    <div className="flex h-full w-4 items-end sm:w-5">
+      <div
+        className={cx("w-full rounded-t-[10px] transition-all duration-300 ease-out", className)}
+        style={{ height: `${normalizedHeight}%` }}
       />
     </div>
   );
