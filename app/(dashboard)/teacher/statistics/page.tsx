@@ -213,8 +213,6 @@ export default async function TeacherStatisticsPage({ searchParams }: TeacherSta
   const totalUnfilled = Math.max(totalStatusSlots - data.stats.totalMarked, 0);
   const activeTopics = topicAnalytics.filter((topic) => topic.studentsWithActivity > 0);
   const activeStudents = studentStats.filter((student) => student.markedCount > 0);
-  const totalStudentsNeedingReview = studentsNeedingReview.length;
-
   const strongestTopics = [...topicAnalytics]
     .sort((left, right) => right.solvedPercent - left.solvedPercent || right.solvedCount - left.solvedCount)
     .slice(0, 5);
@@ -230,15 +228,6 @@ export default async function TeacherStatisticsPage({ searchParams }: TeacherSta
     .filter((student) => student.redCount > 0)
     .sort((left, right) => right.redCount - left.redCount || right.redPercent - left.redPercent)
     .slice(0, 5);
-  const quickWinStudents = [...studentStats]
-    .filter((student) => student.redCount > 0)
-    .sort((left, right) => right.solvedPercent - left.solvedPercent || left.redCount - right.redCount)
-    .slice(0, 5);
-
-  const strongestTopic = strongestTopics[0] ?? null;
-  const attentionTopic = attentionTopics[0] ?? null;
-  const leadStudent = engagedStudents[0] ?? null;
-  const firstReviewStudent = studentsNeedingReview[0] ?? null;
 
   const distributionSegments: DistributionSegment[] = [
     {
@@ -312,38 +301,6 @@ export default async function TeacherStatisticsPage({ searchParams }: TeacherSta
         description={headlineDescription}
       />
 
-      <div className="grid gap-4 sm:grid-cols-3">
-        <InsightCard
-          label="Лучше всего идет"
-          value={strongestTopic ? strongestTopic.title : "Пока нет данных"}
-          hint={
-            strongestTopic
-              ? `${strongestTopic.solvedPercent}% решенных слотов, ${strongestTopic.solvedCount} решенных статусов`
-              : "Как только появится активность, здесь покажется самая сильная тема."
-          }
-        />
-        <InsightCard
-          label="Больше всего внимания"
-          value={attentionTopic ? attentionTopic.title : "Пока без красных"}
-          hint={
-            attentionTopic
-              ? `${attentionTopic.redCount} красных статусов и ${attentionTopic.studentsWithActivity} активных учеников`
-              : "Сейчас нет тем, в которых уже накопились красные статусы."
-          }
-        />
-        <InsightCard
-          label={view === "teacher" ? "Кому первым нужен разбор" : "Ключевой ученик"}
-          value={firstReviewStudent ? firstReviewStudent.name : leadStudent ? leadStudent.name : "Пока нет красных"}
-          hint={
-            firstReviewStudent
-              ? `${firstReviewStudent.totalRed} красных номеров в ${firstReviewStudent.topicCount} темах`
-              : leadStudent
-                ? `${leadStudent.solvedCount} решенных номеров и ${leadStudent.markedCount} отмеченных статусов`
-                : "Когда появятся красные статусы, здесь сразу будет виден главный кандидат на разбор."
-          }
-        />
-      </div>
-
       <nav className="ui-fade-slide ui-tab-shell ui-tab-strip flex gap-1.5 rounded-[14px] sm:rounded-[16px] p-1.5 sm:flex-wrap sm:rounded-[14px] sm:rounded-[16px] sm:p-2">
         {statisticsViews.map((item) => {
           const isActive = item.key === view;
@@ -363,27 +320,6 @@ export default async function TeacherStatisticsPage({ searchParams }: TeacherSta
 
       {view === "teacher" ? (
         <>
-          <div className="grid grid-cols-2 gap-2.5 sm:gap-3 xl:grid-cols-4">
-            <StatCard
-              label="Нужен разбор"
-              value={totalStudentsNeedingReview}
-              accent={<span className="font-semibold text-rose-700">{completionPercent(totalStudentsNeedingReview, data.stats.totalStudents)}% учеников</span>}
-            />
-            <StatCard
-              label="Красные номера"
-              value={totalRed}
-              accent={<span className="font-semibold text-rose-700">{completionPercent(totalRed, totalStatusSlots)}% от всех слотов</span>}
-            />
-            <StatCard
-              label="Темы с разбором"
-              value={attentionTopics.length}
-            />
-            <StatCard
-              label="Быстрые победы"
-              value={quickWinStudents.length}
-            />
-          </div>
-
           <SectionCard title="Кому нужен разбор сейчас">
             {studentsNeedingReview.length === 0 ? (
               <div className="rounded-[14px] sm:rounded-[16px] border border-dashed border-slate-200 bg-slate-50/60 px-4 py-10 text-center">
@@ -615,26 +551,6 @@ export default async function TeacherStatisticsPage({ searchParams }: TeacherSta
         </>
       )}
     </div>
-  );
-}
-
-function InsightCard({
-  label,
-  value,
-  hint
-}: {
-  label: string;
-  value: string;
-  hint: string;
-}) {
-  return (
-    <article className="ui-surface ui-panel-soft rounded-[14px] sm:rounded-[16px] p-4 shadow-[0_10px_22px_rgba(15,23,42,0.04)] sm:rounded-[14px] sm:rounded-[16px] sm:p-4">
-      <p className="text-sm font-medium text-[var(--theme-text-muted)]">{label}</p>
-      <p className="mt-3 font-display text-[1.45rem] font-semibold leading-tight text-[var(--theme-text-strong)] sm:text-[1.6rem]">
-        {value}
-      </p>
-      <p className="ui-hint mt-2.5 text-sm leading-relaxed text-[var(--theme-text-muted)]">{hint}</p>
-    </article>
   );
 }
 
