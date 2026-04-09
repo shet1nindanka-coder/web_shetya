@@ -26,6 +26,7 @@ export type TeacherProgressTimeline = {
   solvedLast30Days: number;
   reviewLast30Days: number;
   activeStudentsLast30Days: number;
+  activeDaysLast30Days: number;
   solvedLast7DaysPrevious: number;
   solvedLast30DaysPrevious: number;
   daily: ProgressTimelinePoint[];
@@ -38,8 +39,16 @@ type TimelineEvent = {
   updatedAt: Date;
 };
 
-export function buildTeacherProgressTimeline(topics: TimelineTopic[], now = new Date()): TeacherProgressTimeline {
-  const events = topics.flatMap((topic) =>
+type TeacherProgressTimelineOptions = {
+  studentId?: string | null;
+};
+
+export function buildTeacherProgressTimeline(
+  topics: TimelineTopic[],
+  now = new Date(),
+  options: TeacherProgressTimelineOptions = {}
+): TeacherProgressTimeline {
+  const allEvents = topics.flatMap((topic) =>
     topic.homeworkNumbers.flatMap((number) =>
       number.statuses.flatMap((status) => {
         if (!status.status) {
@@ -62,6 +71,9 @@ export function buildTeacherProgressTimeline(topics: TimelineTopic[], now = new 
       })
     )
   );
+  const events = options.studentId
+    ? allEvents.filter((event) => event.studentId === options.studentId)
+    : allEvents;
 
   const todayStart = startOfDay(now);
   const tomorrowStart = addDays(todayStart, 1);
@@ -73,6 +85,11 @@ export function buildTeacherProgressTimeline(topics: TimelineTopic[], now = new 
   const currentWeekStart = startOfWeek(now);
   const daily = buildDailyTimeline(events, todayStart, 14);
   const weekly = buildWeeklyTimeline(events, currentWeekStart, 8);
+  const activeDayKeys = new Set(
+    events
+      .filter((event) => isWithinRange(event.updatedAt, last30DaysStart, tomorrowStart))
+      .map((event) => startOfDay(event.updatedAt).toISOString())
+  );
 
   const activeStudentsLast30Days = new Set(
     events
@@ -85,6 +102,7 @@ export function buildTeacherProgressTimeline(topics: TimelineTopic[], now = new 
     solvedLast30Days: countSolved(events, last30DaysStart, tomorrowStart),
     reviewLast30Days: countReview(events, last30DaysStart, tomorrowStart),
     activeStudentsLast30Days,
+    activeDaysLast30Days: activeDayKeys.size,
     solvedLast7DaysPrevious: countSolved(events, previous7DaysStart, last7DaysStart),
     solvedLast30DaysPrevious: countSolved(events, previous30DaysStart, last30DaysStart),
     daily,

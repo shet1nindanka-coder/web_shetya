@@ -7,6 +7,7 @@ import {
   type ProgressTimelinePoint
 } from "@/lib/progress-timeline";
 import { ProgressBar } from "@/components/progress-bar";
+import { TeacherProgressTimelineFilter } from "@/components/teacher-progress-timeline-filter";
 import { SectionCard } from "@/components/section-card";
 import { StatCard } from "@/components/stat-card";
 import { TeacherStatisticsDrilldown } from "@/components/teacher-statistics-drilldown";
@@ -61,8 +62,12 @@ export default async function TeacherStatisticsPage({ searchParams }: TeacherSta
 
   const resolvedSearchParams = (await searchParams) ?? {};
   const requestedView = typeof resolvedSearchParams.view === "string" ? resolvedSearchParams.view : undefined;
+  const requestedStudentId =
+    typeof resolvedSearchParams.studentId === "string" ? resolvedSearchParams.studentId : undefined;
   const view = requestedView === "developer" ? "developer" : "teacher";
   const data = await getTeacherTopicsOverview();
+  const selectedTimelineStudent =
+    data.students.find((student) => student.id === requestedStudentId) ?? null;
   const totalStatusSlots = data.stats.totalStudents * data.stats.totalNumbers;
 
   const studentStatsMap = new Map(
@@ -193,7 +198,9 @@ export default async function TeacherStatisticsPage({ searchParams }: TeacherSta
     view === "teacher"
       ? "Темп прогресса по времени и точечный срез по теме и ученику."
       : "Общие метрики и аналитика платформы.";
-  const progressTimeline = buildTeacherProgressTimeline(data.topics);
+  const progressTimeline = buildTeacherProgressTimeline(data.topics, new Date(), {
+    studentId: selectedTimelineStudent?.id ?? null
+  });
   const drilldownTopics = data.topics.map((topic) => ({
     id: topic.id,
     title: topic.title,
@@ -243,7 +250,20 @@ export default async function TeacherStatisticsPage({ searchParams }: TeacherSta
         <>
           <SectionCard
             title="Динамика прогресса"
-            description="По последним изменениям статусов видно, с каким темпом закрываются номера и где появляются новые сложные места."
+            description={
+              selectedTimelineStudent
+                ? `Показываем темп и сложные места только для ученика ${selectedTimelineStudent.name}.`
+                : "По последним изменениям статусов видно, с каким темпом закрываются номера и где появляются новые сложные места."
+            }
+            action={
+              <TeacherProgressTimelineFilter
+                students={data.students.map((student) => ({
+                  id: student.id,
+                  name: student.name
+                }))}
+                selectedStudentId={selectedTimelineStudent?.id ?? ""}
+              />
+            }
           >
             <div className="grid grid-cols-2 gap-2.5 sm:gap-3 xl:grid-cols-4">
               <StatCard
@@ -270,9 +290,17 @@ export default async function TeacherStatisticsPage({ searchParams }: TeacherSta
                 hint="Новые точки, где ученикам понадобился разбор"
               />
               <StatCard
-                label="Активных учеников за 30 дней"
-                value={progressTimeline.activeStudentsLast30Days}
-                hint="У кого за месяц менялись статусы по номерам"
+                label={selectedTimelineStudent ? "Дней с активностью" : "Активных учеников за 30 дней"}
+                value={
+                  selectedTimelineStudent
+                    ? progressTimeline.activeDaysLast30Days
+                    : progressTimeline.activeStudentsLast30Days
+                }
+                hint={
+                  selectedTimelineStudent
+                    ? "В скольких днях за месяц у выбранного ученика менялись статусы"
+                    : "У кого за месяц менялись статусы по номерам"
+                }
               />
             </div>
 

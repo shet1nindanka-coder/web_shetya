@@ -42,6 +42,7 @@ test("buildTeacherProgressTimeline groups solved and review updates into daily a
   assert.equal(result.solvedLast7Days, 2);
   assert.equal(result.reviewLast30Days, 1);
   assert.equal(result.activeStudentsLast30Days, 3);
+  assert.equal(result.activeDaysLast30Days, 4);
   assert.equal(result.daily.length, 14);
   assert.equal(result.weekly.length, 8);
 
@@ -60,4 +61,37 @@ test("formatProgressTrend produces human-readable delta text", () => {
   assert.equal(formatProgressTrend(0, 0), "без изменений к прошлому периоду");
   assert.equal(formatProgressTrend(4, 0), "новая активность в этом периоде");
   assert.equal(formatProgressTrend(2, 5), "-3 (-60%) к прошлому периоду");
+});
+
+test("buildTeacherProgressTimeline can be filtered to one student", () => {
+  const now = new Date("2026-04-10T12:00:00.000Z");
+  const result = buildTeacherProgressTimeline(
+    [
+      {
+        homeworkNumbers: [
+          {
+            statuses: [
+              {
+                studentId: "student-1",
+                status: HomeworkNumberStatus.GREEN,
+                updatedAt: "2026-04-10T10:00:00.000Z"
+              },
+              {
+                studentId: "student-2",
+                status: HomeworkNumberStatus.RED,
+                updatedAt: "2026-04-09T10:00:00.000Z"
+              }
+            ]
+          }
+        ]
+      }
+    ],
+    now,
+    { studentId: "student-2" }
+  );
+
+  assert.equal(result.solvedLast7Days, 0);
+  assert.equal(result.reviewLast30Days, 1);
+  assert.equal(result.activeStudentsLast30Days, 1);
+  assert.equal(result.activeDaysLast30Days, 1);
 });
