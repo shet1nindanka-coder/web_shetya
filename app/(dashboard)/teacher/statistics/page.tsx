@@ -3,7 +3,6 @@ import { HomeworkNumberStatus, UserRole } from "@prisma/client";
 import { PageHeader } from "@/components/page-header";
 import {
   buildTeacherProgressTimeline,
-  formatProgressTrend,
   type ProgressTimelinePoint
 } from "@/lib/progress-timeline";
 import { ProgressBar } from "@/components/progress-bar";
@@ -265,46 +264,7 @@ export default async function TeacherStatisticsPage({ searchParams }: TeacherSta
               />
             }
           >
-            <div className="grid grid-cols-2 gap-2.5 sm:gap-3 xl:grid-cols-4">
-              <StatCard
-                label="Решено за 7 дней"
-                value={progressTimeline.solvedLast7Days}
-                accent={
-                  <span className="font-semibold text-brand-700">
-                    {formatProgressTrend(progressTimeline.solvedLast7Days, progressTimeline.solvedLast7DaysPrevious)}
-                  </span>
-                }
-              />
-              <StatCard
-                label="Решено за 30 дней"
-                value={progressTimeline.solvedLast30Days}
-                accent={
-                  <span className="font-semibold text-emerald-700">
-                    {formatProgressTrend(progressTimeline.solvedLast30Days, progressTimeline.solvedLast30DaysPrevious)}
-                  </span>
-                }
-              />
-              <StatCard
-                label="Красных за 30 дней"
-                value={progressTimeline.reviewLast30Days}
-                hint="Новые точки, где ученикам понадобился разбор"
-              />
-              <StatCard
-                label={selectedTimelineStudent ? "Дней с активностью" : "Активных учеников за 30 дней"}
-                value={
-                  selectedTimelineStudent
-                    ? progressTimeline.activeDaysLast30Days
-                    : progressTimeline.activeStudentsLast30Days
-                }
-                hint={
-                  selectedTimelineStudent
-                    ? "В скольких днях за месяц у выбранного ученика менялись статусы"
-                    : "У кого за месяц менялись статусы по номерам"
-                }
-              />
-            </div>
-
-            <div className="mt-4 grid gap-3 sm:gap-4 xl:grid-cols-2">
+            <div className="grid gap-3 sm:gap-4 xl:grid-cols-2">
               <TimelineChartCard
                 title="За последние 14 дней"
                 description="Сколько номеров ученики закрывали по дням и где появлялись новые красные статусы."
