@@ -69,7 +69,7 @@ export function ProgressTimelineChart({
               );
             })}
           </div>
-          <p className="text-sm leading-relaxed text-[var(--theme-text-muted)]">
+          <p className="ui-hint text-sm leading-relaxed text-[var(--theme-text-muted)]">
             {selectedStudentName
               ? `Показываем динамику только для ученика ${selectedStudentName}.`
               : "Показываем общий темп по всем ученикам за выбранный период."}
@@ -94,7 +94,7 @@ export function ProgressTimelineChart({
             <h3 className="font-display text-[1.05rem] font-semibold text-[var(--theme-text-strong)] sm:text-[1.15rem]">
               {view.title}
             </h3>
-            <p className="mt-1 max-w-2xl text-sm leading-relaxed text-[var(--theme-text-muted)]">
+            <p className="ui-hint mt-1 max-w-2xl text-sm leading-relaxed text-[var(--theme-text-muted)]">
               {view.description}
             </p>
           </div>
