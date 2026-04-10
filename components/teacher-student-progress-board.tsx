@@ -998,19 +998,21 @@ export function TeacherStudentProgressBoard({
       ) : null}
 
       {topics.length > 0 ? (
-        <section className="ui-surface rounded-[28px] border p-4 sm:p-5">
+        <section className="ui-surface relative overflow-visible rounded-[28px] border p-4 sm:p-5">
           <div className="flex items-center justify-between gap-4">
-            <div className="relative min-w-0 flex-1" ref={comboboxRef}>
+            <div className="relative z-20 min-w-0 flex-1" ref={comboboxRef}>
               <div className="relative">
-                <svg
-                  className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--theme-text-muted)]"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  strokeWidth="2"
-                  stroke="currentColor"
-                >
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
-                </svg>
+                <span className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-[var(--theme-text-muted)]">
+                  <svg
+                    className="h-4 w-4"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    strokeWidth="2"
+                    stroke="currentColor"
+                  >
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+                  </svg>
+                </span>
                 <input
                   type="text"
                   value={comboboxOpen ? topicQuery : (selectedTopic?.title ?? "")}
@@ -1020,7 +1022,7 @@ export function TeacherStudentProgressBoard({
                   }}
                   onChange={(event) => setTopicQuery(event.target.value)}
                   placeholder="Найти тему…"
-                  className="ui-input w-full rounded-[16px] py-3 pl-10 pr-11 text-sm"
+                  className="ui-input h-14 w-full rounded-[16px] pl-10 pr-11 text-sm leading-none"
                   role="combobox"
                   aria-controls={topicListboxId}
                   aria-expanded={comboboxOpen}
@@ -1030,13 +1032,15 @@ export function TeacherStudentProgressBoard({
                   <button
                     type="button"
                     onClick={() => setTopicQuery("")}
-                    className="ui-pressable absolute right-3 top-1/2 inline-flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full text-[var(--theme-text-muted)] transition hover:bg-[var(--theme-surface-soft)] hover:text-[var(--theme-text-strong)]"
+                    className="absolute inset-y-0 right-0 flex items-center pr-3 text-[var(--theme-text-muted)] transition hover:text-[var(--theme-text-strong)]"
                     aria-label="Очистить поиск"
                   >
-                    ×
+                    <span className="inline-flex h-7 w-7 items-center justify-center rounded-full transition hover:bg-[var(--theme-surface-soft)]">
+                      ×
+                    </span>
                   </button>
                 ) : !comboboxOpen ? (
-                  <span className="pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2 text-[var(--theme-text-muted)]">
+                  <span className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3.5 text-[var(--theme-text-muted)]">
                     <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 15L12 18.75 15.75 15m-7.5-6L12 5.25 15.75 9" />
                     </svg>
@@ -1048,7 +1052,7 @@ export function TeacherStudentProgressBoard({
                 <ul
                   id={topicListboxId}
                   role="listbox"
-                  className="absolute left-0 right-0 top-[calc(100%+6px)] z-30 max-h-[280px] overflow-y-auto rounded-[16px] border bg-[var(--theme-surface-default)] p-1.5 shadow-lg"
+                  className="absolute left-0 right-0 top-[calc(100%+8px)] z-40 max-h-[280px] overflow-y-auto rounded-[18px] border border-[var(--theme-border)] bg-[var(--theme-surface-strong)] p-1.5 shadow-[var(--theme-shadow-hover)] backdrop-blur-sm"
                 >
                   {filteredTopics.length === 0 ? (
                     <li className="px-3 py-2.5 text-sm text-[var(--theme-text-muted)]">
