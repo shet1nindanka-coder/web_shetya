@@ -77,9 +77,6 @@ export function ProgressTimelineChart({
         </div>
 
         <div className="flex flex-col gap-2 sm:items-end">
-          <p className="text-sm font-semibold text-[var(--theme-text-strong)]">
-            {view.totalChanges} изменений за период
-          </p>
           <div className="flex flex-wrap gap-2 sm:justify-end">
             <TimelineLegendBadge label="Закрыто" value={view.closedTotal} tone="closed" />
             <TimelineLegendBadge label="Красных" value={view.redTotal} tone="review" />
