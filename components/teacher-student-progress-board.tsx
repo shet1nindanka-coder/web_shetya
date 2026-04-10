@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { HomeworkNumberStatus } from "@prisma/client";
-import { memo, useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
+import { memo, useCallback, useDeferredValue, useEffect, useId, useMemo, useRef, useState } from "react";
 import { Badge } from "@/components/badge";
 import { HomeworkStatusBadge } from "@/components/homework-status-badge";
 import { ProgressBar } from "@/components/progress-bar";
@@ -394,6 +394,7 @@ export function TeacherStudentProgressBoard({
   const controllersRef = useRef<Record<string, AbortController | undefined>>({});
   const timersRef = useRef<Record<string, ReturnType<typeof setTimeout> | undefined>>({});
   const comboboxRef = useRef<HTMLDivElement>(null);
+  const topicListboxId = useId();
   const deferredTopicQuery = useDeferredValue(topicQuery);
 
   const updateTopicsState = useCallback(
@@ -1021,6 +1022,7 @@ export function TeacherStudentProgressBoard({
                   placeholder="Найти тему…"
                   className="ui-input w-full rounded-[16px] py-3 pl-10 pr-11 text-sm"
                   role="combobox"
+                  aria-controls={topicListboxId}
                   aria-expanded={comboboxOpen}
                   aria-haspopup="listbox"
                 />
@@ -1044,6 +1046,7 @@ export function TeacherStudentProgressBoard({
 
               {comboboxOpen ? (
                 <ul
+                  id={topicListboxId}
                   role="listbox"
                   className="absolute left-0 right-0 top-[calc(100%+6px)] z-30 max-h-[280px] overflow-y-auto rounded-[16px] border bg-[var(--theme-surface-default)] p-1.5 shadow-lg"
                 >
