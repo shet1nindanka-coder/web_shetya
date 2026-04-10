@@ -99,9 +99,6 @@ export function ProgressTimelineChart({
             </p>
           </div>
 
-          <div className="rounded-full border border-[var(--theme-border-soft)] bg-[var(--theme-surface-strong)] px-3 py-1.5 text-xs font-medium text-[var(--theme-text-muted)]">
-            Среднее: {formatAverage(view.averagePerPoint)} изменения за период
-          </div>
         </div>
 
         <div className="mt-4 overflow-x-auto">
@@ -113,11 +110,7 @@ export function ProgressTimelineChart({
                 <div
                   className="absolute inset-x-0 progress-timeline-average-line"
                   style={{ top: `${averageOffset}%` }}
-                >
-                  <span className="absolute -top-5 right-0 rounded-full border border-[var(--theme-border-soft)] bg-[var(--theme-surface-strong)] px-2 py-0.5 text-[10px] font-medium text-[var(--theme-text-muted)]">
-                    среднее {formatAverage(view.averagePerPoint)}
-                  </span>
-                </div>
+                />
                 <div className="absolute inset-x-0 bottom-0 border-t-2 border-[var(--theme-border)]" />
               </div>
 
@@ -143,7 +136,7 @@ export function ProgressTimelineChart({
                               Закрыто: {point.closedCount}
                             </span>
                             <span className="inline-flex items-center gap-2">
-                              <span className="h-2.5 w-2.5 rounded-full bg-rose-400" />
+                              <span className="h-2.5 w-2.5 rounded-full bg-[var(--theme-danger-solid)]" />
                               Красных: {point.redCount}
                             </span>
                           </div>
@@ -217,14 +210,14 @@ function TimelineLegendBadge({
         className={cx(
           "h-2.5 w-2.5 rounded-full",
           tone === "closed" && "bg-[var(--theme-accent)]",
-          tone === "review" && "bg-rose-400"
+          tone === "review" && "bg-[var(--theme-danger-solid)]"
         )}
       />
       <span>{label}:</span>
       <span
         className={cx(
           tone === "closed" && "text-[var(--theme-accent-strong)] dark:text-[var(--theme-accent-text)]",
-          tone === "review" && "text-[var(--theme-danger-text)]"
+          tone === "review" && "text-[var(--theme-danger-solid)] dark:text-[var(--theme-danger-solid)]"
         )}
       >
         {value}
@@ -286,8 +279,4 @@ function TimelineBar({
       />
     </div>
   );
-}
-
-function formatAverage(value: number) {
-  return Number.isInteger(value) ? `${value}` : value.toFixed(1).replace(".", ",");
 }

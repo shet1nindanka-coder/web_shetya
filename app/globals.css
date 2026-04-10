@@ -60,6 +60,7 @@
   --theme-danger-soft: rgba(244, 63, 94, 0.08);
   --theme-danger-border: rgba(244, 63, 94, 0.18);
   --theme-danger-text: #be123c;
+  --theme-danger-solid: #dc2626;
 }
 
 /* ───────────────────────────────────────────────
@@ -107,6 +108,7 @@ html[data-theme="dark"] {
   --theme-danger-soft: rgba(244, 63, 94, 0.12);
   --theme-danger-border: rgba(251, 113, 133, 0.2);
   --theme-danger-text: #fecdd3;
+  --theme-danger-solid: #f87171;
 }
 
 /* ───────────────────────────────────────────────
@@ -267,10 +269,10 @@ html[data-theme="dark"] .soft-grid::after {
   background:
     linear-gradient(
       180deg,
-      color-mix(in srgb, var(--theme-danger-text) 28%, white 72%) 0%,
-      color-mix(in srgb, var(--theme-danger-text) 88%, var(--theme-danger-soft) 12%) 100%
+      color-mix(in srgb, var(--theme-danger-solid) 72%, white 28%) 0%,
+      var(--theme-danger-solid) 100%
     );
-  box-shadow: 0 10px 20px rgba(244, 63, 94, 0.18);
+  box-shadow: 0 10px 20px rgba(220, 38, 38, 0.22);
 }
 
 .progress-timeline-average-line {
