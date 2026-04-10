@@ -235,7 +235,7 @@ function TrendBadge({
       className={cx(
         "inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-semibold shadow-[0_8px_24px_rgba(15,23,42,0.04)]",
         direction === "up" &&
-          "border-emerald-300/90 bg-emerald-100/90 text-emerald-900 dark:border-emerald-400/30 dark:bg-emerald-500/16 dark:text-emerald-100",
+          "border-emerald-400/90 bg-emerald-100 text-emerald-950 shadow-[0_10px_24px_rgba(16,185,129,0.10)] dark:border-emerald-400/30 dark:bg-emerald-500/16 dark:text-emerald-100",
         direction === "down" &&
           "border-rose-300/90 bg-rose-100/90 text-rose-900 dark:border-rose-400/30 dark:bg-rose-500/16 dark:text-rose-100",
         direction === "flat" &&
