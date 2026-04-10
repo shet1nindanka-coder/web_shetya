@@ -590,40 +590,44 @@ function TimelineChartCard({
         <TimelineLegendBadge label="Красных" value={reviewTotal} tone="rose" />
       </div>
 
-      <div className="mt-4 rounded-[18px] border border-[var(--theme-border-soft)] bg-[linear-gradient(180deg,var(--theme-surface-soft),var(--theme-surface-strong))] p-3 sm:p-4">
-        <div
-          className="grid gap-2.5 sm:gap-3"
-          style={{ gridTemplateColumns: `repeat(${points.length}, minmax(0, 1fr))` }}
-        >
-          {points.map((point) => {
-            const pointTotal = point.solved + point.review;
+      <div className="mt-4 rounded-[18px] border border-[var(--theme-border-soft)] bg-[linear-gradient(180deg,var(--theme-surface-soft),var(--theme-surface-strong))] px-3 py-4 sm:px-4 sm:py-5">
+        <div className="relative pl-8 sm:pl-10">
+          <div className="pointer-events-none absolute left-0 top-0 bottom-11 flex w-6 flex-col justify-between text-right text-[10px] font-medium text-[var(--theme-text-muted)] sm:w-8 sm:text-[11px]">
+            <span>{maxValue}</span>
+            <span>{Math.max(1, Math.ceil(maxValue / 2))}</span>
+            <span>0</span>
+          </div>
+          <div className="pointer-events-none absolute left-8 right-0 top-0 bottom-11 sm:left-10">
+            <div className="absolute inset-x-0 top-0 border-t border-dashed border-[var(--theme-border-soft)]" />
+            <div className="absolute inset-x-0 top-1/2 border-t border-dashed border-[var(--theme-border-soft)]" />
+            <div className="absolute inset-x-0 bottom-0 h-4 rounded-t-[10px] bg-[var(--theme-surface-soft)]/70" />
+            <div className="absolute inset-x-0 bottom-0 border-t-2 border-[var(--theme-border)]" />
+          </div>
 
-            return (
-              <div key={point.key} className="ui-card-soft min-w-0 rounded-[16px] p-2 sm:p-2.5">
+          <div
+            className="grid items-end gap-2 sm:gap-3"
+            style={{ gridTemplateColumns: `repeat(${points.length}, minmax(0, 1fr))` }}
+          >
+            {points.map((point) => (
+              <div key={point.key} className="min-w-0">
                 <div
-                  className="relative flex h-40 items-end justify-center gap-1.5 rounded-[14px] border border-[var(--theme-border-soft)] bg-[var(--theme-surface-strong)] px-1.5 pb-4 pt-4 sm:h-44"
+                  className="flex h-48 items-end justify-center gap-1.5 px-1 pb-3 pt-5"
                   title={`${point.tooltip}: закрыто ${point.solved}, красных ${point.review}`}
                 >
-                  <div className="pointer-events-none absolute inset-x-3 bottom-3 h-2.5 rounded-full border border-[var(--theme-border-soft)] bg-[var(--theme-surface-soft)]" />
-                  {pointTotal > 0 ? (
-                    <span className="absolute right-2 top-2 rounded-full border border-[var(--theme-border-soft)] bg-[var(--theme-surface-soft)] px-2 py-0.5 text-[10px] font-semibold text-[var(--theme-text-muted)] sm:text-[11px]">
-                      {pointTotal}
-                    </span>
-                  ) : null}
                   <TimelineBar value={point.solved} maxValue={maxValue} className="bg-brand-500" />
                   <TimelineBar value={point.review} maxValue={maxValue} className="bg-rose-400" />
                 </div>
-                <div className="mt-2 rounded-[12px] border border-[var(--theme-border-soft)] bg-[var(--theme-surface-strong)] px-2 py-2 text-center">
+                <div className="border-t border-[var(--theme-border-soft)] pt-2 text-center">
                   <p className="truncate text-[11px] font-semibold text-[var(--theme-text-strong)] sm:text-xs">
                     {point.label}
                   </p>
                   <p className="mt-0.5 text-[11px] text-[var(--theme-text-muted)]">
-                    Закрыто {point.solved} · Красных {point.review}
+                    {point.solved + point.review}
                   </p>
                 </div>
               </div>
-            );
-          })}
+            ))}
+          </div>
         </div>
         {totalActivity === 0 ? (
           <p className="mt-4 text-center text-sm text-[var(--theme-text-muted)]">
@@ -678,8 +682,8 @@ function TimelineBar({
   const normalizedHeight = value <= 0 ? 0 : Math.max(14, Math.round((value / maxValue) * 100));
 
   return (
-    <div className="relative z-10 flex h-full w-4 items-end justify-center sm:w-5">
-      <div className="absolute inset-x-[2px] top-0 bottom-0 rounded-full bg-[var(--theme-surface-soft)]/90" />
+    <div className="relative flex h-full w-5 items-end justify-center sm:w-6">
+      <div className="absolute inset-x-[3px] top-0 bottom-0 rounded-full bg-[var(--theme-surface-soft)]/90" />
       <div
         className={cx(
           "relative z-10 w-full rounded-full shadow-[0_8px_18px_rgba(37,99,235,0.14)] transition-all duration-300 ease-out",
