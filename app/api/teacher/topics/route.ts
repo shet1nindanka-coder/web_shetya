@@ -7,7 +7,7 @@ import { getRequestLogContext, logErrorEvent, logInfoEvent } from "@/lib/logger"
 import { revalidateAllPlatformData } from "@/lib/platform-data-cache";
 import { prisma } from "@/lib/prisma";
 import { createTopicHomeworkNumbersInBatches } from "@/lib/topic-homework-numbers";
-import { parseNumbersInput } from "@/lib/utils";
+import { normalizeMultilineText, normalizeSingleLineText, parseNumbersInput } from "@/lib/utils";
 
 export const runtime = "nodejs";
 
@@ -44,8 +44,8 @@ export async function POST(request: Request) {
       }
     | null;
 
-  const title = String(body?.title ?? "").trim();
-  const description = String(body?.description ?? "").trim();
+  const title = normalizeSingleLineText(String(body?.title ?? ""));
+  const description = normalizeMultilineText(String(body?.description ?? ""));
   const numbers = parseNumbersInput(String(body?.numbers ?? ""));
   const theoryFileId = String(body?.theoryFileId ?? "").trim();
   const homeworkFileId = String(body?.homeworkFileId ?? "").trim();

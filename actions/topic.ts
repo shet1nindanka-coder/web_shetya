@@ -11,7 +11,7 @@ import { prisma } from "@/lib/prisma";
 import { deleteStoredFileRecordIfUnused } from "@/lib/stored-files";
 import { removeStoredFile, saveUploadedFile } from "@/lib/storage";
 import { createTopicHomeworkNumbersInBatches } from "@/lib/topic-homework-numbers";
-import { parseNumbersInput } from "@/lib/utils";
+import { normalizeMultilineText, normalizeSingleLineText, parseNumbersInput } from "@/lib/utils";
 
 const numberStatuses: HomeworkNumberStatus[] = [
   HomeworkNumberStatus.GREEN,
@@ -90,8 +90,8 @@ async function cleanupStoredFileIds(fileIds: Iterable<string>, context: Record<s
 
 export async function createTopicAction(formData: FormData) {
   const user = await requireUser(UserRole.TEACHER);
-  const title = String(formData.get("title") ?? "").trim();
-  const description = String(formData.get("description") ?? "").trim();
+  const title = normalizeSingleLineText(String(formData.get("title") ?? ""));
+  const description = normalizeMultilineText(String(formData.get("description") ?? ""));
   const numbers = parseNumbersInput(String(formData.get("numbers") ?? ""));
   const theoryFileId = String(formData.get("theoryFileId") ?? "").trim();
   const homeworkFileId = String(formData.get("homeworkFileId") ?? "").trim();
@@ -246,8 +246,8 @@ export async function updateTopicAction(formData: FormData) {
   const user = await requireUser(UserRole.TEACHER);
 
   const topicId = String(formData.get("topicId") ?? "");
-  const title = String(formData.get("title") ?? "").trim();
-  const description = String(formData.get("description") ?? "").trim();
+  const title = normalizeSingleLineText(String(formData.get("title") ?? ""));
+  const description = normalizeMultilineText(String(formData.get("description") ?? ""));
   const numbers = parseNumbersInput(String(formData.get("numbers") ?? ""));
   const theoryFile = formData.get("theoryFile");
   const homeworkFile = formData.get("homeworkFile");

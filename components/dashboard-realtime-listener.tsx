@@ -81,7 +81,9 @@ export function DashboardRealtimeListener({
           scheduleRefresh();
         }
       } catch (error) {
-        console.error("Failed to parse dashboard realtime event.", error);
+        if (process.env.NODE_ENV !== "production") {
+          console.error("Failed to parse dashboard realtime event.", error);
+        }
       }
     };
 

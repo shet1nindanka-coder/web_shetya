@@ -13,6 +13,9 @@ import {
   isImageMime,
   isOfficeMime,
   isPdfMime,
+  normalizeLoginInput,
+  normalizeMultilineText,
+  normalizeSingleLineText,
   parseNumbersInput,
   roleHome,
   sanitizeFileName,
@@ -26,6 +29,21 @@ test("cx joins only truthy class name fragments", () => {
 test("roleHome routes users to the correct dashboard root", () => {
   assert.equal(roleHome(UserRole.TEACHER), "/teacher");
   assert.equal(roleHome(UserRole.STUDENT), "/student");
+});
+
+test("normalizeSingleLineText trims, collapses whitespace, and strips control chars", () => {
+  assert.equal(normalizeSingleLineText(" \u0000  Мария \n\t Смирнова  "), "Мария Смирнова");
+});
+
+test("normalizeMultilineText keeps lines, trims trailing spaces, and removes control chars", () => {
+  assert.equal(
+    normalizeMultilineText("  Первая строка  \r\nВторая\tстрока\u0007  \r\n\r\n "),
+    "Первая строка\nВторая\tстрока"
+  );
+});
+
+test("normalizeLoginInput normalizes login casing and whitespace", () => {
+  assert.equal(normalizeLoginInput("  Maria@Example.COM \n"), "maria@example.com");
 });
 
 test("parseNumbersInput expands ranges, deduplicates values, and sorts result", () => {

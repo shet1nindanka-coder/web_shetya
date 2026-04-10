@@ -1,7 +1,7 @@
 "use client";
 
 import { upload as uploadToBlob } from "@vercel/blob/client";
-import { useRef, useState, type FormEvent } from "react";
+import { useCallback, useRef, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { FileDropInput } from "@/components/file-drop-input";
 import { ProgressBar } from "@/components/progress-bar";
@@ -110,7 +110,7 @@ function FileUploadField({
       />
 
       {state.status === "uploading" ? (
-        <div className="space-y-2 rounded-2xl border border-brand-100 bg-brand-50/70 px-4 py-4">
+        <div className="space-y-2 rounded-2xl border border-brand-100 bg-brand-50/70 px-4 py-4" aria-live="polite">
           <div className="flex items-center justify-between text-sm text-[var(--theme-text-default)]">
             <span>Загрузка файла...</span>
             <span className="font-semibold">{state.progress}%</span>
@@ -133,7 +133,7 @@ function FileUploadField({
       ) : null}
 
       {state.status === "error" && state.error ? (
-        <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-4 text-sm font-medium text-rose-900">
+        <div className="ui-notice-error rounded-2xl px-4 py-4 text-sm font-medium" aria-live="polite">
           {state.error}
         </div>
       ) : null}
@@ -159,7 +159,7 @@ export function TopicCreateForm({
   const theoryAbortRef = useRef<(() => void) | null>(null);
   const homeworkAbortRef = useRef<(() => void) | null>(null);
 
-  const handleUpload = (
+  const handleUpload = useCallback((
     nextFile: File | null,
     currentState: UploadState,
     setState: (value: UploadState) => void,
@@ -242,7 +242,9 @@ export function TopicCreateForm({
             return;
           }
 
-          console.error("Blob upload failed in topic create form.", error);
+          if (process.env.NODE_ENV !== "production") {
+            console.error("Blob upload failed in topic create form.", error);
+          }
           setState({
             status: "error",
             progress: 0,
@@ -317,7 +319,7 @@ export function TopicCreateForm({
     };
 
     request.send(formData);
-  };
+  }, [blobAccess, uploadMode]);
 
   const isUploading = theoryUpload.status === "uploading" || homeworkUpload.status === "uploading";
   const isReadyToCreate =
@@ -327,6 +329,15 @@ export function TopicCreateForm({
     Boolean(homeworkUpload.file?.id);
   const hasRequiredFields = Boolean(title.trim() && description.trim() && numbers.trim());
   const isSubmitDisabled = !isReadyToCreate || isUploading || isSubmitting || !hasRequiredFields;
+
+  const handleTheoryFileSelect = useCallback(
+    (file: File | null) => handleUpload(file, theoryUpload, setTheoryUpload, theoryAbortRef),
+    [handleUpload, theoryUpload]
+  );
+  const handleHomeworkFileSelect = useCallback(
+    (file: File | null) => handleUpload(file, homeworkUpload, setHomeworkUpload, homeworkAbortRef),
+    [handleUpload, homeworkUpload]
+  );
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -380,7 +391,7 @@ export function TopicCreateForm({
           value={title}
           onChange={(event) => setTitle(event.target.value)}
           placeholder="Например, Логарифмы и их свойства"
-          className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none transition focus:-translate-y-[1px] focus:border-brand-400 focus:bg-white"
+          className="ui-input w-full rounded-2xl px-4 py-3"
           required
         />
       </label>
@@ -392,7 +403,7 @@ export function TopicCreateForm({
           onChange={(event) => setDescription(event.target.value)}
           rows={4}
           placeholder="Что нужно изучить в теории и на что обратить внимание в заданиях по теме."
-          className="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 outline-none transition focus:-translate-y-[1px] focus:border-brand-400 focus:bg-white"
+          className="ui-input w-full rounded-2xl px-4 py-3"
           required
         />
       </label>
@@ -401,14 +412,14 @@ export function TopicCreateForm({
         name="theoryFile"
         label="Файл теории"
         state={theoryUpload}
-        onFileSelect={(file) => handleUpload(file, theoryUpload, setTheoryUpload, theoryAbortRef)}
+        onFileSelect={handleTheoryFileSelect}
       />
 
       <FileUploadField
         name="homeworkFile"
         label="Файл заданий"
         state={homeworkUpload}
-        onFileSelect={(file) => handleUpload(file, homeworkUpload, setHomeworkUpload, homeworkAbortRef)}
+        onFileSelect={handleHomeworkFileSelect}
       />
 
       <div className="lg:col-span-2">
@@ -431,7 +442,7 @@ export function TopicCreateForm({
         </div>
 
         {submitError ? (
-          <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-4 text-sm font-medium text-rose-900">
+          <div className="ui-notice-error rounded-2xl px-4 py-4 text-sm font-medium" aria-live="polite">
             {submitError}
           </div>
         ) : null}

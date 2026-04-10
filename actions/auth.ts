@@ -10,17 +10,16 @@ import {
   RateLimitExceededError,
   resetRateLimit
 } from "@/lib/rate-limit";
-import { roleHome } from "@/lib/utils";
+import { normalizeLoginInput, roleHome } from "@/lib/utils";
 
 export async function loginAction(formData: FormData) {
-  const login = String(formData.get("login") ?? formData.get("email") ?? "");
+  const login = normalizeLoginInput(String(formData.get("login") ?? formData.get("email") ?? ""));
   const password = String(formData.get("password") ?? "");
 
   if (!login || !password) {
     redirect("/login?error=empty");
   }
 
-  const normalizedLogin = login.trim().toLowerCase();
   const requestHeaders = await headers();
   const clientIp = getClientIpFromHeaders(requestHeaders);
 
@@ -37,7 +36,7 @@ export async function loginAction(formData: FormData) {
     assertRateLimit(
       {
         scope: "login:ip-login",
-        identifier: `${clientIp}:${normalizedLogin}`,
+        identifier: `${clientIp}:${login}`,
         limit: 8,
         windowMs: 10 * 60 * 1000
       },
@@ -48,7 +47,7 @@ export async function loginAction(formData: FormData) {
       logWarnEvent(
         "auth.login.rate_limited",
         getHeadersLogContext(requestHeaders, {
-          login: normalizedLogin
+          login
         }),
         error,
         "Login request was rate limited."
@@ -67,7 +66,7 @@ export async function loginAction(formData: FormData) {
     logErrorEvent(
       "auth.login.failed",
       getHeadersLogContext(requestHeaders, {
-        login: normalizedLogin
+        login
       }),
       error,
       "Failed to create login session."
@@ -77,21 +76,21 @@ export async function loginAction(formData: FormData) {
 
   if (!user) {
     logWarnEvent(
-      "auth.login.invalid_credentials",
-      getHeadersLogContext(requestHeaders, {
-        login: normalizedLogin
-      }),
-      undefined,
-      "Login was rejected due to invalid credentials."
+    "auth.login.invalid_credentials",
+    getHeadersLogContext(requestHeaders, {
+      login
+    }),
+    undefined,
+    "Login was rejected due to invalid credentials."
     );
     redirect("/login?error=invalid");
   }
 
-  resetRateLimit("login:ip-login", `${clientIp}:${normalizedLogin}`);
+  resetRateLimit("login:ip-login", `${clientIp}:${login}`);
   logInfoEvent(
     "auth.login.succeeded",
     getHeadersLogContext(requestHeaders, {
-      login: normalizedLogin,
+      login,
       userId: user.id,
       role: user.role
     }),

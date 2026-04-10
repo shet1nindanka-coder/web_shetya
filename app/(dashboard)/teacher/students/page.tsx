@@ -83,6 +83,7 @@ export default async function TeacherStudentsPage({ searchParams }: TeacherStude
               ? "ui-notice-success rounded-[14px] px-4 py-3 text-sm font-medium sm:rounded-[16px]"
               : "ui-notice-error rounded-[14px] px-4 py-3 text-sm font-medium sm:rounded-[16px]"
           }
+          aria-live="polite"
         >
           {notice.message}
         </div>
@@ -111,6 +112,7 @@ export default async function TeacherStudentsPage({ searchParams }: TeacherStude
                 placeholder="Например, Мария Смирнова"
                 className="ui-input w-full rounded-[12px] px-3.5 py-2.5 sm:rounded-[14px]"
                 required
+                autoComplete="name"
               />
             </label>
 
@@ -122,6 +124,9 @@ export default async function TeacherStudentsPage({ searchParams }: TeacherStude
                 placeholder="maria@example.com"
                 className="ui-input w-full rounded-[12px] px-3.5 py-2.5 sm:rounded-[14px]"
                 required
+                autoCapitalize="none"
+                autoCorrect="off"
+                spellCheck={false}
               />
             </label>
 
@@ -134,6 +139,8 @@ export default async function TeacherStudentsPage({ searchParams }: TeacherStude
                 minLength={8}
                 className="ui-input w-full rounded-[12px] px-3.5 py-2.5 sm:rounded-[14px]"
                 required
+                autoComplete="new-password"
+                spellCheck={false}
               />
             </label>
 

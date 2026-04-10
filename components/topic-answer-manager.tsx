@@ -186,7 +186,9 @@ export function TopicAnswerManager({ topicId, numbers }: TopicAnswerManagerProps
           )
         );
       } catch (error) {
-        console.error("Failed to save LaTeX answer for homework number.", { topicId, homeworkNumberId, error });
+        if (process.env.NODE_ENV !== "production") {
+          console.error("Failed to save LaTeX answer for homework number.", { topicId, homeworkNumberId, error });
+        }
 
         updateItems((current) =>
           current.map((item) =>

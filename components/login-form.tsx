@@ -31,6 +31,9 @@ export function LoginForm({ error }: LoginFormProps) {
             className="ui-input w-full rounded-[12px] px-3.5 py-2.5 text-sm sm:rounded-[14px] sm:px-4 sm:py-3"
             required
             autoComplete="username"
+            autoCapitalize="none"
+            autoCorrect="off"
+            spellCheck={false}
           />
         </label>
 
@@ -43,11 +46,12 @@ export function LoginForm({ error }: LoginFormProps) {
             className="ui-input w-full rounded-[12px] px-3.5 py-2.5 text-sm sm:rounded-[14px] sm:px-4 sm:py-3"
             required
             autoComplete="current-password"
+            spellCheck={false}
           />
         </label>
 
         {error && errorMap[error] ? (
-          <div className="ui-notice-error rounded-[12px] px-3.5 py-2.5 text-sm">
+          <div className="ui-notice-error rounded-[12px] px-3.5 py-2.5 text-sm" aria-live="polite">
             {errorMap[error]}
           </div>
         ) : null}

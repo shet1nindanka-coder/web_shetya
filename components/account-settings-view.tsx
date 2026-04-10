@@ -101,6 +101,7 @@ export function AccountSettingsView({ user, notice }: AccountSettingsViewProps) 
               ? "ui-notice-success rounded-[18px] px-5 py-4 text-sm font-medium"
               : "ui-notice-error rounded-[18px] px-5 py-4 text-sm font-medium"
           }
+          aria-live="polite"
         >
           {notice.message}
         </div>
@@ -127,6 +128,7 @@ export function AccountSettingsView({ user, notice }: AccountSettingsViewProps) 
               placeholder="Ваше имя"
               className="ui-input w-full rounded-[16px] px-4 py-3"
               required
+              autoComplete="name"
             />
           </label>
 
@@ -160,6 +162,8 @@ export function AccountSettingsView({ user, notice }: AccountSettingsViewProps) 
               placeholder="Введите текущий пароль"
               className="ui-input w-full rounded-[16px] px-4 py-3"
               required
+              autoComplete="current-password"
+              spellCheck={false}
             />
           </label>
 
@@ -172,6 +176,8 @@ export function AccountSettingsView({ user, notice }: AccountSettingsViewProps) 
               minLength={8}
               className="ui-input w-full rounded-[16px] px-4 py-3"
               required
+              autoComplete="new-password"
+              spellCheck={false}
             />
           </label>
 
@@ -184,6 +190,8 @@ export function AccountSettingsView({ user, notice }: AccountSettingsViewProps) 
               minLength={8}
               className="ui-input w-full rounded-[16px] px-4 py-3"
               required
+              autoComplete="new-password"
+              spellCheck={false}
             />
           </label>
 

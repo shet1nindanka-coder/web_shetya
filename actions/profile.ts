@@ -8,7 +8,7 @@ import { logErrorEvent, logInfoEvent } from "@/lib/logger";
 import { revalidateAllPlatformData } from "@/lib/platform-data-cache";
 import { hashPassword, verifyPassword } from "@/lib/password";
 import { prisma } from "@/lib/prisma";
-import { roleHome } from "@/lib/utils";
+import { normalizeSingleLineText, roleHome } from "@/lib/utils";
 
 function redirectAccountWithStatus(role: UserRole, params: URLSearchParams) {
   const basePath = `${roleHome(role)}/settings`;
@@ -37,7 +37,7 @@ function revalidateAccountRoutes(role: UserRole) {
 
 export async function updateProfileInfoAction(formData: FormData) {
   const user = await requireUser();
-  const name = String(formData.get("name") ?? "").trim();
+  const name = normalizeSingleLineText(String(formData.get("name") ?? ""));
 
   if (!name) {
     redirectAccountWithStatus(user.role, new URLSearchParams({ infoError: "invalid" }));

@@ -17,6 +17,10 @@ import { allowedUploadExtensions, allowedUploadMimeTypes, getFileExtension } fro
 export const runtime = "nodejs";
 const MAX_UPLOAD_SIZE = 15 * 1024 * 1024;
 
+function isValidUploadPathname(pathname: string) {
+  return pathname.startsWith("uploads/") && !pathname.includes("..") && pathname.length <= 512;
+}
+
 function validateUploadedMetadata(fileName: string, mimeType: string, size: number) {
   const extension = getFileExtension(fileName);
 
@@ -146,6 +150,10 @@ export async function POST(request: Request) {
 
       if (!pathname || !uploadedMimeType || !originalName || !Number.isFinite(size) || size <= 0) {
         return NextResponse.json({ error: "Blob metadata is incomplete" }, { status: 400 });
+      }
+
+      if (!isValidUploadPathname(pathname)) {
+        return NextResponse.json({ error: "Некорректный путь загруженного файла." }, { status: 400 });
       }
 
       try {

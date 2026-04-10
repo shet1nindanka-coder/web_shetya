@@ -19,6 +19,7 @@ export function FileDropInput({
   onFileSelect
 }: FileDropInputProps) {
   const inputId = useId();
+  const helperId = `${inputId}-hint`;
   const inputRef = useRef<HTMLInputElement>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [selectedFileName, setSelectedFileName] = useState<string | null>(null);
@@ -82,6 +83,7 @@ export function FileDropInput({
           accept={accept}
           onChange={handleInputChange}
           className="sr-only"
+          aria-describedby={helperText ? helperId : undefined}
         />
       </div>
 
@@ -98,10 +100,12 @@ export function FileDropInput({
       >
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <div className="space-y-1">
-            <p className="text-sm font-medium text-[var(--theme-text-strong)]">
+            <p className="text-sm font-medium text-[var(--theme-text-strong)]" aria-live="polite">
               {selectedFileName ? selectedFileName : "Файл пока не выбран"}
             </p>
-            <p className="ui-hint text-sm leading-6 text-[var(--theme-text-muted)]">{helperText}</p>
+            <p id={helperId} className="ui-hint text-sm leading-6 text-[var(--theme-text-muted)]">
+              {helperText}
+            </p>
           </div>
 
           <button

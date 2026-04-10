@@ -1,5 +1,21 @@
 import { HomeworkNumberStatus, UserRole } from "@prisma/client";
 
+const singleLineControlChars = /[\u0000-\u001F\u007F]+/g;
+const multilineControlChars = /[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]+/g;
+const repeatedWhitespace = /\s+/g;
+const dateFormatter = new Intl.DateTimeFormat("ru-RU", {
+  day: "2-digit",
+  month: "long",
+  year: "numeric"
+});
+const dateTimeFormatter = new Intl.DateTimeFormat("ru-RU", {
+  day: "2-digit",
+  month: "2-digit",
+  year: "numeric",
+  hour: "2-digit",
+  minute: "2-digit"
+});
+
 export const homeworkStatusMeta: Record<
   HomeworkNumberStatus,
   {
@@ -51,6 +67,24 @@ export function roleHome(role: UserRole) {
   return role === UserRole.TEACHER ? "/teacher" : "/student";
 }
 
+export function normalizeSingleLineText(value: string) {
+  return value.replace(singleLineControlChars, " ").replace(repeatedWhitespace, " ").trim();
+}
+
+export function normalizeMultilineText(value: string) {
+  return value
+    .replace(/\r\n?/g, "\n")
+    .replace(multilineControlChars, "")
+    .split("\n")
+    .map((line) => line.trimEnd())
+    .join("\n")
+    .trim();
+}
+
+export function normalizeLoginInput(value: string) {
+  return normalizeSingleLineText(value).toLowerCase();
+}
+
 export function formatDate(value?: Date | string | null) {
   if (!value) {
     return "Без даты";
@@ -58,11 +92,7 @@ export function formatDate(value?: Date | string | null) {
 
   const date = value instanceof Date ? value : new Date(value);
 
-  return new Intl.DateTimeFormat("ru-RU", {
-    day: "2-digit",
-    month: "long",
-    year: "numeric"
-  }).format(date);
+  return dateFormatter.format(date);
 }
 
 export function formatDateTime(value?: Date | string | null) {
@@ -72,13 +102,7 @@ export function formatDateTime(value?: Date | string | null) {
 
   const date = value instanceof Date ? value : new Date(value);
 
-  return new Intl.DateTimeFormat("ru-RU", {
-    day: "2-digit",
-    month: "2-digit",
-    year: "numeric",
-    hour: "2-digit",
-    minute: "2-digit"
-  }).format(date);
+  return dateTimeFormatter.format(date);
 }
 
 export function toIsoDateTimeString(value?: Date | string | null) {

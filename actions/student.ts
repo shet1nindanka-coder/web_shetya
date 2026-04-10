@@ -11,6 +11,7 @@ import { revalidateTeacherStudentsData, revalidateTeacherTopicsData } from "@/li
 import { hashPassword } from "@/lib/password";
 import { prisma } from "@/lib/prisma";
 import { assertRateLimit, getClientIpFromHeaders, RateLimitExceededError } from "@/lib/rate-limit";
+import { normalizeLoginInput, normalizeSingleLineText } from "@/lib/utils";
 
 function redirectTeacherWithStudentStatus(params: URLSearchParams) {
   const query = params.toString();
@@ -20,8 +21,8 @@ function redirectTeacherWithStudentStatus(params: URLSearchParams) {
 export async function createStudentAction(formData: FormData) {
   const teacher = await requireUser(UserRole.TEACHER);
 
-  const name = String(formData.get("name") ?? "").trim();
-  const login = String(formData.get("login") ?? "").trim().toLowerCase();
+  const name = normalizeSingleLineText(String(formData.get("name") ?? ""));
+  const login = normalizeLoginInput(String(formData.get("login") ?? ""));
   const password = String(formData.get("password") ?? "");
 
   if (!name || !login || password.trim().length < 8) {
