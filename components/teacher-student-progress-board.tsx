@@ -2,10 +2,15 @@
 
 import Link from "next/link";
 import { HomeworkNumberStatus } from "@prisma/client";
-import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { memo, useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
 import { Badge } from "@/components/badge";
 import { HomeworkStatusBadge } from "@/components/homework-status-badge";
 import { ProgressBar } from "@/components/progress-bar";
+import {
+  filterTeacherTopicsByQuery,
+  getDefaultTeacherTopicId,
+  moveTopicByDirection
+} from "@/lib/teacher-topic-selection";
 
 type TeacherStudentProgressBoardProps = {
   studentId: string;
@@ -380,10 +385,14 @@ export function TeacherStudentProgressBoard({
   );
   const topicsRef = useRef(initialState);
   const [topics, setTopics] = useState(initialState);
+  const [selectedTopicId, setSelectedTopicId] = useState<string | null>(() => getDefaultTeacherTopicId(initialState));
+  const [topicQuery, setTopicQuery] = useState("");
   const [saveError, setSaveError] = useState<string | null>(null);
+  const [orderingTopicId, setOrderingTopicId] = useState<string | null>(null);
   const requestVersionRef = useRef<Record<string, number>>({});
   const controllersRef = useRef<Record<string, AbortController | undefined>>({});
   const timersRef = useRef<Record<string, ReturnType<typeof setTimeout> | undefined>>({});
+  const deferredTopicQuery = useDeferredValue(topicQuery);
 
   const updateTopicsState = useCallback(
     (
@@ -403,6 +412,8 @@ export function TeacherStudentProgressBoard({
   useEffect(() => {
     topicsRef.current = initialState;
     setTopics(initialState);
+    setSelectedTopicId(getDefaultTeacherTopicId(initialState));
+    setTopicQuery("");
   }, [initialState]);
 
   useEffect(() => {
@@ -837,6 +848,118 @@ export function TeacherStudentProgressBoard({
     [deadlinesEnabled, studentId, updateTopicsState]
   );
 
+  const filteredTopics = useMemo(
+    () => filterTeacherTopicsByQuery(topics, deferredTopicQuery),
+    [deferredTopicQuery, topics]
+  );
+
+  const selectedTopic = useMemo(
+    () => topics.find((topic) => topic.id === selectedTopicId) ?? topics[0] ?? null,
+    [selectedTopicId, topics]
+  );
+
+  const selectedTopicIndex = useMemo(
+    () => (selectedTopic ? topics.findIndex((topic) => topic.id === selectedTopic.id) : -1),
+    [selectedTopic, topics]
+  );
+
+  const previousTopic = selectedTopicIndex > 0 ? topics[selectedTopicIndex - 1] ?? null : null;
+  const nextTopic =
+    selectedTopicIndex >= 0 && selectedTopicIndex < topics.length - 1
+      ? topics[selectedTopicIndex + 1] ?? null
+      : null;
+
+  const selectOptions = useMemo(() => {
+    if (!selectedTopic) {
+      return filteredTopics;
+    }
+
+    if (filteredTopics.some((topic) => topic.id === selectedTopic.id)) {
+      return filteredTopics;
+    }
+
+    return [selectedTopic, ...filteredTopics];
+  }, [filteredTopics, selectedTopic]);
+
+  useEffect(() => {
+    if (!topics.length) {
+      setSelectedTopicId(null);
+      return;
+    }
+
+    if (!selectedTopicId || !topics.some((topic) => topic.id === selectedTopicId)) {
+      setSelectedTopicId(getDefaultTeacherTopicId(topics));
+    }
+  }, [selectedTopicId, topics]);
+
+  useEffect(() => {
+    if (!deferredTopicQuery || !filteredTopics.length) {
+      return;
+    }
+
+    if (!selectedTopicId || !filteredTopics.some((topic) => topic.id === selectedTopicId)) {
+      setSelectedTopicId(filteredTopics[0]!.id);
+    }
+  }, [deferredTopicQuery, filteredTopics, selectedTopicId]);
+
+  const moveSelectedTopic = useCallback(
+    async (direction: "up" | "down") => {
+      if (!selectedTopicId) {
+        return;
+      }
+
+      const currentTopics = topicsRef.current;
+      const optimisticOrder = moveTopicByDirection(currentTopics, selectedTopicId, direction);
+
+      if (!optimisticOrder.moved) {
+        return;
+      }
+
+      setSaveError(null);
+      setOrderingTopicId(selectedTopicId);
+      updateTopicsState(() => optimisticOrder.topics);
+
+      try {
+        const response = await fetch("/api/teacher/topics/order", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            topicId: selectedTopicId,
+            direction
+          })
+        });
+
+        const result = (await response.json().catch(() => null)) as
+          | { error?: string; orderedTopicIds?: string[]; moved?: boolean }
+          | null;
+
+        if (!response.ok) {
+          throw new Error(result?.error || "Не удалось сохранить новый порядок тем.");
+        }
+
+        if (Array.isArray(result?.orderedTopicIds) && result.orderedTopicIds.length > 0) {
+          const orderByTopicId = new Map(result.orderedTopicIds.map((topicId, index) => [topicId, index]));
+
+          updateTopicsState((current) =>
+            [...current].sort(
+              (left, right) =>
+                (orderByTopicId.get(left.id) ?? Number.MAX_SAFE_INTEGER) -
+                (orderByTopicId.get(right.id) ?? Number.MAX_SAFE_INTEGER)
+            )
+          );
+        }
+      } catch (error) {
+        updateTopicsState(() => currentTopics);
+        setSaveError(error instanceof Error ? error.message : "Не удалось сохранить новый порядок тем.");
+      } finally {
+        setOrderingTopicId(null);
+      }
+    },
+    [selectedTopicId, updateTopicsState]
+  );
+
   return (
     <div className="space-y-5">
       {!deadlinesEnabled ? (
@@ -851,10 +974,112 @@ export function TeacherStudentProgressBoard({
         </div>
       ) : null}
 
-      {topics.map((topic) => (
+      {topics.length > 0 ? (
+        <section className="ui-surface space-y-4 rounded-[28px] border p-4 sm:p-5">
+          <div className="grid gap-4 xl:grid-cols-[minmax(0,1.15fr)_minmax(320px,0.85fr)]">
+            <div className="space-y-3">
+              <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(260px,0.9fr)]">
+                <label className="space-y-2">
+                  <span className="ui-copy-muted text-sm font-medium">Найти тему</span>
+                  <div className="relative">
+                    <input
+                      type="search"
+                      value={topicQuery}
+                      onChange={(event) => setTopicQuery(event.target.value)}
+                      placeholder="Начните вводить название темы"
+                      className="ui-input w-full rounded-[16px] px-4 py-3 pr-11 text-sm"
+                    />
+                    {topicQuery ? (
+                      <button
+                        type="button"
+                        onClick={() => setTopicQuery("")}
+                        className="ui-pressable absolute right-2 top-1/2 inline-flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full text-[var(--theme-text-muted)] transition hover:bg-[var(--theme-surface-soft)] hover:text-[var(--theme-text-strong)]"
+                        aria-label="Очистить поиск по темам"
+                      >
+                        ×
+                      </button>
+                    ) : null}
+                  </div>
+                </label>
+
+                <label className="space-y-2">
+                  <span className="ui-copy-muted text-sm font-medium">Тема для выдачи ДЗ</span>
+                  <select
+                    value={selectedTopicId ?? ""}
+                    onChange={(event) => setSelectedTopicId(event.target.value || null)}
+                    className="ui-input w-full rounded-[16px] px-4 py-3 text-sm"
+                  >
+                    {!filteredTopics.length && selectedTopic ? (
+                      <option value={selectedTopic.id}>{selectedTopic.title}</option>
+                    ) : null}
+                    {selectOptions.map((topic) => (
+                      <option key={topic.id} value={topic.id}>
+                        {topic.title}
+                      </option>
+                    ))}
+                  </select>
+                </label>
+              </div>
+
+              {!filteredTopics.length && topicQuery.trim() ? (
+                <div className="ui-panel-soft rounded-[20px] px-4 py-3 text-sm text-[var(--theme-text-muted)]">
+                  По этому запросу темы не найдены. Текущая выбранная тема сохранена, чтобы не сбивать выдачу ДЗ.
+                </div>
+              ) : null}
+            </div>
+
+            {selectedTopic ? (
+              <div className="ui-panel-soft space-y-4 rounded-[24px] border p-4">
+                <div className="space-y-1.5">
+                  <p className="ui-copy-muted text-xs font-semibold uppercase tracking-[0.14em]">
+                    Сейчас выбрана тема
+                  </p>
+                  <h2 className="font-display text-xl font-semibold text-[var(--theme-text-strong)]">
+                    {selectedTopic.title}
+                  </h2>
+                </div>
+
+                <div className="flex flex-wrap gap-2 text-xs">
+                  <span className="ui-badge-soft">
+                    {previousTopic ? `До неё: ${previousTopic.title}` : "Первая тема курса"}
+                  </span>
+                  <span className="ui-badge-soft">
+                    {nextTopic ? `После неё: ${nextTopic.title}` : "Последняя тема курса"}
+                  </span>
+                </div>
+
+                <div className="flex flex-wrap gap-2">
+                  <button
+                    type="button"
+                    onClick={() => void moveSelectedTopic("up")}
+                    disabled={selectedTopicIndex <= 0 || orderingTopicId === selectedTopic.id}
+                    className="ui-pressable ui-button-secondary rounded-[14px] px-4 py-2.5 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    {orderingTopicId === selectedTopic.id ? "Сохраняем..." : "Выше"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => void moveSelectedTopic("down")}
+                    disabled={
+                      selectedTopicIndex === -1 ||
+                      selectedTopicIndex >= topics.length - 1 ||
+                      orderingTopicId === selectedTopic.id
+                    }
+                    className="ui-pressable ui-button-secondary rounded-[14px] px-4 py-2.5 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-50"
+                  >
+                    {orderingTopicId === selectedTopic.id ? "Сохраняем..." : "Ниже"}
+                  </button>
+                </div>
+              </div>
+            ) : null}
+          </div>
+        </section>
+      ) : null}
+
+      {selectedTopic ? (
         <TeacherTopicCard
-          key={topic.id}
-          topic={topic}
+          key={selectedTopic.id}
+          topic={selectedTopic}
           deadlinesEnabled={deadlinesEnabled}
           onApplyBulkDeadline={applyBulkDeadline}
           onClearBulkSelection={clearBulkSelection}
@@ -863,7 +1088,7 @@ export function TeacherStudentProgressBoard({
           onUpdateDeadlineValue={updateDeadlineValue}
           onFlushDeadline={flushDeadline}
         />
-      ))}
+      ) : null}
     </div>
   );
 }
