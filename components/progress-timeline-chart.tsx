@@ -206,11 +206,11 @@ function TimelineLegendBadge({
   return (
     <span
       className={cx(
-        "inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-medium",
+        "inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-semibold",
         tone === "closed" &&
-          "border-brand-200/80 bg-brand-50/80 text-brand-700 dark:border-brand-400/20 dark:bg-brand-500/10 dark:text-brand-200",
+          "border-[var(--theme-accent-border)] bg-[var(--theme-accent-soft)] text-[var(--theme-text-strong)]",
         tone === "review" &&
-          "border-rose-200/80 bg-rose-50/80 text-rose-700 dark:border-rose-400/25 dark:bg-rose-500/10 dark:text-rose-200"
+          "border-[var(--theme-danger-border)] bg-[var(--theme-danger-soft)] text-[var(--theme-text-strong)]"
       )}
     >
       <span
@@ -220,7 +220,15 @@ function TimelineLegendBadge({
           tone === "review" && "bg-rose-400"
         )}
       />
-      {label}: {value}
+      <span>{label}:</span>
+      <span
+        className={cx(
+          tone === "closed" && "text-[var(--theme-accent-strong)] dark:text-[var(--theme-accent-text)]",
+          tone === "review" && "text-[var(--theme-danger-text)]"
+        )}
+      >
+        {value}
+      </span>
     </span>
   );
 }
