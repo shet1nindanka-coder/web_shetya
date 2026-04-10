@@ -387,11 +387,13 @@ export function TeacherStudentProgressBoard({
   const [topics, setTopics] = useState(initialState);
   const [selectedTopicId, setSelectedTopicId] = useState<string | null>(() => getDefaultTeacherTopicId(initialState));
   const [topicQuery, setTopicQuery] = useState("");
+  const [comboboxOpen, setComboboxOpen] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [orderingTopicId, setOrderingTopicId] = useState<string | null>(null);
   const requestVersionRef = useRef<Record<string, number>>({});
   const controllersRef = useRef<Record<string, AbortController | undefined>>({});
   const timersRef = useRef<Record<string, ReturnType<typeof setTimeout> | undefined>>({});
+  const comboboxRef = useRef<HTMLDivElement>(null);
   const deferredTopicQuery = useDeferredValue(topicQuery);
 
   const updateTopicsState = useCallback(
@@ -432,6 +434,26 @@ export function TeacherStudentProgressBoard({
       }
     };
   }, []);
+
+  useEffect(() => {
+    if (!comboboxOpen) {
+      return;
+    }
+
+    function handleClickOutside(event: MouseEvent) {
+      if (comboboxRef.current && !comboboxRef.current.contains(event.target as Node)) {
+        setComboboxOpen(false);
+        setTopicQuery("");
+      }
+    }
+
+    document.addEventListener("mousedown", handleClickOutside);
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [comboboxOpen]);
+
 
   const saveDeadline = useCallback(
     async (topicId: string, homeworkNumberId: string, nextDraft?: string) => {
@@ -976,120 +998,116 @@ export function TeacherStudentProgressBoard({
 
       {topics.length > 0 ? (
         <section className="ui-surface rounded-[28px] border p-4 sm:p-5">
-          <div className="flex flex-col gap-4 xl:flex-row xl:items-start">
-            <div className="ui-panel-soft min-w-0 flex-1 rounded-[24px] border p-4 sm:p-5">
-              <div className="flex flex-col gap-4">
-                <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
-                  <div className="space-y-1">
-                    <p className="ui-copy-muted text-xs font-semibold uppercase tracking-[0.14em]">
-                      Выбор темы
-                    </p>
-                    <p className="text-sm text-[var(--theme-text-muted)]">
-                      Найдите тему и сразу перейдите к выдаче ДЗ по ней.
-                    </p>
-                  </div>
-                  <span className="ui-badge-soft w-fit text-xs">
-                    {topicQuery.trim()
-                      ? `${filteredTopics.length} ${filteredTopics.length === 1 ? "совпадение" : filteredTopics.length < 5 ? "совпадения" : "совпадений"}`
-                      : `${topics.length} ${topics.length === 1 ? "тема" : topics.length < 5 ? "темы" : "тем"}`}
+          <div className="flex items-center justify-between gap-4">
+            <div className="relative min-w-0 flex-1" ref={comboboxRef}>
+              <div className="relative">
+                <svg
+                  className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--theme-text-muted)]"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  strokeWidth="2"
+                  stroke="currentColor"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+                </svg>
+                <input
+                  type="text"
+                  value={comboboxOpen ? topicQuery : (selectedTopic?.title ?? "")}
+                  onFocus={() => {
+                    setComboboxOpen(true);
+                    setTopicQuery("");
+                  }}
+                  onChange={(event) => setTopicQuery(event.target.value)}
+                  placeholder="Найти тему…"
+                  className="ui-input w-full rounded-[16px] py-3 pl-10 pr-11 text-sm"
+                  role="combobox"
+                  aria-expanded={comboboxOpen}
+                  aria-haspopup="listbox"
+                />
+                {comboboxOpen && topicQuery ? (
+                  <button
+                    type="button"
+                    onClick={() => setTopicQuery("")}
+                    className="ui-pressable absolute right-3 top-1/2 inline-flex h-7 w-7 -translate-y-1/2 items-center justify-center rounded-full text-[var(--theme-text-muted)] transition hover:bg-[var(--theme-surface-soft)] hover:text-[var(--theme-text-strong)]"
+                    aria-label="Очистить поиск"
+                  >
+                    ×
+                  </button>
+                ) : !comboboxOpen ? (
+                  <span className="pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2 text-[var(--theme-text-muted)]">
+                    <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M8.25 15L12 18.75 15.75 15m-7.5-6L12 5.25 15.75 9" />
+                    </svg>
                   </span>
-                </div>
-
-                <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(260px,0.92fr)]">
-                  <label className="space-y-2">
-                    <span className="ui-copy-muted text-sm font-medium">Найти тему</span>
-                    <div className="relative">
-                      <input
-                        type="search"
-                        value={topicQuery}
-                        onChange={(event) => setTopicQuery(event.target.value)}
-                        placeholder="Начните вводить название темы"
-                        className="ui-input w-full rounded-[16px] px-4 py-3 pr-11 text-sm"
-                      />
-                      {topicQuery ? (
-                        <button
-                          type="button"
-                          onClick={() => setTopicQuery("")}
-                          className="ui-pressable absolute right-2 top-1/2 inline-flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full text-[var(--theme-text-muted)] transition hover:bg-[var(--theme-surface-soft)] hover:text-[var(--theme-text-strong)]"
-                          aria-label="Очистить поиск по темам"
-                        >
-                          ×
-                        </button>
-                      ) : null}
-                    </div>
-                  </label>
-
-                  <label className="space-y-2">
-                    <span className="ui-copy-muted text-sm font-medium">Тема для выдачи ДЗ</span>
-                    <select
-                      value={selectedTopicId ?? ""}
-                      onChange={(event) => setSelectedTopicId(event.target.value || null)}
-                      className="ui-input w-full rounded-[16px] px-4 py-3 text-sm"
-                    >
-                      {!filteredTopics.length && selectedTopic ? (
-                        <option value={selectedTopic.id}>{selectedTopic.title}</option>
-                      ) : null}
-                      {selectOptions.map((topic) => (
-                        <option key={topic.id} value={topic.id}>
-                          {topic.title}
-                        </option>
-                      ))}
-                    </select>
-                  </label>
-                </div>
-
-                {!filteredTopics.length && topicQuery.trim() ? (
-                  <div className="ui-panel-soft rounded-[20px] px-4 py-3 text-sm text-[var(--theme-text-muted)]">
-                    По этому запросу темы не найдены. Текущая выбранная тема сохранена, чтобы не сбивать выдачу ДЗ.
-                  </div>
                 ) : null}
               </div>
+
+              {comboboxOpen ? (
+                <ul
+                  role="listbox"
+                  className="absolute left-0 right-0 top-[calc(100%+6px)] z-30 max-h-[280px] overflow-y-auto rounded-[16px] border bg-[var(--theme-surface-default)] p-1.5 shadow-lg"
+                >
+                  {filteredTopics.length === 0 ? (
+                    <li className="px-3 py-2.5 text-sm text-[var(--theme-text-muted)]">
+                      Ничего не найдено
+                    </li>
+                  ) : (
+                    filteredTopics.map((topic) => (
+                      <li key={topic.id}>
+                        <button
+                          type="button"
+                          role="option"
+                          aria-selected={topic.id === selectedTopicId}
+                          onClick={() => {
+                            setSelectedTopicId(topic.id);
+                            setComboboxOpen(false);
+                            setTopicQuery("");
+                          }}
+                          className={`flex w-full items-center justify-between gap-3 rounded-[12px] px-3 py-2.5 text-left text-sm transition ${
+                            topic.id === selectedTopicId
+                              ? "bg-[var(--theme-brand-subtle)] font-semibold text-[var(--theme-text-strong)]"
+                              : "text-[var(--theme-text-default)] hover:bg-[var(--theme-surface-soft)]"
+                          }`}
+                        >
+                          <span className="min-w-0 truncate">{topic.title}</span>
+                          <span className="flex-none text-xs text-[var(--theme-text-muted)]">
+                            {topic.solvedCount}/{topic.totalNumbers}
+                          </span>
+                        </button>
+                      </li>
+                    ))
+                  )}
+                </ul>
+              ) : null}
             </div>
 
-            {selectedTopic ? (
-              <div className="ui-panel-soft w-full xl:max-w-[430px] xl:flex-none space-y-4 rounded-[24px] border p-4 sm:p-5">
-                <div className="space-y-1.5">
-                  <p className="ui-copy-muted text-xs font-semibold uppercase tracking-[0.14em]">
-                    Сейчас выбрана тема
-                  </p>
-                  <h2 className="font-display text-xl font-semibold text-[var(--theme-text-strong)]">
-                    {selectedTopic.title}
-                  </h2>
-                </div>
-
-                <div className="flex flex-wrap gap-2 text-xs">
-                  <span className="ui-badge-soft">
-                    {previousTopic ? `До неё: ${previousTopic.title}` : "Первая тема курса"}
-                  </span>
-                  <span className="ui-badge-soft">
-                    {nextTopic ? `После неё: ${nextTopic.title}` : "Последняя тема курса"}
-                  </span>
-                </div>
-
-                <div className="flex flex-wrap gap-2">
-                  <button
-                    type="button"
-                    onClick={() => void moveSelectedTopic("up")}
-                    disabled={selectedTopicIndex <= 0 || orderingTopicId === selectedTopic.id}
-                    className="ui-pressable ui-button-secondary rounded-[14px] px-4 py-2.5 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-50"
-                  >
-                    {orderingTopicId === selectedTopic.id ? "Сохраняем..." : "Выше"}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => void moveSelectedTopic("down")}
-                    disabled={
-                      selectedTopicIndex === -1 ||
-                      selectedTopicIndex >= topics.length - 1 ||
-                      orderingTopicId === selectedTopic.id
-                    }
-                    className="ui-pressable ui-button-secondary rounded-[14px] px-4 py-2.5 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-50"
-                  >
-                    {orderingTopicId === selectedTopic.id ? "Сохраняем..." : "Ниже"}
-                  </button>
-                </div>
-              </div>
-            ) : null}
+            <div className="flex flex-none items-center gap-1.5">
+              <span className="hidden text-xs text-[var(--theme-text-muted)] sm:block">
+                {topics.length} {topics.length === 1 ? "тема" : topics.length < 5 ? "темы" : "тем"}
+              </span>
+              <button
+                type="button"
+                onClick={() => void moveSelectedTopic("up")}
+                disabled={selectedTopicIndex <= 0 || orderingTopicId === selectedTopic?.id}
+                className="ui-pressable inline-flex h-9 w-9 items-center justify-center rounded-[12px] border text-[var(--theme-text-muted)] transition hover:bg-[var(--theme-surface-soft)] hover:text-[var(--theme-text-strong)] disabled:cursor-not-allowed disabled:opacity-40"
+                aria-label="Переместить тему выше"
+              >
+                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M4.5 15.75l7.5-7.5 7.5 7.5" />
+                </svg>
+              </button>
+              <button
+                type="button"
+                onClick={() => void moveSelectedTopic("down")}
+                disabled={selectedTopicIndex === -1 || selectedTopicIndex >= topics.length - 1 || orderingTopicId === selectedTopic?.id}
+                className="ui-pressable inline-flex h-9 w-9 items-center justify-center rounded-[12px] border text-[var(--theme-text-muted)] transition hover:bg-[var(--theme-surface-soft)] hover:text-[var(--theme-text-strong)] disabled:cursor-not-allowed disabled:opacity-40"
+                aria-label="Переместить тему ниже"
+              >
+                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 8.25l-7.5 7.5-7.5-7.5" />
+                </svg>
+              </button>
+            </div>
           </div>
         </section>
       ) : null}
