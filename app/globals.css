@@ -108,7 +108,7 @@ html[data-theme="dark"] {
   --theme-danger-soft: rgba(244, 63, 94, 0.12);
   --theme-danger-border: rgba(251, 113, 133, 0.2);
   --theme-danger-text: #fecdd3;
-  --theme-danger-solid: #f87171;
+  --theme-danger-solid: #ef4444;
 }
 
 /* ───────────────────────────────────────────────
@@ -269,7 +269,7 @@ html[data-theme="dark"] .soft-grid::after {
   background:
     linear-gradient(
       180deg,
-      color-mix(in srgb, var(--theme-danger-solid) 72%, white 28%) 0%,
+      color-mix(in srgb, var(--theme-danger-solid) 88%, white 12%) 0%,
       var(--theme-danger-solid) 100%
     );
   box-shadow: 0 10px 20px rgba(220, 38, 38, 0.22);
