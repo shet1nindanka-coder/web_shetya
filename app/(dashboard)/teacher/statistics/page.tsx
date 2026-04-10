@@ -1,17 +1,14 @@
 import Link from "next/link";
 import { HomeworkNumberStatus, UserRole } from "@prisma/client";
 import { PageHeader } from "@/components/page-header";
-import {
-  buildTeacherProgressTimeline,
-  type ProgressTimelinePoint
-} from "@/lib/progress-timeline";
+import { ProgressTimelineChart } from "@/components/progress-timeline-chart";
 import { ProgressBar } from "@/components/progress-bar";
 import { TeacherProgressTimelineFilter } from "@/components/teacher-progress-timeline-filter";
 import { SectionCard } from "@/components/section-card";
 import { StatCard } from "@/components/stat-card";
 import { TeacherStatisticsDrilldown } from "@/components/teacher-statistics-drilldown";
 import { requireUser } from "@/lib/auth";
-import { getTeacherTopicsOverview } from "@/lib/platform-data";
+import { getProgressTimeline, getTeacherTopicsOverview } from "@/lib/platform-data";
 import { completionPercent, cx, toIsoDateTimeString } from "@/lib/utils";
 
 type TeacherTopicsOverview = Awaited<ReturnType<typeof getTeacherTopicsOverview>>;
@@ -197,9 +194,7 @@ export default async function TeacherStatisticsPage({ searchParams }: TeacherSta
     view === "teacher"
       ? "Темп прогресса по времени и точечный срез по теме и ученику."
       : "Общие метрики и аналитика платформы.";
-  const progressTimeline = buildTeacherProgressTimeline(data.topics, new Date(), {
-    studentId: selectedTimelineStudent?.id ?? null
-  });
+  const progressTimelineEntries = await getProgressTimeline(selectedTimelineStudent?.id, 112);
   const drilldownTopics = data.topics.map((topic) => ({
     id: topic.id,
     title: topic.title,
@@ -249,11 +244,6 @@ export default async function TeacherStatisticsPage({ searchParams }: TeacherSta
         <>
           <SectionCard
             title="Динамика прогресса"
-            description={
-              selectedTimelineStudent
-                ? `Показываем темп и сложные места только для ученика ${selectedTimelineStudent.name}.`
-                : "По последним изменениям статусов видно, с каким темпом закрываются номера и где появляются новые сложные места."
-            }
             action={
               <TeacherProgressTimelineFilter
                 students={data.students.map((student) => ({
@@ -264,18 +254,10 @@ export default async function TeacherStatisticsPage({ searchParams }: TeacherSta
               />
             }
           >
-            <div className="grid gap-3 sm:gap-4 xl:grid-cols-2">
-              <TimelineChartCard
-                title="За последнюю неделю"
-                description="Закрытые номера и новые красные статусы по дням за последние 7 дней."
-                points={progressTimeline.daily}
-              />
-              <TimelineChartCard
-                title="По неделям за 8 недель"
-                description="Темп прохождения по неделям за последние 8 учебных недель."
-                points={progressTimeline.weekly}
-              />
-            </div>
+            <ProgressTimelineChart
+              entries={progressTimelineEntries}
+              selectedStudentName={selectedTimelineStudent?.name ?? null}
+            />
           </SectionCard>
 
           <SectionCard title="Срез по теме и ученику">
@@ -552,144 +534,6 @@ function CompactBar({
           transform: `scaleX(${normalizedValue})`,
           transformOrigin: "left center"
         }}
-      />
-    </div>
-  );
-}
-
-function TimelineChartCard({
-  title,
-  description,
-  points
-}: {
-  title: string;
-  description: string;
-  points: ProgressTimelinePoint[];
-}) {
-  const maxValue = Math.max(1, ...points.map((point) => Math.max(point.solved, point.review)));
-  const solvedTotal = points.reduce((sum, point) => sum + point.solved, 0);
-  const reviewTotal = points.reduce((sum, point) => sum + point.review, 0);
-  const totalActivity = solvedTotal + reviewTotal;
-
-  return (
-    <article className="ui-surface ui-panel-soft rounded-[16px] p-4 sm:rounded-[18px] sm:p-5">
-      <div className="space-y-1.5">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <h3 className="font-display text-[1.08rem] font-semibold text-[var(--theme-text-strong)] sm:text-[1.2rem]">
-            {title}
-          </h3>
-          <span className="rounded-full border border-[var(--theme-border-soft)] bg-[var(--theme-surface-soft)] px-3 py-1 text-xs font-medium text-[var(--theme-text-muted)]">
-            Всего изменений: {totalActivity}
-          </span>
-        </div>
-        <p className="max-w-2xl text-sm leading-relaxed text-[var(--theme-text-muted)]">{description}</p>
-      </div>
-
-      <div className="mt-4 flex flex-wrap gap-2.5">
-        <TimelineLegendBadge label="Закрыто" value={solvedTotal} tone="brand" />
-        <TimelineLegendBadge label="Красных" value={reviewTotal} tone="rose" />
-      </div>
-
-      <div className="mt-4 rounded-[18px] border border-[var(--theme-border-soft)] bg-[linear-gradient(180deg,var(--theme-surface-soft),var(--theme-surface-strong))] px-3 py-4 sm:px-4 sm:py-5">
-        <div className="relative pl-8 sm:pl-10">
-          <div className="pointer-events-none absolute left-0 top-0 bottom-11 flex w-6 flex-col justify-between text-right text-[10px] font-medium text-[var(--theme-text-muted)] sm:w-8 sm:text-[11px]">
-            <span>{maxValue}</span>
-            <span>{Math.max(1, Math.ceil(maxValue / 2))}</span>
-            <span>0</span>
-          </div>
-          <div className="pointer-events-none absolute left-8 right-0 top-0 bottom-11 sm:left-10">
-            <div className="absolute inset-x-0 top-0 border-t border-dashed border-[var(--theme-border-soft)]" />
-            <div className="absolute inset-x-0 top-1/2 border-t border-dashed border-[var(--theme-border-soft)]" />
-            <div className="absolute inset-x-0 bottom-0 h-4 rounded-t-[10px] bg-[var(--theme-surface-soft)]/70" />
-            <div className="absolute inset-x-0 bottom-0 border-t-2 border-[var(--theme-border)]" />
-          </div>
-
-          <div
-            className="grid items-end gap-2 sm:gap-3"
-            style={{ gridTemplateColumns: `repeat(${points.length}, minmax(0, 1fr))` }}
-          >
-            {points.map((point) => (
-              <div key={point.key} className="min-w-0">
-                <div
-                  className="flex h-48 items-end justify-center gap-1.5 px-1 pb-3 pt-5"
-                  title={`${point.tooltip}: закрыто ${point.solved}, красных ${point.review}`}
-                >
-                  <TimelineBar value={point.solved} maxValue={maxValue} className="bg-brand-500" />
-                  <TimelineBar value={point.review} maxValue={maxValue} className="bg-rose-400" />
-                </div>
-                <div className="border-t border-[var(--theme-border-soft)] pt-2 text-center">
-                  <p className="truncate text-[11px] font-semibold text-[var(--theme-text-strong)] sm:text-xs">
-                    {point.label}
-                  </p>
-                  <p className="mt-0.5 text-[11px] text-[var(--theme-text-muted)]">
-                    {point.solved + point.review}
-                  </p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-        {totalActivity === 0 ? (
-          <p className="mt-4 text-center text-sm text-[var(--theme-text-muted)]">
-            За выбранный период пока не было изменений статусов.
-          </p>
-        ) : null}
-      </div>
-    </article>
-  );
-}
-
-function TimelineLegendBadge({
-  label,
-  value,
-  tone
-}: {
-  label: string;
-  value: number;
-  tone: "brand" | "rose";
-}) {
-  return (
-    <span
-      className={cx(
-        "inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-medium",
-        tone === "brand" &&
-          "border-brand-200/80 bg-brand-50/80 text-brand-700 dark:border-brand-400/20 dark:bg-brand-500/10 dark:text-brand-200",
-        tone === "rose" &&
-          "border-rose-200/80 bg-rose-50/80 text-rose-700 dark:border-rose-400/25 dark:bg-rose-500/10 dark:text-rose-200"
-      )}
-    >
-      <span
-        className={cx(
-          "h-2.5 w-2.5 rounded-full",
-          tone === "brand" && "bg-brand-500",
-          tone === "rose" && "bg-rose-400"
-        )}
-      />
-      {label}: {value}
-    </span>
-  );
-}
-
-function TimelineBar({
-  value,
-  maxValue,
-  className
-}: {
-  value: number;
-  maxValue: number;
-  className: string;
-}) {
-  const normalizedHeight = value <= 0 ? 0 : Math.max(14, Math.round((value / maxValue) * 100));
-
-  return (
-    <div className="relative flex h-full w-5 items-end justify-center sm:w-6">
-      <div className="absolute inset-x-[3px] top-0 bottom-0 rounded-full bg-[var(--theme-surface-soft)]/90" />
-      <div
-        className={cx(
-          "relative z-10 w-full rounded-full shadow-[0_8px_18px_rgba(37,99,235,0.14)] transition-all duration-300 ease-out",
-          className
-        )}
-        style={{ height: `${normalizedHeight}%` }}
       />
     </div>
   );

@@ -21,7 +21,7 @@ export function TeacherProgressTimelineFilter({
   const [isPending, startTransition] = useTransition();
 
   return (
-    <label className="flex min-w-[220px] max-w-[280px] flex-col gap-1.5">
+    <label className="flex w-full min-w-0 flex-col gap-1.5 sm:min-w-[220px] sm:max-w-[280px]">
       <span className="text-xs font-medium uppercase tracking-[0.18em] text-[var(--theme-text-muted)]">
         Ученик
       </span>

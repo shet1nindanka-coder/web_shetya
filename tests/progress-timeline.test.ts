@@ -1,7 +1,12 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { HomeworkNumberStatus } from "@prisma/client";
-import { buildTeacherProgressTimeline, formatProgressTrend } from "../lib/progress-timeline";
+import {
+  buildProgressTimelineView,
+  buildTeacherProgressTimeline,
+  formatProgressTrend,
+  type TimelineEntry
+} from "../lib/progress-timeline";
 
 test("buildTeacherProgressTimeline groups solved and review updates into daily and weekly buckets", () => {
   const now = new Date("2026-04-10T12:00:00.000Z");
@@ -94,3 +99,78 @@ test("buildTeacherProgressTimeline can be filtered to one student", () => {
   assert.equal(result.activeStudentsLast30Days, 1);
   assert.equal(result.activeDaysLast30Days, 1);
 });
+
+test("buildProgressTimelineView creates a 7-day chart model with trend", () => {
+  const entries = createTimelineEntries(112);
+
+  setTimelineEntry(entries, "2026-04-04", 0, 0);
+  setTimelineEntry(entries, "2026-04-05", 0, 0);
+  setTimelineEntry(entries, "2026-04-06", 1, 0);
+  setTimelineEntry(entries, "2026-04-07", 0, 1);
+  setTimelineEntry(entries, "2026-04-08", 2, 0);
+  setTimelineEntry(entries, "2026-04-09", 0, 0);
+  setTimelineEntry(entries, "2026-04-10", 3, 1);
+
+  setTimelineEntry(entries, "2026-03-28", 1, 0);
+  setTimelineEntry(entries, "2026-03-29", 0, 0);
+  setTimelineEntry(entries, "2026-03-30", 0, 0);
+  setTimelineEntry(entries, "2026-03-31", 1, 0);
+  setTimelineEntry(entries, "2026-04-01", 0, 0);
+  setTimelineEntry(entries, "2026-04-02", 0, 0);
+  setTimelineEntry(entries, "2026-04-03", 0, 0);
+
+  const result = buildProgressTimelineView(entries, "7d");
+
+  assert.equal(result.points.length, 7);
+  assert.equal(result.closedTotal, 6);
+  assert.equal(result.redTotal, 2);
+  assert.equal(result.totalChanges, 8);
+  assert.equal(result.trend.direction, "up");
+  assert.match(result.trend.label, /\+4 закрыто/);
+  assert.equal(result.points.at(-1)?.label, "10 апр.");
+  assert.equal(result.points.at(-1)?.totalCount, 4);
+});
+
+test("buildProgressTimelineView groups daily entries into weekly buckets", () => {
+  const entries = createTimelineEntries(112);
+
+  for (let index = 0; index < 28; index += 1) {
+    const date = new Date("2026-03-14T00:00:00.000Z");
+    date.setUTCDate(date.getUTCDate() + index);
+
+    setTimelineEntry(entries, date.toISOString().slice(0, 10), 1, index % 7 === 0 ? 1 : 0);
+  }
+
+  const result = buildProgressTimelineView(entries, "4w");
+
+  assert.equal(result.points.length, 4);
+  assert.equal(result.closedTotal, 28);
+  assert.equal(result.redTotal, 4);
+  assert.equal(result.points[0]?.closedCount, 7);
+  assert.equal(result.points[0]?.redCount, 1);
+  assert.match(result.points[0]?.tooltip ?? "", /14 марта 2026/);
+});
+
+function createTimelineEntries(days: number): TimelineEntry[] {
+  const start = new Date("2025-12-20T00:00:00.000Z");
+
+  return Array.from({ length: days }, (_, index) => {
+    const current = new Date(start);
+    current.setUTCDate(current.getUTCDate() + index);
+
+    return {
+      date: current.toISOString().slice(0, 10),
+      closedCount: 0,
+      redCount: 0
+    };
+  });
+}
+
+function setTimelineEntry(entries: TimelineEntry[], date: string, closedCount: number, redCount: number) {
+  const target = entries.find((entry) => entry.date === date);
+
+  assert.ok(target, `Timeline entry not found for ${date}`);
+
+  target.closedCount = closedCount;
+  target.redCount = redCount;
+}

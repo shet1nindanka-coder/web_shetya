@@ -3,6 +3,7 @@ import { HomeworkNumberStatus, Prisma, UserRole } from "@prisma/client";
 import { logWarnEvent } from "@/lib/logger";
 import { PLATFORM_DATA_TAGS } from "@/lib/platform-data-cache";
 import { prisma } from "@/lib/prisma";
+import type { TimelineEntry } from "@/lib/progress-timeline";
 import { completionPercent, getStatusCounts } from "@/lib/utils";
 
 function buildProgress(statuses: Array<HomeworkNumberStatus | null | undefined>, totalNumbers: number) {
@@ -828,10 +829,100 @@ export async function getStudentDeadlines(studentId: string) {
 
 export type StudentDeadline = Awaited<ReturnType<typeof getStudentDeadlines>>[number];
 
+export async function getProgressTimeline(studentId?: string, days = 112): Promise<TimelineEntry[]> {
+  const normalizedDays = Math.max(1, Math.min(112, Math.floor(days)));
+  const today = startOfTimelineDay(new Date());
+  const timelineStart = addTimelineDays(today, -(normalizedDays - 1));
+
+  try {
+    const statuses = await prisma.studentTopicNumberStatus.findMany({
+      where: {
+        updatedAt: { gte: timelineStart },
+        status: {
+          in: [HomeworkNumberStatus.GREEN, HomeworkNumberStatus.YELLOW, HomeworkNumberStatus.RED]
+        },
+        ...(studentId ? { studentId } : {})
+      },
+      select: {
+        status: true,
+        updatedAt: true
+      },
+      orderBy: { updatedAt: "asc" }
+    });
+
+    const grouped = new Map<string, TimelineEntry>();
+
+    for (let index = 0; index < normalizedDays; index += 1) {
+      const currentDate = addTimelineDays(timelineStart, index);
+      const key = getTimelineDateKey(currentDate);
+
+      grouped.set(key, {
+        date: key,
+        closedCount: 0,
+        redCount: 0
+      });
+    }
+
+    for (const status of statuses) {
+      const key = getTimelineDateKey(status.updatedAt);
+      const current = grouped.get(key);
+
+      if (!current) {
+        continue;
+      }
+
+      if (status.status === HomeworkNumberStatus.RED) {
+        current.redCount += 1;
+      } else {
+        current.closedCount += 1;
+      }
+    }
+
+    return Array.from(grouped.values());
+  } catch (error) {
+    if (!isRecoverablePlatformDataError(error)) {
+      throw error;
+    }
+
+    logWarnEvent(
+      "platform.progress_timeline.schema_mismatch_fallback",
+      { studentId: studentId ?? null, days: normalizedDays },
+      error,
+      "Falling back to empty progress timeline due to Prisma schema mismatch."
+    );
+
+    return Array.from({ length: normalizedDays }, (_, index) => {
+      const currentDate = addTimelineDays(timelineStart, index);
+
+      return {
+        date: getTimelineDateKey(currentDate),
+        closedCount: 0,
+        redCount: 0
+      };
+    });
+  }
+}
+
 export async function getDashboardSummary(userId: string, role: UserRole) {
   if (role === UserRole.TEACHER) {
     return getTeacherTopicsOverview();
   }
 
   return getStudentTopicsOverview(userId);
+}
+
+function startOfTimelineDay(date: Date) {
+  const result = new Date(date);
+  result.setHours(0, 0, 0, 0);
+  return result;
+}
+
+function addTimelineDays(date: Date, days: number) {
+  const result = new Date(date);
+  result.setDate(result.getDate() + days);
+  return result;
+}
+
+function getTimelineDateKey(date: Date) {
+  return date.toISOString().slice(0, 10);
 }
