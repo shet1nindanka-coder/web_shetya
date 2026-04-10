@@ -267,12 +267,12 @@ export default async function TeacherStatisticsPage({ searchParams }: TeacherSta
             <div className="grid gap-3 sm:gap-4 xl:grid-cols-2">
               <TimelineChartCard
                 title="За последнюю неделю"
-                description="Сколько номеров ученики закрывали по дням за последние 7 дней и где появлялись новые красные статусы."
+                description="Закрытые номера и новые красные статусы по дням за последние 7 дней."
                 points={progressTimeline.daily}
               />
               <TimelineChartCard
                 title="По неделям за 8 недель"
-                description="Помогает увидеть общий темп прохождения и моменты просадки по неделям."
+                description="Темп прохождения по неделям за последние 8 учебных недель."
                 points={progressTimeline.weekly}
               />
             </div>
@@ -569,50 +569,99 @@ function TimelineChartCard({
   const maxValue = Math.max(1, ...points.map((point) => Math.max(point.solved, point.review)));
   const solvedTotal = points.reduce((sum, point) => sum + point.solved, 0);
   const reviewTotal = points.reduce((sum, point) => sum + point.review, 0);
+  const totalActivity = solvedTotal + reviewTotal;
 
   return (
-    <article className="ui-surface ui-panel-soft rounded-[14px] sm:rounded-[16px] p-3.5 sm:p-6">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div className="space-y-1">
-          <h3 className="font-display text-[1.05rem] font-semibold text-[var(--theme-text-strong)] sm:text-[1.15rem]">
+    <article className="ui-surface ui-panel-soft rounded-[16px] p-4 sm:rounded-[18px] sm:p-5">
+      <div className="space-y-1.5">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <h3 className="font-display text-[1.08rem] font-semibold text-[var(--theme-text-strong)] sm:text-[1.2rem]">
             {title}
           </h3>
-          <p className="max-w-xl text-sm leading-relaxed text-[var(--theme-text-muted)]">{description}</p>
-        </div>
-
-        <div className="flex flex-wrap items-center gap-3 text-xs font-medium text-[var(--theme-text-muted)]">
-          <span className="inline-flex items-center gap-2">
-            <span className="h-2.5 w-2.5 rounded-full bg-brand-500" />
-            Закрыто: {solvedTotal}
-          </span>
-          <span className="inline-flex items-center gap-2">
-            <span className="h-2.5 w-2.5 rounded-full bg-rose-400" />
-            Красных: {reviewTotal}
+          <span className="rounded-full border border-[var(--theme-border-soft)] bg-[var(--theme-surface-soft)] px-3 py-1 text-xs font-medium text-[var(--theme-text-muted)]">
+            Всего изменений: {totalActivity}
           </span>
         </div>
+        <p className="max-w-2xl text-sm leading-relaxed text-[var(--theme-text-muted)]">{description}</p>
       </div>
 
-      <div
-        className="mt-6 grid items-end gap-2"
-        style={{ gridTemplateColumns: `repeat(${points.length}, minmax(0, 1fr))` }}
-      >
-        {points.map((point) => (
-          <div key={point.key} className="min-w-0">
-            <div
-              className="flex h-44 items-end justify-center gap-1.5 rounded-[14px] border border-[var(--theme-border-soft)] bg-[var(--theme-surface-soft)] px-1.5 py-3"
-              title={`${point.tooltip}: закрыто ${point.solved}, красных ${point.review}`}
-            >
-              <TimelineBar value={point.solved} maxValue={maxValue} className="bg-brand-500" />
-              <TimelineBar value={point.review} maxValue={maxValue} className="bg-rose-400" />
-            </div>
-            <div className="mt-2 space-y-0.5 text-center">
-              <p className="truncate text-[11px] font-medium text-[var(--theme-text-strong)]">{point.label}</p>
-              <p className="text-[11px] text-[var(--theme-text-muted)]">{point.solved + point.review}</p>
-            </div>
+      <div className="mt-4 flex flex-wrap gap-2.5">
+        <TimelineLegendBadge label="Закрыто" value={solvedTotal} tone="brand" />
+        <TimelineLegendBadge label="Красных" value={reviewTotal} tone="rose" />
+      </div>
+
+      <div className="mt-4 rounded-[18px] border border-[var(--theme-border-soft)] bg-[linear-gradient(180deg,var(--theme-surface-soft),var(--theme-surface-strong))] px-3 py-4 sm:px-4 sm:py-5">
+        <div className="relative">
+          <div className="pointer-events-none absolute inset-x-0 top-0 bottom-11">
+            <div className="absolute inset-x-0 top-0 border-t border-dashed border-[var(--theme-border-soft)]" />
+            <div className="absolute inset-x-0 top-1/3 border-t border-dashed border-[var(--theme-border-soft)]" />
+            <div className="absolute inset-x-0 top-2/3 border-t border-dashed border-[var(--theme-border-soft)]" />
+            <div className="absolute inset-x-0 bottom-0 border-t border-[var(--theme-border)]" />
           </div>
-        ))}
+
+          <div
+            className="grid items-end gap-2 sm:gap-3"
+            style={{ gridTemplateColumns: `repeat(${points.length}, minmax(0, 1fr))` }}
+          >
+            {points.map((point) => (
+              <div key={point.key} className="min-w-0">
+                <div
+                  className="flex h-48 items-end justify-center gap-1.5 px-1 pb-3 pt-5"
+                  title={`${point.tooltip}: закрыто ${point.solved}, красных ${point.review}`}
+                >
+                  <TimelineBar value={point.solved} maxValue={maxValue} className="bg-brand-500" />
+                  <TimelineBar value={point.review} maxValue={maxValue} className="bg-rose-400" />
+                </div>
+                <div className="border-t border-[var(--theme-border-soft)] pt-2 text-center">
+                  <p className="truncate text-[11px] font-semibold text-[var(--theme-text-strong)] sm:text-xs">
+                    {point.label}
+                  </p>
+                  <p className="mt-0.5 text-[11px] text-[var(--theme-text-muted)]">
+                    {point.solved + point.review}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+          {totalActivity === 0 ? (
+            <p className="mt-4 text-center text-sm text-[var(--theme-text-muted)]">
+              За выбранный период пока не было изменений статусов.
+            </p>
+          ) : null}
+        </div>
       </div>
     </article>
+  );
+}
+
+function TimelineLegendBadge({
+  label,
+  value,
+  tone
+}: {
+  label: string;
+  value: number;
+  tone: "brand" | "rose";
+}) {
+  return (
+    <span
+      className={cx(
+        "inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-medium",
+        tone === "brand" &&
+          "border-brand-200/80 bg-brand-50/80 text-brand-700 dark:border-brand-400/20 dark:bg-brand-500/10 dark:text-brand-200",
+        tone === "rose" &&
+          "border-rose-200/80 bg-rose-50/80 text-rose-700 dark:border-rose-400/25 dark:bg-rose-500/10 dark:text-rose-200"
+      )}
+    >
+      <span
+        className={cx(
+          "h-2.5 w-2.5 rounded-full",
+          tone === "brand" && "bg-brand-500",
+          tone === "rose" && "bg-rose-400"
+        )}
+      />
+      {label}: {value}
+    </span>
   );
 }
 
@@ -625,12 +674,16 @@ function TimelineBar({
   maxValue: number;
   className: string;
 }) {
-  const normalizedHeight = value <= 0 ? 0 : Math.max(12, Math.round((value / maxValue) * 100));
+  const normalizedHeight = value <= 0 ? 0 : Math.max(14, Math.round((value / maxValue) * 100));
 
   return (
-    <div className="flex h-full w-4 items-end sm:w-5">
+    <div className="relative flex h-full w-5 items-end justify-center sm:w-6">
+      <div className="absolute inset-x-[3px] top-0 bottom-0 rounded-full bg-[var(--theme-surface-soft)]/90" />
       <div
-        className={cx("w-full rounded-t-[10px] transition-all duration-300 ease-out", className)}
+        className={cx(
+          "relative z-10 w-full rounded-full shadow-[0_8px_18px_rgba(37,99,235,0.14)] transition-all duration-300 ease-out",
+          className
+        )}
         style={{ height: `${normalizedHeight}%` }}
       />
     </div>
