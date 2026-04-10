@@ -83,7 +83,7 @@ export function buildTeacherProgressTimeline(
   const previous30DaysStart = addDays(last30DaysStart, -30);
 
   const currentWeekStart = startOfWeek(now);
-  const daily = buildDailyTimeline(events, todayStart, 14);
+  const daily = buildDailyTimeline(events, todayStart, 7);
   const weekly = buildWeeklyTimeline(events, currentWeekStart, 8);
   const activeDayKeys = new Set(
     events

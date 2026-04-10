@@ -266,8 +266,8 @@ export default async function TeacherStatisticsPage({ searchParams }: TeacherSta
           >
             <div className="grid gap-3 sm:gap-4 xl:grid-cols-2">
               <TimelineChartCard
-                title="За последние 14 дней"
-                description="Сколько номеров ученики закрывали по дням и где появлялись новые красные статусы."
+                title="За последнюю неделю"
+                description="Сколько номеров ученики закрывали по дням за последние 7 дней и где появлялись новые красные статусы."
                 points={progressTimeline.daily}
               />
               <TimelineChartCard

@@ -43,16 +43,15 @@ test("buildTeacherProgressTimeline groups solved and review updates into daily a
   assert.equal(result.reviewLast30Days, 1);
   assert.equal(result.activeStudentsLast30Days, 3);
   assert.equal(result.activeDaysLast30Days, 4);
-  assert.equal(result.daily.length, 14);
+  assert.equal(result.daily.length, 7);
   assert.equal(result.weekly.length, 8);
 
   const todayBucket = result.daily.at(-1);
-  const reviewBucket = result.daily.find((point) => point.tooltip === "3 апреля 2026 г.");
   const currentWeekBucket = result.weekly.at(-1);
 
   assert.equal(todayBucket?.solved, 1);
   assert.equal(todayBucket?.review, 0);
-  assert.equal(reviewBucket?.review, 1);
+  assert.equal(result.daily.some((point) => point.review > 0), false);
   assert.equal(currentWeekBucket?.solved, 2);
 });
 
