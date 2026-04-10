@@ -4,6 +4,7 @@ import { Badge } from "@/components/badge";
 import { PageHeader } from "@/components/page-header";
 import { ProgressBar } from "@/components/progress-bar";
 import { SectionCard } from "@/components/section-card";
+import { StudentTopicsRefreshBridge } from "@/components/student-topics-refresh-bridge";
 import { requireUser } from "@/lib/auth";
 import { getStudentTopicsOverview } from "@/lib/platform-data";
 
@@ -13,6 +14,8 @@ export default async function StudentTopicsPage() {
 
   return (
     <div className="space-y-5 sm:space-y-6">
+      <StudentTopicsRefreshBridge />
+
       <PageHeader
         eyebrow="Темы"
         title="Список тем"

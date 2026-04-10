@@ -7,6 +7,7 @@ import { HomeworkStatusBadge } from "@/components/homework-status-badge";
 import { LatexAnswerPreview } from "@/components/latex-answer-preview";
 import { ProgressBar } from "@/components/progress-bar";
 import { SectionCard } from "@/components/section-card";
+import { markStudentTopicsNeedsRefresh } from "@/components/student-topics-refresh-bridge";
 import { completionPercent, cx, getStatusCounts, homeworkStatusMeta } from "@/lib/utils";
 
 type StudentTopicStatusBoardProps = {
@@ -794,6 +795,7 @@ export function StudentTopicStatusBoard({
             : number
         )
       );
+      markStudentTopicsNeedsRefresh();
     } catch (error) {
       if (controller.signal.aborted || statusRequestVersionRef.current[homeworkNumberId] !== nextVersion) {
         return;

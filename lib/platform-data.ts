@@ -174,19 +174,11 @@ async function getStudentTopicsOverviewUncached(studentId: string) {
   };
 }
 
-const getStudentTopicsOverviewCached = unstable_cache(
-  getStudentTopicsOverviewUncached,
-  ["student-topics-overview"],
-  {
-    tags: [PLATFORM_DATA_TAGS.studentTopics]
-  }
-);
-
 export async function getStudentTopicsOverview(
   studentId: string
 ): Promise<Awaited<ReturnType<typeof getStudentTopicsOverviewUncached>>> {
   try {
-    return await getStudentTopicsOverviewCached(studentId);
+    return await getStudentTopicsOverviewUncached(studentId);
   } catch (error) {
     if (!isRecoverablePlatformDataError(error)) {
       throw error;
