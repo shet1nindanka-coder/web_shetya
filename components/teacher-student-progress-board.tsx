@@ -975,61 +975,79 @@ export function TeacherStudentProgressBoard({
       ) : null}
 
       {topics.length > 0 ? (
-        <section className="ui-surface space-y-4 rounded-[28px] border p-4 sm:p-5">
-          <div className="grid gap-4 xl:grid-cols-[minmax(0,1.15fr)_minmax(320px,0.85fr)]">
-            <div className="space-y-3">
-              <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(260px,0.9fr)]">
-                <label className="space-y-2">
-                  <span className="ui-copy-muted text-sm font-medium">Найти тему</span>
-                  <div className="relative">
-                    <input
-                      type="search"
-                      value={topicQuery}
-                      onChange={(event) => setTopicQuery(event.target.value)}
-                      placeholder="Начните вводить название темы"
-                      className="ui-input w-full rounded-[16px] px-4 py-3 pr-11 text-sm"
-                    />
-                    {topicQuery ? (
-                      <button
-                        type="button"
-                        onClick={() => setTopicQuery("")}
-                        className="ui-pressable absolute right-2 top-1/2 inline-flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full text-[var(--theme-text-muted)] transition hover:bg-[var(--theme-surface-soft)] hover:text-[var(--theme-text-strong)]"
-                        aria-label="Очистить поиск по темам"
-                      >
-                        ×
-                      </button>
-                    ) : null}
+        <section className="ui-surface rounded-[28px] border p-4 sm:p-5">
+          <div className="flex flex-col gap-4 xl:flex-row xl:items-start">
+            <div className="ui-panel-soft min-w-0 flex-1 rounded-[24px] border p-4 sm:p-5">
+              <div className="flex flex-col gap-4">
+                <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                  <div className="space-y-1">
+                    <p className="ui-copy-muted text-xs font-semibold uppercase tracking-[0.14em]">
+                      Выбор темы
+                    </p>
+                    <p className="text-sm text-[var(--theme-text-muted)]">
+                      Найдите тему и сразу перейдите к выдаче ДЗ по ней.
+                    </p>
                   </div>
-                </label>
-
-                <label className="space-y-2">
-                  <span className="ui-copy-muted text-sm font-medium">Тема для выдачи ДЗ</span>
-                  <select
-                    value={selectedTopicId ?? ""}
-                    onChange={(event) => setSelectedTopicId(event.target.value || null)}
-                    className="ui-input w-full rounded-[16px] px-4 py-3 text-sm"
-                  >
-                    {!filteredTopics.length && selectedTopic ? (
-                      <option value={selectedTopic.id}>{selectedTopic.title}</option>
-                    ) : null}
-                    {selectOptions.map((topic) => (
-                      <option key={topic.id} value={topic.id}>
-                        {topic.title}
-                      </option>
-                    ))}
-                  </select>
-                </label>
-              </div>
-
-              {!filteredTopics.length && topicQuery.trim() ? (
-                <div className="ui-panel-soft rounded-[20px] px-4 py-3 text-sm text-[var(--theme-text-muted)]">
-                  По этому запросу темы не найдены. Текущая выбранная тема сохранена, чтобы не сбивать выдачу ДЗ.
+                  <span className="ui-badge-soft w-fit text-xs">
+                    {topicQuery.trim()
+                      ? `${filteredTopics.length} ${filteredTopics.length === 1 ? "совпадение" : filteredTopics.length < 5 ? "совпадения" : "совпадений"}`
+                      : `${topics.length} ${topics.length === 1 ? "тема" : topics.length < 5 ? "темы" : "тем"}`}
+                  </span>
                 </div>
-              ) : null}
+
+                <div className="grid gap-3 lg:grid-cols-[minmax(0,1fr)_minmax(260px,0.92fr)]">
+                  <label className="space-y-2">
+                    <span className="ui-copy-muted text-sm font-medium">Найти тему</span>
+                    <div className="relative">
+                      <input
+                        type="search"
+                        value={topicQuery}
+                        onChange={(event) => setTopicQuery(event.target.value)}
+                        placeholder="Начните вводить название темы"
+                        className="ui-input w-full rounded-[16px] px-4 py-3 pr-11 text-sm"
+                      />
+                      {topicQuery ? (
+                        <button
+                          type="button"
+                          onClick={() => setTopicQuery("")}
+                          className="ui-pressable absolute right-2 top-1/2 inline-flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-full text-[var(--theme-text-muted)] transition hover:bg-[var(--theme-surface-soft)] hover:text-[var(--theme-text-strong)]"
+                          aria-label="Очистить поиск по темам"
+                        >
+                          ×
+                        </button>
+                      ) : null}
+                    </div>
+                  </label>
+
+                  <label className="space-y-2">
+                    <span className="ui-copy-muted text-sm font-medium">Тема для выдачи ДЗ</span>
+                    <select
+                      value={selectedTopicId ?? ""}
+                      onChange={(event) => setSelectedTopicId(event.target.value || null)}
+                      className="ui-input w-full rounded-[16px] px-4 py-3 text-sm"
+                    >
+                      {!filteredTopics.length && selectedTopic ? (
+                        <option value={selectedTopic.id}>{selectedTopic.title}</option>
+                      ) : null}
+                      {selectOptions.map((topic) => (
+                        <option key={topic.id} value={topic.id}>
+                          {topic.title}
+                        </option>
+                      ))}
+                    </select>
+                  </label>
+                </div>
+
+                {!filteredTopics.length && topicQuery.trim() ? (
+                  <div className="ui-panel-soft rounded-[20px] px-4 py-3 text-sm text-[var(--theme-text-muted)]">
+                    По этому запросу темы не найдены. Текущая выбранная тема сохранена, чтобы не сбивать выдачу ДЗ.
+                  </div>
+                ) : null}
+              </div>
             </div>
 
             {selectedTopic ? (
-              <div className="ui-panel-soft space-y-4 rounded-[24px] border p-4">
+              <div className="ui-panel-soft w-full xl:max-w-[430px] xl:flex-none space-y-4 rounded-[24px] border p-4 sm:p-5">
                 <div className="space-y-1.5">
                   <p className="ui-copy-muted text-xs font-semibold uppercase tracking-[0.14em]">
                     Сейчас выбрана тема
