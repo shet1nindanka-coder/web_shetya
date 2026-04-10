@@ -475,6 +475,7 @@ async function getTeacherTopicsOverviewUncached() {
                 select: {
                   studentId: true,
                   status: true,
+                  updatedAt: true,
                   ...(deadlinesEnabled ? { deadlineAt: true } : {})
                 }
               }
