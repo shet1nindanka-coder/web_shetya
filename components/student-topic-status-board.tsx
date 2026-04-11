@@ -283,6 +283,7 @@ const StudentNumberCard = memo(function StudentNumberCard({
                     <LatexAnswerPreview value={number.answerLatex} />
                   </div>
                 </div>
+                <div className="ui-telegram-spoiler-mask" aria-hidden="true" />
               </div>
             </button>
           )}
