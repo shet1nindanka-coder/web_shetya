@@ -232,6 +232,68 @@ const StudentNumberCard = memo(function StudentNumberCard({
         </div>
       </div>
 
+      {number.conditionLatex ? (
+        <div className="student-answer-panel mt-2.5 rounded-[12px] border p-2.5 sm:mt-3 sm:rounded-[20px] sm:p-3">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <p className="ui-kicker">Условие</p>
+            </div>
+          </div>
+
+          <div className="ui-card-soft mt-2.5 overflow-hidden rounded-[12px] sm:rounded-[18px]">
+            <div className="px-3 py-2.5 sm:px-4 sm:py-3.5">
+              <LatexAnswerPreview value={number.conditionLatex} />
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {number.answerLatex ? (
+        <div className="student-answer-panel mt-2.5 rounded-[12px] border p-2.5 sm:mt-3 sm:rounded-[20px] sm:p-3">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <p className="ui-kicker">Ответ</p>
+            {isAnswerVisible ? (
+              <button
+                type="button"
+                onClick={() => setIsAnswerVisible(false)}
+                className="ui-pressable ui-button-secondary w-full rounded-[10px] px-3 py-1.5 text-sm font-semibold transition sm:w-auto sm:rounded-[14px] sm:px-3.5 sm:py-2"
+              >
+                Скрыть ответ
+              </button>
+            ) : null}
+          </div>
+
+          {isAnswerVisible ? (
+            <div className="ui-card-soft mt-2.5 overflow-hidden rounded-[12px] sm:rounded-[18px]">
+              <div className="px-3 py-2.5 sm:px-4 sm:py-3.5">
+                <LatexAnswerPreview value={number.answerLatex} />
+              </div>
+            </div>
+          ) : (
+            <button
+              type="button"
+              onClick={() => setIsAnswerVisible(true)}
+              className="group mt-2.5 block w-full rounded-[12px] text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--theme-accent-border)] focus-visible:ring-offset-2 focus-visible:ring-offset-transparent sm:rounded-[18px]"
+              aria-expanded={false}
+              aria-label={`Открыть ответ к номеру ${number.number}`}
+            >
+              <div className="ui-card-soft relative overflow-hidden rounded-[12px] border border-dashed sm:rounded-[18px]">
+                <div className="pointer-events-none px-3 py-2.5 sm:px-4 sm:py-3.5">
+                  <div className="select-none blur-[10px] opacity-80">
+                    <LatexAnswerPreview value={number.answerLatex} />
+                  </div>
+                </div>
+                <div className="absolute inset-0 flex items-center justify-center bg-[color:color-mix(in_srgb,var(--theme-surface-strong)_62%,transparent)] backdrop-blur-[1px]">
+                  <span className="inline-flex items-center rounded-full border border-[var(--theme-accent-border)] bg-[var(--theme-surface-strong)] px-3.5 py-1.5 text-sm font-semibold text-[var(--theme-accent-text)] shadow-[0_10px_28px_rgba(37,99,235,0.12)] transition group-hover:-translate-y-[1px]">
+                    Открыть ответ
+                  </span>
+                </div>
+              </div>
+            </button>
+          )}
+        </div>
+      ) : null}
+
       {notesEnabled ? (
         <div className="student-note-panel mt-2.5 rounded-[12px] border px-3 py-2.5 sm:mt-3 sm:rounded-[20px] sm:px-4 sm:py-3">
           <button
@@ -288,51 +350,6 @@ const StudentNumberCard = memo(function StudentNumberCard({
               <p className="ui-hint ui-copy-soft mt-1.5 text-xs leading-5">Сохранится автоматически.</p>
             </>
           ) : null}
-        </div>
-      ) : null}
-
-      {number.conditionLatex ? (
-        <div className="student-answer-panel mt-2.5 rounded-[12px] border p-2.5 sm:mt-3 sm:rounded-[20px] sm:p-3">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div>
-              <p className="ui-kicker">Условие</p>
-            </div>
-          </div>
-
-          <div className="ui-card-soft mt-2.5 overflow-hidden rounded-[12px] sm:rounded-[18px]">
-            <div className="px-3 py-2.5 sm:px-4 sm:py-3.5">
-              <LatexAnswerPreview value={number.conditionLatex} />
-            </div>
-          </div>
-        </div>
-      ) : null}
-
-      {number.answerLatex ? (
-        <div className="student-answer-panel mt-2.5 rounded-[12px] border p-2.5 sm:mt-3 sm:rounded-[20px] sm:p-3">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div>
-              <p className="ui-hint ui-copy-muted text-sm leading-5">Ответ откроется только по вашему клику.</p>
-            </div>
-            <button
-              type="button"
-              onClick={() => setIsAnswerVisible((current) => !current)}
-              className="ui-pressable ui-button-secondary w-full rounded-[10px] px-3 py-1.5 text-sm font-semibold transition sm:w-auto sm:rounded-[14px] sm:px-3.5 sm:py-2"
-            >
-              {isAnswerVisible ? "Скрыть ответ" : "Открыть ответ"}
-            </button>
-          </div>
-
-          {isAnswerVisible ? (
-            <div className="ui-card-soft mt-2.5 overflow-hidden rounded-[12px] sm:rounded-[18px]">
-              <div className="px-3 py-2.5 sm:px-4 sm:py-3.5">
-                <LatexAnswerPreview value={number.answerLatex} />
-              </div>
-            </div>
-          ) : (
-            <div className="ui-hint ui-card-soft ui-copy-muted mt-2.5 rounded-[12px] border border-dashed px-3 py-2.5 text-sm leading-5 sm:rounded-[18px] sm:px-4 sm:py-3">
-              Ответ скрыт, пока вы его не откроете.
-            </div>
-          )}
         </div>
       ) : null}
     </div>
