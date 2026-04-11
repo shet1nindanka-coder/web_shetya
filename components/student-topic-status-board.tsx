@@ -228,20 +228,42 @@ const StudentNumberCard = memo(function StudentNumberCard({
 
       {notesEnabled ? (
         <div className="student-note-panel mt-2.5 rounded-[12px] border px-3 py-2.5 sm:mt-3 sm:rounded-[20px] sm:px-4 sm:py-3">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div>
-              <p className="ui-hint ui-copy-muted text-sm leading-5">
-                {notePreview ? "Есть сохраненная заметка." : "Можно оставить короткую заметку."}
+          <button
+            type="button"
+            onClick={() => setIsNoteOpen((current) => !current)}
+            className="group flex w-full items-start justify-between gap-3 rounded-[10px] text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--theme-accent-border)] focus-visible:ring-offset-2 focus-visible:ring-offset-transparent"
+            aria-expanded={isNoteOpen}
+          >
+            <div className="min-w-0 flex-1">
+              <p className="ui-kicker">Заметка</p>
+              <p
+                className={cx(
+                  "mt-1 text-sm leading-6",
+                  notePreview ? "text-[var(--theme-text-default)]" : "text-[var(--theme-text-muted)]"
+                )}
+              >
+                {isNoteOpen
+                  ? "Короткий комментарий к этому номеру."
+                  : notePreview ?? "Добавить короткую заметку к этому номеру"}
               </p>
             </div>
-            <button
-              type="button"
-              onClick={() => setIsNoteOpen((current) => !current)}
-              className="ui-pressable ui-button-secondary w-full rounded-[10px] px-3 py-1.5 text-sm font-semibold transition sm:w-auto sm:rounded-[14px] sm:px-3.5 sm:py-2"
-            >
-              {isNoteOpen ? "Скрыть заметку" : notePreview ? "Открыть заметку" : "Добавить заметку"}
-            </button>
-          </div>
+            <span className="flex flex-none items-center gap-2 pt-0.5">
+              <span className="hidden text-xs font-semibold text-[var(--theme-text-muted)] sm:block">
+                {isNoteOpen ? "Свернуть" : notePreview ? "Изменить" : "Добавить"}
+              </span>
+              <span className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-[var(--theme-border-soft)] bg-[var(--theme-surface-strong)] text-[var(--theme-text-muted)] transition group-hover:border-[var(--theme-accent-border)] group-hover:text-[var(--theme-accent-text)]">
+                {isNoteOpen ? (
+                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor" aria-hidden="true">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 15.75l-7.5-7.5-7.5 7.5" />
+                  </svg>
+                ) : (
+                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor" aria-hidden="true">
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487a2.25 2.25 0 113.182 3.182L8.25 19.463 3.75 20.25l.787-4.5L16.862 4.487z" />
+                  </svg>
+                )}
+              </span>
+            </span>
+          </button>
 
           {isNoteOpen ? (
             <>
@@ -259,10 +281,6 @@ const StudentNumberCard = memo(function StudentNumberCard({
               />
               <p className="ui-hint ui-copy-soft mt-1.5 text-xs leading-5">Сохранится автоматически.</p>
             </>
-          ) : notePreview ? (
-            <div className="ui-card-soft mt-2.5 rounded-[12px] px-3 py-2 text-sm leading-5 text-[var(--theme-text-default)] sm:rounded-2xl sm:py-2.5">
-              {notePreview}
-            </div>
           ) : null}
         </div>
       ) : null}
