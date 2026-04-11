@@ -249,7 +249,7 @@ const StudentNumberCard = memo(function StudentNumberCard({
       ) : null}
 
       {number.answerLatex ? (
-        <div className="student-answer-panel mt-2.5 rounded-[12px] border p-2.5 sm:mt-3 sm:rounded-[20px] sm:p-3">
+        <div className="student-answer-panel mt-2.5 rounded-[12px] border p-2 sm:mt-3 sm:rounded-[20px] sm:p-2.5">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <p className="ui-kicker">Ответ</p>
             {isAnswerVisible ? (
@@ -265,7 +265,7 @@ const StudentNumberCard = memo(function StudentNumberCard({
 
           {isAnswerVisible ? (
             <div className="ui-card-soft mt-2.5 overflow-hidden rounded-[12px] sm:rounded-[18px]">
-              <div className="px-3 py-2.5 sm:px-4 sm:py-3.5">
+              <div className="px-3 py-2 sm:px-3.5 sm:py-3">
                 <LatexAnswerPreview value={number.answerLatex} />
               </div>
             </div>
@@ -278,13 +278,13 @@ const StudentNumberCard = memo(function StudentNumberCard({
               aria-label={`Открыть ответ к номеру ${number.number}`}
             >
               <div className="ui-card-soft relative overflow-hidden rounded-[12px] border border-dashed sm:rounded-[18px]">
-                <div className="pointer-events-none px-3 py-2.5 sm:px-4 sm:py-3.5">
-                  <div className="select-none blur-[10px] opacity-80">
+                <div className="pointer-events-none max-h-[76px] overflow-hidden px-3 py-2 sm:max-h-[88px] sm:px-3.5 sm:py-2.5">
+                  <div className="select-none blur-[10px] opacity-75">
                     <LatexAnswerPreview value={number.answerLatex} />
                   </div>
                 </div>
                 <div className="absolute inset-0 flex items-center justify-center bg-[color:color-mix(in_srgb,var(--theme-surface-strong)_62%,transparent)] backdrop-blur-[1px]">
-                  <span className="inline-flex items-center rounded-full border border-[var(--theme-accent-border)] bg-[var(--theme-surface-strong)] px-3.5 py-1.5 text-sm font-semibold text-[var(--theme-accent-text)] shadow-[0_10px_28px_rgba(37,99,235,0.12)] transition group-hover:-translate-y-[1px]">
+                  <span className="inline-flex items-center rounded-full border border-[var(--theme-accent-border)] bg-[var(--theme-surface-strong)] px-3 py-1.5 text-sm font-semibold text-[var(--theme-accent-text)] shadow-[0_10px_28px_rgba(37,99,235,0.12)] transition group-hover:-translate-y-[1px]">
                     Открыть ответ
                   </span>
                 </div>
