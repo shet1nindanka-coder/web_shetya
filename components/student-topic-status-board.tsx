@@ -8,6 +8,7 @@ import { LatexAnswerPreview } from "@/components/latex-answer-preview";
 import { ProgressBar } from "@/components/progress-bar";
 import { SectionCard } from "@/components/section-card";
 import { markStudentTopicsNeedsRefresh } from "@/components/student-topics-refresh-bridge";
+import { TelegramSpoiler } from "@/components/telegram-spoiler";
 import { completionPercent, cx, getStatusCounts, homeworkStatusMeta } from "@/lib/utils";
 
 type StudentTopicStatusBoardProps = {
@@ -263,30 +264,18 @@ const StudentNumberCard = memo(function StudentNumberCard({
             ) : null}
           </div>
 
-          {isAnswerVisible ? (
-            <div className="ui-card-soft mt-2.5 overflow-hidden rounded-[12px] sm:rounded-[18px]">
+          <TelegramSpoiler
+            revealed={isAnswerVisible}
+            onReveal={() => setIsAnswerVisible(true)}
+            className="mt-2.5 rounded-[12px] sm:rounded-[18px]"
+            ariaLabel={`Открыть ответ к номеру ${number.number}`}
+          >
+            <div className="ui-card-soft overflow-hidden rounded-[12px] sm:rounded-[18px]">
               <div className="px-3 py-2 sm:px-3.5 sm:py-3">
                 <LatexAnswerPreview value={number.answerLatex} />
               </div>
             </div>
-          ) : (
-            <button
-              type="button"
-              onClick={() => setIsAnswerVisible(true)}
-              className="group mt-2.5 block w-full rounded-[12px] text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--theme-accent-border)] focus-visible:ring-offset-2 focus-visible:ring-offset-transparent sm:rounded-[18px]"
-              aria-expanded={false}
-              aria-label={`Открыть ответ к номеру ${number.number}`}
-            >
-              <div className="ui-telegram-spoiler relative rounded-[12px] sm:rounded-[18px]">
-                <div className="pointer-events-none max-h-[82px] overflow-hidden px-3 py-2.5 sm:max-h-[96px] sm:px-3.5 sm:py-3">
-                  <div className="ui-telegram-spoiler-content">
-                    <LatexAnswerPreview value={number.answerLatex} />
-                  </div>
-                </div>
-                <div className="ui-telegram-spoiler-mask" aria-hidden="true" />
-              </div>
-            </button>
-          )}
+          </TelegramSpoiler>
         </div>
       ) : null}
 
