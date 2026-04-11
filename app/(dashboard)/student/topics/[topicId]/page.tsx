@@ -48,6 +48,7 @@ export default async function StudentTopicPage({ params, searchParams }: Student
               status: number.studentStatus?.status ?? null,
               note: number.studentStatus?.note ?? "",
               deadlineAt: toIsoDateTimeString(number.studentStatus?.deadlineAt ?? null),
+              conditionLatex: number.conditionLatex,
               answerLatex: number.answerLatex
             }))}
           />

@@ -209,17 +209,18 @@ export default async function TeacherTopicPage({ params, searchParams }: Teacher
       </SectionCard>
 
       <div id="topic-answers" className="scroll-mt-28">
-      <SectionCard title="Ответы к заданиям" description="LaTeX-ответы к номерам.">
-        <TopicAnswerManager
-          topicId={data.topic.id}
-          initialNumber={requestedNumber}
-          numbers={data.topic.homeworkNumbers.map((number) => ({
-            id: number.id,
-            number: number.number,
-            answerLatex: number.answerLatex
-          }))}
-        />
-      </SectionCard>
+        <SectionCard title="Условия и ответы к заданиям" description="LaTeX-условия и ответы к номерам.">
+          <TopicAnswerManager
+            topicId={data.topic.id}
+            initialNumber={requestedNumber}
+            numbers={data.topic.homeworkNumbers.map((number) => ({
+              id: number.id,
+              number: number.number,
+              conditionLatex: number.conditionLatex,
+              answerLatex: number.answerLatex
+            }))}
+          />
+        </SectionCard>
       </div>
     </div>
   );

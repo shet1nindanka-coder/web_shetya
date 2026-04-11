@@ -78,6 +78,7 @@ model TopicHomeworkNumber {
   number       Int
   displayOrder Int                       @default(0)
   answerFileId String?
+  conditionLatex String?
   answerLatex  String?
   topic        Topic                     @relation(fields: [topicId], references: [id], onDelete: Cascade)
   answerFile   StoredFile?               @relation("NumberAnswerFile", fields: [answerFileId], references: [id], onDelete: SetNull)

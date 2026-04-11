@@ -22,6 +22,7 @@ type StudentTopicStatusBoardProps = {
     status: HomeworkNumberStatus | null;
     note: string;
     deadlineAt: string | null;
+    conditionLatex: string | null;
     answerLatex: string | null;
   }>;
 };
@@ -33,6 +34,7 @@ type StudentNumberState = {
   note: string;
   savedNote: string;
   deadlineAt: string | null;
+  conditionLatex: string | null;
   answerLatex: string | null;
   isSavingStatus: boolean;
   isSavingNote: boolean;
@@ -131,6 +133,10 @@ function estimateStudentNumberCardHeight(number: StudentNumberState, notesEnable
     height += 76;
   }
 
+  if (number.conditionLatex) {
+    height += 72;
+  }
+
   if (number.answerLatex) {
     height += 72;
   }
@@ -182,6 +188,7 @@ const StudentNumberCard = memo(function StudentNumberCard({
   homeworkGroup: HomeworkGroup | null;
 }) {
   const [isNoteOpen, setIsNoteOpen] = useState(false);
+  const [isConditionVisible, setIsConditionVisible] = useState(false);
   const [isAnswerVisible, setIsAnswerVisible] = useState(false);
   const isSaving = number.isSavingStatus || number.isSavingNote;
   const notePreview = getNotePreview(number.note);
@@ -282,6 +289,35 @@ const StudentNumberCard = memo(function StudentNumberCard({
               <p className="ui-hint ui-copy-soft mt-1.5 text-xs leading-5">Сохранится автоматически.</p>
             </>
           ) : null}
+        </div>
+      ) : null}
+
+      {number.conditionLatex ? (
+        <div className="student-answer-panel mt-2.5 rounded-[12px] border p-2.5 sm:mt-3 sm:rounded-[20px] sm:p-3">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <p className="ui-hint ui-copy-muted text-sm leading-5">Условие откроется только по вашему клику.</p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setIsConditionVisible((current) => !current)}
+              className="ui-pressable ui-button-secondary w-full rounded-[10px] px-3 py-1.5 text-sm font-semibold transition sm:w-auto sm:rounded-[14px] sm:px-3.5 sm:py-2"
+            >
+              {isConditionVisible ? "Скрыть условие" : "Открыть условие"}
+            </button>
+          </div>
+
+          {isConditionVisible ? (
+            <div className="ui-card-soft mt-2.5 overflow-hidden rounded-[12px] sm:rounded-[18px]">
+              <div className="px-3 py-2.5 sm:px-4 sm:py-3.5">
+                <LatexAnswerPreview value={number.conditionLatex} />
+              </div>
+            </div>
+          ) : (
+            <div className="ui-hint ui-card-soft ui-copy-muted mt-2.5 rounded-[12px] border border-dashed px-3 py-2.5 text-sm leading-5 sm:rounded-[18px] sm:px-4 sm:py-3">
+              Условие скрыто, пока вы его не откроете.
+            </div>
+          )}
         </div>
       ) : null}
 
