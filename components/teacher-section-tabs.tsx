@@ -123,6 +123,7 @@ export function TeacherSectionTabs() {
               type="text"
               inputMode="numeric"
               pattern="[0-9]*"
+              autoComplete="off"
               value={numberQuery}
               onChange={(event) => {
                 setNumberQuery(event.target.value.replace(/[^\d]/g, ""));
@@ -130,17 +131,12 @@ export function TeacherSectionTabs() {
                   setFeedback(null);
                 }
               }}
-              placeholder="Найти номер"
-              className="ui-input w-full rounded-[12px] pl-10 pr-24 py-2.5 text-sm xl:min-w-[320px]"
+              placeholder={isPending ? "Ищем номер..." : "Найти номер"}
+              className="ui-input w-full rounded-[12px] py-2.5 pl-10 pr-3 text-sm xl:min-w-[320px]"
               aria-describedby={feedback ? "teacher-number-search-feedback" : undefined}
-            />
-            <button
-              type="submit"
+              aria-label="Найти номер и открыть тему"
               disabled={isPending}
-              className="ui-pressable ui-button-secondary absolute right-1.5 top-1/2 inline-flex -translate-y-1/2 items-center justify-center rounded-[10px] px-3 py-1.5 text-xs font-semibold transition disabled:cursor-not-allowed disabled:opacity-60"
-            >
-              {isPending ? "Ищем..." : "Открыть"}
-            </button>
+            />
           </label>
           {feedback ? (
             <p
