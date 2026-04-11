@@ -13,13 +13,18 @@ type StudentTopicPageProps = {
   }>;
   searchParams: Promise<{
     homework?: string;
+    number?: string;
   }>;
 };
 
 export default async function StudentTopicPage({ params, searchParams }: StudentTopicPageProps) {
   const user = await requireUser(UserRole.STUDENT);
   const { topicId } = await params;
-  const { homework } = await searchParams;
+  const { homework, number: numberParam } = await searchParams;
+  const initialNumber =
+    typeof numberParam === "string" && Number.isInteger(Number(numberParam))
+      ? Number(numberParam)
+      : null;
   const topic = await getStudentTopicDetail(user.id, topicId);
 
   return (
@@ -42,6 +47,7 @@ export default async function StudentTopicPage({ params, searchParams }: Student
             notesEnabled={topic.notesEnabled}
             deadlinesEnabled={topic.deadlinesEnabled}
             initialHomeworkFilterId={homework}
+            initialNumber={initialNumber}
             initialNumbers={topic.numbers.map((number: (typeof topic.numbers)[number]) => ({
               id: number.id,
               number: number.number,

@@ -17,6 +17,7 @@ type StudentTopicStatusBoardProps = {
   notesEnabled: boolean;
   deadlinesEnabled: boolean;
   initialHomeworkFilterId?: string;
+  initialNumber?: number | null;
   initialNumbers: Array<{
     id: string;
     number: number;
@@ -44,6 +45,7 @@ type StudentNumberState = {
 type StudentNumberCardProps = {
   number: StudentNumberState;
   notesEnabled: boolean;
+  isHighlighted?: boolean;
   onSelect: (homeworkNumberId: string, status: HomeworkNumberStatus | null) => void;
   onNoteChange: (homeworkNumberId: string, value: string) => void;
   onNoteBlur: (homeworkNumberId: string) => void;
@@ -53,6 +55,7 @@ type StudentNumberListProps = {
   numbers: StudentNumberState[];
   resetKey: HomeworkFilterId;
   notesEnabled: boolean;
+  highlightedNumber: number | null;
   homeworkGroupsByDeadline: Map<string, HomeworkGroup>;
   onSelect: (homeworkNumberId: string, status: HomeworkNumberStatus | null) => void;
   onNoteChange: (homeworkNumberId: string, value: string) => void;
@@ -180,6 +183,7 @@ function findStartIndex(offsets: number[], scrollOffset: number) {
 const StudentNumberCard = memo(function StudentNumberCard({
   number,
   notesEnabled,
+  isHighlighted,
   homeworkGroup,
   onSelect,
   onNoteChange,
@@ -192,7 +196,13 @@ const StudentNumberCard = memo(function StudentNumberCard({
   const notePreview = getNotePreview(number.note);
 
   return (
-    <div className="student-number-card rounded-[14px] border p-3 sm:rounded-[22px] sm:p-4">
+    <div
+      id={`student-number-${number.number}`}
+      className={cx(
+        "student-number-card rounded-[14px] border p-3 sm:rounded-[22px] sm:p-4 transition-shadow duration-700",
+        isHighlighted && "ring-2 ring-[var(--theme-accent)] shadow-[0_0_16px_rgba(99,102,241,0.2)]"
+      )}
+    >
       <div className="student-number-header flex flex-col gap-2.5 lg:flex-row lg:items-start lg:justify-between">
         <div className="space-y-2">
           <div className="flex flex-wrap items-center gap-2.5">
@@ -331,13 +341,15 @@ const StudentNumberCard = memo(function StudentNumberCard({
 }, (previousProps, nextProps) =>
   previousProps.notesEnabled === nextProps.notesEnabled &&
   previousProps.number === nextProps.number &&
-  previousProps.homeworkGroup === nextProps.homeworkGroup
+  previousProps.homeworkGroup === nextProps.homeworkGroup &&
+  previousProps.isHighlighted === nextProps.isHighlighted
 );
 
 const StudentNumberRow = memo(function StudentNumberRow({
   number,
   top,
   notesEnabled,
+  isHighlighted,
   homeworkGroup,
   onSelect,
   onNoteChange,
@@ -385,6 +397,7 @@ const StudentNumberRow = memo(function StudentNumberRow({
       <StudentNumberCard
         number={number}
         notesEnabled={notesEnabled}
+        isHighlighted={isHighlighted}
         homeworkGroup={homeworkGroup}
         onSelect={onSelect}
         onNoteChange={onNoteChange}
@@ -396,13 +409,15 @@ const StudentNumberRow = memo(function StudentNumberRow({
   previousProps.top === nextProps.top &&
   previousProps.notesEnabled === nextProps.notesEnabled &&
   previousProps.number === nextProps.number &&
-  previousProps.homeworkGroup === nextProps.homeworkGroup
+  previousProps.homeworkGroup === nextProps.homeworkGroup &&
+  previousProps.isHighlighted === nextProps.isHighlighted
 );
 
 function StudentNumberList({
   numbers,
   resetKey,
   notesEnabled,
+  highlightedNumber,
   homeworkGroupsByDeadline,
   onSelect,
   onNoteChange,
@@ -576,6 +591,7 @@ function StudentNumberList({
                   number={number}
                   top={item.start}
                   notesEnabled={notesEnabled}
+                  isHighlighted={highlightedNumber === number.number}
                   homeworkGroup={number.deadlineAt ? (homeworkGroupsByDeadline.get(number.deadlineAt) ?? null) : null}
                   onSelect={onSelect}
                   onNoteChange={onNoteChange}
@@ -592,6 +608,7 @@ function StudentNumberList({
                 key={number.id}
                 number={number}
                 notesEnabled={notesEnabled}
+                isHighlighted={highlightedNumber === number.number}
                 homeworkGroup={number.deadlineAt ? (homeworkGroupsByDeadline.get(number.deadlineAt) ?? null) : null}
                 onSelect={onSelect}
                 onNoteChange={onNoteChange}
@@ -610,6 +627,7 @@ export function StudentTopicStatusBoard({
   totalNumbers,
   notesEnabled,
   initialHomeworkFilterId,
+  initialNumber,
   initialNumbers
 }: StudentTopicStatusBoardProps) {
   const initialState = useMemo<StudentNumberState[]>(
@@ -625,6 +643,7 @@ export function StudentTopicStatusBoard({
   const numbersRef = useRef<StudentNumberState[]>(initialState);
   const [numbers, setNumbers] = useState<StudentNumberState[]>(initialState);
   const [activeFilter, setActiveFilter] = useState<HomeworkFilterId>(initialHomeworkFilterId ?? "all");
+  const [highlightedNumber, setHighlightedNumber] = useState<number | null>(initialNumber ?? null);
   const [saveError, setSaveError] = useState<string | null>(null);
   const statusRequestVersionRef = useRef<Record<string, number>>({});
   const noteRequestVersionRef = useRef<Record<string, number>>({});
@@ -761,6 +780,43 @@ export function StudentTopicStatusBoard({
       setActiveFilter(homeworkGroups[0]!.id);
     }
   }, [activeFilter, hasIssuedHomeworkGroups, homeworkGroups]);
+
+  useEffect(() => {
+    if (!initialNumber) {
+      return;
+    }
+
+    const targetNumber = numbers.find((n) => n.number === initialNumber);
+
+    if (!targetNumber) {
+      return;
+    }
+
+    if (targetNumber.deadlineAt && homeworkGroupsByDeadline.has(targetNumber.deadlineAt)) {
+      setActiveFilter(targetNumber.deadlineAt);
+    } else {
+      setActiveFilter("all");
+    }
+
+    const timer = setTimeout(() => {
+      const element = document.getElementById(`student-number-${initialNumber}`);
+
+      if (element) {
+        element.scrollIntoView({ behavior: "smooth", block: "center" });
+      }
+
+      setHighlightedNumber(initialNumber);
+
+      const fadeTimer = setTimeout(() => {
+        setHighlightedNumber(null);
+      }, 2000);
+
+      return () => clearTimeout(fadeTimer);
+    }, 200);
+
+    return () => clearTimeout(timer);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialNumber]);
 
   const updateNumberStatus = useCallback(async (homeworkNumberId: string, nextStatus: HomeworkNumberStatus | null) => {
     const currentNumber = numbersRef.current.find((number) => number.id === homeworkNumberId);
@@ -1098,6 +1154,7 @@ export function StudentTopicStatusBoard({
                   numbers={deferredFilteredNumbers}
                   resetKey={activeFilter}
                   notesEnabled={notesEnabled}
+                  highlightedNumber={highlightedNumber}
                   homeworkGroupsByDeadline={homeworkGroupsByDeadline}
                   onSelect={updateNumberStatus}
                   onNoteChange={updateNumberNote}
@@ -1117,6 +1174,7 @@ export function StudentTopicStatusBoard({
                 numbers={deferredFilteredNumbers}
                 resetKey={activeFilter}
                 notesEnabled={notesEnabled}
+                highlightedNumber={highlightedNumber}
                 homeworkGroupsByDeadline={homeworkGroupsByDeadline}
                 onSelect={updateNumberStatus}
                 onNoteChange={updateNumberNote}
