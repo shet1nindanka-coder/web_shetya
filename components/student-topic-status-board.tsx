@@ -256,33 +256,19 @@ const StudentNumberCard = memo(function StudentNumberCard({
           ) : null}
 
           {notesEnabled ? (
-            <div className={cx(
-              "student-note-panel min-w-0 rounded-[12px] border px-2.5 py-2 sm:rounded-[18px] sm:px-3 sm:py-2.5",
-              !isNoteOpen && "flex"
-            )}>
-              <button
-                type="button"
-                onClick={() => setIsNoteOpen((current) => !current)}
-                className={cx(
-                  "group flex w-full items-center justify-between gap-2 text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--theme-accent-border)]",
-                  !isNoteOpen && "min-h-[72px] sm:min-h-[84px]"
-                )}
-                aria-expanded={isNoteOpen}
-              >
-                <div className={cx("min-w-0 flex-1", !isNoteOpen && "flex h-full flex-col justify-center")}>
+            <div className="student-note-panel flex min-w-0 min-h-[72px] flex-col rounded-[12px] border px-2.5 py-2 sm:min-h-[84px] sm:rounded-[18px] sm:px-3 sm:py-2.5">
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex min-w-0 flex-1 items-center justify-between gap-2">
                   <p className="ui-kicker">Заметка</p>
-                  {!isNoteOpen ? (
-                    <p
-                      className={cx(
-                        "mt-1 truncate text-sm leading-5",
-                        notePreview ? "text-[var(--theme-text-default)]" : "text-[var(--theme-text-muted)]"
-                      )}
-                    >
-                      {notePreview ?? "Добавить заметку"}
-                    </p>
-                  ) : null}
+                  {isNoteOpen ? <span className="ui-copy-soft flex-none text-xs">{number.note.length}/240</span> : null}
                 </div>
-                <span className="inline-flex h-7 w-7 flex-none items-center justify-center rounded-full border border-[var(--theme-border-soft)] bg-[var(--theme-surface-strong)] text-[var(--theme-text-muted)] transition group-hover:border-[var(--theme-accent-border)] group-hover:text-[var(--theme-accent-text)]">
+                <button
+                  type="button"
+                  onClick={() => setIsNoteOpen((current) => !current)}
+                  className="group inline-flex h-7 w-7 flex-none items-center justify-center rounded-full border border-[var(--theme-border-soft)] bg-[var(--theme-surface-strong)] text-[var(--theme-text-muted)] transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--theme-accent-border)] group-hover:border-[var(--theme-accent-border)] group-hover:text-[var(--theme-accent-text)]"
+                  aria-expanded={isNoteOpen}
+                  aria-label={isNoteOpen ? "Свернуть заметку" : notePreview ? "Изменить заметку" : "Добавить заметку"}
+                >
                   {isNoteOpen ? (
                     <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor" aria-hidden="true">
                       <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 15.75l-7.5-7.5-7.5 7.5" />
@@ -292,13 +278,13 @@ const StudentNumberCard = memo(function StudentNumberCard({
                       <path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487a2.25 2.25 0 113.182 3.182L8.25 19.463 3.75 20.25l.787-4.5L16.862 4.487z" />
                     </svg>
                   )}
-                </span>
-              </button>
+                </button>
+              </div>
 
               {isNoteOpen ? (
-                <>
+                <div className="mt-1.5">
                   <textarea
-                    rows={2}
+                    rows={1}
                     maxLength={240}
                     value={number.note}
                     onChange={(event) => onNoteChange(number.id, event.target.value)}
@@ -310,17 +296,29 @@ const StudentNumberCard = memo(function StudentNumberCard({
 
                       event.preventDefault();
                       onNoteBlur(number.id);
+                      setIsNoteOpen(false);
                       event.currentTarget.blur();
                     }}
                     placeholder="Короткая заметка"
-                    className="ui-input mt-2 min-h-[56px] w-full resize-none rounded-[10px] px-2.5 py-2 text-sm sm:rounded-[14px] sm:px-3 sm:py-2.5"
+                    className="ui-input h-[42px] min-h-0 w-full resize-none rounded-[10px] px-2.5 py-2 text-sm leading-5 sm:h-[46px] sm:rounded-[14px] sm:px-3 sm:py-2.5"
                   />
-                  <div className="mt-1 flex items-center justify-between">
-                    <p className="ui-hint ui-copy-soft text-xs">Enter сохранит, Shift+Enter перенесёт строку</p>
-                    <span className="ui-copy-soft text-xs">{number.note.length}/240</span>
-                  </div>
-                </>
-              ) : null}
+                </div>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setIsNoteOpen(true)}
+                  className="mt-1 flex min-h-0 flex-1 items-center rounded-[10px] text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--theme-accent-border)]"
+                >
+                  <p
+                    className={cx(
+                      "truncate text-sm leading-5",
+                      notePreview ? "text-[var(--theme-text-default)]" : "text-[var(--theme-text-muted)]"
+                    )}
+                  >
+                    {notePreview ?? "Добавить заметку"}
+                  </p>
+                </button>
+              )}
             </div>
           ) : null}
         </div>
