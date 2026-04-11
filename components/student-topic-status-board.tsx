@@ -284,7 +284,7 @@ const StudentNumberCard = memo(function StudentNumberCard({
                   </div>
                 </div>
                 <div className="absolute inset-0 flex items-center justify-center">
-                  <span className="ui-telegram-spoiler-badge inline-flex items-center rounded-full px-3.5 py-1.5 text-sm font-semibold transition group-hover:-translate-y-[1px]">
+                  <span className="ui-telegram-spoiler-label transition group-hover:scale-[1.01]">
                     Показать ответ
                   </span>
                 </div>
