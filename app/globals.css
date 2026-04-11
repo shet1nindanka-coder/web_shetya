@@ -1218,9 +1218,9 @@ html[data-theme="dark"] .student-virtual-scroll::-webkit-scrollbar-thumb {
 .ui-telegram-spoiler {
   position: relative;
   overflow: hidden;
+  isolation: isolate;
   border: 1px solid var(--theme-border-soft);
-  background:
-    linear-gradient(115deg, #b7bac0 0%, #c9ccd2 40%, #9ea3ad 100%);
+  background: linear-gradient(118deg, #bcc1ca 0%, #ced3dc 44%, #979fab 100%);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.28), inset 0 -1px 0 rgba(15, 23, 42, 0.06);
   cursor: pointer;
 }
@@ -1230,16 +1230,11 @@ html[data-theme="dark"] .student-virtual-scroll::-webkit-scrollbar-thumb {
   position: absolute;
   inset: 0;
   background:
-    radial-gradient(circle at 7px 7px, rgba(255, 255, 255, 0.92) 0 1.45px, transparent 1.8px),
-    radial-gradient(circle at 18px 14px, rgba(255, 255, 255, 0.78) 0 1.2px, transparent 1.55px),
-    radial-gradient(circle at 29px 9px, rgba(255, 255, 255, 0.84) 0 1.25px, transparent 1.6px),
-    radial-gradient(circle at 36px 22px, rgba(255, 255, 255, 0.7) 0 1.15px, transparent 1.5px),
-    radial-gradient(circle at 14px 26px, rgba(255, 255, 255, 0.88) 0 1.1px, transparent 1.45px),
-    radial-gradient(circle at 27px 30px, rgba(255, 255, 255, 0.82) 0 1.05px, transparent 1.4px);
-  background-size: 40px 32px;
-  opacity: 0.95;
+    linear-gradient(92deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.03) 38%, rgba(67, 77, 93, 0.08) 100%),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 160 160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='1.12' numOctaves='2' seed='7' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)' opacity='0.24'/%3E%3C/svg%3E");
+  background-size: 100% 100%, 180px 180px;
+  opacity: 0.88;
   pointer-events: none;
-  animation: ui-telegram-spoiler-float-a 3.4s linear infinite;
 }
 
 .ui-telegram-spoiler::after {
@@ -1247,76 +1242,38 @@ html[data-theme="dark"] .student-virtual-scroll::-webkit-scrollbar-thumb {
   position: absolute;
   inset: 0;
   background:
-    radial-gradient(circle at 11px 16px, rgba(255, 255, 255, 0.72) 0 1.2px, transparent 1.55px),
-    radial-gradient(circle at 24px 8px, rgba(255, 255, 255, 0.68) 0 1.05px, transparent 1.35px),
-    radial-gradient(circle at 34px 24px, rgba(255, 255, 255, 0.78) 0 1.15px, transparent 1.45px),
-    radial-gradient(circle at 19px 28px, rgba(255, 255, 255, 0.7) 0 1px, transparent 1.3px),
-    linear-gradient(90deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.2) 52%, rgba(15, 23, 42, 0.08)),
-    linear-gradient(180deg, rgba(255, 255, 255, 0.04), rgba(15, 23, 42, 0.08));
-  background-size: 38px 30px, 38px 30px, 38px 30px, 38px 30px, 100% 100%, 100% 100%;
-  opacity: 0.92;
+    linear-gradient(180deg, rgba(255, 255, 255, 0.18), rgba(255, 255, 255, 0.02) 32%, rgba(43, 53, 70, 0.08) 100%),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 160 160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.88' numOctaves='3' seed='19' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)' opacity='0.2'/%3E%3C/svg%3E");
+  background-size: 100% 100%, 132px 132px;
+  opacity: 0.72;
   pointer-events: none;
-  animation: ui-telegram-spoiler-float-b 2.8s linear infinite;
 }
 
 .ui-telegram-spoiler-content {
-  filter: blur(16px);
-  opacity: 0.06;
+  filter: blur(18px);
+  opacity: 0.05;
   user-select: none;
 }
 
 html[data-theme="dark"] .ui-telegram-spoiler {
-  background:
-    linear-gradient(115deg, #747984 0%, #858a94 42%, #5a616d 100%);
+  background: linear-gradient(118deg, #68707a 0%, #7a818d 44%, #4c5460 100%);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.11), inset 0 -1px 0 rgba(0, 0, 0, 0.24);
 }
 
 html[data-theme="dark"] .ui-telegram-spoiler::before {
   background:
-    radial-gradient(circle at 7px 7px, rgba(255, 255, 255, 0.88) 0 1.45px, transparent 1.8px),
-    radial-gradient(circle at 18px 14px, rgba(255, 255, 255, 0.72) 0 1.2px, transparent 1.55px),
-    radial-gradient(circle at 29px 9px, rgba(255, 255, 255, 0.8) 0 1.25px, transparent 1.6px),
-    radial-gradient(circle at 36px 22px, rgba(255, 255, 255, 0.62) 0 1.15px, transparent 1.5px),
-    radial-gradient(circle at 14px 26px, rgba(255, 255, 255, 0.84) 0 1.1px, transparent 1.45px),
-    radial-gradient(circle at 27px 30px, rgba(255, 255, 255, 0.74) 0 1.05px, transparent 1.4px);
-  background-size: 40px 32px;
+    linear-gradient(92deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.02) 38%, rgba(8, 12, 18, 0.16) 100%),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 160 160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='1.12' numOctaves='2' seed='7' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)' opacity='0.22'/%3E%3C/svg%3E");
+  background-size: 100% 100%, 180px 180px;
+  opacity: 0.8;
 }
 
 html[data-theme="dark"] .ui-telegram-spoiler::after {
   background:
-    radial-gradient(circle at 11px 16px, rgba(255, 255, 255, 0.66) 0 1.2px, transparent 1.55px),
-    radial-gradient(circle at 24px 8px, rgba(255, 255, 255, 0.6) 0 1.05px, transparent 1.35px),
-    radial-gradient(circle at 34px 24px, rgba(255, 255, 255, 0.72) 0 1.15px, transparent 1.45px),
-    radial-gradient(circle at 19px 28px, rgba(255, 255, 255, 0.58) 0 1px, transparent 1.3px),
-    linear-gradient(90deg, rgba(255, 255, 255, 0.04), rgba(255, 255, 255, 0.16) 52%, rgba(15, 23, 42, 0.14)),
-    linear-gradient(180deg, rgba(255, 255, 255, 0.02), rgba(15, 23, 42, 0.2));
-  background-size: 38px 30px, 38px 30px, 38px 30px, 38px 30px, 100% 100%, 100% 100%;
-  opacity: 0.94;
-}
-
-@keyframes ui-telegram-spoiler-float-a {
-  0% {
-    transform: translate3d(0, 0, 0);
-  }
-  100% {
-    transform: translate3d(18px, 10px, 0);
-  }
-}
-
-@keyframes ui-telegram-spoiler-float-b {
-  0% {
-    transform: translate3d(0, 0, 0);
-  }
-  100% {
-    transform: translate3d(-14px, 8px, 0);
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .ui-telegram-spoiler::before,
-  .ui-telegram-spoiler::after {
-    animation: none !important;
-  }
+    linear-gradient(180deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.01) 32%, rgba(7, 11, 18, 0.2) 100%),
+    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 160 160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.88' numOctaves='3' seed='19' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)' opacity='0.18'/%3E%3C/svg%3E");
+  background-size: 100% 100%, 132px 132px;
+  opacity: 0.66;
 }
 
 /* ───────────────────────────────────────────────
