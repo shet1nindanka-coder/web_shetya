@@ -2,6 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import {
   filterTeacherTopicsByQuery,
+  findTopicByHomeworkNumber,
   getDefaultTeacherTopicId,
   moveTopicByDirection,
   type TeacherTopicSelectionTopic
@@ -129,4 +130,37 @@ test("moveTopicByDirection reorders topics predictably", () => {
   const noMove = moveTopicByDirection(topics, "topic-1", "up");
   assert.equal(noMove.moved, false);
   assert.deepEqual(noMove.topics, topics);
+});
+
+test("findTopicByHomeworkNumber returns the earliest topic by display order", () => {
+  const topics = [
+    {
+      id: "topic-2",
+      displayOrder: 2,
+      createdAt: "2026-04-10T12:00:00.000Z",
+      homeworkNumbers: [{ number: 215 }]
+    },
+    {
+      id: "topic-1",
+      displayOrder: 1,
+      createdAt: "2026-04-11T12:00:00.000Z",
+      homeworkNumbers: [{ number: 215 }]
+    }
+  ];
+
+  assert.equal(findTopicByHomeworkNumber(topics, 215)?.id, "topic-1");
+});
+
+test("findTopicByHomeworkNumber returns null for invalid or missing numbers", () => {
+  const topics = [
+    {
+      id: "topic-1",
+      displayOrder: 1,
+      createdAt: "2026-04-10T12:00:00.000Z",
+      homeworkNumbers: [{ number: 112 }]
+    }
+  ];
+
+  assert.equal(findTopicByHomeworkNumber(topics, 999), null);
+  assert.equal(findTopicByHomeworkNumber(topics, 0), null);
 });

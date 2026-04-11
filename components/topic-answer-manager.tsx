@@ -19,6 +19,7 @@ type NumberAnswerCard = {
 
 type TopicAnswerManagerProps = {
   topicId: string;
+  initialNumber?: number | null;
   numbers: Array<{
     id: string;
     number: number;
@@ -54,7 +55,7 @@ function getDeleteErrorMessage(status: number) {
   return "Не удалось удалить ответ.";
 }
 
-export function TopicAnswerManager({ topicId, numbers }: TopicAnswerManagerProps) {
+export function TopicAnswerManager({ topicId, initialNumber = null, numbers }: TopicAnswerManagerProps) {
   const initialState = useMemo<NumberAnswerCard[]>(
     () =>
       numbers.map((number) => ({
@@ -84,6 +85,20 @@ export function TopicAnswerManager({ topicId, numbers }: TopicAnswerManagerProps
     numbersRef.current = initialState;
     setItems(initialState);
   }, [initialState]);
+
+  useEffect(() => {
+    if (!initialNumber) {
+      return;
+    }
+
+    const matchingIndex = initialState.findIndex((item) => item.number === initialNumber);
+
+    if (matchingIndex === -1) {
+      return;
+    }
+
+    setCurrentPage(Math.floor(matchingIndex / ANSWERS_PAGE_SIZE) + 1);
+  }, [initialNumber, initialState]);
 
   const pageCount = Math.max(1, Math.ceil(items.length / ANSWERS_PAGE_SIZE));
 
@@ -347,7 +362,12 @@ export function TopicAnswerManager({ topicId, numbers }: TopicAnswerManagerProps
         {currentPageItems.map((item) => (
         <article
           key={item.id}
-          className="topic-answer-card ui-fade-slide ui-surface ui-panel-soft rounded-[20px] p-4 shadow-[0_10px_24px_rgba(15,23,42,0.05)] sm:p-4.5"
+          className={cx(
+            "topic-answer-card ui-fade-slide ui-surface ui-panel-soft rounded-[20px] p-4 shadow-[0_10px_24px_rgba(15,23,42,0.05)] sm:p-4.5",
+            item.number === initialNumber
+              ? "ring-2 ring-[var(--theme-accent-border)] ring-offset-2 ring-offset-transparent"
+              : ""
+          )}
         >
           <div className="flex flex-wrap items-start justify-between gap-3">
             <div>

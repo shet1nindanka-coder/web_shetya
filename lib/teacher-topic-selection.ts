@@ -11,6 +11,15 @@ export type TeacherTopicSelectionTopic = {
   }>;
 };
 
+export type TeacherTopicNumberSearchTopic = {
+  id: string;
+  displayOrder: number;
+  createdAt: Date | string;
+  homeworkNumbers: Array<{
+    number: number;
+  }>;
+};
+
 export function getDefaultTeacherTopicId(topics: TeacherTopicSelectionTopic[]) {
   if (!topics.length) {
     return null;
@@ -94,6 +103,27 @@ export function moveTopicByDirection<T extends { id: string }>(
   };
 }
 
+export function findTopicByHomeworkNumber<T extends TeacherTopicNumberSearchTopic>(
+  topics: T[],
+  targetNumber: number
+) {
+  if (!Number.isInteger(targetNumber) || targetNumber <= 0) {
+    return null;
+  }
+
+  const orderedTopics = [...topics].sort((left, right) => {
+    if (left.displayOrder !== right.displayOrder) {
+      return left.displayOrder - right.displayOrder;
+    }
+
+    return getSortableTimestamp(left.createdAt) - getSortableTimestamp(right.createdAt);
+  });
+
+  return (
+    orderedTopics.find((topic) => topic.homeworkNumbers.some((number) => number.number === targetNumber)) ?? null
+  );
+}
+
 function getLatestIssuedTimestamp(topic: TeacherTopicSelectionTopic) {
   let latestTimestamp: number | null = null;
 
@@ -125,4 +155,11 @@ function shouldAdvanceToNextTopic(topic: TeacherTopicSelectionTopic) {
   const isCompleted = hasNumbers && topic.solvedCount >= topic.totalNumbers;
 
   return allNumbersIssued || isCompleted;
+}
+
+function getSortableTimestamp(value: Date | string) {
+  const date = value instanceof Date ? value : new Date(value);
+  const timestamp = date.getTime();
+
+  return Number.isNaN(timestamp) ? 0 : timestamp;
 }

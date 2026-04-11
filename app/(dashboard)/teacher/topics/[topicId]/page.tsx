@@ -57,6 +57,10 @@ export default async function TeacherTopicPage({ params, searchParams }: Teacher
   const fileDeleted =
     typeof resolvedSearchParams.fileDeleted === "string" ? resolvedSearchParams.fileDeleted : undefined;
   const error = typeof resolvedSearchParams.error === "string" ? resolvedSearchParams.error : undefined;
+  const requestedNumber =
+    typeof resolvedSearchParams.number === "string" && Number.isInteger(Number(resolvedSearchParams.number))
+      ? Number(resolvedSearchParams.number)
+      : null;
   const noticeKey =
     saved === "1"
       ? "saved"
@@ -204,9 +208,11 @@ export default async function TeacherTopicPage({ params, searchParams }: Teacher
         </form>
       </SectionCard>
 
+      <div id="topic-answers" className="scroll-mt-28">
       <SectionCard title="Ответы к заданиям" description="LaTeX-ответы к номерам.">
         <TopicAnswerManager
           topicId={data.topic.id}
+          initialNumber={requestedNumber}
           numbers={data.topic.homeworkNumbers.map((number) => ({
             id: number.id,
             number: number.number,
@@ -214,6 +220,7 @@ export default async function TeacherTopicPage({ params, searchParams }: Teacher
           }))}
         />
       </SectionCard>
+      </div>
     </div>
   );
 }
