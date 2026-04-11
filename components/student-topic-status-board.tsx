@@ -188,7 +188,6 @@ const StudentNumberCard = memo(function StudentNumberCard({
   homeworkGroup: HomeworkGroup | null;
 }) {
   const [isNoteOpen, setIsNoteOpen] = useState(false);
-  const [isAnswerVisible, setIsAnswerVisible] = useState(false);
   const isSaving = number.isSavingStatus || number.isSavingNote;
   const notePreview = getNotePreview(number.note);
 
@@ -245,24 +244,11 @@ const StudentNumberCard = memo(function StudentNumberCard({
         <div className="mt-2.5 grid gap-2.5 sm:mt-3 sm:gap-3 lg:grid-cols-2">
           {number.answerLatex ? (
             <div className="student-answer-panel min-w-0 rounded-[12px] border p-2 sm:rounded-[18px] sm:p-2.5">
-              <div className="flex items-center justify-between gap-2">
-                <p className="ui-kicker">Ответ</p>
-                {isAnswerVisible ? (
-                  <button
-                    type="button"
-                    onClick={() => setIsAnswerVisible(false)}
-                    className="ui-pressable ui-button-secondary rounded-[10px] px-2.5 py-1 text-xs font-semibold transition sm:rounded-[12px] sm:px-3 sm:py-1.5 sm:text-sm"
-                  >
-                    Скрыть
-                  </button>
-                ) : null}
-              </div>
+              <p className="ui-kicker">Ответ</p>
 
               <TelegramSpoiler
-                revealed={isAnswerVisible}
-                onReveal={() => setIsAnswerVisible(true)}
                 className="mt-1.5 rounded-[10px] sm:rounded-[14px]"
-                ariaLabel={`Открыть ответ к номеру ${number.number}`}
+                ariaLabel={`Показать ответ к номеру ${number.number}`}
               >
                 <div className="px-2.5 py-1.5 sm:px-3 sm:py-2">
                   <LatexAnswerPreview value={number.answerLatex} />

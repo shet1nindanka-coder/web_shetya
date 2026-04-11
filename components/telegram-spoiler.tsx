@@ -4,8 +4,6 @@ import { useCallback, useEffect, useRef, useState } from "react";
 
 type TelegramSpoilerProps = {
   children: React.ReactNode;
-  revealed?: boolean;
-  onReveal?: () => void;
   className?: string;
   ariaLabel?: string;
 };
@@ -55,8 +53,6 @@ function createParticles(width: number, height: number): Particle[] {
 
 export function TelegramSpoiler({
   children,
-  revealed = false,
-  onReveal,
   className = "",
   ariaLabel
 }: TelegramSpoilerProps) {
@@ -64,24 +60,8 @@ export function TelegramSpoiler({
   const particlesRef = useRef<Particle[]>([]);
   const animationFrameRef = useRef<number>(0);
   const timeRef = useRef(0);
-  const [isOpen, setIsOpen] = useState(revealed);
-  const [overlayVisible, setOverlayVisible] = useState(!revealed);
-
-  // Sync with external revealed prop
-  useEffect(() => {
-    if (revealed && !isOpen) {
-      // External reveal — start opening
-      setIsOpen(true);
-      // Fade out overlay on next frame
-      requestAnimationFrame(() => {
-        setOverlayVisible(false);
-      });
-    } else if (!revealed && isOpen) {
-      // External hide — go back to hidden
-      setIsOpen(false);
-      setOverlayVisible(true);
-    }
-  }, [revealed, isOpen]);
+  const [isOpen, setIsOpen] = useState(false);
+  const [overlayVisible, setOverlayVisible] = useState(true);
 
   const stopAnimation = useCallback(() => {
     if (animationFrameRef.current) {
@@ -146,7 +126,6 @@ export function TelegramSpoiler({
     particlesRef.current = createParticles(rect.width, rect.height);
   }, []);
 
-  // Start/stop canvas animation based on overlay visibility
   useEffect(() => {
     if (!overlayVisible) {
       stopAnimation();
@@ -170,15 +149,10 @@ export function TelegramSpoiler({
   const handleClick = () => {
     if (isOpen) return;
     setIsOpen(true);
-    onReveal?.();
-    // Trigger fade out on next frame so transition fires
     requestAnimationFrame(() => {
       setOverlayVisible(false);
     });
   };
-
-  // Overlay is either fully visible (hidden state) or transitioning out
-  const showOverlay = overlayVisible || isOpen;
 
   return (
     <div
@@ -191,12 +165,10 @@ export function TelegramSpoiler({
       aria-label={!isOpen ? ariaLabel : undefined}
       className={`relative block w-full overflow-hidden text-left ${!isOpen ? "cursor-pointer" : ""} ${className}`}
     >
-      {/* Content — blurred when overlay is up */}
       <div
         style={{
           filter: overlayVisible ? `blur(${CONTENT_BLUR}px)` : "blur(0px)",
-          transform: overlayVisible ? "scale(1.02)" : "scale(1)",
-          transition: `filter ${REVEAL_MS}ms ease-out, transform ${REVEAL_MS}ms ease-out`,
+          transition: `filter ${REVEAL_MS}ms ease-out`,
           pointerEvents: isOpen ? "auto" : "none",
           userSelect: isOpen ? "auto" : "none"
         }}
@@ -204,19 +176,13 @@ export function TelegramSpoiler({
         {children}
       </div>
 
-      {/* Particle overlay — fades out via opacity transition */}
-      {showOverlay ? (
+      {overlayVisible || !isOpen ? (
         <div
           className="absolute inset-0 pointer-events-none"
           aria-hidden="true"
           style={{
             opacity: overlayVisible ? 1 : 0,
             transition: `opacity ${REVEAL_MS}ms cubic-bezier(0.22, 1, 0.36, 1)`
-          }}
-          onTransitionEnd={() => {
-            if (!overlayVisible) {
-              // Transition done — overlay fully gone
-            }
           }}
         >
           <canvas ref={canvasRef} className="absolute inset-0" />
