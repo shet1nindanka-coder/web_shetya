@@ -1,9 +1,7 @@
 import { UserRole } from "@prisma/client";
 import { notFound } from "next/navigation";
 import { PageHeader } from "@/components/page-header";
-import { ProgressBar } from "@/components/progress-bar";
 import { SectionCard } from "@/components/section-card";
-import { StatCard } from "@/components/stat-card";
 import { DeleteStudentDialog } from "@/components/delete-student-dialog";
 import { TeacherStudentProgressBoard } from "@/components/teacher-student-progress-board";
 import { requireUser } from "@/lib/auth";
@@ -55,36 +53,6 @@ export default async function TeacherStudentPage({ params }: TeacherStudentPageP
           </>
         }
       />
-
-      <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-        <StatCard label="Темы" value={data.stats.totalTopics} />
-        <StatCard label="Решено" value={`${data.stats.solvedPercent}%`} />
-        <StatCard label="Желтые" value={data.stats.totalYellow} />
-        <StatCard label="Красные" value={data.stats.totalRed} />
-      </div>
-
-      <SectionCard title="Общая картина" description="Решено учитывает только зелёные и жёлтые номера.">
-        <div className="grid gap-5 lg:grid-cols-2">
-          <div className="ui-panel-soft space-y-3 rounded-[24px] p-5">
-            <div className="flex items-center justify-between text-sm text-[var(--theme-text-muted)]">
-              <span>Решено номеров</span>
-              <span className="font-semibold text-[var(--theme-text-strong)]">
-                {data.stats.totalSolved} / {data.stats.totalNumbers}
-              </span>
-            </div>
-            <ProgressBar value={data.stats.solvedPercent} size="md" />
-          </div>
-          <div className="ui-panel-soft space-y-3 rounded-[24px] p-5">
-            <div className="flex items-center justify-between text-sm text-[var(--theme-text-muted)]">
-              <span>Отмечено статусов</span>
-              <span className="font-semibold text-[var(--theme-text-strong)]">
-                {data.stats.totalMarked} / {data.stats.totalNumbers}
-              </span>
-            </div>
-            <ProgressBar value={data.stats.markedPercent} size="md" />
-          </div>
-        </div>
-      </SectionCard>
 
       <SectionCard title="Темы ученика">
         {!data.notesEnabled ? (
