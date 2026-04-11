@@ -256,7 +256,7 @@ const StudentNumberCard = memo(function StudentNumberCard({
           ) : null}
 
           {notesEnabled ? (
-            <div className="student-note-panel flex min-w-0 min-h-[72px] flex-col rounded-[12px] border px-2.5 py-2 sm:min-h-[84px] sm:rounded-[18px] sm:px-3 sm:py-2.5">
+            <div className="student-note-panel flex min-w-0 h-[92px] flex-col rounded-[12px] border px-2.5 py-2 sm:h-[104px] sm:rounded-[18px] sm:px-3 sm:py-2.5">
               <div className="flex items-start justify-between gap-3">
                 <div className="flex min-w-0 flex-1 items-center justify-between gap-2">
                   <p className="ui-kicker">Заметка</p>
@@ -282,7 +282,7 @@ const StudentNumberCard = memo(function StudentNumberCard({
               </div>
 
               {isNoteOpen ? (
-                <div className="mt-1.5">
+                <div className="mt-1.5 flex min-h-0 flex-1">
                   <textarea
                     rows={1}
                     maxLength={240}
@@ -300,7 +300,7 @@ const StudentNumberCard = memo(function StudentNumberCard({
                       event.currentTarget.blur();
                     }}
                     placeholder="Короткая заметка"
-                    className="ui-input h-[42px] min-h-0 w-full resize-none rounded-[10px] px-2.5 py-2 text-sm leading-5 sm:h-[46px] sm:rounded-[14px] sm:px-3 sm:py-2.5"
+                    className="ui-input h-full min-h-0 w-full resize-none rounded-[10px] px-2.5 py-2 text-sm leading-5 sm:rounded-[14px] sm:px-3 sm:py-2.5"
                   />
                 </div>
               ) : (
