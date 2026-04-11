@@ -307,7 +307,7 @@ const StudentNumberCard = memo(function StudentNumberCard({
                 <button
                   type="button"
                   onClick={() => setIsNoteOpen(true)}
-                  className="mt-1 flex min-h-0 flex-1 items-center rounded-[10px] text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--theme-accent-border)]"
+                  className="flex min-h-0 flex-1 items-center rounded-[10px] pt-1 text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--theme-accent-border)]"
                 >
                   <p
                     className={cx(
