@@ -256,14 +256,20 @@ const StudentNumberCard = memo(function StudentNumberCard({
           ) : null}
 
           {notesEnabled ? (
-            <div className="student-note-panel min-w-0 rounded-[12px] border px-2.5 py-2 sm:rounded-[18px] sm:px-3 sm:py-2.5">
+            <div className={cx(
+              "student-note-panel min-w-0 rounded-[12px] border px-2.5 py-2 sm:rounded-[18px] sm:px-3 sm:py-2.5",
+              !isNoteOpen && "flex"
+            )}>
               <button
                 type="button"
                 onClick={() => setIsNoteOpen((current) => !current)}
-                className="group flex w-full items-center justify-between gap-2 text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--theme-accent-border)]"
+                className={cx(
+                  "group flex w-full items-center justify-between gap-2 text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--theme-accent-border)]",
+                  !isNoteOpen && "min-h-[72px] sm:min-h-[84px]"
+                )}
                 aria-expanded={isNoteOpen}
               >
-                <div className="min-w-0 flex-1">
+                <div className={cx("min-w-0 flex-1", !isNoteOpen && "flex h-full flex-col justify-center")}>
                   <p className="ui-kicker">Заметка</p>
                   {!isNoteOpen ? (
                     <p
