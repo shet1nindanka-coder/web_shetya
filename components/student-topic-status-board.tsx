@@ -244,15 +244,13 @@ const StudentNumberCard = memo(function StudentNumberCard({
         <div className="mt-2.5 grid gap-2.5 sm:mt-3 sm:gap-3 lg:grid-cols-2">
           {number.answerLatex ? (
             <div className="student-answer-panel min-w-0 rounded-[12px] border p-2 sm:rounded-[18px] sm:p-2.5">
-              <p className="ui-kicker">Ответ</p>
+              <p className="ui-kicker mb-1.5">Ответ</p>
 
               <TelegramSpoiler
-                className="mt-1.5 rounded-[10px] sm:rounded-[14px]"
+                className="rounded-[8px] sm:rounded-[10px]"
                 ariaLabel={`Показать ответ к номеру ${number.number}`}
               >
-                <div className="px-2.5 py-1.5 sm:px-3 sm:py-2">
-                  <LatexAnswerPreview value={number.answerLatex} />
-                </div>
+                <LatexAnswerPreview value={number.answerLatex} />
               </TelegramSpoiler>
             </div>
           ) : null}

@@ -14,7 +14,7 @@ const PARTICLE_MAX_SIZE = 1.3;
 const PARTICLE_MIN_SPEED = 0.06;
 const PARTICLE_MAX_SPEED = 0.22;
 const CONTENT_BLUR = 8;
-const REVEAL_MS = 340;
+const REVEAL_MS = 500;
 
 type Particle = {
   x: number;
@@ -168,7 +168,7 @@ export function TelegramSpoiler({
       <div
         style={{
           filter: overlayVisible ? `blur(${CONTENT_BLUR}px)` : "blur(0px)",
-          transition: `filter ${REVEAL_MS}ms ease-out`,
+          transition: `filter ${REVEAL_MS}ms cubic-bezier(0.4, 0, 0.2, 1)`,
           pointerEvents: isOpen ? "auto" : "none",
           userSelect: isOpen ? "auto" : "none"
         }}
