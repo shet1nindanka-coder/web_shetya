@@ -1215,34 +1215,10 @@ html[data-theme="dark"] .student-virtual-scroll::-webkit-scrollbar-thumb {
   box-shadow: 0 22px 0 rgba(148, 163, 184, 0.1), 0 44px 0 rgba(148, 163, 184, 0.08);
 }
 
-/* Telegram spoiler — canvas particle overlay */
-.ui-telegram-spoiler-bg {
-  border-radius: inherit;
-  background:
-    linear-gradient(102deg,
-      rgba(180, 186, 196, 0.72) 0%,
-      rgba(200, 206, 215, 0.68) 34%,
-      rgba(185, 192, 202, 0.7) 64%,
-      rgba(145, 153, 166, 0.74) 100%
-    );
-  backdrop-filter: blur(2px);
-  -webkit-backdrop-filter: blur(2px);
-}
-
+/* Telegram spoiler reveal animation */
 @keyframes spoiler-fade-out {
-  0% { opacity: 1; filter: blur(0px); }
-  60% { opacity: 0.5; filter: blur(4px); }
-  100% { opacity: 0; filter: blur(8px); }
-}
-
-html[data-theme="dark"] .ui-telegram-spoiler-bg {
-  background:
-    linear-gradient(102deg,
-      rgba(101, 109, 121, 0.78) 0%,
-      rgba(120, 127, 137, 0.74) 34%,
-      rgba(108, 116, 128, 0.76) 64%,
-      rgba(69, 77, 91, 0.8) 100%
-    );
+  0% { opacity: 1; }
+  100% { opacity: 0; }
 }
 
 /* ───────────────────────────────────────────────

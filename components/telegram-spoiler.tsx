@@ -10,13 +10,13 @@ type TelegramSpoilerProps = {
   ariaLabel?: string;
 };
 
-const PARTICLE_DENSITY = 0.18;
+const PARTICLE_DENSITY = 0.2;
 const PARTICLE_MIN_SIZE = 0.5;
-const PARTICLE_MAX_SIZE = 1.3;
+const PARTICLE_MAX_SIZE = 1.4;
 const PARTICLE_MIN_SPEED = 0.06;
-const PARTICLE_MAX_SPEED = 0.22;
-const CONTENT_BLUR = 10;
-const REVEAL_DURATION = 380;
+const PARTICLE_MAX_SPEED = 0.24;
+const CONTENT_BLUR = 8;
+const REVEAL_DURATION = 400;
 
 type Particle = {
   x: number;
@@ -44,7 +44,7 @@ function createParticles(width: number, height: number): Particle[] {
       size: PARTICLE_MIN_SIZE + Math.random() * (PARTICLE_MAX_SIZE - PARTICLE_MIN_SIZE),
       speedX: Math.cos(angle) * speed,
       speedY: Math.sin(angle) * speed,
-      opacity: 0.3 + Math.random() * 0.55,
+      opacity: 0.35 + Math.random() * 0.5,
       flickerSpeed: 0.008 + Math.random() * 0.016,
       flickerPhase: Math.random() * Math.PI * 2
     });
@@ -66,12 +66,10 @@ export function TelegramSpoiler({
   const timeRef = useRef(0);
   const [isRevealed, setIsRevealed] = useState(revealed);
   const [isAnimatingOut, setIsAnimatingOut] = useState(false);
-  const revealStartRef = useRef(0);
 
   useEffect(() => {
     if (revealed && !isRevealed) {
       setIsAnimatingOut(true);
-      revealStartRef.current = performance.now();
     }
 
     setIsRevealed(revealed);
@@ -99,9 +97,9 @@ export function TelegramSpoiler({
     timeRef.current += 1;
 
     const isDark = document.documentElement.getAttribute("data-theme") === "dark";
-    const baseR = isDark ? 200 : 255;
-    const baseG = isDark ? 210 : 255;
-    const baseB = isDark ? 224 : 255;
+    const baseR = isDark ? 190 : 120;
+    const baseG = isDark ? 200 : 130;
+    const baseB = isDark ? 216 : 148;
 
     for (const particle of particles) {
       particle.x += particle.speedX;
@@ -148,7 +146,8 @@ export function TelegramSpoiler({
     }
 
     const resizeCanvas = () => {
-      const rect = canvas.parentElement?.getBoundingClientRect();
+      const container = canvas.closest("[data-spoiler-root]");
+      const rect = container?.getBoundingClientRect();
 
       if (!rect) {
         return;
@@ -165,12 +164,11 @@ export function TelegramSpoiler({
     resizeCanvas();
     animationFrameRef.current = requestAnimationFrame(animate);
 
-    const observer = new ResizeObserver(() => {
-      resizeCanvas();
-    });
+    const container = canvas.closest("[data-spoiler-root]");
+    const observer = new ResizeObserver(() => resizeCanvas());
 
-    if (canvas.parentElement) {
-      observer.observe(canvas.parentElement);
+    if (container) {
+      observer.observe(container);
     }
 
     return () => {
@@ -185,7 +183,6 @@ export function TelegramSpoiler({
 
   const handleReveal = () => {
     setIsAnimatingOut(true);
-    revealStartRef.current = performance.now();
     setIsRevealed(true);
     onReveal?.();
 
@@ -202,16 +199,23 @@ export function TelegramSpoiler({
 
   if (isAnimatingOut) {
     return (
-      <div className={`relative overflow-hidden ${className}`}>
+      <div className={`relative overflow-hidden ${className}`} data-spoiler-root>
         {children}
 
         <div
-          className="absolute inset-0 ui-telegram-spoiler-bg"
+          className="absolute inset-0 pointer-events-none"
           aria-hidden="true"
           style={{
             animation: `spoiler-fade-out ${REVEAL_DURATION}ms cubic-bezier(0.22, 1, 0.36, 1) forwards`
           }}
         >
+          <div
+            className="absolute inset-0"
+            style={{
+              backdropFilter: `blur(${CONTENT_BLUR}px)`,
+              WebkitBackdropFilter: `blur(${CONTENT_BLUR}px)`
+            }}
+          />
           <canvas ref={canvasRef} className="absolute inset-0" />
         </div>
       </div>
@@ -222,26 +226,23 @@ export function TelegramSpoiler({
     <button
       type="button"
       onClick={handleReveal}
-      className={`group relative block w-full overflow-hidden text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--theme-accent-border)] focus-visible:ring-offset-2 focus-visible:ring-offset-transparent ${className}`}
+      data-spoiler-root
+      className={`group relative block w-full overflow-hidden text-left cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--theme-accent-border)] focus-visible:ring-offset-2 focus-visible:ring-offset-transparent ${className}`}
       aria-expanded={false}
       aria-label={ariaLabel}
     >
-      <div
-        className="pointer-events-none select-none"
-        style={{
-          filter: `blur(${CONTENT_BLUR}px) saturate(0.86) contrast(0.96)`,
-          transform: "scale(1.04)",
-          transformOrigin: "center",
-          opacity: 0.6
-        }}
-      >
+      <div className="pointer-events-none select-none" aria-hidden="true">
         {children}
       </div>
 
-      <div
-        className="absolute inset-0 ui-telegram-spoiler-bg"
-        aria-hidden="true"
-      >
+      <div className="absolute inset-0 pointer-events-none" aria-hidden="true">
+        <div
+          className="absolute inset-0"
+          style={{
+            backdropFilter: `blur(${CONTENT_BLUR}px)`,
+            WebkitBackdropFilter: `blur(${CONTENT_BLUR}px)`
+          }}
+        />
         <canvas ref={canvasRef} className="absolute inset-0" />
       </div>
     </button>
