@@ -278,18 +278,6 @@ export function TeacherStatisticsDrilldown({
           </label>
         </div>
 
-        <div className="ui-card-soft mt-5 rounded-[18px] px-4 py-4">
-          <p className="text-sm font-medium text-[var(--theme-text-muted)]">Выбрано</p>
-          <p className="mt-2 text-lg font-semibold text-[var(--theme-text-strong)]">{selectedTopic?.title ?? "Тема не выбрана"}</p>
-          <p className="mt-1 text-sm text-[var(--theme-text-muted)]">
-            {selectedStudent?.name ?? "Ученик не выбран"}
-            {selectedStudent ? ` · ${selectedStudent.email}` : ""}
-          </p>
-          <p className="mt-2 text-sm font-medium text-[var(--theme-text-default)]">
-            {selectedAssignment ? `${selectedAssignment.label} · ${selectedAssignment.deadlineLabel}` : "Вся тема"}
-          </p>
-        </div>
-
         <div className="mt-5 space-y-4">
           <div>
             <div className="mb-2 flex items-center justify-between gap-3 text-sm text-[var(--theme-text-muted)]">
@@ -332,21 +320,6 @@ export function TeacherStatisticsDrilldown({
             <RatioSegment value={metrics.redCount} total={metrics.totalNumbers} className="bg-[rgba(244,63,94,0.72)]" />
             <RatioSegment value={metrics.unmarkedCount} total={metrics.totalNumbers} className="bg-[rgba(148,163,184,0.55)]" />
           </div>
-        </div>
-
-        <div className="mt-4 flex flex-wrap gap-2 text-sm">
-          <span className="rounded-[12px] border border-[var(--theme-success-border)] bg-[var(--theme-success-soft)] px-3 py-1.5 text-[var(--theme-success-text)]">
-            Зеленых: {metrics.greenCount}
-          </span>
-          <span className="rounded-[12px] border border-[var(--theme-warning-border)] bg-[var(--theme-warning-soft)] px-3 py-1.5 text-[var(--theme-warning-text)]">
-            Желтых: {metrics.yellowCount}
-          </span>
-          <span className="rounded-[12px] border border-[var(--theme-danger-border)] bg-[var(--theme-danger-soft)] px-3 py-1.5 text-[var(--theme-danger-text)]">
-            Красных: {metrics.redCount}
-          </span>
-          <span className="ui-badge-soft rounded-[12px] px-3 py-1.5">
-            Без статуса: {metrics.unmarkedCount}
-          </span>
         </div>
 
         <div className="ui-panel-soft mt-5 rounded-[24px] px-4 py-4">
