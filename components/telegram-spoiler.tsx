@@ -10,14 +10,13 @@ type TelegramSpoilerProps = {
   ariaLabel?: string;
 };
 
-const PARTICLE_DENSITY = 0.28;
-const PARTICLE_MIN_SIZE = 0.6;
-const PARTICLE_MAX_SIZE = 1.6;
-const PARTICLE_MIN_SPEED = 0.3;
-const PARTICLE_MAX_SPEED = 1.2;
-const PARTICLE_MIN_OPACITY = 0.35;
-const PARTICLE_MAX_OPACITY = 0.95;
+const PARTICLE_DENSITY = 0.18;
+const PARTICLE_MIN_SIZE = 0.5;
+const PARTICLE_MAX_SIZE = 1.3;
+const PARTICLE_MIN_SPEED = 0.06;
+const PARTICLE_MAX_SPEED = 0.22;
 const CONTENT_BLUR = 10;
+const REVEAL_DURATION = 380;
 
 type Particle = {
   x: number;
@@ -45,8 +44,8 @@ function createParticles(width: number, height: number): Particle[] {
       size: PARTICLE_MIN_SIZE + Math.random() * (PARTICLE_MAX_SIZE - PARTICLE_MIN_SIZE),
       speedX: Math.cos(angle) * speed,
       speedY: Math.sin(angle) * speed,
-      opacity: PARTICLE_MIN_OPACITY + Math.random() * (PARTICLE_MAX_OPACITY - PARTICLE_MIN_OPACITY),
-      flickerSpeed: 0.02 + Math.random() * 0.04,
+      opacity: 0.3 + Math.random() * 0.55,
+      flickerSpeed: 0.008 + Math.random() * 0.016,
       flickerPhase: Math.random() * Math.PI * 2
     });
   }
@@ -66,10 +65,17 @@ export function TelegramSpoiler({
   const animationFrameRef = useRef<number>(0);
   const timeRef = useRef(0);
   const [isRevealed, setIsRevealed] = useState(revealed);
+  const [isAnimatingOut, setIsAnimatingOut] = useState(false);
+  const revealStartRef = useRef(0);
 
   useEffect(() => {
+    if (revealed && !isRevealed) {
+      setIsAnimatingOut(true);
+      revealStartRef.current = performance.now();
+    }
+
     setIsRevealed(revealed);
-  }, [revealed]);
+  }, [revealed, isRevealed]);
 
   const animate = useCallback(() => {
     const canvas = canvasRef.current;
@@ -93,9 +99,9 @@ export function TelegramSpoiler({
     timeRef.current += 1;
 
     const isDark = document.documentElement.getAttribute("data-theme") === "dark";
-    const baseR = isDark ? 220 : 255;
-    const baseG = isDark ? 228 : 255;
-    const baseB = isDark ? 240 : 255;
+    const baseR = isDark ? 200 : 255;
+    const baseG = isDark ? 210 : 255;
+    const baseB = isDark ? 224 : 255;
 
     for (const particle of particles) {
       particle.x += particle.speedX;
@@ -114,7 +120,7 @@ export function TelegramSpoiler({
       }
 
       const flicker = 0.5 + 0.5 * Math.sin(timeRef.current * particle.flickerSpeed + particle.flickerPhase);
-      const alpha = particle.opacity * (0.6 + 0.4 * flicker);
+      const alpha = particle.opacity * (0.7 + 0.3 * flicker);
 
       ctx.beginPath();
       ctx.arc(particle.x * dpr, particle.y * dpr, particle.size * dpr, 0, Math.PI * 2);
@@ -126,7 +132,7 @@ export function TelegramSpoiler({
   }, []);
 
   useEffect(() => {
-    if (isRevealed) {
+    if (isRevealed && !isAnimatingOut) {
       if (animationFrameRef.current) {
         cancelAnimationFrame(animationFrameRef.current);
         animationFrameRef.current = 0;
@@ -175,15 +181,41 @@ export function TelegramSpoiler({
 
       observer.disconnect();
     };
-  }, [isRevealed, animate]);
+  }, [isRevealed, isAnimatingOut, animate]);
 
   const handleReveal = () => {
+    setIsAnimatingOut(true);
+    revealStartRef.current = performance.now();
     setIsRevealed(true);
     onReveal?.();
+
+    setTimeout(() => {
+      setIsAnimatingOut(false);
+    }, REVEAL_DURATION);
   };
 
-  if (isRevealed) {
+  const isFullyRevealed = isRevealed && !isAnimatingOut;
+
+  if (isFullyRevealed) {
     return <div className={className}>{children}</div>;
+  }
+
+  if (isAnimatingOut) {
+    return (
+      <div className={`relative overflow-hidden ${className}`}>
+        {children}
+
+        <div
+          className="absolute inset-0 ui-telegram-spoiler-bg"
+          aria-hidden="true"
+          style={{
+            animation: `spoiler-fade-out ${REVEAL_DURATION}ms cubic-bezier(0.22, 1, 0.36, 1) forwards`
+          }}
+        >
+          <canvas ref={canvasRef} className="absolute inset-0" />
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -210,10 +242,7 @@ export function TelegramSpoiler({
         className="absolute inset-0 ui-telegram-spoiler-bg"
         aria-hidden="true"
       >
-        <canvas
-          ref={canvasRef}
-          className="absolute inset-0"
-        />
+        <canvas ref={canvasRef} className="absolute inset-0" />
       </div>
     </button>
   );

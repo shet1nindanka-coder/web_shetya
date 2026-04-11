@@ -1229,6 +1229,12 @@ html[data-theme="dark"] .student-virtual-scroll::-webkit-scrollbar-thumb {
   -webkit-backdrop-filter: blur(2px);
 }
 
+@keyframes spoiler-fade-out {
+  0% { opacity: 1; filter: blur(0px); }
+  60% { opacity: 0.5; filter: blur(4px); }
+  100% { opacity: 0; filter: blur(8px); }
+}
+
 html[data-theme="dark"] .ui-telegram-spoiler-bg {
   background:
     linear-gradient(102deg,
