@@ -1215,12 +1215,6 @@ html[data-theme="dark"] .student-virtual-scroll::-webkit-scrollbar-thumb {
   box-shadow: 0 22px 0 rgba(148, 163, 184, 0.1), 0 44px 0 rgba(148, 163, 184, 0.08);
 }
 
-/* Telegram spoiler reveal animation */
-@keyframes spoiler-fade-out {
-  0% { opacity: 1; }
-  100% { opacity: 0; }
-}
-
 /* ───────────────────────────────────────────────
    Reduced motion
    ─────────────────────────────────────────────── */

@@ -10,13 +10,13 @@ type TelegramSpoilerProps = {
   ariaLabel?: string;
 };
 
-const PARTICLE_DENSITY = 0.2;
+const PARTICLE_DENSITY = 0.12;
 const PARTICLE_MIN_SIZE = 0.5;
-const PARTICLE_MAX_SIZE = 1.4;
+const PARTICLE_MAX_SIZE = 1.3;
 const PARTICLE_MIN_SPEED = 0.06;
-const PARTICLE_MAX_SPEED = 0.24;
+const PARTICLE_MAX_SPEED = 0.22;
 const CONTENT_BLUR = 8;
-const REVEAL_DURATION = 400;
+const REVEAL_MS = 360;
 
 type Particle = {
   x: number;
@@ -61,32 +61,30 @@ export function TelegramSpoiler({
   ariaLabel
 }: TelegramSpoilerProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
+  const overlayRef = useRef<HTMLDivElement>(null);
   const particlesRef = useRef<Particle[]>([]);
   const animationFrameRef = useRef<number>(0);
   const timeRef = useRef(0);
-  const [isRevealed, setIsRevealed] = useState(revealed);
-  const [isAnimatingOut, setIsAnimatingOut] = useState(false);
+  const [phase, setPhase] = useState<"hidden" | "revealing" | "done">(revealed ? "done" : "hidden");
 
   useEffect(() => {
-    if (revealed && !isRevealed) {
-      setIsAnimatingOut(true);
+    if (revealed) {
+      setPhase((p) => (p === "hidden" ? "revealing" : p));
     }
+  }, [revealed]);
 
-    setIsRevealed(revealed);
-  }, [revealed, isRevealed]);
+  const stopAnimation = useCallback(() => {
+    if (animationFrameRef.current) {
+      cancelAnimationFrame(animationFrameRef.current);
+      animationFrameRef.current = 0;
+    }
+  }, []);
 
   const animate = useCallback(() => {
     const canvas = canvasRef.current;
-
-    if (!canvas) {
-      return;
-    }
-
+    if (!canvas) return;
     const ctx = canvas.getContext("2d");
-
-    if (!ctx) {
-      return;
-    }
+    if (!ctx) return;
 
     const dpr = window.devicePixelRatio || 1;
     const width = canvas.width / dpr;
@@ -101,27 +99,20 @@ export function TelegramSpoiler({
     const baseG = isDark ? 200 : 130;
     const baseB = isDark ? 216 : 148;
 
-    for (const particle of particles) {
-      particle.x += particle.speedX;
-      particle.y += particle.speedY;
+    for (const p of particles) {
+      p.x += p.speedX;
+      p.y += p.speedY;
 
-      if (particle.x < -2) {
-        particle.x = width + 2;
-      } else if (particle.x > width + 2) {
-        particle.x = -2;
-      }
+      if (p.x < -2) p.x = width + 2;
+      else if (p.x > width + 2) p.x = -2;
+      if (p.y < -2) p.y = height + 2;
+      else if (p.y > height + 2) p.y = -2;
 
-      if (particle.y < -2) {
-        particle.y = height + 2;
-      } else if (particle.y > height + 2) {
-        particle.y = -2;
-      }
-
-      const flicker = 0.5 + 0.5 * Math.sin(timeRef.current * particle.flickerSpeed + particle.flickerPhase);
-      const alpha = particle.opacity * (0.7 + 0.3 * flicker);
+      const flicker = 0.5 + 0.5 * Math.sin(timeRef.current * p.flickerSpeed + p.flickerPhase);
+      const alpha = p.opacity * (0.7 + 0.3 * flicker);
 
       ctx.beginPath();
-      ctx.arc(particle.x * dpr, particle.y * dpr, particle.size * dpr, 0, Math.PI * 2);
+      ctx.arc(p.x * dpr, p.y * dpr, p.size * dpr, 0, Math.PI * 2);
       ctx.fillStyle = `rgba(${baseR}, ${baseG}, ${baseB}, ${alpha})`;
       ctx.fill();
     }
@@ -129,113 +120,102 @@ export function TelegramSpoiler({
     animationFrameRef.current = requestAnimationFrame(animate);
   }, []);
 
-  useEffect(() => {
-    if (isRevealed && !isAnimatingOut) {
-      if (animationFrameRef.current) {
-        cancelAnimationFrame(animationFrameRef.current);
-        animationFrameRef.current = 0;
-      }
-
-      return;
-    }
-
+  const initCanvas = useCallback(() => {
     const canvas = canvasRef.current;
+    if (!canvas) return;
 
-    if (!canvas) {
+    const root = canvas.closest("[data-spoiler-root]");
+    const rect = root?.getBoundingClientRect();
+    if (!rect) return;
+
+    const dpr = window.devicePixelRatio || 1;
+    canvas.width = rect.width * dpr;
+    canvas.height = rect.height * dpr;
+    canvas.style.width = `${rect.width}px`;
+    canvas.style.height = `${rect.height}px`;
+    particlesRef.current = createParticles(rect.width, rect.height);
+  }, []);
+
+  useEffect(() => {
+    if (phase === "done") {
+      stopAnimation();
       return;
     }
 
-    const resizeCanvas = () => {
-      const container = canvas.closest("[data-spoiler-root]");
-      const rect = container?.getBoundingClientRect();
-
-      if (!rect) {
-        return;
-      }
-
-      const dpr = window.devicePixelRatio || 1;
-      canvas.width = rect.width * dpr;
-      canvas.height = rect.height * dpr;
-      canvas.style.width = `${rect.width}px`;
-      canvas.style.height = `${rect.height}px`;
-      particlesRef.current = createParticles(rect.width, rect.height);
-    };
-
-    resizeCanvas();
+    initCanvas();
     animationFrameRef.current = requestAnimationFrame(animate);
 
-    const container = canvas.closest("[data-spoiler-root]");
-    const observer = new ResizeObserver(() => resizeCanvas());
-
-    if (container) {
-      observer.observe(container);
-    }
+    const canvas = canvasRef.current;
+    const root = canvas?.closest("[data-spoiler-root]");
+    const observer = new ResizeObserver(() => initCanvas());
+    if (root) observer.observe(root);
 
     return () => {
-      if (animationFrameRef.current) {
-        cancelAnimationFrame(animationFrameRef.current);
-        animationFrameRef.current = 0;
-      }
-
+      stopAnimation();
       observer.disconnect();
     };
-  }, [isRevealed, isAnimatingOut, animate]);
+  }, [phase, animate, initCanvas, stopAnimation]);
 
   const handleReveal = () => {
-    setIsAnimatingOut(true);
-    setIsRevealed(true);
+    if (phase !== "hidden") return;
+    setPhase("revealing");
     onReveal?.();
-
-    setTimeout(() => {
-      setIsAnimatingOut(false);
-    }, REVEAL_DURATION);
   };
 
-  const isFullyRevealed = isRevealed && !isAnimatingOut;
+  useEffect(() => {
+    if (phase !== "revealing") return;
 
-  if (isFullyRevealed) {
+    const overlay = overlayRef.current;
+    if (!overlay) {
+      setPhase("done");
+      return;
+    }
+
+    const onEnd = () => setPhase("done");
+    overlay.addEventListener("transitionend", onEnd);
+
+    requestAnimationFrame(() => {
+      overlay.style.opacity = "0";
+    });
+
+    const fallback = setTimeout(onEnd, REVEAL_MS + 50);
+    return () => {
+      overlay.removeEventListener("transitionend", onEnd);
+      clearTimeout(fallback);
+    };
+  }, [phase]);
+
+  if (phase === "done") {
     return <div className={className}>{children}</div>;
   }
 
-  if (isAnimatingOut) {
-    return (
-      <div className={`relative overflow-hidden ${className}`} data-spoiler-root>
-        {children}
-
-        <div
-          className="absolute inset-0 pointer-events-none"
-          aria-hidden="true"
-          style={{
-            animation: `spoiler-fade-out ${REVEAL_DURATION}ms cubic-bezier(0.22, 1, 0.36, 1) forwards`
-          }}
-        >
-          <div
-            className="absolute inset-0"
-            style={{
-              backdropFilter: `blur(${CONTENT_BLUR}px)`,
-              WebkitBackdropFilter: `blur(${CONTENT_BLUR}px)`
-            }}
-          />
-          <canvas ref={canvasRef} className="absolute inset-0" />
-        </div>
-      </div>
-    );
-  }
+  const isHidden = phase === "hidden";
 
   return (
-    <button
-      type="button"
-      onClick={handleReveal}
+    <div
       data-spoiler-root
-      className={`group relative block w-full overflow-hidden text-left cursor-pointer focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--theme-accent-border)] focus-visible:ring-offset-2 focus-visible:ring-offset-transparent ${className}`}
-      aria-expanded={false}
-      aria-label={ariaLabel}
+      role={isHidden ? "button" : undefined}
+      tabIndex={isHidden ? 0 : undefined}
+      onClick={isHidden ? handleReveal : undefined}
+      onKeyDown={isHidden ? (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); handleReveal(); } } : undefined}
+      aria-expanded={!isHidden}
+      aria-label={isHidden ? ariaLabel : undefined}
+      className={`relative block w-full overflow-hidden text-left ${isHidden ? "cursor-pointer" : ""} ${className}`}
     >
-      <div className="pointer-events-none select-none" aria-hidden="true">
+      <div className={isHidden ? "pointer-events-none select-none" : ""}>
         {children}
       </div>
 
-      <div className="absolute inset-0 pointer-events-none" aria-hidden="true">
+      <div
+        ref={overlayRef}
+        className="absolute inset-0 pointer-events-none"
+        aria-hidden="true"
+        style={{
+          opacity: 1,
+          transition: `opacity ${REVEAL_MS}ms cubic-bezier(0.22, 1, 0.36, 1)`,
+          willChange: phase === "revealing" ? "opacity" : "auto"
+        }}
+      >
         <div
           className="absolute inset-0"
           style={{
@@ -245,6 +225,6 @@ export function TelegramSpoiler({
         />
         <canvas ref={canvasRef} className="absolute inset-0" />
       </div>
-    </button>
+    </div>
   );
 }
