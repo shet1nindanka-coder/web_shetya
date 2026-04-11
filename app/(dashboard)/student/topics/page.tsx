@@ -24,8 +24,8 @@ export default async function StudentTopicsPage() {
 
       <SectionCard title="Список тем">
         {data.topics.length === 0 ? (
-          <div className="rounded-[16px] border border-dashed border-slate-200 bg-slate-50/60 px-4 py-8 text-center sm:rounded-[20px] sm:px-5 sm:py-10">
-            <p className="font-display text-lg font-semibold text-slate-950 sm:text-xl">Темы пока не добавлены</p>
+          <div className="ui-panel-soft rounded-[16px] border border-dashed px-4 py-8 text-center sm:rounded-[20px] sm:px-5 sm:py-10">
+            <p className="font-display text-lg font-semibold text-[var(--theme-text-strong)] sm:text-xl">Темы пока не добавлены</p>
           </div>
         ) : (
           <div className="space-y-3 sm:space-y-4">

@@ -60,7 +60,7 @@ export function DeleteStudentDialog({
         type="button"
         onClick={() => setIsOpen(true)}
         className={cx(
-          "ui-pressable ui-button-danger inline-flex items-center justify-center rounded-[10px] px-3.5 py-1.5 text-sm font-semibold transition",
+          "ui-pressable ui-button-danger inline-flex items-center justify-center rounded-[14px] px-5 py-3 text-sm font-semibold transition",
           triggerClassName
         )}
       >
@@ -69,7 +69,7 @@ export function DeleteStudentDialog({
 
       {isOpen ? (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/45 px-4 py-6 backdrop-blur-sm"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-[rgba(15,23,42,0.45)] px-4 py-6 backdrop-blur-sm"
           onClick={() => setIsOpen(false)}
         >
           <div

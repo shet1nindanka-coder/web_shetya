@@ -97,7 +97,7 @@ function FileUploadField({
   onFileSelect: (file: File | null) => void;
 }) {
   const uploadBadgeClassName =
-    "inline-flex items-center rounded-[12px] border border-emerald-200 bg-emerald-50 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-emerald-700";
+    "inline-flex items-center rounded-[12px] border border-[var(--theme-success-border)] bg-[var(--theme-surface-strong)] px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-[var(--theme-success-text)]";
 
   return (
     <div className="space-y-3">
@@ -110,7 +110,7 @@ function FileUploadField({
       />
 
       {state.status === "uploading" ? (
-        <div className="space-y-2 rounded-2xl border border-brand-100 bg-brand-50/70 px-4 py-4" aria-live="polite">
+        <div className="space-y-2 rounded-2xl border border-[var(--theme-accent-border)] bg-[var(--theme-accent-soft)] px-4 py-4" aria-live="polite">
           <div className="flex items-center justify-between text-sm text-[var(--theme-text-default)]">
             <span>Загрузка файла...</span>
             <span className="font-semibold">{state.progress}%</span>
@@ -120,7 +120,7 @@ function FileUploadField({
       ) : null}
 
       {state.status === "uploaded" && state.file ? (
-        <div className="space-y-3 rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-4">
+        <div className="ui-notice-success space-y-3 rounded-2xl px-4 py-4">
           <div className="flex flex-wrap items-center gap-2">
             <span className={uploadBadgeClassName}>Загружено</span>
             <span className={uploadBadgeClassName}>{state.file.mimeType}</span>
@@ -128,7 +128,7 @@ function FileUploadField({
               {formatUploadFileSize(state.file.size)}
             </span>
           </div>
-          <p className="text-sm font-medium text-emerald-900">{state.file.originalName}</p>
+          <p className="text-sm font-medium">{state.file.originalName}</p>
         </div>
       ) : null}
 
@@ -385,7 +385,7 @@ export function TopicCreateForm({
   return (
     <form onSubmit={handleSubmit} className="grid gap-4 lg:grid-cols-2">
       <label className="block space-y-2 lg:col-span-2">
-        <span className="text-sm font-medium text-slate-700">Название темы</span>
+        <span className="ui-form-label">Название темы</span>
         <input
           type="text"
           value={title}
@@ -397,7 +397,7 @@ export function TopicCreateForm({
       </label>
 
       <label className="block space-y-2 lg:col-span-2">
-        <span className="text-sm font-medium text-slate-700">Описание</span>
+        <span className="ui-form-label">Описание</span>
         <textarea
           value={description}
           onChange={(event) => setDescription(event.target.value)}
@@ -433,7 +433,7 @@ export function TopicCreateForm({
       </div>
 
       <div className="space-y-3 lg:col-span-2">
-        <div className="ui-panel-soft rounded-2xl px-4 py-4 text-sm text-[var(--theme-text-muted)]">
+        <div className="ui-hint ui-panel-soft rounded-2xl px-4 py-4 text-sm text-[var(--theme-text-muted)]">
           {isUploading
             ? "Дождитесь окончания загрузки файлов. Кнопка создания станет доступной автоматически."
             : isReadyToCreate

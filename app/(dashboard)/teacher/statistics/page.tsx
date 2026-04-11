@@ -157,7 +157,7 @@ export default async function TeacherStatisticsPage({ searchParams }: TeacherSta
       note: "Уверенно решены",
       value: totalGreen,
       color: "#34d399",
-      badgeClassName: "border-emerald-200 bg-emerald-50 text-emerald-900"
+      badgeClassName: "border-[var(--theme-success-border)] bg-[var(--theme-success-soft)] text-[var(--theme-success-text)]"
     },
     {
       key: "yellow",
@@ -165,7 +165,7 @@ export default async function TeacherStatisticsPage({ searchParams }: TeacherSta
       note: "Исправлены после самопроверки",
       value: totalYellow,
       color: "#fbbf24",
-      badgeClassName: "border-amber-200 bg-amber-50 text-amber-900"
+      badgeClassName: "border-[var(--theme-warning-border)] bg-[var(--theme-warning-soft)] text-[var(--theme-warning-text)]"
     },
     {
       key: "red",
@@ -173,7 +173,7 @@ export default async function TeacherStatisticsPage({ searchParams }: TeacherSta
       note: "Требуют помощи преподавателя",
       value: totalRed,
       color: "#fb7185",
-      badgeClassName: "border-rose-200 bg-rose-50 text-rose-900"
+      badgeClassName: "border-[var(--theme-danger-border)] bg-[var(--theme-danger-soft)] text-[var(--theme-danger-text)]"
     },
     {
       key: "empty",
@@ -181,7 +181,7 @@ export default async function TeacherStatisticsPage({ searchParams }: TeacherSta
       note: "Номер еще не отмечен",
       value: totalUnfilled,
       color: "#cbd5e1",
-      badgeClassName: "border-slate-200 bg-slate-100 text-slate-700"
+      badgeClassName: "border-[var(--theme-border)] bg-[var(--theme-surface-soft)] text-[var(--theme-text-muted)]"
     }
   ];
 
@@ -271,22 +271,22 @@ export default async function TeacherStatisticsPage({ searchParams }: TeacherSta
             <StatCard
               label="Решено"
               value={totalSolved}
-              accent={<span className="font-semibold text-emerald-700">{solvedPercent}% от всех слотов</span>}
+              accent={<span className="font-semibold text-[var(--theme-success-text)]">{solvedPercent}% от всех слотов</span>}
             />
             <StatCard
               label="Нужна помощь"
               value={totalRed}
-              accent={<span className="font-semibold text-rose-700">{completionPercent(totalRed, totalStatusSlots)}% от всех слотов</span>}
+              accent={<span className="font-semibold text-[var(--theme-danger-text)]">{completionPercent(totalRed, totalStatusSlots)}% от всех слотов</span>}
             />
             <StatCard
               label="Без статуса"
               value={totalUnfilled}
-              accent={<span className="font-semibold text-slate-700">{completionPercent(totalUnfilled, totalStatusSlots)}% от всех слотов</span>}
+              accent={<span className="font-semibold text-[var(--theme-text-default)]">{completionPercent(totalUnfilled, totalStatusSlots)}% от всех слотов</span>}
             />
             <StatCard
               label="Активные ученики"
               value={`${activeStudents.length} / ${data.stats.totalStudents}`}
-              accent={<span className="font-semibold text-brand-700">{activeStudentsPercent}% охвата</span>}
+              accent={<span className="font-semibold text-[var(--theme-accent-text)]">{activeStudentsPercent}% охвата</span>}
             />
           </div>
 
@@ -521,13 +521,13 @@ function CompactBar({
   const normalizedValue = Math.min(100, Math.max(0, value)) / 100;
 
   return (
-    <div className="h-2.5 overflow-hidden rounded-full bg-slate-200/90">
+    <div className="h-2.5 overflow-hidden rounded-full bg-[var(--theme-surface-soft)] border border-[var(--theme-border-soft)]">
       <div
         className={cx(
           "h-full rounded-full transition-transform duration-300 ease-out",
-          tone === "emerald" && "bg-emerald-400",
-          tone === "rose" && "bg-rose-400",
-          tone === "brand" && "bg-brand-500"
+          tone === "emerald" && "bg-[var(--theme-success-text)]",
+          tone === "rose" && "bg-[var(--theme-danger-solid)]",
+          tone === "brand" && "bg-[var(--theme-accent)]"
         )}
         style={{
           width: "100%",

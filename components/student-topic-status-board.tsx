@@ -194,7 +194,7 @@ const StudentNumberCard = memo(function StudentNumberCard({
             <h3 className="student-number-title font-display text-[1.55rem] font-semibold text-[var(--theme-text-strong)] sm:text-[1.9rem]">№ {number.number}</h3>
             <HomeworkStatusBadge status={number.status} />
             {homeworkGroup ? (
-              <Badge className="border-brand-200 bg-brand-50 text-brand-700">{homeworkGroup.label}</Badge>
+              <Badge className="border-[var(--theme-accent-border)] bg-[var(--theme-accent-soft)] text-[var(--theme-accent-text)]">{homeworkGroup.label}</Badge>
             ) : null}
             {isSaving ? <span className="ui-copy-muted text-xs font-medium">Сохраняем...</span> : null}
           </div>
@@ -230,7 +230,7 @@ const StudentNumberCard = memo(function StudentNumberCard({
         <div className="student-note-panel mt-2.5 rounded-[12px] border px-3 py-2.5 sm:mt-3 sm:rounded-[20px] sm:px-4 sm:py-3">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
-              <p className="ui-copy-muted text-sm leading-5">
+              <p className="ui-hint ui-copy-muted text-sm leading-5">
                 {notePreview ? "Есть сохраненная заметка." : "Можно оставить короткую заметку."}
               </p>
             </div>
@@ -257,7 +257,7 @@ const StudentNumberCard = memo(function StudentNumberCard({
                 placeholder="Короткая заметка к этому номеру"
                 className="ui-input mt-2.5 min-h-[64px] w-full resize-none rounded-[12px] px-3 py-2.5 text-sm sm:rounded-2xl sm:py-3"
               />
-              <p className="ui-copy-soft mt-1.5 text-xs leading-5">Сохранится автоматически.</p>
+              <p className="ui-hint ui-copy-soft mt-1.5 text-xs leading-5">Сохранится автоматически.</p>
             </>
           ) : notePreview ? (
             <div className="ui-card-soft mt-2.5 rounded-[12px] px-3 py-2 text-sm leading-5 text-[var(--theme-text-default)] sm:rounded-2xl sm:py-2.5">
@@ -271,7 +271,7 @@ const StudentNumberCard = memo(function StudentNumberCard({
         <div className="student-answer-panel mt-2.5 rounded-[12px] border p-2.5 sm:mt-3 sm:rounded-[20px] sm:p-3">
           <div className="flex flex-wrap items-center justify-between gap-3">
             <div>
-              <p className="ui-copy-muted text-sm leading-5">Ответ откроется только по вашему клику.</p>
+              <p className="ui-hint ui-copy-muted text-sm leading-5">Ответ откроется только по вашему клику.</p>
             </div>
             <button
               type="button"
@@ -289,7 +289,7 @@ const StudentNumberCard = memo(function StudentNumberCard({
               </div>
             </div>
           ) : (
-            <div className="ui-card-soft ui-copy-muted mt-2.5 rounded-[12px] border border-dashed px-3 py-2.5 text-sm leading-5 sm:rounded-[18px] sm:px-4 sm:py-3">
+            <div className="ui-hint ui-card-soft ui-copy-muted mt-2.5 rounded-[12px] border border-dashed px-3 py-2.5 text-sm leading-5 sm:rounded-[18px] sm:px-4 sm:py-3">
               Ответ скрыт, пока вы его не откроете.
             </div>
           )}
@@ -517,7 +517,7 @@ function StudentNumberList({
   }, []);
 
   return (
-    <div className="student-virtual-shell rounded-[14px] border border-slate-200 bg-slate-50/45 p-2 sm:rounded-[24px] sm:p-3">
+    <div className="student-virtual-shell rounded-[14px] border border-[var(--theme-border-soft)] p-2 sm:rounded-[24px] sm:p-3">
       <div
         ref={scrollRef}
         className="student-virtual-scroll rounded-[12px] sm:rounded-[18px]"
@@ -988,7 +988,7 @@ export function StudentTopicStatusBoard({
         }
       >
         {saveError ? (
-          <div className="mb-4 rounded-[12px] border border-rose-200 bg-rose-50 px-3.5 py-3 text-sm font-medium text-rose-900 sm:mb-5 sm:rounded-[18px] sm:px-4 sm:py-4">
+          <div className="ui-notice-error mb-4 rounded-[12px] px-3.5 py-3 text-sm font-medium sm:mb-5 sm:rounded-[18px] sm:px-4 sm:py-4">
             {saveError}
           </div>
         ) : null}
@@ -1050,18 +1050,18 @@ export function StudentTopicStatusBoard({
         ) : null}
 
         {isTopicCompleted ? (
-          <details className="rounded-[12px] border border-emerald-200 bg-emerald-50/70 sm:rounded-[20px]">
+          <details className="rounded-[12px] border border-[var(--theme-success-border)] bg-[var(--theme-success-soft)] sm:rounded-[20px]">
             <summary className="ui-pressable flex cursor-pointer list-none items-center justify-between gap-3 px-3 py-3 sm:gap-4 sm:px-4 sm:py-4 [&::-webkit-details-marker]:hidden">
               <div>
-                <p className="text-sm font-semibold text-emerald-900">Тема полностью решена</p>
-                <p className="ui-hint mt-1 text-sm leading-6 text-emerald-800">Подробности можно открыть в любой момент.</p>
+                <p className="text-sm font-semibold text-[var(--theme-success-text)]">Тема полностью решена</p>
+                <p className="ui-hint mt-1 text-sm leading-6 text-[var(--theme-success-text)]">Подробности можно открыть в любой момент.</p>
               </div>
-              <span className="rounded-[9px] border border-emerald-200 bg-white px-3 py-1.5 text-sm font-semibold text-emerald-800 sm:rounded-[12px] sm:px-4 sm:py-2">
+              <span className="rounded-[9px] border border-[var(--theme-success-border)] bg-[var(--theme-surface-strong)] px-3 py-1.5 text-sm font-semibold text-[var(--theme-success-text)] sm:rounded-[12px] sm:px-4 sm:py-2">
                 Показать номера
               </span>
             </summary>
 
-            <div className="border-t border-emerald-100 px-3 py-3 sm:px-4 sm:py-4">
+            <div className="border-t border-[var(--theme-success-border)] px-3 py-3 sm:px-4 sm:py-4">
               {deferredFilteredNumbers.length > 0 ? (
                 <StudentNumberList
                   numbers={deferredFilteredNumbers}
@@ -1073,7 +1073,7 @@ export function StudentTopicStatusBoard({
                   onNoteBlur={flushNumberNote}
                 />
               ) : (
-                <div className="rounded-[12px] border border-dashed border-emerald-200 bg-white/70 px-3.5 py-6 text-center text-sm text-emerald-900 sm:rounded-[22px] sm:px-4 sm:py-8">
+                <div className="ui-panel-soft rounded-[12px] border border-dashed px-3.5 py-6 text-center text-sm text-[var(--theme-text-muted)] sm:rounded-[22px] sm:px-4 sm:py-8">
                   По выбранному фильтру здесь пока ничего нет.
                 </div>
               )}
@@ -1092,7 +1092,7 @@ export function StudentTopicStatusBoard({
                 onNoteBlur={flushNumberNote}
               />
             ) : (
-              <div className="rounded-[14px] border border-dashed border-slate-200 bg-slate-50/70 px-4 py-8 text-center sm:rounded-[24px] sm:py-10">
+              <div className="ui-panel-soft rounded-[14px] border border-dashed px-4 py-8 text-center sm:rounded-[24px] sm:py-10">
                 <p className="font-display text-[1.45rem] font-semibold text-[var(--theme-text-strong)] sm:text-2xl">Ничего не найдено</p>
                 <p className="ui-hint mt-1.5 text-sm leading-6 text-[var(--theme-text-muted)] sm:mt-2">Попробуйте другой фильтр.</p>
               </div>

@@ -163,8 +163,8 @@ export function DeadlinesCalendar({ deadlines }: DeadlinesCalendarProps) {
                   isCurrentMonth
                     ? "border-[var(--theme-border-soft)] bg-[var(--theme-surface-strong)] text-[var(--theme-text-strong)] hover:border-[var(--theme-accent-border)]"
                     : "border-transparent bg-[var(--theme-surface-soft)] text-[var(--theme-text-muted)] opacity-70"
-                } ${isToday ? "ring-1 ring-brand-300" : ""} ${
-                  hasOverdue ? "border-rose-200 bg-rose-50/70 text-rose-700" : hasSoon ? "border-amber-200 bg-amber-50/70" : ""
+                } ${isToday ? "ring-1 ring-[var(--theme-accent-border)]" : ""} ${
+                  hasOverdue ? "border-[var(--theme-danger-border)] bg-[var(--theme-danger-soft)] text-[var(--theme-danger-text)]" : hasSoon ? "border-[var(--theme-warning-border)] bg-[var(--theme-warning-soft)]" : ""
                 } ${isCurrentMonth ? "cursor-pointer" : "cursor-default"}`}
               >
                 <span>{day.getDate()}</span>
@@ -173,10 +173,10 @@ export function DeadlinesCalendar({ deadlines }: DeadlinesCalendarProps) {
                     aria-hidden
                     className={`mt-1 inline-flex h-2.5 w-2.5 rotate-45 rounded-[2px] ${
                       hasOverdue
-                        ? "bg-rose-500"
+                        ? "bg-[var(--theme-danger-solid)]"
                         : hasSoon
-                        ? "bg-amber-500"
-                        : "bg-brand-500"
+                        ? "bg-[rgb(245,158,11)]"
+                        : "bg-[var(--theme-accent)]"
                     }`}
                   />
                 ) : null}
@@ -198,7 +198,7 @@ export function DeadlinesCalendar({ deadlines }: DeadlinesCalendarProps) {
                   </div>
                   <DeadlineList items={dayItems} compact emptyMessage="На этот день дедлайн не назначен." />
                   {dayItems.length > 0 ? (
-                    <p className="mt-2 text-[11px] text-[var(--theme-text-muted)]">Нажмите вне окна или Esc, чтобы закрыть.</p>
+                    <p className="ui-hint mt-2 text-[11px] text-[var(--theme-text-muted)]">Нажмите вне окна или Esc, чтобы закрыть.</p>
                   ) : null}
                 </div>
               ) : null}

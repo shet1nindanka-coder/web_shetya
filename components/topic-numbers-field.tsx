@@ -102,7 +102,7 @@ export function TopicNumbersField({
           placeholder={placeholder}
           className={cx(
             "ui-input w-full rounded-2xl px-4 py-3 outline-none transition focus:-translate-y-[1px]",
-            hasInput && !hasParsedNumbers ? "border-rose-300 bg-rose-50/60" : ""
+            hasInput && !hasParsedNumbers ? "border-[var(--theme-danger-border)] bg-[var(--theme-danger-soft)]" : ""
           )}
           required
         />
@@ -124,7 +124,7 @@ export function TopicNumbersField({
           className={cx(
             "rounded-2xl border px-4 py-4 text-sm leading-6",
             hasInput && !hasParsedNumbers
-              ? "border-rose-200 bg-rose-50 text-rose-900"
+              ? "ui-notice-error"
               : "ui-panel-soft text-[var(--theme-text-muted)]"
           )}
         >

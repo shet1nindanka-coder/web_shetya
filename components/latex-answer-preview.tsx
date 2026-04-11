@@ -16,7 +16,11 @@ function renderInlineLine(line: string, lineIndex: number) {
         <InlineMath
           key={`math-${lineIndex}-${partIndex}`}
           math={math}
-          renderError={(error) => <code className="rounded bg-rose-50 px-1 py-0.5 text-rose-700">{error.name}</code>}
+          renderError={(error) => (
+            <code className="rounded bg-[var(--theme-danger-soft)] px-1 py-0.5 text-[var(--theme-danger-text)]">
+              {error.name}
+            </code>
+          )}
         />
       );
     }
@@ -37,7 +41,7 @@ export function LatexAnswerPreview({ value }: LatexAnswerPreviewProps) {
   }
 
   return (
-    <div className="space-y-4 text-sm leading-7 text-slate-700">
+    <div className="space-y-4 text-sm leading-7 text-[var(--theme-text-default)]">
       {blocks.map((block, blockIndex) => {
         const isDisplayMath =
           (block.startsWith("$$") && block.endsWith("$$") && block.length > 4) ||
@@ -47,11 +51,11 @@ export function LatexAnswerPreview({ value }: LatexAnswerPreviewProps) {
           const math = block.startsWith("$$") ? block.slice(2, -2).trim() : block.slice(2, -2).trim();
 
           return (
-            <div key={`block-${blockIndex}`} className="overflow-x-auto rounded-2xl bg-slate-50 px-3 py-3">
+            <div key={`block-${blockIndex}`} className="overflow-x-auto rounded-2xl bg-[var(--theme-surface-soft)] px-3 py-3">
               <BlockMath
                 math={math}
                 renderError={(error) => (
-                  <code className="block whitespace-pre-wrap rounded bg-rose-50 px-3 py-2 text-rose-700">
+                  <code className="block whitespace-pre-wrap rounded bg-[var(--theme-danger-soft)] px-3 py-2 text-[var(--theme-danger-text)]">
                     {error.name}: {error.message}
                   </code>
                 )}

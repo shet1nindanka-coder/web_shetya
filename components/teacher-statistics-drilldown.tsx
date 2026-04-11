@@ -44,19 +44,19 @@ const statusCards = [
     key: "green",
     label: "Зеленые",
     valueKey: "greenCount" as const,
-    className: "border-emerald-200 bg-emerald-50 text-emerald-900"
+    className: "border-[var(--theme-success-border)] bg-[var(--theme-success-soft)] text-[var(--theme-success-text)]"
   },
   {
     key: "yellow",
     label: "Желтые",
     valueKey: "yellowCount" as const,
-    className: "border-amber-200 bg-amber-50 text-amber-900"
+    className: "border-[var(--theme-warning-border)] bg-[var(--theme-warning-soft)] text-[var(--theme-warning-text)]"
   },
   {
     key: "red",
     label: "Красные",
     valueKey: "redCount" as const,
-    className: "border-rose-200 bg-rose-50 text-rose-900"
+    className: "border-[var(--theme-danger-border)] bg-[var(--theme-danger-soft)] text-[var(--theme-danger-text)]"
   }
 ];
 
@@ -335,13 +335,13 @@ export function TeacherStatisticsDrilldown({
         </div>
 
         <div className="mt-4 flex flex-wrap gap-2 text-sm">
-          <span className="rounded-[12px] border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-emerald-900">
+          <span className="rounded-[12px] border border-[var(--theme-success-border)] bg-[var(--theme-success-soft)] px-3 py-1.5 text-[var(--theme-success-text)]">
             Зеленых: {metrics.greenCount}
           </span>
-          <span className="rounded-[12px] border border-amber-200 bg-amber-50 px-3 py-1.5 text-amber-900">
+          <span className="rounded-[12px] border border-[var(--theme-warning-border)] bg-[var(--theme-warning-soft)] px-3 py-1.5 text-[var(--theme-warning-text)]">
             Желтых: {metrics.yellowCount}
           </span>
-          <span className="rounded-[12px] border border-rose-200 bg-rose-50 px-3 py-1.5 text-rose-900">
+          <span className="rounded-[12px] border border-[var(--theme-danger-border)] bg-[var(--theme-danger-soft)] px-3 py-1.5 text-[var(--theme-danger-text)]">
             Красных: {metrics.redCount}
           </span>
           <span className="ui-badge-soft rounded-[12px] px-3 py-1.5">

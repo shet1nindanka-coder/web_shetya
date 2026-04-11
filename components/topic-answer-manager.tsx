@@ -276,7 +276,7 @@ export function TopicAnswerManager({ topicId, numbers }: TopicAnswerManagerProps
             <p className="mt-2 text-base font-semibold text-[var(--theme-text-strong)]">
               Показаны номера {rangeStart}-{rangeEnd} из {items.length}
             </p>
-            <p className="mt-1 text-sm leading-6 text-[var(--theme-text-muted)]">
+            <p className="ui-hint mt-1 text-sm leading-6 text-[var(--theme-text-muted)]">
               Сохранено ответов: {savedAnswersCount} из {items.length}. Для больших тем ответы разбиты на страницы по{" "}
               {ANSWERS_PAGE_SIZE} номеров.
             </p>
@@ -357,7 +357,7 @@ export function TopicAnswerManager({ topicId, numbers }: TopicAnswerManagerProps
             <Badge
               className={
                 item.savedAnswerLatex
-                  ? "border-emerald-200 bg-emerald-50 text-emerald-700"
+                  ? "border-[var(--theme-success-border)] bg-[var(--theme-success-soft)] text-[var(--theme-success-text)]"
                   : "ui-badge-soft"
               }
             >
@@ -388,7 +388,7 @@ export function TopicAnswerManager({ topicId, numbers }: TopicAnswerManagerProps
                 className="ui-input min-h-[138px] w-full rounded-[20px] px-4 py-3 text-sm outline-none transition focus:-translate-y-[1px]"
                 disabled={item.isSaving || item.isDeleting}
               />
-              <p className="text-xs leading-5 text-[var(--theme-text-muted)]">
+              <p className="ui-hint text-xs leading-5 text-[var(--theme-text-muted)]">
                 Поддерживаются inline-формулы через <code>$...$</code> и отдельные блоки через <code>$$...$$</code>.
               </p>
             </label>
@@ -401,13 +401,13 @@ export function TopicAnswerManager({ topicId, numbers }: TopicAnswerManagerProps
                 </div>
               </div>
             ) : (
-              <div className="ui-panel-soft rounded-[20px] border-dashed px-4 py-5 text-sm leading-6 text-[var(--theme-text-muted)]">
+              <div className="ui-hint ui-panel-soft rounded-[20px] border-dashed px-4 py-5 text-sm leading-6 text-[var(--theme-text-muted)]">
                 Пока ответ к этому номеру не добавлен.
               </div>
             )}
 
             {item.error ? (
-              <div className="rounded-2xl border border-rose-200 bg-rose-50 px-4 py-4 text-sm font-medium text-rose-900">
+              <div className="ui-notice-error rounded-2xl px-4 py-4 text-sm font-medium">
                 {item.error}
               </div>
             ) : null}

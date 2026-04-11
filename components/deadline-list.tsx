@@ -13,7 +13,7 @@ type DeadlineListProps = {
 export function DeadlineList({ items, emptyMessage = "На эту дату дедлайнов нет.", compact = false }: DeadlineListProps) {
   if (items.length === 0) {
     return (
-      <div className="rounded-[14px] border border-dashed border-slate-200 bg-slate-50/70 px-3 py-4 text-sm text-[var(--theme-text-muted)]">
+      <div className="ui-panel-soft rounded-[14px] border border-dashed px-3 py-4 text-sm text-[var(--theme-text-muted)]">
         {emptyMessage}
       </div>
     );

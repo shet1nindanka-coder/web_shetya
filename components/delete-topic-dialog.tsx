@@ -19,7 +19,7 @@ function DeleteSubmitButton() {
     <button
       type="submit"
       disabled={pending}
-      className="ui-pressable ui-button-danger rounded-2xl px-4 py-3 text-sm font-semibold transition disabled:cursor-not-allowed"
+      className="ui-pressable ui-button-danger rounded-[12px] px-4 py-2.5 text-sm font-semibold transition disabled:cursor-not-allowed"
     >
       {pending ? "Удаляем..." : "Да, удалить"}
     </button>
@@ -69,27 +69,27 @@ export function DeleteTopicDialog({
 
       {isOpen ? (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/45 px-4 py-6 backdrop-blur-sm"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-[rgba(15,23,42,0.45)] px-4 py-6 backdrop-blur-sm"
           onClick={() => setIsOpen(false)}
         >
           <div
-            className="ui-pop-in w-full max-w-md rounded-[32px] border border-[var(--theme-border)] bg-[var(--theme-surface-strong)] p-6 shadow-[0_24px_80px_rgba(15,23,42,0.24)]"
+            className="ui-pop-in w-full max-w-md rounded-[24px] border border-[var(--theme-border)] bg-[var(--theme-surface-strong)] p-5 shadow-[0_24px_80px_rgba(15,23,42,0.24)]"
             onClick={(event) => event.stopPropagation()}
           >
             <div className="space-y-3">
               <p className="text-sm font-semibold uppercase tracking-[0.24em] text-[var(--theme-danger-text)]">Подтверждение</p>
-              <h3 className="font-display text-3xl font-semibold text-[var(--theme-text-strong)]">Удалить тему?</h3>
+              <h3 className="font-display text-2xl font-semibold text-[var(--theme-text-strong)]">Удалить тему?</h3>
               <p className="text-sm leading-6 text-[var(--theme-text-default)]">
                 Тема <span className="font-semibold text-[var(--theme-text-strong)]">«{topicTitle}»</span> будет удалена вместе с
                 прикреплёнными файлами и статусами по номерам. Это действие нельзя отменить.
               </p>
             </div>
 
-            <div className="mt-6 flex flex-wrap gap-3">
+            <div className="mt-5 flex flex-wrap gap-3">
               <button
                 type="button"
                 onClick={() => setIsOpen(false)}
-                className="ui-pressable ui-button-secondary rounded-2xl px-4 py-3 text-sm font-semibold transition"
+                className="ui-pressable ui-button-secondary rounded-[12px] px-4 py-2.5 text-sm font-semibold transition"
               >
                 Отмена
               </button>

@@ -213,8 +213,8 @@ function TimelineLegendBadge({
       <span>{label}:</span>
       <span
         className={cx(
-          tone === "closed" && "text-[var(--theme-accent-strong)] dark:text-[var(--theme-accent-text)]",
-          tone === "review" && "text-[var(--theme-danger-solid)] dark:text-[var(--theme-danger-solid)]"
+          tone === "closed" && "text-[var(--theme-accent-strong)]",
+          tone === "review" && "text-[var(--theme-danger-solid)]"
         )}
       >
         {value}
@@ -235,9 +235,9 @@ function TrendBadge({
       className={cx(
         "inline-flex items-center gap-2 rounded-full border px-3 py-1.5 text-xs font-semibold shadow-[0_8px_24px_rgba(15,23,42,0.04)]",
         direction === "up" &&
-          "border-[color-mix(in_srgb,var(--theme-success-border)_72%,var(--theme-success-text)_28%)] bg-[color-mix(in_srgb,var(--theme-success-soft)_88%,white_12%)] text-[var(--theme-success-text)] shadow-[0_10px_24px_rgba(16,185,129,0.10)] dark:border-[color-mix(in_srgb,var(--theme-success-border)_84%,var(--theme-success-text)_16%)] dark:bg-[color-mix(in_srgb,var(--theme-success-soft)_92%,rgba(0,0,0,0.08)_8%)] dark:text-[var(--theme-success-text)]",
+          "border-[var(--theme-success-border)] bg-[var(--theme-success-soft)] text-[var(--theme-success-text)] shadow-[0_10px_24px_rgba(16,185,129,0.10)]",
         direction === "down" &&
-          "border-rose-300/90 bg-rose-100/90 text-rose-900 dark:border-rose-400/30 dark:bg-rose-500/16 dark:text-rose-100",
+          "border-[var(--theme-danger-border)] bg-[var(--theme-danger-soft)] text-[var(--theme-danger-text)]",
         direction === "flat" &&
           "border-[var(--theme-border-soft)] bg-[var(--theme-surface-soft)] text-[var(--theme-text-strong)]"
       )}

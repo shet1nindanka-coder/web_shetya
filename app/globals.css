@@ -1114,6 +1114,16 @@ html[data-theme="dark"] .ui-tab[data-active="true"] {
   background-size: 200% 100%;
   animation: ui-shimmer 1.4s linear infinite;
 }
+html[data-theme="dark"] .ui-skeleton {
+  background:
+    linear-gradient(
+      90deg,
+      rgba(30, 41, 59, 0.78) 20%,
+      rgba(51, 65, 85, 0.96) 50%,
+      rgba(30, 41, 59, 0.78) 80%
+    );
+  background-size: 200% 100%;
+}
 
 /* ───────────────────────────────────────────────
    Student number list & virtualization
@@ -1132,6 +1142,10 @@ html[data-theme="dark"] .ui-tab[data-active="true"] {
   background: rgba(148, 163, 184, 0.35);
 }
 .student-virtual-scroll::-webkit-scrollbar-track { background: transparent; }
+html[data-theme="dark"] .student-virtual-scroll::-webkit-scrollbar-thumb {
+  border-color: rgba(10, 17, 30, 0.94);
+  background: rgba(96, 165, 250, 0.24);
+}
 
 .student-number-card {
   content-visibility: auto;

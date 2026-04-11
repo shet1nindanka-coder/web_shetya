@@ -161,7 +161,7 @@ const TeacherNumberCard = memo(function TeacherNumberCard({
             type="checkbox"
             checked={number.selectedForBulk}
             onChange={() => onToggleBulkSelection(topicId, number.id)}
-            className="h-4 w-4 rounded border-slate-300"
+            className="h-4 w-4 rounded border-[var(--theme-border)]"
           />
           Выбрать
         </label>
@@ -169,7 +169,7 @@ const TeacherNumberCard = memo(function TeacherNumberCard({
       </div>
       <div className="mt-3 flex items-center justify-between gap-3">
         <p className="teacher-number-title text-lg font-semibold text-[var(--theme-text-strong)]">№ {number.number}</p>
-        {homeworkLabel ? <Badge className="border-brand-200 bg-brand-50 text-brand-700">{homeworkLabel}</Badge> : null}
+        {homeworkLabel ? <Badge className="border-[var(--theme-accent-border)] bg-[var(--theme-accent-soft)] text-[var(--theme-accent-text)]">{homeworkLabel}</Badge> : null}
       </div>
       {number.studentStatus?.note ? (
         <div className="ui-card-soft mt-3 rounded-2xl px-3 py-2">
@@ -260,11 +260,11 @@ const TeacherTopicCard = memo(function TeacherTopicCard({
           <div className="ui-copy-muted flex flex-wrap gap-x-5 gap-y-2 text-sm">
             <span>Решено: <span className="font-semibold text-[var(--theme-text-strong)]">{topic.solvedCount}/{topic.totalNumbers}</span></span>
             <span>Отмечено: <span className="font-semibold text-[var(--theme-text-strong)]">{topic.markedCount}/{topic.totalNumbers}</span></span>
-            <span>Красные: <span className="font-semibold text-rose-700">{topic.redCount}</span></span>
+            <span>Красные: <span className="font-semibold text-[var(--theme-danger-text)]">{topic.redCount}</span></span>
             {homeworkGroups.length > 0 ? (
               <span>ДЗ: <span className="font-semibold text-[var(--theme-text-strong)]">{homeworkGroups.length}</span></span>
             ) : null}
-            {isCompleted ? <span className="font-medium text-emerald-700">Тема завершена</span> : null}
+            {isCompleted ? <span className="font-medium text-[var(--theme-success-text)]">Тема завершена</span> : null}
           </div>
         </div>
 
@@ -338,19 +338,19 @@ const TeacherTopicCard = memo(function TeacherTopicCard({
       </div>
 
       {isCompleted ? (
-        <details className="mt-5 rounded-[20px] border border-emerald-200 bg-emerald-50/70">
+        <details className="mt-5 rounded-[20px] border border-[var(--theme-success-border)] bg-[var(--theme-success-soft)]">
           <summary className="ui-pressable flex cursor-pointer list-none items-center justify-between gap-4 px-4 py-4 [&::-webkit-details-marker]:hidden">
             <div>
-              <p className="text-sm font-semibold text-emerald-900">Тема полностью решена</p>
-              <p className="mt-1 text-sm leading-6 text-emerald-800">
+              <p className="text-sm font-semibold text-[var(--theme-success-text)]">Тема полностью решена</p>
+              <p className="ui-hint mt-1 text-sm leading-6 text-[var(--theme-success-text)]">
                 Все номера уже отмечены зеленым или желтым. Подробности можно открыть при необходимости.
               </p>
             </div>
-            <span className="rounded-[12px] border border-emerald-200 bg-white px-4 py-2 text-sm font-semibold text-emerald-800">
+            <span className="rounded-[12px] border border-[var(--theme-success-border)] bg-[var(--theme-surface-strong)] px-4 py-2 text-sm font-semibold text-[var(--theme-success-text)]">
               Показать номера
             </span>
           </summary>
-          <div className="border-t border-emerald-100 px-4 py-4">{numberCards}</div>
+          <div className="border-t border-[var(--theme-success-border)] px-4 py-4">{numberCards}</div>
         </details>
       ) : (
         numberCards
@@ -986,13 +986,13 @@ export function TeacherStudentProgressBoard({
   return (
     <div className="space-y-5">
       {!deadlinesEnabled ? (
-        <div className="rounded-[24px] border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-900">
+        <div className="ui-notice-warning rounded-[24px] px-4 py-3 text-sm">
           Дедлайны появятся здесь после обновления базы данных до актуальной версии.
         </div>
       ) : null}
 
       {saveError ? (
-        <div className="rounded-[24px] border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-900">
+        <div className="ui-notice-error rounded-[24px] px-4 py-3 text-sm">
           {saveError}
         </div>
       ) : null}

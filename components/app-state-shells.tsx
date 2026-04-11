@@ -104,7 +104,7 @@ export function RouteErrorState({ title, description, reset, homeHref, homeLabel
   return (
       <div className="mx-auto flex min-h-[60vh] w-full max-w-3xl items-center justify-center px-4 py-10">
       <div className="ui-pop-in ui-surface w-full rounded-[36px] border p-8 text-center backdrop-blur">
-        <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-rose-50 text-lg font-semibold text-rose-700 shadow-sm">
+        <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-[var(--theme-danger-soft)] text-lg font-semibold text-[var(--theme-danger-text)] shadow-sm">
           !
         </div>
         <h1 className="font-display mt-5 text-3xl font-semibold text-[var(--theme-text-strong)]">{title}</h1>
