@@ -283,11 +283,6 @@ const StudentNumberCard = memo(function StudentNumberCard({
                     <LatexAnswerPreview value={number.answerLatex} />
                   </div>
                 </div>
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <span className="ui-telegram-spoiler-label transition group-hover:scale-[1.01]">
-                    Показать ответ
-                  </span>
-                </div>
               </div>
             </button>
           )}
