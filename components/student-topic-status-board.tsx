@@ -130,16 +130,15 @@ const VIRTUAL_ITEM_GAP = 16;
 function estimateStudentNumberCardHeight(number: StudentNumberState, notesEnabled: boolean) {
   let height = 148;
 
-  if (notesEnabled) {
-    height += 76;
-  }
-
   if (number.conditionLatex) {
-    height += 72;
+    height += 48;
   }
 
-  if (number.answerLatex) {
-    height += 72;
+  // Answer and note are side by side on lg+, but stacked on mobile
+  const hasAnswerOrNote = number.answerLatex || notesEnabled;
+
+  if (hasAnswerOrNote) {
+    height += 80;
   }
 
   return height;
@@ -234,106 +233,98 @@ const StudentNumberCard = memo(function StudentNumberCard({
       </div>
 
       {number.conditionLatex ? (
-        <div className="student-answer-panel mt-2.5 rounded-[12px] border p-2.5 sm:mt-3 sm:rounded-[20px] sm:p-3">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div>
-              <p className="ui-kicker">Условие</p>
-            </div>
-          </div>
-
-          <div className="ui-card-soft mt-2.5 overflow-hidden rounded-[12px] sm:rounded-[18px]">
-            <div className="px-3 py-2.5 sm:px-4 sm:py-3.5">
-              <LatexAnswerPreview value={number.conditionLatex} />
-            </div>
+        <div className="mt-2.5 sm:mt-3">
+          <p className="ui-kicker mb-1.5">Условие</p>
+          <div className="text-sm leading-relaxed text-[var(--theme-text-default)]">
+            <LatexAnswerPreview value={number.conditionLatex} />
           </div>
         </div>
       ) : null}
 
-      {number.answerLatex ? (
-        <div className="student-answer-panel mt-2.5 rounded-[12px] border p-2 sm:mt-3 sm:rounded-[20px] sm:p-2.5">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <p className="ui-kicker">Ответ</p>
-            {isAnswerVisible ? (
+      {(number.answerLatex || notesEnabled) ? (
+        <div className="mt-2.5 grid gap-2.5 sm:mt-3 sm:gap-3 lg:grid-cols-2">
+          {number.answerLatex ? (
+            <div className="student-answer-panel min-w-0 rounded-[12px] border p-2 sm:rounded-[18px] sm:p-2.5">
+              <div className="flex items-center justify-between gap-2">
+                <p className="ui-kicker">Ответ</p>
+                {isAnswerVisible ? (
+                  <button
+                    type="button"
+                    onClick={() => setIsAnswerVisible(false)}
+                    className="ui-pressable ui-button-secondary rounded-[10px] px-2.5 py-1 text-xs font-semibold transition sm:rounded-[12px] sm:px-3 sm:py-1.5 sm:text-sm"
+                  >
+                    Скрыть
+                  </button>
+                ) : null}
+              </div>
+
+              <TelegramSpoiler
+                revealed={isAnswerVisible}
+                onReveal={() => setIsAnswerVisible(true)}
+                className="mt-2 rounded-[10px] sm:rounded-[14px]"
+                ariaLabel={`Открыть ответ к номеру ${number.number}`}
+              >
+                <div className="ui-card-soft overflow-hidden rounded-[10px] sm:rounded-[14px]">
+                  <div className="px-2.5 py-2 sm:px-3 sm:py-2.5">
+                    <LatexAnswerPreview value={number.answerLatex} />
+                  </div>
+                </div>
+              </TelegramSpoiler>
+            </div>
+          ) : null}
+
+          {notesEnabled ? (
+            <div className="student-note-panel min-w-0 rounded-[12px] border px-2.5 py-2 sm:rounded-[18px] sm:px-3 sm:py-2.5">
               <button
                 type="button"
-                onClick={() => setIsAnswerVisible(false)}
-                className="ui-pressable ui-button-secondary w-full rounded-[10px] px-3 py-1.5 text-sm font-semibold transition sm:w-auto sm:rounded-[14px] sm:px-3.5 sm:py-2"
+                onClick={() => setIsNoteOpen((current) => !current)}
+                className="group flex w-full items-center justify-between gap-2 text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--theme-accent-border)]"
+                aria-expanded={isNoteOpen}
               >
-                Скрыть ответ
+                <div className="min-w-0 flex-1">
+                  <p className="ui-kicker">Заметка</p>
+                  {!isNoteOpen ? (
+                    <p
+                      className={cx(
+                        "mt-1 truncate text-sm leading-5",
+                        notePreview ? "text-[var(--theme-text-default)]" : "text-[var(--theme-text-muted)]"
+                      )}
+                    >
+                      {notePreview ?? "Добавить заметку"}
+                    </p>
+                  ) : null}
+                </div>
+                <span className="inline-flex h-7 w-7 flex-none items-center justify-center rounded-full border border-[var(--theme-border-soft)] bg-[var(--theme-surface-strong)] text-[var(--theme-text-muted)] transition group-hover:border-[var(--theme-accent-border)] group-hover:text-[var(--theme-accent-text)]">
+                  {isNoteOpen ? (
+                    <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor" aria-hidden="true">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 15.75l-7.5-7.5-7.5 7.5" />
+                    </svg>
+                  ) : (
+                    <svg className="h-3.5 w-3.5" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor" aria-hidden="true">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487a2.25 2.25 0 113.182 3.182L8.25 19.463 3.75 20.25l.787-4.5L16.862 4.487z" />
+                    </svg>
+                  )}
+                </span>
               </button>
-            ) : null}
-          </div>
 
-          <TelegramSpoiler
-            revealed={isAnswerVisible}
-            onReveal={() => setIsAnswerVisible(true)}
-            className="mt-2.5 rounded-[12px] sm:rounded-[18px]"
-            ariaLabel={`Открыть ответ к номеру ${number.number}`}
-          >
-            <div className="ui-card-soft overflow-hidden rounded-[12px] sm:rounded-[18px]">
-              <div className="px-3 py-2 sm:px-3.5 sm:py-3">
-                <LatexAnswerPreview value={number.answerLatex} />
-              </div>
+              {isNoteOpen ? (
+                <>
+                  <textarea
+                    rows={2}
+                    maxLength={240}
+                    value={number.note}
+                    onChange={(event) => onNoteChange(number.id, event.target.value)}
+                    onBlur={() => onNoteBlur(number.id)}
+                    placeholder="Короткая заметка"
+                    className="ui-input mt-2 min-h-[56px] w-full resize-none rounded-[10px] px-2.5 py-2 text-sm sm:rounded-[14px] sm:px-3 sm:py-2.5"
+                  />
+                  <div className="mt-1 flex items-center justify-between">
+                    <p className="ui-hint ui-copy-soft text-xs">Сохранится автоматически</p>
+                    <span className="ui-copy-soft text-xs">{number.note.length}/240</span>
+                  </div>
+                </>
+              ) : null}
             </div>
-          </TelegramSpoiler>
-        </div>
-      ) : null}
-
-      {notesEnabled ? (
-        <div className="student-note-panel mt-2.5 rounded-[12px] border px-3 py-2.5 sm:mt-3 sm:rounded-[20px] sm:px-4 sm:py-3">
-          <button
-            type="button"
-            onClick={() => setIsNoteOpen((current) => !current)}
-            className="group flex w-full items-center justify-between gap-3 rounded-[10px] text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--theme-accent-border)] focus-visible:ring-offset-2 focus-visible:ring-offset-transparent"
-            aria-expanded={isNoteOpen}
-          >
-            <div className="min-w-0 flex-1">
-              <p className="ui-kicker">Заметка</p>
-              <p
-                className={cx(
-                  "mt-1 text-sm leading-6",
-                  notePreview ? "text-[var(--theme-text-default)]" : "text-[var(--theme-text-muted)]"
-                )}
-              >
-                {isNoteOpen
-                  ? "Короткий комментарий к этому номеру."
-                  : notePreview ?? "Добавить короткую заметку к этому номеру"}
-              </p>
-            </div>
-            <span className="flex flex-none items-center gap-2 self-center">
-              <span className="hidden text-xs font-semibold text-[var(--theme-text-muted)] sm:block">
-                {isNoteOpen ? "Свернуть" : notePreview ? "Изменить" : "Добавить"}
-              </span>
-              <span className="inline-flex h-8 w-8 items-center justify-center rounded-full border border-[var(--theme-border-soft)] bg-[var(--theme-surface-strong)] text-[var(--theme-text-muted)] transition group-hover:border-[var(--theme-accent-border)] group-hover:text-[var(--theme-accent-text)]">
-                {isNoteOpen ? (
-                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor" aria-hidden="true">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 15.75l-7.5-7.5-7.5 7.5" />
-                  </svg>
-                ) : (
-                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" strokeWidth="2" stroke="currentColor" aria-hidden="true">
-                    <path strokeLinecap="round" strokeLinejoin="round" d="M16.862 4.487a2.25 2.25 0 113.182 3.182L8.25 19.463 3.75 20.25l.787-4.5L16.862 4.487z" />
-                  </svg>
-                )}
-              </span>
-            </span>
-          </button>
-
-          {isNoteOpen ? (
-            <>
-              <div className="mt-2.5 flex items-center justify-between gap-3">
-                <span className="ui-copy-soft text-xs">{number.note.length}/240</span>
-              </div>
-              <textarea
-                rows={2}
-                maxLength={240}
-                value={number.note}
-                onChange={(event) => onNoteChange(number.id, event.target.value)}
-                onBlur={() => onNoteBlur(number.id)}
-                placeholder="Короткая заметка к этому номеру"
-                className="ui-input mt-2.5 min-h-[64px] w-full resize-none rounded-[12px] px-3 py-2.5 text-sm sm:rounded-2xl sm:py-3"
-              />
-              <p className="ui-hint ui-copy-soft mt-1.5 text-xs leading-5">Сохранится автоматически.</p>
-            </>
           ) : null}
         </div>
       ) : null}
