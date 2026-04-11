@@ -16,7 +16,7 @@ const PARTICLE_MAX_SIZE = 1.3;
 const PARTICLE_MIN_SPEED = 0.06;
 const PARTICLE_MAX_SPEED = 0.22;
 const CONTENT_BLUR = 8;
-const REVEAL_MS = 360;
+const REVEAL_MS = 340;
 
 type Particle = {
   x: number;
@@ -61,17 +61,27 @@ export function TelegramSpoiler({
   ariaLabel
 }: TelegramSpoilerProps) {
   const canvasRef = useRef<HTMLCanvasElement>(null);
-  const overlayRef = useRef<HTMLDivElement>(null);
   const particlesRef = useRef<Particle[]>([]);
   const animationFrameRef = useRef<number>(0);
   const timeRef = useRef(0);
-  const [phase, setPhase] = useState<"hidden" | "revealing" | "done">(revealed ? "done" : "hidden");
+  const [isOpen, setIsOpen] = useState(revealed);
+  const [overlayVisible, setOverlayVisible] = useState(!revealed);
 
+  // Sync with external revealed prop
   useEffect(() => {
-    if (revealed) {
-      setPhase((p) => (p === "hidden" ? "revealing" : p));
+    if (revealed && !isOpen) {
+      // External reveal — start opening
+      setIsOpen(true);
+      // Fade out overlay on next frame
+      requestAnimationFrame(() => {
+        setOverlayVisible(false);
+      });
+    } else if (!revealed && isOpen) {
+      // External hide — go back to hidden
+      setIsOpen(false);
+      setOverlayVisible(true);
     }
-  }, [revealed]);
+  }, [revealed, isOpen]);
 
   const stopAnimation = useCallback(() => {
     if (animationFrameRef.current) {
@@ -136,8 +146,9 @@ export function TelegramSpoiler({
     particlesRef.current = createParticles(rect.width, rect.height);
   }, []);
 
+  // Start/stop canvas animation based on overlay visibility
   useEffect(() => {
-    if (phase === "done") {
+    if (!overlayVisible) {
       stopAnimation();
       return;
     }
@@ -154,77 +165,63 @@ export function TelegramSpoiler({
       stopAnimation();
       observer.disconnect();
     };
-  }, [phase, animate, initCanvas, stopAnimation]);
+  }, [overlayVisible, animate, initCanvas, stopAnimation]);
 
-  const handleReveal = () => {
-    if (phase !== "hidden") return;
-    setPhase("revealing");
+  const handleClick = () => {
+    if (isOpen) return;
+    setIsOpen(true);
     onReveal?.();
+    // Trigger fade out on next frame so transition fires
+    requestAnimationFrame(() => {
+      setOverlayVisible(false);
+    });
   };
 
-  useEffect(() => {
-    if (phase !== "revealing") return;
-
-    const overlay = overlayRef.current;
-    if (!overlay) {
-      setPhase("done");
-      return;
-    }
-
-    const onEnd = () => setPhase("done");
-    overlay.addEventListener("transitionend", onEnd);
-
-    requestAnimationFrame(() => {
-      overlay.style.opacity = "0";
-    });
-
-    const fallback = setTimeout(onEnd, REVEAL_MS + 50);
-    return () => {
-      overlay.removeEventListener("transitionend", onEnd);
-      clearTimeout(fallback);
-    };
-  }, [phase]);
-
-  if (phase === "done") {
-    return <div className={className}>{children}</div>;
-  }
-
-  const isHidden = phase === "hidden";
+  // Overlay is either fully visible (hidden state) or transitioning out
+  const showOverlay = overlayVisible || isOpen;
 
   return (
     <div
       data-spoiler-root
-      role={isHidden ? "button" : undefined}
-      tabIndex={isHidden ? 0 : undefined}
-      onClick={isHidden ? handleReveal : undefined}
-      onKeyDown={isHidden ? (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); handleReveal(); } } : undefined}
-      aria-expanded={!isHidden}
-      aria-label={isHidden ? ariaLabel : undefined}
-      className={`relative block w-full overflow-hidden text-left ${isHidden ? "cursor-pointer" : ""} ${className}`}
+      role={!isOpen ? "button" : undefined}
+      tabIndex={!isOpen ? 0 : undefined}
+      onClick={!isOpen ? handleClick : undefined}
+      onKeyDown={!isOpen ? (e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); handleClick(); } } : undefined}
+      aria-expanded={isOpen}
+      aria-label={!isOpen ? ariaLabel : undefined}
+      className={`relative block w-full overflow-hidden text-left ${!isOpen ? "cursor-pointer" : ""} ${className}`}
     >
-      <div className={isHidden ? "pointer-events-none select-none" : ""}>
+      {/* Content — blurred when overlay is up */}
+      <div
+        style={{
+          filter: overlayVisible ? `blur(${CONTENT_BLUR}px)` : "blur(0px)",
+          transform: overlayVisible ? "scale(1.02)" : "scale(1)",
+          transition: `filter ${REVEAL_MS}ms ease-out, transform ${REVEAL_MS}ms ease-out`,
+          pointerEvents: isOpen ? "auto" : "none",
+          userSelect: isOpen ? "auto" : "none"
+        }}
+      >
         {children}
       </div>
 
-      <div
-        ref={overlayRef}
-        className="absolute inset-0 pointer-events-none"
-        aria-hidden="true"
-        style={{
-          opacity: 1,
-          transition: `opacity ${REVEAL_MS}ms cubic-bezier(0.22, 1, 0.36, 1)`,
-          willChange: phase === "revealing" ? "opacity" : "auto"
-        }}
-      >
+      {/* Particle overlay — fades out via opacity transition */}
+      {showOverlay ? (
         <div
-          className="absolute inset-0"
+          className="absolute inset-0 pointer-events-none"
+          aria-hidden="true"
           style={{
-            backdropFilter: `blur(${CONTENT_BLUR}px)`,
-            WebkitBackdropFilter: `blur(${CONTENT_BLUR}px)`
+            opacity: overlayVisible ? 1 : 0,
+            transition: `opacity ${REVEAL_MS}ms cubic-bezier(0.22, 1, 0.36, 1)`
           }}
-        />
-        <canvas ref={canvasRef} className="absolute inset-0" />
-      </div>
+          onTransitionEnd={() => {
+            if (!overlayVisible) {
+              // Transition done — overlay fully gone
+            }
+          }}
+        >
+          <canvas ref={canvasRef} className="absolute inset-0" />
+        </div>
+      ) : null}
     </div>
   );
 }
