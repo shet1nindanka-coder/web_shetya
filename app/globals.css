@@ -1215,6 +1215,79 @@ html[data-theme="dark"] .student-virtual-scroll::-webkit-scrollbar-thumb {
   box-shadow: 0 22px 0 rgba(148, 163, 184, 0.1), 0 44px 0 rgba(148, 163, 184, 0.08);
 }
 
+.ui-telegram-spoiler {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid var(--theme-border-soft);
+  background:
+    linear-gradient(135deg, color-mix(in srgb, var(--theme-surface-strong) 82%, white 18%), color-mix(in srgb, var(--theme-surface-soft) 88%, white 12%));
+}
+
+.ui-telegram-spoiler::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at 14px 16px, rgba(255, 255, 255, 0.92) 0 1.3px, transparent 1.7px),
+    radial-gradient(circle at 34px 26px, rgba(255, 255, 255, 0.74) 0 1.2px, transparent 1.6px),
+    radial-gradient(circle at 22px 38px, rgba(255, 255, 255, 0.8) 0 1.1px, transparent 1.5px),
+    radial-gradient(circle at 48px 12px, rgba(255, 255, 255, 0.78) 0 1px, transparent 1.45px);
+  background-size: 58px 52px;
+  opacity: 0.9;
+  pointer-events: none;
+}
+
+.ui-telegram-spoiler::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(90deg, rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0.42) 48%, rgba(255, 255, 255, 0.12)),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.05), rgba(148, 163, 184, 0.08));
+  opacity: 0.75;
+  pointer-events: none;
+}
+
+.ui-telegram-spoiler-content {
+  filter: blur(11px);
+  opacity: 0.7;
+  user-select: none;
+}
+
+.ui-telegram-spoiler-badge {
+  border: 1px solid color-mix(in srgb, var(--theme-text-strong) 12%, transparent);
+  background: color-mix(in srgb, var(--theme-surface-strong) 82%, white 18%);
+  color: var(--theme-text-strong);
+  box-shadow: 0 10px 30px rgba(15, 23, 42, 0.08);
+}
+
+html[data-theme="dark"] .ui-telegram-spoiler {
+  background:
+    linear-gradient(135deg, color-mix(in srgb, var(--theme-surface-strong) 78%, black 22%), color-mix(in srgb, var(--theme-surface-soft) 86%, black 14%));
+}
+
+html[data-theme="dark"] .ui-telegram-spoiler::before {
+  background:
+    radial-gradient(circle at 14px 16px, rgba(255, 255, 255, 0.88) 0 1.3px, transparent 1.7px),
+    radial-gradient(circle at 34px 26px, rgba(255, 255, 255, 0.68) 0 1.2px, transparent 1.6px),
+    radial-gradient(circle at 22px 38px, rgba(255, 255, 255, 0.74) 0 1.1px, transparent 1.5px),
+    radial-gradient(circle at 48px 12px, rgba(255, 255, 255, 0.62) 0 1px, transparent 1.45px);
+  background-size: 58px 52px;
+}
+
+html[data-theme="dark"] .ui-telegram-spoiler::after {
+  background:
+    linear-gradient(90deg, rgba(255, 255, 255, 0.06), rgba(255, 255, 255, 0.14) 48%, rgba(255, 255, 255, 0.04)),
+    linear-gradient(180deg, rgba(15, 23, 42, 0.12), rgba(51, 65, 85, 0.18));
+  opacity: 0.82;
+}
+
+html[data-theme="dark"] .ui-telegram-spoiler-badge {
+  border-color: color-mix(in srgb, var(--theme-text-strong) 14%, transparent);
+  background: color-mix(in srgb, var(--theme-surface-strong) 88%, black 12%);
+  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.28);
+}
+
 /* ───────────────────────────────────────────────
    Reduced motion
    ─────────────────────────────────────────────── */

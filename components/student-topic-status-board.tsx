@@ -277,15 +277,15 @@ const StudentNumberCard = memo(function StudentNumberCard({
               aria-expanded={false}
               aria-label={`Открыть ответ к номеру ${number.number}`}
             >
-              <div className="ui-card-soft relative overflow-hidden rounded-[12px] border border-dashed sm:rounded-[18px]">
-                <div className="pointer-events-none max-h-[76px] overflow-hidden px-3 py-2 sm:max-h-[88px] sm:px-3.5 sm:py-2.5">
-                  <div className="select-none blur-[10px] opacity-75">
+              <div className="ui-telegram-spoiler relative rounded-[12px] sm:rounded-[18px]">
+                <div className="pointer-events-none max-h-[82px] overflow-hidden px-3 py-2.5 sm:max-h-[96px] sm:px-3.5 sm:py-3">
+                  <div className="ui-telegram-spoiler-content">
                     <LatexAnswerPreview value={number.answerLatex} />
                   </div>
                 </div>
-                <div className="absolute inset-0 flex items-center justify-center bg-[color:color-mix(in_srgb,var(--theme-surface-strong)_62%,transparent)] backdrop-blur-[1px]">
-                  <span className="inline-flex items-center rounded-full border border-[var(--theme-accent-border)] bg-[var(--theme-surface-strong)] px-3 py-1.5 text-sm font-semibold text-[var(--theme-accent-text)] shadow-[0_10px_28px_rgba(37,99,235,0.12)] transition group-hover:-translate-y-[1px]">
-                    Открыть ответ
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <span className="ui-telegram-spoiler-badge inline-flex items-center rounded-full px-3.5 py-1.5 text-sm font-semibold transition group-hover:-translate-y-[1px]">
+                    Показать ответ
                   </span>
                 </div>
               </div>
