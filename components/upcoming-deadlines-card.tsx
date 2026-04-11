@@ -10,8 +10,8 @@ type UpcomingDeadlinesCardProps = {
 
 export function UpcomingDeadlinesCard({
   deadlines,
-  title = "Ближайшие дедлайны",
-  description = "Что нужно закрыть в первую очередь.",
+  title = "Ближайшие ДЗ",
+  description = "Какие домашние задания нужно закрыть в первую очередь.",
   limit = 5
 }: UpcomingDeadlinesCardProps) {
   const upcoming = deadlines
@@ -27,7 +27,7 @@ export function UpcomingDeadlinesCard({
         </h2>
         <p className="ui-hint ui-copy-muted mt-1 max-w-2xl text-sm leading-relaxed">{description}</p>
       </div>
-      <DeadlineList items={upcoming} emptyMessage="Пока нет назначенных дедлайнов." />
+      <DeadlineList items={upcoming} emptyMessage="Пока нет назначенных ДЗ." />
     </section>
   );
 }

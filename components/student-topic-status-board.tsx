@@ -231,7 +231,7 @@ const StudentNumberCard = memo(function StudentNumberCard({
           <button
             type="button"
             onClick={() => setIsNoteOpen((current) => !current)}
-            className="group flex w-full items-start justify-between gap-3 rounded-[10px] text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--theme-accent-border)] focus-visible:ring-offset-2 focus-visible:ring-offset-transparent"
+            className="group flex w-full items-center justify-between gap-3 rounded-[10px] text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--theme-accent-border)] focus-visible:ring-offset-2 focus-visible:ring-offset-transparent"
             aria-expanded={isNoteOpen}
           >
             <div className="min-w-0 flex-1">
@@ -247,7 +247,7 @@ const StudentNumberCard = memo(function StudentNumberCard({
                   : notePreview ?? "Добавить короткую заметку к этому номеру"}
               </p>
             </div>
-            <span className="flex flex-none items-center gap-2 pt-0.5">
+            <span className="flex flex-none items-center gap-2 self-center">
               <span className="hidden text-xs font-semibold text-[var(--theme-text-muted)] sm:block">
                 {isNoteOpen ? "Свернуть" : notePreview ? "Изменить" : "Добавить"}
               </span>
