@@ -303,11 +303,20 @@ const StudentNumberCard = memo(function StudentNumberCard({
                     value={number.note}
                     onChange={(event) => onNoteChange(number.id, event.target.value)}
                     onBlur={() => onNoteBlur(number.id)}
+                    onKeyDown={(event) => {
+                      if (event.nativeEvent.isComposing || event.key !== "Enter" || event.shiftKey) {
+                        return;
+                      }
+
+                      event.preventDefault();
+                      onNoteBlur(number.id);
+                      event.currentTarget.blur();
+                    }}
                     placeholder="Короткая заметка"
                     className="ui-input mt-2 min-h-[56px] w-full resize-none rounded-[10px] px-2.5 py-2 text-sm sm:rounded-[14px] sm:px-3 sm:py-2.5"
                   />
                   <div className="mt-1 flex items-center justify-between">
-                    <p className="ui-hint ui-copy-soft text-xs">Сохранится автоматически</p>
+                    <p className="ui-hint ui-copy-soft text-xs">Enter сохранит, Shift+Enter перенесёт строку</p>
                     <span className="ui-copy-soft text-xs">{number.note.length}/240</span>
                   </div>
                 </>
