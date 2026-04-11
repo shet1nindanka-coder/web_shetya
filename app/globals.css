@@ -1220,7 +1220,8 @@ html[data-theme="dark"] .student-virtual-scroll::-webkit-scrollbar-thumb {
   overflow: hidden;
   isolation: isolate;
   border: 1px solid var(--theme-border-soft);
-  background: linear-gradient(118deg, #bcc1ca 0%, #ced3dc 44%, #979fab 100%);
+  background:
+    linear-gradient(102deg, #b4bac4 0%, #c8ced7 34%, #b9c0ca 64%, #9199a6 100%);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.28), inset 0 -1px 0 rgba(15, 23, 42, 0.06);
   cursor: pointer;
 }
@@ -1230,10 +1231,16 @@ html[data-theme="dark"] .student-virtual-scroll::-webkit-scrollbar-thumb {
   position: absolute;
   inset: 0;
   background:
-    linear-gradient(92deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.03) 38%, rgba(67, 77, 93, 0.08) 100%),
-    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 160 160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='1.12' numOctaves='2' seed='7' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)' opacity='0.24'/%3E%3C/svg%3E");
-  background-size: 100% 100%, 180px 180px;
-  opacity: 0.88;
+    radial-gradient(circle at 6px 6px, rgba(255, 255, 255, 0.94) 0 1px, transparent 1.35px),
+    radial-gradient(circle at 15px 11px, rgba(255, 255, 255, 0.74) 0 0.8px, transparent 1.12px),
+    radial-gradient(circle at 24px 5px, rgba(255, 255, 255, 0.88) 0 0.88px, transparent 1.18px),
+    radial-gradient(circle at 31px 13px, rgba(255, 255, 255, 0.7) 0 0.76px, transparent 1.05px),
+    radial-gradient(circle at 11px 17px, rgba(255, 255, 255, 0.86) 0 0.8px, transparent 1.1px),
+    radial-gradient(circle at 21px 18px, rgba(255, 255, 255, 0.78) 0 0.74px, transparent 1.04px),
+    radial-gradient(circle at 29px 20px, rgba(255, 255, 255, 0.82) 0 0.78px, transparent 1.08px),
+    linear-gradient(92deg, rgba(255, 255, 255, 0.16), rgba(255, 255, 255, 0.04) 34%, rgba(47, 58, 76, 0.08) 100%);
+  background-size: 36px 24px, 36px 24px, 36px 24px, 36px 24px, 36px 24px, 36px 24px, 36px 24px, 100% 100%;
+  opacity: 0.92;
   pointer-events: none;
 }
 
@@ -1242,10 +1249,14 @@ html[data-theme="dark"] .student-virtual-scroll::-webkit-scrollbar-thumb {
   position: absolute;
   inset: 0;
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.18), rgba(255, 255, 255, 0.02) 32%, rgba(43, 53, 70, 0.08) 100%),
-    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 160 160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.88' numOctaves='3' seed='19' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)' opacity='0.2'/%3E%3C/svg%3E");
-  background-size: 100% 100%, 132px 132px;
-  opacity: 0.72;
+    radial-gradient(circle at 9px 9px, rgba(255, 255, 255, 0.48) 0 0.62px, transparent 0.94px),
+    radial-gradient(circle at 18px 15px, rgba(255, 255, 255, 0.4) 0 0.56px, transparent 0.88px),
+    radial-gradient(circle at 27px 8px, rgba(255, 255, 255, 0.5) 0 0.6px, transparent 0.92px),
+    radial-gradient(circle at 4px 18px, rgba(255, 255, 255, 0.38) 0 0.52px, transparent 0.84px),
+    radial-gradient(ellipse at 88% 50%, rgba(45, 50, 62, 0.34), transparent 34%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.02) 28%, rgba(49, 58, 76, 0.1) 100%);
+  background-size: 18px 12px, 18px 12px, 18px 12px, 18px 12px, 100% 100%, 100% 100%;
+  opacity: 0.86;
   pointer-events: none;
 }
 
@@ -1256,24 +1267,34 @@ html[data-theme="dark"] .student-virtual-scroll::-webkit-scrollbar-thumb {
 }
 
 html[data-theme="dark"] .ui-telegram-spoiler {
-  background: linear-gradient(118deg, #68707a 0%, #7a818d 44%, #4c5460 100%);
+  background: linear-gradient(102deg, #656d79 0%, #787f89 34%, #6c7480 64%, #454d5b 100%);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.11), inset 0 -1px 0 rgba(0, 0, 0, 0.24);
 }
 
 html[data-theme="dark"] .ui-telegram-spoiler::before {
   background:
-    linear-gradient(92deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.02) 38%, rgba(8, 12, 18, 0.16) 100%),
-    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 160 160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='1.12' numOctaves='2' seed='7' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)' opacity='0.22'/%3E%3C/svg%3E");
-  background-size: 100% 100%, 180px 180px;
-  opacity: 0.8;
+    radial-gradient(circle at 6px 6px, rgba(255, 255, 255, 0.88) 0 1px, transparent 1.35px),
+    radial-gradient(circle at 15px 11px, rgba(255, 255, 255, 0.66) 0 0.8px, transparent 1.12px),
+    radial-gradient(circle at 24px 5px, rgba(255, 255, 255, 0.8) 0 0.88px, transparent 1.18px),
+    radial-gradient(circle at 31px 13px, rgba(255, 255, 255, 0.58) 0 0.76px, transparent 1.05px),
+    radial-gradient(circle at 11px 17px, rgba(255, 255, 255, 0.78) 0 0.8px, transparent 1.1px),
+    radial-gradient(circle at 21px 18px, rgba(255, 255, 255, 0.7) 0 0.74px, transparent 1.04px),
+    radial-gradient(circle at 29px 20px, rgba(255, 255, 255, 0.74) 0 0.78px, transparent 1.08px),
+    linear-gradient(92deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.02) 34%, rgba(8, 12, 18, 0.16) 100%);
+  background-size: 36px 24px, 36px 24px, 36px 24px, 36px 24px, 36px 24px, 36px 24px, 36px 24px, 100% 100%;
+  opacity: 0.84;
 }
 
 html[data-theme="dark"] .ui-telegram-spoiler::after {
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0.01) 32%, rgba(7, 11, 18, 0.2) 100%),
-    url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 160 160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.88' numOctaves='3' seed='19' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)' opacity='0.18'/%3E%3C/svg%3E");
-  background-size: 100% 100%, 132px 132px;
-  opacity: 0.66;
+    radial-gradient(circle at 9px 9px, rgba(255, 255, 255, 0.42) 0 0.62px, transparent 0.94px),
+    radial-gradient(circle at 18px 15px, rgba(255, 255, 255, 0.34) 0 0.56px, transparent 0.88px),
+    radial-gradient(circle at 27px 8px, rgba(255, 255, 255, 0.44) 0 0.6px, transparent 0.92px),
+    radial-gradient(circle at 4px 18px, rgba(255, 255, 255, 0.3) 0 0.52px, transparent 0.84px),
+    radial-gradient(ellipse at 88% 50%, rgba(5, 8, 14, 0.38), transparent 34%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(255, 255, 255, 0.01) 28%, rgba(7, 11, 18, 0.2) 100%);
+  background-size: 18px 12px, 18px 12px, 18px 12px, 18px 12px, 100% 100%, 100% 100%;
+  opacity: 0.78;
 }
 
 /* ───────────────────────────────────────────────
