@@ -567,9 +567,20 @@ html[data-theme="dark"] .ui-pressable:hover {
 .ui-settings-option { min-height: 3.4rem; align-content: start; }
 .ui-settings-option-copy { display: flex; min-height: 100%; flex-direction: column; justify-content: center; }
 .ui-settings-option[aria-pressed="true"] {
+  border-color: color-mix(in srgb, var(--theme-accent-border) 68%, var(--theme-accent) 32%) !important;
+  background:
+    linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--theme-accent-soft) 82%, white 18%) 0%,
+      color-mix(in srgb, var(--theme-accent-soft-hover) 88%, white 12%) 100%
+    ) !important;
+  color: var(--theme-accent-strong) !important;
   box-shadow:
     inset 0 0 0 1px color-mix(in srgb, var(--theme-accent-border) 76%, transparent 24%),
     0 8px 18px rgba(37, 99, 235, 0.08);
+}
+.ui-settings-option[aria-pressed="true"] .ui-hint {
+  color: color-mix(in srgb, var(--theme-accent-strong) 78%, var(--theme-text-muted) 22%) !important;
 }
 html[data-theme="dark"] .ui-settings-option[aria-pressed="true"] {
   border-color: rgba(147, 197, 253, 0.52) !important;
