@@ -244,8 +244,8 @@ const StudentNumberCard = memo(function StudentNumberCard({
       {(number.answerLatex || notesEnabled) ? (
         <div className="mt-2.5 grid gap-2.5 sm:mt-3 sm:gap-3 lg:grid-cols-2">
           {number.answerLatex ? (
-            <div className="student-answer-panel min-w-0 rounded-[12px] border p-2 sm:rounded-[18px] sm:p-2.5">
-              <div className="flex items-center justify-between gap-2">
+            <div className="student-answer-panel min-w-0 rounded-[12px] border sm:rounded-[18px]">
+              <div className="flex items-center justify-between gap-2 px-2.5 pt-2 sm:px-3 sm:pt-2.5">
                 <p className="ui-kicker">Ответ</p>
                 {isAnswerVisible ? (
                   <button
@@ -261,13 +261,11 @@ const StudentNumberCard = memo(function StudentNumberCard({
               <TelegramSpoiler
                 revealed={isAnswerVisible}
                 onReveal={() => setIsAnswerVisible(true)}
-                className="mt-2 rounded-[10px] sm:rounded-[14px]"
+                className="rounded-b-[12px] sm:rounded-b-[18px]"
                 ariaLabel={`Открыть ответ к номеру ${number.number}`}
               >
-                <div className="ui-card-soft overflow-hidden rounded-[10px] sm:rounded-[14px]">
-                  <div className="px-2.5 py-2 sm:px-3 sm:py-2.5">
-                    <LatexAnswerPreview value={number.answerLatex} />
-                  </div>
+                <div className="px-2.5 py-1.5 sm:px-3 sm:py-2">
+                  <LatexAnswerPreview value={number.answerLatex} />
                 </div>
               </TelegramSpoiler>
             </div>
