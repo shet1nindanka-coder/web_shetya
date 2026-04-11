@@ -261,7 +261,14 @@ const StudentNumberCard = memo(function StudentNumberCard({
                 <p className="ui-kicker">Заметка</p>
                 <button
                   type="button"
-                  onClick={() => setIsNoteOpen((current) => !current)}
+                  onClick={() => {
+                    if (isNoteOpen) {
+                      onNoteBlur(number.id);
+                      setIsNoteOpen(false);
+                    } else {
+                      setIsNoteOpen(true);
+                    }
+                  }}
                   className="group inline-flex h-7 w-7 flex-none items-center justify-center rounded-full border border-[var(--theme-border-soft)] bg-[var(--theme-surface-strong)] text-[var(--theme-text-muted)] transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[var(--theme-accent-border)] hover:border-[var(--theme-accent-border)] hover:text-[var(--theme-accent-text)]"
                   aria-expanded={isNoteOpen}
                   aria-label={isNoteOpen ? "Свернуть заметку" : "Редактировать заметку"}
