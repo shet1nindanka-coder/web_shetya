@@ -207,7 +207,7 @@ export function TeacherSingleNumberCard({
               disabled={isSavingCondition || !draftCondition.trim() || draftCondition.trim() === savedCondition?.trim()}
               className={cx(
                 "ui-pressable rounded-[10px] px-3.5 py-2 text-sm font-semibold transition sm:rounded-[12px]",
-                "bg-[var(--theme-accent)] text-white hover:bg-[var(--theme-accent-hover)] disabled:opacity-50"
+                "bg-[var(--theme-accent)] text-white hover:bg-[var(--theme-accent-strong)] disabled:opacity-50"
               )}
             >
               {isSavingCondition ? "Сохраняем..." : "Сохранить условие"}
@@ -256,7 +256,7 @@ export function TeacherSingleNumberCard({
               disabled={isSavingAnswer || !draftAnswer.trim() || draftAnswer.trim() === savedAnswer?.trim()}
               className={cx(
                 "ui-pressable rounded-[10px] px-3.5 py-2 text-sm font-semibold transition sm:rounded-[12px]",
-                "bg-[var(--theme-accent)] text-white hover:bg-[var(--theme-accent-hover)] disabled:opacity-50"
+                "bg-[var(--theme-accent)] text-white hover:bg-[var(--theme-accent-strong)] disabled:opacity-50"
               )}
             >
               {isSavingAnswer ? "Сохраняем..." : "Сохранить ответ"}

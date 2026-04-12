@@ -18,7 +18,7 @@ export default function DashboardNotFound() {
       <div className="mt-6 flex gap-3">
         <Link
           href="/student"
-          className="ui-pressable rounded-[12px] bg-[var(--theme-accent)] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[var(--theme-accent-hover)] sm:rounded-[14px]"
+          className="ui-pressable rounded-[12px] bg-[var(--theme-accent)] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[var(--theme-accent-strong)] sm:rounded-[14px]"
         >
           На главную
         </Link>
