@@ -7,13 +7,17 @@ type StatCardProps = {
   hint?: string;
   accent?: ReactNode;
   className?: string;
+  stagger?: number;
 };
 
-export function StatCard({ label, value, hint, accent, className }: StatCardProps) {
+export function StatCard({ label, value, hint, accent, className, stagger }: StatCardProps) {
+  const staggerClass = stagger && stagger >= 1 && stagger <= 6 ? `ui-stagger-${stagger}` : undefined;
+
   return (
     <article
       className={cx(
         "ui-stat-card ui-fade-slide ui-surface rounded-[14px] border p-3.5 sm:rounded-[16px] sm:p-4 lg:rounded-[18px]",
+        staggerClass,
         className
       )}
     >

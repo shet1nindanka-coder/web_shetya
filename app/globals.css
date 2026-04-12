@@ -19,6 +19,9 @@
 
   --anim-spring: cubic-bezier(0.22, 1, 0.36, 1);
   --anim-standard: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
+  --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
+  --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
 
   --theme-bg:
     radial-gradient(ellipse 80% 50% at 10% 0%, rgba(37, 99, 235, 0.07), transparent),
@@ -427,8 +430,18 @@ html[data-theme="dark"] .page-header-panel::after { background: radial-gradient(
   from { background-position: 200% 0; }
   to { background-position: -200% 0; }
 }
-.ui-fade-slide { animation: ui-fade-slide 0.3s var(--anim-standard) both; }
-.ui-pop-in { animation: ui-pop-in 0.18s var(--anim-spring) both; }
+.ui-fade-slide { animation: ui-fade-slide 0.25s var(--ease-out) both; }
+.ui-pop-in { animation: ui-pop-in 0.18s var(--ease-out) both; }
+
+/* ───────────────────────────────────────────────
+   Stagger delays — cascade for cards & list items
+   ─────────────────────────────────────────────── */
+.ui-stagger-1 { animation-delay: 0ms; }
+.ui-stagger-2 { animation-delay: 50ms; }
+.ui-stagger-3 { animation-delay: 100ms; }
+.ui-stagger-4 { animation-delay: 150ms; }
+.ui-stagger-5 { animation-delay: 200ms; }
+.ui-stagger-6 { animation-delay: 250ms; }
 
 /* ───────────────────────────────────────────────
    Surface
@@ -438,22 +451,24 @@ html[data-theme="dark"] .page-header-panel::after { background: radial-gradient(
   border-color: var(--theme-border);
   box-shadow: var(--theme-shadow-soft);
   transition:
-    box-shadow 200ms var(--anim-standard),
+    box-shadow 200ms var(--ease-out),
     border-color 200ms ease,
     background-color 200ms ease;
-}
-.ui-surface:hover {
-  border-color: rgba(148, 163, 184, 0.4);
-  box-shadow: var(--theme-shadow-hover);
 }
 html[data-theme="dark"] .ui-surface {
   background: var(--theme-surface) !important;
   border-color: var(--theme-border) !important;
   box-shadow: var(--theme-shadow-soft) !important;
 }
-html[data-theme="dark"] .ui-surface:hover {
-  border-color: rgba(96, 165, 250, 0.2) !important;
-  box-shadow: var(--theme-shadow-hover) !important;
+@media (hover: hover) and (pointer: fine) {
+  .ui-surface:hover {
+    border-color: rgba(148, 163, 184, 0.4);
+    box-shadow: var(--theme-shadow-hover);
+  }
+  html[data-theme="dark"] .ui-surface:hover {
+    border-color: rgba(96, 165, 250, 0.2) !important;
+    box-shadow: var(--theme-shadow-hover) !important;
+  }
 }
 
 /* ───────────────────────────────────────────────
@@ -464,27 +479,29 @@ html[data-theme="dark"] .ui-surface:hover {
   isolation: isolate;
   transform: translateZ(0);
   transition:
-    transform 140ms var(--anim-standard),
-    box-shadow 180ms var(--anim-standard),
+    transform 140ms var(--ease-out),
+    box-shadow 180ms var(--ease-out),
     border-color 140ms ease,
     background-color 140ms ease,
     color 140ms ease,
     opacity 180ms ease;
 }
-.ui-pressable:hover {
-  transform: translateY(-1px);
-  box-shadow: 0 6px 16px rgba(15, 23, 42, 0.06);
-}
 .ui-pressable:active {
-  transform: translateY(0) scale(0.98);
+  transform: translateY(0) scale(0.97);
   transition-duration: 60ms;
 }
 .ui-pressable:focus-visible {
   outline: none;
   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.15);
 }
-html[data-theme="dark"] .ui-pressable:hover {
-  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.25);
+@media (hover: hover) and (pointer: fine) {
+  .ui-pressable:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 16px rgba(15, 23, 42, 0.06);
+  }
+  html[data-theme="dark"] .ui-pressable:hover {
+    box-shadow: 0 6px 16px rgba(0, 0, 0, 0.25);
+  }
 }
 .ui-pressable[aria-pressed="true"],
 .ui-pressable[data-active="true"] {
@@ -1063,7 +1080,7 @@ html[data-theme="dark"] [class*="bg-slate-950"] { background: var(--theme-hero) 
    Progress bar
    ─────────────────────────────────────────────── */
 .ui-progress-fill {
-  transition: transform 280ms var(--anim-spring), filter 220ms ease, opacity 220ms ease;
+  transition: transform 280ms var(--ease-out), filter 220ms ease, opacity 220ms ease;
   will-change: transform;
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.32),
@@ -1102,10 +1119,17 @@ html[data-theme="dark"] .ui-tab-shell { box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2
   background: transparent;
   color: var(--theme-tab-text);
   white-space: nowrap;
+  transition:
+    background-color 160ms var(--ease-out),
+    border-color 160ms var(--ease-out),
+    color 160ms ease,
+    box-shadow 160ms var(--ease-out);
 }
-.ui-tab:hover {
-  background: var(--theme-tab);
-  color: var(--theme-text-strong);
+@media (hover: hover) and (pointer: fine) {
+  .ui-tab:hover {
+    background: var(--theme-tab);
+    color: var(--theme-text-strong);
+  }
 }
 .ui-tab[data-active="true"] {
   position: relative;
@@ -1226,9 +1250,17 @@ html[data-theme="dark"] .student-virtual-scroll::-webkit-scrollbar-thumb {
    ─────────────────────────────────────────────── */
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }
-  .ui-fade-slide, .ui-pop-in { animation: none !important; }
-  .ui-surface, .ui-pressable, .ui-progress-fill, .ui-skeleton { transition: none !important; animation: none !important; }
+  /* Keep opacity fades — remove only movement-based motion */
+  .ui-fade-slide { animation: ui-fade-opacity 0.2s ease both; }
+  .ui-pop-in { animation: ui-fade-opacity 0.15s ease both; }
+  .ui-skeleton { animation: none !important; }
+  .ui-pressable, .ui-progress-fill { transition: opacity 140ms ease, background-color 140ms ease, color 140ms ease, border-color 140ms ease !important; }
+  .ui-surface { transition: opacity 200ms ease, background-color 200ms ease, border-color 200ms ease !important; }
   .ui-surface:hover, .ui-pressable:hover, .ui-pressable:active { transform: none !important; }
+}
+@keyframes ui-fade-opacity {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
 /* ───────────────────────────────────────────────
@@ -1257,13 +1289,45 @@ html[data-theme="dark"] .student-virtual-scroll::-webkit-scrollbar-thumb {
   html[data-density="compact"] .ui-tab { padding: 0.4rem 0.7rem !important; }
 }
 
-/* Touch devices & tablets: reduce animations */
-@media (hover: none), (pointer: coarse), (max-width: 960px) {
-  .ui-fade-slide, .ui-pop-in { animation-duration: 0.01ms; animation-iteration-count: 1; }
+/* Touch devices & tablets: shorter, crisper animations */
+@media (hover: none) and (pointer: coarse) {
+  .ui-fade-slide { animation-duration: 0.15s; }
+  .ui-pop-in { animation-duration: 0.12s; }
   .ui-surface, .ui-pressable, .ui-progress-fill { transition-duration: 100ms; }
-  .ui-surface:hover { transform: none; }
   .ui-tab-shell { backdrop-filter: none; }
   .student-number-card, .teacher-number-card { box-shadow: none; }
+}
+
+/* ───────────────────────────────────────────────
+   Mobile dropdown overlay + panel
+   ─────────────────────────────────────────────── */
+@keyframes mobile-overlay-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes mobile-panel-in {
+  from { opacity: 0; transform: translateY(-8px) scale(0.98); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+.mobile-overlay {
+  animation: mobile-overlay-in 200ms var(--ease-out) both;
+}
+.mobile-panel {
+  animation: mobile-panel-in 250ms var(--ease-out) both;
+}
+
+/* ───────────────────────────────────────────────
+   Button hover — gated for pointer devices
+   ─────────────────────────────────────────────── */
+@media (hover: hover) and (pointer: fine) {
+  .ui-table-row:hover {
+    background: color-mix(in srgb, var(--theme-accent-soft) 36%, var(--theme-surface-strong) 64%);
+  }
+  .ui-status-button:hover {
+    border-color: var(--theme-accent-border);
+    background: color-mix(in srgb, var(--theme-surface-soft) 86%, white 14%);
+    color: var(--theme-text-strong);
+  }
 }
 
 /* ───────────────────────────────────────────────

@@ -19,7 +19,7 @@ export default async function TeacherPage() {
 
       <SectionCard title="Быстрые переходы" description="Основные рабочие разделы преподавателя.">
         <div className="grid gap-3 sm:gap-4 md:grid-cols-2 xl:grid-cols-3">
-          <article className="ui-action-card ui-fade-slide">
+          <article className="ui-action-card ui-fade-slide ui-stagger-1">
             <div className="ui-action-card-header">
               <p className="ui-kicker">Темы</p>
               <h2 className="ui-action-card-title font-display">Материалы и ответы</h2>
@@ -45,7 +45,7 @@ export default async function TeacherPage() {
             </div>
           </article>
 
-          <article className="ui-action-card ui-fade-slide">
+          <article className="ui-action-card ui-fade-slide ui-stagger-2">
             <div className="ui-action-card-header">
               <p className="ui-kicker">Ученики</p>
               <h2 className="ui-action-card-title font-display">Аккаунты и прогресс</h2>
@@ -71,7 +71,7 @@ export default async function TeacherPage() {
             </div>
           </article>
 
-          <article className="ui-action-card ui-fade-slide">
+          <article className="ui-action-card ui-fade-slide ui-stagger-3">
             <div className="ui-action-card-header">
               <p className="ui-kicker">Статистика</p>
               <h2 className="ui-action-card-title font-display">Разбор и аналитика</h2>

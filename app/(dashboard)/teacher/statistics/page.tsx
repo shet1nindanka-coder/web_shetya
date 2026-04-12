@@ -271,21 +271,25 @@ export default async function TeacherStatisticsPage({ searchParams }: TeacherSta
             <StatCard
               label="Решено"
               value={totalSolved}
+              stagger={1}
               accent={<span className="font-semibold text-[var(--theme-success-text)]">{solvedPercent}% от всех слотов</span>}
             />
             <StatCard
               label="Нужна помощь"
               value={totalRed}
+              stagger={2}
               accent={<span className="font-semibold text-[var(--theme-danger-text)]">{completionPercent(totalRed, totalStatusSlots)}% от всех слотов</span>}
             />
             <StatCard
               label="Без статуса"
               value={totalUnfilled}
+              stagger={3}
               accent={<span className="font-semibold text-[var(--theme-text-default)]">{completionPercent(totalUnfilled, totalStatusSlots)}% от всех слотов</span>}
             />
             <StatCard
               label="Активные ученики"
               value={`${activeStudents.length} / ${data.stats.totalStudents}`}
+              stagger={4}
               accent={<span className="font-semibold text-[var(--theme-accent-text)]">{activeStudentsPercent}% охвата</span>}
             />
           </div>
@@ -524,7 +528,7 @@ function CompactBar({
     <div className="h-2.5 overflow-hidden rounded-full bg-[var(--theme-surface-soft)] border border-[var(--theme-border-soft)]">
       <div
         className={cx(
-          "h-full rounded-full transition-transform duration-300 ease-out",
+          "h-full rounded-full transition-transform duration-[280ms] ease-[cubic-bezier(0.23,1,0.32,1)]",
           tone === "emerald" && "bg-[var(--theme-success-text)]",
           tone === "rose" && "bg-[var(--theme-danger-solid)]",
           tone === "brand" && "bg-[var(--theme-accent)]"
