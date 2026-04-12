@@ -79,7 +79,7 @@ export async function GET(request: Request) {
       topicId: topic.id,
       topicTitle: topic.title,
       number: requestedNumber,
-      href: `/student/topics/${topic.id}?number=${requestedNumber}`
+      href: `/student/topics/${topic.id}/numbers/${requestedNumber}`
     });
   } catch (error) {
     logErrorEvent(

@@ -1,6 +1,7 @@
 "use client";
 
 import { HomeworkNumberStatus } from "@prisma/client";
+import Link from "next/link";
 import { memo, startTransition, useCallback, useDeferredValue, useEffect, useMemo, useRef, useState } from "react";
 import { Badge } from "@/components/badge";
 import { HomeworkStatusBadge } from "@/components/homework-status-badge";
@@ -43,6 +44,7 @@ type StudentNumberState = {
 };
 
 type StudentNumberCardProps = {
+  topicId: string;
   number: StudentNumberState;
   notesEnabled: boolean;
   isHighlighted?: boolean;
@@ -52,6 +54,7 @@ type StudentNumberCardProps = {
 };
 
 type StudentNumberListProps = {
+  topicId: string;
   numbers: StudentNumberState[];
   resetKey: HomeworkFilterId;
   notesEnabled: boolean;
@@ -181,6 +184,7 @@ function findStartIndex(offsets: number[], scrollOffset: number) {
 }
 
 const StudentNumberCard = memo(function StudentNumberCard({
+  topicId,
   number,
   notesEnabled,
   isHighlighted,
@@ -206,7 +210,12 @@ const StudentNumberCard = memo(function StudentNumberCard({
       <div className="student-number-header flex flex-col gap-2.5 lg:flex-row lg:items-start lg:justify-between">
         <div className="space-y-2">
           <div className="flex flex-wrap items-center gap-2.5">
-            <h3 className="student-number-title font-display text-[1.55rem] font-semibold text-[var(--theme-text-strong)] sm:text-[1.9rem]">№ {number.number}</h3>
+            <Link
+              href={`/student/topics/${topicId}/numbers/${number.number}`}
+              className="student-number-title font-display text-[1.55rem] font-semibold text-[var(--theme-text-strong)] transition hover:text-[var(--theme-accent-text)] sm:text-[1.9rem]"
+            >
+              № {number.number}
+            </Link>
             <HomeworkStatusBadge status={number.status} />
             {homeworkGroup ? (
               <Badge className="border-[var(--theme-accent-border)] bg-[var(--theme-accent-soft)] text-[var(--theme-accent-text)]">{homeworkGroup.label}</Badge>
@@ -346,6 +355,7 @@ const StudentNumberCard = memo(function StudentNumberCard({
 );
 
 const StudentNumberRow = memo(function StudentNumberRow({
+  topicId,
   number,
   top,
   notesEnabled,
@@ -395,6 +405,7 @@ const StudentNumberRow = memo(function StudentNumberRow({
       }}
     >
       <StudentNumberCard
+        topicId={topicId}
         number={number}
         notesEnabled={notesEnabled}
         isHighlighted={isHighlighted}
@@ -414,6 +425,7 @@ const StudentNumberRow = memo(function StudentNumberRow({
 );
 
 function StudentNumberList({
+  topicId,
   numbers,
   resetKey,
   notesEnabled,
@@ -588,6 +600,7 @@ function StudentNumberList({
               return (
                 <StudentNumberRow
                   key={number.id}
+                  topicId={topicId}
                   number={number}
                   top={item.start}
                   notesEnabled={notesEnabled}
@@ -606,6 +619,7 @@ function StudentNumberList({
             {numbers.map((number) => (
               <StudentNumberCard
                 key={number.id}
+                topicId={topicId}
                 number={number}
                 notesEnabled={notesEnabled}
                 isHighlighted={highlightedNumber === number.number}
@@ -1151,6 +1165,7 @@ export function StudentTopicStatusBoard({
             <div className="border-t border-[var(--theme-success-border)] px-3 py-3 sm:px-4 sm:py-4">
               {deferredFilteredNumbers.length > 0 ? (
                 <StudentNumberList
+                  topicId={topicId}
                   numbers={deferredFilteredNumbers}
                   resetKey={activeFilter}
                   notesEnabled={notesEnabled}
@@ -1171,6 +1186,7 @@ export function StudentTopicStatusBoard({
           <>
             {deferredFilteredNumbers.length > 0 ? (
               <StudentNumberList
+                topicId={topicId}
                 numbers={deferredFilteredNumbers}
                 resetKey={activeFilter}
                 notesEnabled={notesEnabled}

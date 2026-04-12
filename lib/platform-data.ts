@@ -931,6 +931,156 @@ export async function getDashboardSummary(userId: string, role: UserRole) {
   return getStudentTopicsOverview(userId);
 }
 
+export async function getStudentNumberDetail(studentId: string, topicId: string, targetNumber: number) {
+  const topic = await prisma.topic.findUniqueOrThrow({
+    where: { id: topicId },
+    select: {
+      id: true,
+      title: true,
+      description: true
+    }
+  });
+
+  let homeworkNumber;
+
+  try {
+    homeworkNumber = await prisma.topicHomeworkNumber.findFirstOrThrow({
+      where: { topicId, number: targetNumber },
+      select: {
+        id: true,
+        number: true,
+        conditionLatex: true,
+        answerLatex: true,
+        statuses: {
+          where: { studentId },
+          select: {
+            id: true,
+            status: true,
+            note: true,
+            deadlineAt: true,
+            updatedAt: true
+          }
+        }
+      }
+    });
+  } catch (error) {
+    if (isRecoverablePlatformDataError(error)) {
+      homeworkNumber = await prisma.topicHomeworkNumber.findFirstOrThrow({
+        where: { topicId, number: targetNumber },
+        select: {
+          id: true,
+          number: true,
+          statuses: {
+            where: { studentId },
+            select: {
+              id: true,
+              status: true,
+              updatedAt: true
+            }
+          }
+        }
+      });
+
+      const rawStatus = homeworkNumber.statuses[0] ?? null;
+
+      return {
+        topic,
+        number: {
+          id: homeworkNumber.id,
+          number: homeworkNumber.number,
+          conditionLatex: null as string | null,
+          answerLatex: null as string | null,
+          studentStatus: rawStatus
+            ? { ...rawStatus, note: "" as string, deadlineAt: null as Date | null }
+            : null
+        },
+        notesEnabled: false,
+        deadlinesEnabled: false
+      };
+    }
+
+    throw error;
+  }
+
+  const rawStatus = homeworkNumber.statuses[0] ?? null;
+
+  return {
+    topic,
+    number: {
+      id: homeworkNumber.id,
+      number: homeworkNumber.number,
+      conditionLatex: (homeworkNumber as { conditionLatex?: string | null }).conditionLatex ?? null,
+      answerLatex: (homeworkNumber as { answerLatex?: string | null }).answerLatex ?? null,
+      studentStatus: rawStatus
+        ? {
+            ...rawStatus,
+            note: (rawStatus as { note?: string | null }).note ?? "",
+            deadlineAt: (rawStatus as { deadlineAt?: Date | null }).deadlineAt ?? null
+          }
+        : null
+    },
+    notesEnabled: true,
+    deadlinesEnabled: true
+  };
+}
+
+export async function getTeacherNumberDetail(topicId: string, targetNumber: number) {
+  const topic = await prisma.topic.findUniqueOrThrow({
+    where: { id: topicId },
+    select: {
+      id: true,
+      title: true,
+      description: true
+    }
+  });
+
+  let homeworkNumber;
+
+  try {
+    homeworkNumber = await prisma.topicHomeworkNumber.findFirstOrThrow({
+      where: { topicId, number: targetNumber },
+      select: {
+        id: true,
+        number: true,
+        conditionLatex: true,
+        answerLatex: true
+      }
+    });
+  } catch (error) {
+    if (isRecoverablePlatformDataError(error)) {
+      const minimal = await prisma.topicHomeworkNumber.findFirstOrThrow({
+        where: { topicId, number: targetNumber },
+        select: {
+          id: true,
+          number: true
+        }
+      });
+
+      return {
+        topic,
+        number: {
+          id: minimal.id,
+          number: minimal.number,
+          conditionLatex: null as string | null,
+          answerLatex: null as string | null
+        }
+      };
+    }
+
+    throw error;
+  }
+
+  return {
+    topic,
+    number: {
+      id: homeworkNumber.id,
+      number: homeworkNumber.number,
+      conditionLatex: (homeworkNumber as { conditionLatex?: string | null }).conditionLatex ?? null,
+      answerLatex: (homeworkNumber as { answerLatex?: string | null }).answerLatex ?? null
+    }
+  };
+}
+
 function startOfTimelineDay(date: Date) {
   const result = new Date(date);
   result.setHours(0, 0, 0, 0);
