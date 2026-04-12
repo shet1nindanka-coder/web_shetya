@@ -1081,12 +1081,16 @@ html[data-theme="dark"] [class*="bg-slate-950"] { background: var(--theme-hero) 
   border: 1px solid var(--theme-tab-border);
   background: color-mix(in srgb, var(--theme-surface-strong) 92%, white 8%);
   box-shadow: 0 2px 8px rgba(15, 23, 42, 0.02);
+  overflow: visible;
 }
 html[data-theme="dark"] .ui-tab-shell { box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2); }
 
 .ui-tab-strip {
   overflow-x: auto;
+  overflow-y: visible;
   flex-wrap: nowrap;
+  padding-top: 2px;
+  padding-bottom: 2px;
   scrollbar-width: none;
   -ms-overflow-style: none;
   scroll-snap-type: x proximity;
@@ -1104,6 +1108,8 @@ html[data-theme="dark"] .ui-tab-shell { box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2
   color: var(--theme-text-strong);
 }
 .ui-tab[data-active="true"] {
+  position: relative;
+  z-index: 1;
   border-color: var(--theme-border-soft);
   background: var(--theme-tab-active);
   color: var(--theme-tab-text-active);
