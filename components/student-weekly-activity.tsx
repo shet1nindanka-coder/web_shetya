@@ -1,6 +1,7 @@
 import { SectionCard } from "@/components/section-card";
 import { StudentStreakBadge } from "@/components/student-streak-badge";
 import type { StudentStreak } from "@/lib/student-streak";
+import { getStudentStreakColorMeta } from "@/lib/student-streak-colors";
 
 type StudentWeeklyActivityProps = {
   streak: StudentStreak;
@@ -8,30 +9,26 @@ type StudentWeeklyActivityProps = {
 
 export function StudentWeeklyActivity({ streak }: StudentWeeklyActivityProps) {
   const maxCount = Math.max(1, ...streak.dailyActivity.map((d) => d.count));
+  const streakColorMeta = getStudentStreakColorMeta(streak.currentStreak);
   const solvedTodayLabel =
     streak.solvedToday > 0 ? `${streak.solvedToday} ${formatSolvedLabel(streak.solvedToday)}` : "Без закрытых номеров";
-  const recordTarget = Math.max(streak.bestStreak + 1, 1);
-  const daysToRecord = Math.max(recordTarget - streak.currentStreak, 0);
-  const goalTitle =
-    streak.currentStreak === 0
-      ? "Зажечь стрик"
-      : daysToRecord <= 1
-        ? "Новый рекорд близко"
-        : `До рекорда ${daysToRecord} ${formatDaysLabel(daysToRecord)}`;
+  const goalTitle = streakColorMeta.nextThreshold
+    ? `${streakColorMeta.nextThreshold} ${formatDaysLabel(streakColorMeta.nextThreshold)}`
+    : "Максимальный цвет";
   const goalHint =
-    streak.solvedToday > 0
-      ? "Сегодняшний шаг уже засчитан."
-      : "Закройте хотя бы один номер сегодня.";
+    streakColorMeta.nextThreshold && streakColorMeta.daysToNextThreshold !== null
+      ? streak.currentStreak > 0
+        ? `До нового цвета осталось ${streakColorMeta.daysToNextThreshold} ${formatDaysLabel(streakColorMeta.daysToNextThreshold)}.`
+        : `Первый цвет откроется на ${streakColorMeta.nextThreshold}-м дне.`
+      : "Вы уже открыли последний цветовой уровень.";
   const streakHeadline =
     streak.currentStreak > 0 ? `${streak.currentStreak} ${formatDaysLabel(streak.currentStreak)} подряд` : "Зажгите первый день";
   const streakHint =
-    streak.currentStreak > streak.bestStreak
-      ? "Вы уже обогнали свой прошлый лучший ритм."
-      : streak.currentStreak === streak.bestStreak && streak.currentStreak > 0
-        ? "Рекорд повторён — ещё один день, и он станет новым."
-        : streak.currentStreak > 0
-          ? `До нового рекорда осталось ${daysToRecord} ${formatDaysLabel(daysToRecord)}.`
-          : "Закройте хотя бы один номер сегодня, и стрик начнётся.";
+    streak.solvedToday > 0
+      ? "Сегодняшний шаг уже засчитан — огонек сохранён."
+      : streak.currentStreak > 0
+        ? "Закройте хотя бы один номер сегодня, чтобы серия не оборвалась."
+        : "Закройте хотя бы один номер сегодня, и огонек начнётся.";
 
   return (
     <SectionCard title="Огонек и ритм" description="Стрик держится, пока каждый день закрывается хотя бы один номер.">

@@ -1,6 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { buildStudentStreak } from "../lib/student-streak";
+import { getStudentStreakColorMeta } from "../lib/student-streak-colors";
 import type { TimelineEntry } from "../lib/progress-timeline";
 
 test("buildStudentStreak starts current streak from yesterday when today is empty", () => {
@@ -43,6 +44,36 @@ test("buildStudentStreak tracks best streak across the whole period", () => {
   assert.equal(result.currentStreak, 1);
   assert.equal(result.solvedToday, 3);
   assert.equal(result.activeDaysThisWeek, 5);
+});
+
+test("getStudentStreakColorMeta switches colors on configured thresholds", () => {
+  assert.deepEqual(getStudentStreakColorMeta(0), {
+    tier: "starter",
+    currentThreshold: null,
+    nextThreshold: 10,
+    daysToNextThreshold: 10
+  });
+
+  assert.deepEqual(getStudentStreakColorMeta(10), {
+    tier: "ember",
+    currentThreshold: 10,
+    nextThreshold: 25,
+    daysToNextThreshold: 15
+  });
+
+  assert.deepEqual(getStudentStreakColorMeta(299), {
+    tier: "blue",
+    currentThreshold: 200,
+    nextThreshold: 300,
+    daysToNextThreshold: 1
+  });
+
+  assert.deepEqual(getStudentStreakColorMeta(1000), {
+    tier: "gold",
+    currentThreshold: 1000,
+    nextThreshold: null,
+    daysToNextThreshold: null
+  });
 });
 
 function createEntries(days: Array<[string, number, number]>): TimelineEntry[] {

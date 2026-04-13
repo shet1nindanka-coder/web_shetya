@@ -973,12 +973,12 @@ html[data-theme="dark"] .ui-status-button.ui-status-red:hover {
 .app-topbar-profile { background: var(--theme-header-card); border-color: var(--theme-border) !important; }
 .app-streak-pill {
   gap: 0.38rem;
-  border-color: rgba(251, 146, 60, 0.22);
+  border-color: var(--streak-border, rgba(251, 146, 60, 0.22));
   background:
-    linear-gradient(135deg, rgba(255, 237, 213, 0.96), rgba(255, 247, 237, 0.9)),
+    linear-gradient(135deg, var(--streak-bg-start, rgba(255, 237, 213, 0.96)), var(--streak-bg-end, rgba(255, 247, 237, 0.9))),
     var(--theme-surface-strong);
-  color: #c2410c;
-  box-shadow: 0 10px 22px rgba(251, 146, 60, 0.14);
+  color: var(--streak-text, #c2410c);
+  box-shadow: 0 10px 22px var(--streak-shadow, rgba(251, 146, 60, 0.14));
 }
 .app-streak-pill[data-active="false"] {
   border-color: var(--theme-border-soft);
@@ -1001,7 +1001,7 @@ html[data-theme="dark"] .ui-status-button.ui-status-red:hover {
   align-items: center;
   justify-content: center;
   color: currentColor;
-  filter: drop-shadow(0 3px 6px rgba(251, 146, 60, 0.2));
+  filter: drop-shadow(0 3px 6px var(--streak-icon-glow, rgba(251, 146, 60, 0.2)));
 }
 .student-streak-hero {
   border-color: color-mix(in srgb, rgba(251, 146, 60, 0.18) 70%, var(--theme-border-soft) 30%);
@@ -1030,12 +1030,12 @@ html[data-theme="dark"] .app-topbar-profile {
   border-color: var(--theme-border) !important;
 }
 html[data-theme="dark"] .app-streak-pill {
-  border-color: rgba(251, 146, 60, 0.2);
+  border-color: var(--streak-border-dark, rgba(251, 146, 60, 0.2));
   background:
-    linear-gradient(135deg, rgba(127, 29, 29, 0.32), rgba(120, 53, 15, 0.22)),
+    linear-gradient(135deg, var(--streak-bg-start-dark, rgba(127, 29, 29, 0.32)), var(--streak-bg-end-dark, rgba(120, 53, 15, 0.22))),
     color-mix(in srgb, var(--theme-surface-soft) 90%, rgba(0, 0, 0, 0.1) 10%);
-  color: #fdba74;
-  box-shadow: 0 12px 28px rgba(0, 0, 0, 0.24);
+  color: var(--streak-text-dark, #fdba74);
+  box-shadow: 0 12px 28px var(--streak-shadow-dark, rgba(0, 0, 0, 0.24));
 }
 html[data-theme="dark"] .app-streak-pill[data-active="false"] {
   border-color: var(--theme-border-soft);
