@@ -12,6 +12,16 @@ export function StudentWeeklyActivity({ streak }: StudentWeeklyActivityProps) {
     streak.solvedToday > 0 ? `${streak.solvedToday} ${formatSolvedLabel(streak.solvedToday)}` : "Без закрытых номеров";
   const recordTarget = Math.max(streak.bestStreak + 1, 1);
   const daysToRecord = Math.max(recordTarget - streak.currentStreak, 0);
+  const goalTitle =
+    streak.currentStreak === 0
+      ? "Зажечь стрик"
+      : daysToRecord <= 1
+        ? "Новый рекорд близко"
+        : `До рекорда ${daysToRecord} ${formatDaysLabel(daysToRecord)}`;
+  const goalHint =
+    streak.solvedToday > 0
+      ? "Сегодняшний шаг уже засчитан."
+      : "Закройте хотя бы один номер сегодня.";
   const streakHeadline =
     streak.currentStreak > 0 ? `${streak.currentStreak} ${formatDaysLabel(streak.currentStreak)} подряд` : "Зажгите первый день";
   const streakHint =
@@ -42,12 +52,17 @@ export function StudentWeeklyActivity({ streak }: StudentWeeklyActivityProps) {
             </p>
           </div>
 
-          <div className="max-w-sm">
+          <div className="grid gap-3 sm:grid-cols-2">
             <div className="ui-card-soft rounded-[18px] px-4 py-4">
               <p className="ui-kicker">Сегодня сделано</p>
               <p className="mt-2 font-display text-[1.3rem] font-semibold text-[var(--theme-text-strong)]">
                 {solvedTodayLabel}
               </p>
+            </div>
+            <div className="ui-card-soft rounded-[18px] px-4 py-4">
+              <p className="ui-kicker">Следующая цель</p>
+              <p className="mt-2 font-display text-[1.3rem] font-semibold text-[var(--theme-text-strong)]">{goalTitle}</p>
+              <p className="ui-hint mt-2 text-sm text-[var(--theme-text-muted)]">{goalHint}</p>
             </div>
           </div>
         </div>
