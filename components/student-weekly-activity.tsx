@@ -10,8 +10,6 @@ export function StudentWeeklyActivity({ streak }: StudentWeeklyActivityProps) {
   const maxCount = Math.max(1, ...streak.dailyActivity.map((d) => d.count));
   const solvedTodayLabel =
     streak.solvedToday > 0 ? `${streak.solvedToday} ${formatSolvedLabel(streak.solvedToday)}` : "Без закрытых номеров";
-  const bestStreakLabel =
-    streak.bestStreak > 0 ? `${streak.bestStreak} ${formatDaysLabel(streak.bestStreak)}` : "Пока нет";
   const recordTarget = Math.max(streak.bestStreak + 1, 1);
   const daysToRecord = Math.max(recordTarget - streak.currentStreak, 0);
   const streakHeadline =
@@ -44,23 +42,11 @@ export function StudentWeeklyActivity({ streak }: StudentWeeklyActivityProps) {
             </p>
           </div>
 
-          <div className="grid gap-3 sm:grid-cols-3">
+          <div className="max-w-sm">
             <div className="ui-card-soft rounded-[18px] px-4 py-4">
               <p className="ui-kicker">Сегодня сделано</p>
               <p className="mt-2 font-display text-[1.3rem] font-semibold text-[var(--theme-text-strong)]">
                 {solvedTodayLabel}
-              </p>
-            </div>
-            <div className="ui-card-soft rounded-[18px] px-4 py-4">
-              <p className="ui-kicker">Активных дней</p>
-              <p className="mt-2 font-display text-[1.3rem] font-semibold text-[var(--theme-text-strong)]">
-                {streak.activeDaysThisWeek} из 7
-              </p>
-            </div>
-            <div className="ui-card-soft rounded-[18px] px-4 py-4">
-              <p className="ui-kicker">Лучший стрик</p>
-              <p className="mt-2 font-display text-[1.3rem] font-semibold text-[var(--theme-text-strong)]">
-                {bestStreakLabel}
               </p>
             </div>
           </div>
