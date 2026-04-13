@@ -21,6 +21,7 @@ type DashboardNavProps = {
 export function DashboardNav({ user, studentStreak }: DashboardNavProps) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const pathname = usePathname();
+  const roleLabel = user.role === UserRole.TEACHER ? "Преподаватель" : "Ученик";
 
   const closeMobile = useCallback(() => setMobileOpen(false), []);
 
@@ -47,18 +48,19 @@ export function DashboardNav({ user, studentStreak }: DashboardNavProps) {
         </Link>
 
         {/* Desktop profile */}
-        <div className="app-topbar-profile hidden items-center gap-3 rounded-[14px] border px-3 py-2 sm:flex sm:rounded-[16px]">
+        <div className="app-topbar-profile hidden items-center gap-2.5 rounded-[14px] border px-3 py-2 sm:flex sm:rounded-[16px]">
           <div className="min-w-0">
             <div className="flex items-center gap-2">
               <p className="truncate text-sm font-semibold text-[var(--theme-text-strong)]">{user.name}</p>
               {user.role === UserRole.STUDENT && studentStreak ? (
                 <StudentStreakBadge currentStreak={studentStreak.currentStreak} />
               ) : null}
-              <span className="ui-badge-soft inline-flex items-center rounded-[8px] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em]">
-                {user.role === UserRole.TEACHER ? "Преподаватель" : "Ученик"}
-              </span>
             </div>
-            <p className="ui-copy-muted truncate text-xs">{user.email}</p>
+            <div className="mt-0.5 flex items-center gap-1.5 text-xs text-[var(--theme-text-muted)]">
+              <p className="truncate">{user.email}</p>
+              <span className="hidden text-[var(--theme-text-soft)] lg:inline">•</span>
+              <span className="hidden whitespace-nowrap lg:inline">{roleLabel}</span>
+            </div>
           </div>
           <form action={logoutAction}>
             <button
@@ -113,10 +115,8 @@ export function DashboardNav({ user, studentStreak }: DashboardNavProps) {
                     ) : null}
                   </div>
                   <p className="truncate text-xs text-[var(--theme-text-muted)]">{user.email}</p>
+                  <p className="mt-0.5 text-[11px] uppercase tracking-[0.12em] text-[var(--theme-text-soft)]">{roleLabel}</p>
                 </div>
-                <span className="ui-badge-soft rounded-[8px] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.1em]">
-                  {user.role === UserRole.TEACHER ? "Преподаватель" : "Ученик"}
-                </span>
               </div>
               <div className="border-t border-[var(--theme-border-soft)] pt-3">
                 <form action={logoutAction}>
