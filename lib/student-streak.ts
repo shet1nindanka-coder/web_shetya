@@ -1,10 +1,13 @@
+import { cache } from "react";
 import type { TimelineEntry } from "@/lib/progress-timeline";
+import { getProgressTimeline } from "@/lib/platform-data";
 
 export type StudentStreak = {
   currentStreak: number;
   bestStreak: number;
   solvedToday: number;
   solvedThisWeek: number;
+  activeDaysThisWeek: number;
   dailyActivity: Array<{
     date: string;
     dayLabel: string;
@@ -59,6 +62,7 @@ export function buildStudentStreak(entries: TimelineEntry[]): StudentStreak {
   // Last 7 days activity
   const last7 = sorted.slice(0, 7).reverse();
   const solvedThisWeek = last7.reduce((sum, e) => sum + e.closedCount, 0);
+  const activeDaysThisWeek = last7.filter((entry) => entry.closedCount > 0).length;
 
   const dailyActivity = last7.map((entry) => ({
     date: entry.date,
@@ -71,6 +75,12 @@ export function buildStudentStreak(entries: TimelineEntry[]): StudentStreak {
     bestStreak,
     solvedToday,
     solvedThisWeek,
+    activeDaysThisWeek,
     dailyActivity
   };
 }
+
+export const getStudentStreakSnapshot = cache(async (studentId: string) => {
+  const entries = await getProgressTimeline(studentId, 112);
+  return buildStudentStreak(entries);
+});

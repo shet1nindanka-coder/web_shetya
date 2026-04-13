@@ -19,6 +19,7 @@ test("buildStudentStreak starts current streak from yesterday when today is empt
   assert.equal(result.currentStreak, 2);
   assert.equal(result.solvedToday, 0);
   assert.equal(result.solvedThisWeek, 5);
+  assert.equal(result.activeDaysThisWeek, 4);
   assert.equal(result.dailyActivity.at(-1)?.dayLabel, "Пт");
 });
 
@@ -41,6 +42,7 @@ test("buildStudentStreak tracks best streak across the whole period", () => {
   assert.equal(result.bestStreak, 4);
   assert.equal(result.currentStreak, 1);
   assert.equal(result.solvedToday, 3);
+  assert.equal(result.activeDaysThisWeek, 5);
 });
 
 function createEntries(days: Array<[string, number, number]>): TimelineEntry[] {

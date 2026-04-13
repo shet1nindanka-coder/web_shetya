@@ -5,6 +5,7 @@ import { useState, useCallback, useEffect } from "react";
 import { usePathname } from "next/navigation";
 import { UserRole } from "@prisma/client";
 import { logoutAction } from "@/actions/auth";
+import { StudentStreakBadge } from "@/components/student-streak-badge";
 
 type DashboardNavProps = {
   user: {
@@ -12,9 +13,12 @@ type DashboardNavProps = {
     email: string;
     role: UserRole;
   };
+  studentStreak?: {
+    currentStreak: number;
+  } | null;
 };
 
-export function DashboardNav({ user }: DashboardNavProps) {
+export function DashboardNav({ user, studentStreak }: DashboardNavProps) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const pathname = usePathname();
 
@@ -47,6 +51,9 @@ export function DashboardNav({ user }: DashboardNavProps) {
           <div className="min-w-0">
             <div className="flex items-center gap-2">
               <p className="truncate text-sm font-semibold text-[var(--theme-text-strong)]">{user.name}</p>
+              {user.role === UserRole.STUDENT && studentStreak ? (
+                <StudentStreakBadge currentStreak={studentStreak.currentStreak} />
+              ) : null}
               <span className="ui-badge-soft inline-flex items-center rounded-[8px] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.12em]">
                 {user.role === UserRole.TEACHER ? "Преподаватель" : "Ученик"}
               </span>
@@ -99,7 +106,12 @@ export function DashboardNav({ user }: DashboardNavProps) {
                   {user.name.charAt(0).toUpperCase()}
                 </div>
                 <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-semibold text-[var(--theme-text-strong)]">{user.name}</p>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <p className="truncate text-sm font-semibold text-[var(--theme-text-strong)]">{user.name}</p>
+                    {user.role === UserRole.STUDENT && studentStreak ? (
+                      <StudentStreakBadge currentStreak={studentStreak.currentStreak} />
+                    ) : null}
+                  </div>
                   <p className="truncate text-xs text-[var(--theme-text-muted)]">{user.email}</p>
                 </div>
                 <span className="ui-badge-soft rounded-[8px] px-2 py-0.5 text-[10px] font-semibold uppercase tracking-[0.1em]">

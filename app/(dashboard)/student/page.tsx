@@ -3,18 +3,17 @@ import { PageHeader } from "@/components/page-header";
 import { StudentWeeklyActivity } from "@/components/student-weekly-activity";
 import { UpcomingDeadlinesCard } from "@/components/upcoming-deadlines-card";
 import { requireUser } from "@/lib/auth";
-import { getProgressTimeline, getStudentDeadlines } from "@/lib/platform-data";
+import { getStudentDeadlines } from "@/lib/platform-data";
 import { groupStudentDeadlinesAsAssignments } from "@/lib/student-deadline-groups";
-import { buildStudentStreak } from "@/lib/student-streak";
+import { getStudentStreakSnapshot } from "@/lib/student-streak";
 
 export default async function StudentPage() {
   const user = await requireUser(UserRole.STUDENT);
-  const [deadlines, progressTimeline] = await Promise.all([
+  const [deadlines, streak] = await Promise.all([
     getStudentDeadlines(user.id),
-    getProgressTimeline(user.id, 56)
+    getStudentStreakSnapshot(user.id)
   ]);
   const assignmentDeadlines = groupStudentDeadlinesAsAssignments(deadlines);
-  const streak = buildStudentStreak(progressTimeline);
 
   return (
     <div className="space-y-5 sm:space-y-6">

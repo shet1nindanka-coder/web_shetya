@@ -1,4 +1,5 @@
 import { SectionCard } from "@/components/section-card";
+import { StudentStreakBadge } from "@/components/student-streak-badge";
 import type { StudentStreak } from "@/lib/student-streak";
 
 type StudentWeeklyActivityProps = {
@@ -7,56 +8,60 @@ type StudentWeeklyActivityProps = {
 
 export function StudentWeeklyActivity({ streak }: StudentWeeklyActivityProps) {
   const maxCount = Math.max(1, ...streak.dailyActivity.map((d) => d.count));
-  const currentStreakLabel =
-    streak.currentStreak > 0 ? `${streak.currentStreak} ${formatDaysLabel(streak.currentStreak)} подряд` : "Пока без серии";
-  const currentStreakHint =
-    streak.currentStreak > 0
-      ? "Серия держится, пока каждый день закрывается хотя бы один номер."
-      : "Закройте хотя бы один номер сегодня, чтобы запустить стрик.";
-  const bestStreakLabel =
-    streak.bestStreak > 0 ? `${streak.bestStreak} ${formatDaysLabel(streak.bestStreak)}` : "Пока нет";
   const solvedTodayLabel =
     streak.solvedToday > 0 ? `${streak.solvedToday} ${formatSolvedLabel(streak.solvedToday)}` : "Без закрытых номеров";
+  const bestStreakLabel =
+    streak.bestStreak > 0 ? `${streak.bestStreak} ${formatDaysLabel(streak.bestStreak)}` : "Пока нет";
+  const recordTarget = Math.max(streak.bestStreak + 1, 1);
+  const daysToRecord = Math.max(recordTarget - streak.currentStreak, 0);
+  const streakHeadline =
+    streak.currentStreak > 0 ? `${streak.currentStreak} ${formatDaysLabel(streak.currentStreak)} подряд` : "Зажгите первый день";
+  const streakHint =
+    streak.currentStreak > streak.bestStreak
+      ? "Вы уже обогнали свой прошлый лучший ритм."
+      : streak.currentStreak === streak.bestStreak && streak.currentStreak > 0
+        ? "Рекорд повторён — ещё один день, и он станет новым."
+        : streak.currentStreak > 0
+          ? `До нового рекорда осталось ${daysToRecord} ${formatDaysLabel(daysToRecord)}.`
+          : "Закройте хотя бы один номер сегодня, и стрик начнётся.";
 
   return (
-    <SectionCard title="Стрик и активность" description="Дни подряд считаются по дням, когда вы закрывали хотя бы один номер.">
+    <SectionCard title="Огонек и ритм" description="Стрик держится, пока каждый день закрывается хотя бы один номер.">
       <div className="grid gap-4 xl:grid-cols-[minmax(0,0.92fr)_minmax(0,1.08fr)]">
-        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-1">
-          <div className="ui-card-soft rounded-[18px] px-4 py-4">
-            <p className="ui-kicker">Сейчас</p>
-            <p className="mt-2 font-display text-[1.6rem] font-semibold leading-none text-[var(--theme-text-strong)] sm:text-[1.85rem]">
-              {currentStreakLabel}
-            </p>
-            <p className="ui-hint mt-2 text-sm leading-relaxed text-[var(--theme-text-muted)]">
-              {currentStreakHint}
+        <div className="space-y-3">
+          <div className="student-streak-hero rounded-[22px] border px-4 py-4 sm:px-5 sm:py-5">
+            <div className="flex items-start justify-between gap-3">
+              <div className="space-y-2">
+                <p className="ui-kicker text-[var(--theme-text-soft)]">Огонек</p>
+                <h3 className="font-display text-[1.65rem] font-semibold leading-none text-[var(--theme-text-strong)] sm:text-[1.95rem]">
+                  {streakHeadline}
+                </h3>
+              </div>
+              <StudentStreakBadge currentStreak={streak.currentStreak} size="md" className="shrink-0" />
+            </div>
+            <p className="ui-hint mt-3 max-w-lg text-sm leading-relaxed text-[var(--theme-text-muted)]">
+              {streakHint}
             </p>
           </div>
 
-          <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-2">
-            <div className="ui-card-soft rounded-[16px] px-4 py-3.5">
-              <p className="ui-kicker">Лучший ритм</p>
-              <p className="mt-2 font-display text-[1.25rem] font-semibold text-[var(--theme-text-strong)]">
-                {bestStreakLabel}
-              </p>
-            </div>
-            <div className="ui-card-soft rounded-[16px] px-4 py-3.5">
-              <p className="ui-kicker">Сегодня</p>
-              <p className="mt-2 font-display text-[1.25rem] font-semibold text-[var(--theme-text-strong)]">
+          <div className="grid gap-3 sm:grid-cols-3">
+            <div className="ui-card-soft rounded-[18px] px-4 py-4">
+              <p className="ui-kicker">Сегодня сделано</p>
+              <p className="mt-2 font-display text-[1.3rem] font-semibold text-[var(--theme-text-strong)]">
                 {solvedTodayLabel}
               </p>
             </div>
-            <div className="ui-card-soft rounded-[16px] px-4 py-3.5 sm:col-span-2">
-              <div className="flex items-center justify-between gap-3">
-                <div>
-                  <p className="ui-kicker">За неделю</p>
-                  <p className="mt-2 font-display text-[1.25rem] font-semibold text-[var(--theme-text-strong)]">
-                    {streak.solvedThisWeek} {formatSolvedLabel(streak.solvedThisWeek)}
-                  </p>
-                </div>
-                <span className="inline-flex rounded-full border border-[var(--theme-accent-border)] bg-[var(--theme-accent-soft)] px-3 py-1 text-xs font-semibold text-[var(--theme-accent-text)]">
-                  Последние 7 дней
-                </span>
-              </div>
+            <div className="ui-card-soft rounded-[18px] px-4 py-4">
+              <p className="ui-kicker">Активных дней</p>
+              <p className="mt-2 font-display text-[1.3rem] font-semibold text-[var(--theme-text-strong)]">
+                {streak.activeDaysThisWeek} из 7
+              </p>
+            </div>
+            <div className="ui-card-soft rounded-[18px] px-4 py-4">
+              <p className="ui-kicker">Лучший стрик</p>
+              <p className="mt-2 font-display text-[1.3rem] font-semibold text-[var(--theme-text-strong)]">
+                {bestStreakLabel}
+              </p>
             </div>
           </div>
         </div>
@@ -64,8 +69,10 @@ export function StudentWeeklyActivity({ streak }: StudentWeeklyActivityProps) {
         <div className="ui-panel-soft rounded-[18px] px-4 py-4">
           <div className="mb-4 flex items-center justify-between gap-3">
             <div>
-              <p className="ui-kicker">По дням</p>
-              <p className="mt-1 text-sm text-[var(--theme-text-muted)]">Сколько номеров получилось закрыть за каждый день.</p>
+              <p className="ui-kicker">За неделю</p>
+              <p className="mt-1 text-sm text-[var(--theme-text-muted)]">
+                {streak.solvedThisWeek} {formatSolvedLabel(streak.solvedThisWeek)} закрыто за последние 7 дней.
+              </p>
             </div>
           </div>
 
