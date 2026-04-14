@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { UserRole } from "@prisma/client";
 import { logoutAction } from "@/actions/auth";
 import { StudentStreakBadge } from "@/components/student-streak-badge";
+import { useStudentStreak } from "@/components/student-streak-provider";
 
 type DashboardNavProps = {
   user: {
@@ -22,6 +23,8 @@ export function DashboardNav({ user, studentStreak }: DashboardNavProps) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const pathname = usePathname();
   const roleLabel = user.role === UserRole.TEACHER ? "Преподаватель" : "Ученик";
+  const liveStreak = useStudentStreak();
+  const streakValue = liveStreak?.streak ?? studentStreak;
 
   const closeMobile = useCallback(() => setMobileOpen(false), []);
 
@@ -41,19 +44,19 @@ export function DashboardNav({ user, studentStreak }: DashboardNavProps) {
       <div className="mx-auto flex w-full max-w-7xl items-center justify-between gap-3 px-3 py-2.5 sm:px-6 sm:py-3 lg:px-8">
         {/* Logo */}
         <Link href="/" className="app-brand-link inline-flex items-center gap-2.5 text-[var(--theme-text-strong)]">
-          <span className="app-logo-mark flex h-9 w-9 items-center justify-center rounded-[12px] text-sm font-semibold text-white shadow-sm sm:h-10 sm:w-10 sm:rounded-[14px]">
+          <span className="app-logo-mark flex h-9 w-9 items-center justify-center rounded-[8px] text-sm font-semibold text-white sm:h-10 sm:w-10">
             T
           </span>
           <p className="app-brand-title font-display text-[0.95rem] font-semibold leading-none sm:text-base">TutorFlow</p>
         </Link>
 
         {/* Desktop profile */}
-        <div className="app-topbar-profile hidden items-center gap-2 rounded-[14px] border px-3 py-2 sm:flex sm:rounded-[16px]">
+        <div className="app-topbar-profile hidden items-center gap-2 rounded-[8px] border px-3 py-2 sm:flex sm:rounded-[10px]">
           <div className="min-w-0">
             <p className="truncate text-sm font-semibold text-[var(--theme-text-strong)]">{user.name}</p>
             <div className="mt-0.75 flex flex-wrap items-center gap-2 text-xs text-[var(--theme-text-muted)]">
-              {user.role === UserRole.STUDENT && studentStreak ? (
-                <StudentStreakBadge currentStreak={studentStreak.currentStreak} />
+              {user.role === UserRole.STUDENT && streakValue ? (
+                <StudentStreakBadge currentStreak={streakValue.currentStreak} />
               ) : null}
               <p className="truncate">{user.email}</p>
               <span className="text-[var(--theme-text-soft)]">•</span>
@@ -108,8 +111,8 @@ export function DashboardNav({ user, studentStreak }: DashboardNavProps) {
                 <div className="min-w-0 flex-1">
                   <p className="truncate text-sm font-semibold text-[var(--theme-text-strong)]">{user.name}</p>
                   <div className="mt-1 flex flex-wrap items-center gap-2">
-                    {user.role === UserRole.STUDENT && studentStreak ? (
-                      <StudentStreakBadge currentStreak={studentStreak.currentStreak} />
+                    {user.role === UserRole.STUDENT && streakValue ? (
+                      <StudentStreakBadge currentStreak={streakValue.currentStreak} />
                     ) : null}
                     <p className="truncate text-xs text-[var(--theme-text-muted)]">{user.email}</p>
                   </div>

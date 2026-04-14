@@ -13,9 +13,9 @@ type LoginFormProps = {
 
 export function LoginForm({ error }: LoginFormProps) {
   return (
-    <div className="ui-pop-in ui-surface w-full max-w-[380px] rounded-[20px] border p-6 sm:max-w-md sm:rounded-[24px] sm:p-8">
+    <div className="ui-pop-in ui-surface w-full max-w-[380px] rounded-[12px] border p-6 sm:max-w-md sm:rounded-[16px] sm:p-8">
       <div className="mb-6 flex flex-col items-center text-center sm:mb-8">
-        <span className="app-logo-mark mb-3 flex h-11 w-11 items-center justify-center rounded-[14px] text-base font-semibold text-white shadow-sm sm:mb-4 sm:h-12 sm:w-12 sm:rounded-[16px]">
+        <span className="app-logo-mark mb-3 flex h-11 w-11 items-center justify-center rounded-[8px] text-base font-semibold text-white sm:mb-4 sm:h-12 sm:w-12 sm:rounded-[8px]">
           T
         </span>
         <h1 className="font-display text-2xl font-semibold text-[var(--theme-text-strong)] sm:text-3xl">Вход</h1>

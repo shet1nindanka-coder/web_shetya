@@ -16,7 +16,7 @@ export function StatCard({ label, value, hint, accent, className, stagger }: Sta
   return (
     <article
       className={cx(
-        "ui-stat-card ui-fade-slide ui-surface rounded-[14px] border p-3.5 sm:rounded-[16px] sm:p-4 lg:rounded-[18px]",
+        "ui-stat-card ui-fade-slide ui-surface rounded-[8px] border p-3.5 sm:rounded-[10px] sm:p-4 lg:rounded-[12px]",
         staggerClass,
         className
       )}

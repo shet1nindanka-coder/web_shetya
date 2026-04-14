@@ -42,7 +42,7 @@ export function PageHeader({
   className
 }: PageHeaderProps) {
   return (
-    <section className={cx("ui-page-header ui-surface rounded-[14px] border p-3.5 sm:rounded-[18px] sm:p-5 lg:rounded-[20px]", className)}>
+    <section className={cx("ui-page-header ui-surface rounded-[8px] border p-3.5 sm:rounded-[10px] sm:p-5 lg:rounded-[12px]", className)}>
       <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
         <div className="min-w-0 flex-1 space-y-3">
           <div className="space-y-2">
