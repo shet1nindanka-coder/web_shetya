@@ -103,7 +103,7 @@ export function DashboardNav({ user, studentStreak }: DashboardNavProps) {
         <>
           <div className="mobile-overlay fixed inset-0 z-30 bg-black/20 backdrop-blur-sm sm:hidden" onClick={closeMobile} />
           <div className="mobile-panel absolute left-0 right-0 top-full z-40 border-b border-[var(--theme-border)] bg-[var(--theme-header)] p-3 shadow-lg sm:hidden">
-            <div className="rounded-[14px] border border-[var(--theme-border-soft)] bg-[var(--theme-surface)] p-3 space-y-3">
+            <div className="rounded-[8px] border border-[var(--theme-border-soft)] bg-[var(--theme-surface)] p-3 space-y-3">
               <div className="flex items-center gap-3">
                 <div className="flex h-9 w-9 items-center justify-center rounded-[10px] bg-[var(--theme-accent-soft)] text-sm font-bold text-[var(--theme-accent-text)]">
                   {user.name.charAt(0).toUpperCase()}

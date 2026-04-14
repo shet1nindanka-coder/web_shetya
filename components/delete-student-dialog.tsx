@@ -60,7 +60,7 @@ export function DeleteStudentDialog({
         type="button"
         onClick={() => setIsOpen(true)}
         className={cx(
-          "ui-pressable ui-button-danger inline-flex items-center justify-center rounded-[14px] px-5 py-3 text-sm font-semibold transition",
+          "ui-pressable ui-button-danger inline-flex items-center justify-center rounded-[12px] px-5 py-3 text-sm font-semibold transition",
           triggerClassName
         )}
       >
@@ -73,7 +73,7 @@ export function DeleteStudentDialog({
           onClick={() => setIsOpen(false)}
         >
           <div
-            className="ui-pop-in w-full max-w-md rounded-[24px] border border-[var(--theme-border)] bg-[var(--theme-surface-strong)] p-5 shadow-[0_24px_80px_rgba(15,23,42,0.24)]"
+            className="ui-pop-in ui-dialog-shell w-full max-w-md rounded-[12px] p-5 sm:rounded-[12px] sm:p-6"
             onClick={(event) => event.stopPropagation()}
           >
             <div className="space-y-3">

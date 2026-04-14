@@ -27,7 +27,7 @@ export function FileResourceCard({
   const isExpanded = previewSize === "expanded";
 
   return (
-    <article className="ui-file-card ui-fade-slide ui-surface rounded-[22px] border p-4 sm:rounded-[24px] sm:p-5 lg:rounded-[26px]">
+    <article className="ui-file-card ui-fade-slide ui-surface rounded-[10px] border p-4 sm:rounded-[12px] sm:p-5">
       <div className="ui-file-card-header flex flex-col gap-4 border-b pb-5">
         <div className="space-y-1.5">
           <p className="ui-kicker">{title}</p>
@@ -47,7 +47,7 @@ export function FileResourceCard({
       </div>
 
       {!file ? (
-        <div className="ui-card-soft ui-hint ui-copy-muted mt-5 rounded-[24px] border border-dashed px-4 py-6 text-sm leading-6">
+        <div className="ui-card-soft ui-hint ui-copy-muted mt-5 rounded-[10px] border border-dashed px-4 py-6 text-sm leading-6">
           Файл пока не загружен.
         </div>
       ) : (
@@ -57,26 +57,26 @@ export function FileResourceCard({
               href={`/files/${file.id}`}
               target="_blank"
               rel="noreferrer"
-              className="ui-pressable ui-button-primary inline-flex w-full justify-center rounded-[14px] px-4 py-2 text-sm font-semibold transition sm:w-auto"
+              className="ui-pressable ui-button-primary inline-flex w-full justify-center rounded-[12px] px-4 py-2 text-sm font-semibold transition sm:w-auto"
             >
               Открыть в браузере
             </a>
             <a
               href={`/files/${file.id}?download=1`}
-              className="ui-pressable ui-button-secondary inline-flex w-full justify-center rounded-[14px] px-4 py-2 text-sm font-semibold transition sm:w-auto"
+              className="ui-pressable ui-button-secondary inline-flex w-full justify-center rounded-[12px] px-4 py-2 text-sm font-semibold transition sm:w-auto"
             >
               Скачать файл
             </a>
           </div>
 
           {!showPreview ? (
-            <div className="ui-card-soft ui-hint ui-copy-muted rounded-[22px] px-4 py-5 text-sm leading-6">
+            <div className="ui-card-soft ui-hint ui-copy-muted rounded-[10px] px-4 py-5 text-sm leading-6">
               Предпросмотр скрыт. Файл можно открыть или скачать.
             </div>
           ) : null}
 
           {showPreview && isPdfMime(file.mimeType) ? (
-            <div className="ui-card-soft overflow-hidden rounded-[22px]">
+            <div className="ui-card-soft overflow-hidden rounded-[10px]">
               <iframe
                 src={`/files/${file.id}`}
                 title={file.originalName}
@@ -86,7 +86,7 @@ export function FileResourceCard({
           ) : null}
 
           {showPreview && !isPdfMime(file.mimeType) && isImageMime(file.mimeType) ? (
-            <div className="ui-card-soft overflow-hidden rounded-[22px] p-2">
+            <div className="ui-card-soft overflow-hidden rounded-[10px] p-2">
               <Image
                 src={`/files/${file.id}`}
                 alt={file.originalName}
@@ -95,15 +95,15 @@ export function FileResourceCard({
                 unoptimized
                 className={
                   isExpanded
-                    ? "max-h-[380px] h-auto w-full rounded-[18px] object-contain sm:max-h-[520px] lg:max-h-[760px]"
-                    : "max-h-[300px] h-auto w-full rounded-[18px] object-contain sm:max-h-[380px] lg:max-h-[420px]"
+                    ? "max-h-[380px] h-auto w-full rounded-[12px] object-contain sm:max-h-[520px] lg:max-h-[760px]"
+                    : "max-h-[300px] h-auto w-full rounded-[12px] object-contain sm:max-h-[380px] lg:max-h-[420px]"
                 }
               />
             </div>
           ) : null}
 
           {showPreview && !isPdfMime(file.mimeType) && !isImageMime(file.mimeType) && isOfficeMime(file.mimeType) ? (
-            <div className="ui-card-soft ui-hint ui-copy-muted rounded-[22px] px-4 py-5 text-sm leading-6">
+            <div className="ui-card-soft ui-hint ui-copy-muted rounded-[10px] px-4 py-5 text-sm leading-6">
               Для DOCX встроенный предпросмотр зависит от браузера.
             </div>
           ) : null}

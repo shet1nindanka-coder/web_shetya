@@ -103,7 +103,7 @@ export function DeadlinesCalendar({ deadlines }: DeadlinesCalendarProps) {
   }, []);
 
   return (
-    <div ref={calendarRef} className="ui-surface min-h-[430px] rounded-[16px] border p-3 sm:p-4">
+    <div ref={calendarRef} className="ui-surface min-h-[430px] rounded-[10px] border p-3 sm:p-4">
       <div className="mb-3 flex items-center justify-between gap-2">
         <button
           type="button"

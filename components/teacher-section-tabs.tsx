@@ -51,7 +51,7 @@ export function TeacherSectionTabs() {
   }, [pathname]);
 
   return (
-    <div className="ui-fade-slide ui-tab-shell mb-4 rounded-[12px] p-1 sm:mb-6 sm:rounded-[16px] sm:p-1.5">
+    <div className="ui-fade-slide ui-tab-shell mb-4 rounded-[12px] p-1 sm:mb-6 sm:rounded-[10px] sm:p-1.5">
       <div className="flex flex-col gap-3 xl:flex-row xl:items-center xl:justify-between">
         <nav className="ui-tab-strip flex min-w-0 gap-1 overflow-x-auto sm:gap-1.5" aria-label="Разделы преподавателя">
           {items.map((item) => {

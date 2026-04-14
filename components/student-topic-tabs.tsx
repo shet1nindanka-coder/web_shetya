@@ -40,7 +40,7 @@ export function StudentTopicTabs({
 
   return (
     <div className="space-y-4 sm:space-y-6">
-      <nav className="ui-fade-slide ui-tab-shell ui-tab-strip flex gap-0.5 rounded-[10px] p-0.5 sm:gap-1.5 sm:rounded-[16px] sm:p-1.5">
+      <nav className="ui-fade-slide ui-tab-shell ui-tab-strip flex gap-0.5 rounded-[10px] p-0.5 sm:gap-1.5 sm:rounded-[10px] sm:p-1.5">
         {tabMeta.map((tab) => {
           const isActive = activeTab === tab.id;
 

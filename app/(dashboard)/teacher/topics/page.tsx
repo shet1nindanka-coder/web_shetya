@@ -64,8 +64,8 @@ export default async function TeacherTopicsPage({ searchParams }: TeacherTopicsP
         <div
           className={
             notice.tone === "success"
-              ? "ui-notice-success rounded-[14px] px-4 py-3 text-sm font-medium sm:rounded-[16px]"
-              : "ui-notice-error rounded-[14px] px-4 py-3 text-sm font-medium sm:rounded-[16px]"
+              ? "ui-notice-success rounded-[8px] px-4 py-3 text-sm font-medium sm:rounded-[10px]"
+              : "ui-notice-error rounded-[8px] px-4 py-3 text-sm font-medium sm:rounded-[10px]"
           }
         >
           {notice.message}
@@ -86,13 +86,13 @@ export default async function TeacherTopicsPage({ searchParams }: TeacherTopicsP
 
       <SectionCard title="Все темы">
         {data.topics.length === 0 ? (
-          <div className="ui-panel-soft rounded-[16px] border-dashed px-4 py-8 text-center sm:rounded-[20px] sm:px-5 sm:py-10">
+          <div className="ui-panel-soft rounded-[10px] border-dashed px-4 py-8 text-center sm:rounded-[12px] sm:px-5 sm:py-10">
             <p className="font-display text-lg font-semibold text-[var(--theme-text-strong)] sm:text-xl">Пока нет ни одной темы</p>
           </div>
         ) : (
           <div className="grid gap-3 sm:gap-4 xl:grid-cols-2">
             {data.topics.map((topic) => (
-              <article key={topic.id} className="ui-surface rounded-[14px] border p-3.5 sm:rounded-[16px] sm:p-4">
+              <article key={topic.id} className="ui-surface rounded-[8px] border p-3.5 sm:rounded-[10px] sm:p-4">
                 <div className="flex flex-col gap-3">
                   <div className="space-y-1.5">
                     <h2 className="font-display text-[1.15rem] font-semibold text-[var(--theme-text-strong)] sm:text-[1.35rem]">

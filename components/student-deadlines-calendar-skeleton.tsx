@@ -1,6 +1,6 @@
 export function StudentDeadlinesCalendarSkeleton() {
   return (
-    <section className="ui-surface relative min-h-[430px] overflow-hidden rounded-[16px] border p-3 sm:p-4">
+    <section className="ui-surface relative min-h-[430px] overflow-hidden rounded-[10px] border p-3 sm:p-4">
       <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(90deg,transparent,rgba(148,163,184,0.12),transparent)] [background-size:220%_100%] animate-[ui-shimmer_1.6s_linear_infinite]" />
       <div className="mb-3 flex items-center justify-center">
         <div className="h-5 w-5 animate-spin rounded-full border-2 border-[var(--theme-border-soft)] border-t-[var(--theme-accent-strong)]" />

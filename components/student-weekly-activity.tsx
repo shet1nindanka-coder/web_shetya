@@ -46,7 +46,7 @@ export function StudentWeeklyActivity({ streak }: StudentWeeklyActivityProps) {
       <div className="grid gap-4 xl:grid-cols-[minmax(0,0.92fr)_minmax(0,1.08fr)]">
         <div className="space-y-3">
           <div
-            className="student-streak-hero rounded-[22px] border px-4 py-4 sm:px-5 sm:py-5"
+            className="student-streak-hero rounded-[12px] border px-4 py-4 sm:px-5 sm:py-5"
             data-streak-animate={motionState ?? undefined}
           >
             <div className="flex items-start justify-between gap-3">
@@ -64,13 +64,13 @@ export function StudentWeeklyActivity({ streak }: StudentWeeklyActivityProps) {
           </div>
 
           <div className="grid gap-3 sm:grid-cols-2">
-            <div className="ui-card-soft rounded-[18px] px-4 py-4">
+            <div className="ui-card-soft rounded-[10px] px-4 py-4">
               <p className="ui-kicker">Сегодня сделано</p>
               <p className="mt-2 font-display text-[1.3rem] font-semibold text-[var(--theme-text-strong)]">
                 {solvedTodayLabel}
               </p>
             </div>
-            <div className="ui-card-soft rounded-[18px] px-4 py-4">
+            <div className="ui-card-soft rounded-[10px] px-4 py-4">
               <p className="ui-kicker">Следующая цель</p>
               <p className="mt-2 font-display text-[1.3rem] font-semibold text-[var(--theme-text-strong)]">{goalTitle}</p>
               <p className="ui-hint mt-2 text-sm text-[var(--theme-text-muted)]">{goalHint}</p>
@@ -78,7 +78,7 @@ export function StudentWeeklyActivity({ streak }: StudentWeeklyActivityProps) {
           </div>
         </div>
 
-        <div className="ui-panel-soft rounded-[18px] px-4 py-4">
+        <div className="ui-panel-soft rounded-[10px] px-4 py-4">
           <div className="mb-4 flex items-center justify-between gap-3">
             <div>
               <p className="ui-kicker">За неделю</p>

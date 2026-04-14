@@ -203,7 +203,7 @@ const StudentNumberCard = memo(function StudentNumberCard({
     <div
       id={`student-number-${number.number}`}
       className={cx(
-        "student-number-card rounded-[14px] border p-3 sm:rounded-[22px] sm:p-4 transition-shadow duration-700",
+        "student-number-card rounded-[8px] border p-3 sm:rounded-[12px] sm:p-4 transition-shadow duration-700",
         isHighlighted && "ring-2 ring-[var(--theme-accent)] shadow-[0_0_16px_rgba(99,102,241,0.2)]"
       )}
     >
@@ -236,7 +236,7 @@ const StudentNumberCard = memo(function StudentNumberCard({
                 aria-pressed={isActive}
                 onClick={() => onSelect(number.id, isActive ? null : status)}
                 className={cx(
-                  "ui-pressable w-full touch-manipulation rounded-[12px] px-2.5 py-2 text-center text-[12px] transition-colors duration-75 sm:min-w-[160px] sm:rounded-[16px] sm:px-4 sm:py-3 sm:text-left sm:text-[13px]",
+                  "ui-pressable w-full touch-manipulation rounded-[12px] px-2.5 py-2 text-center text-[12px] transition-colors duration-75 sm:min-w-[160px] sm:rounded-[10px] sm:px-4 sm:py-3 sm:text-left sm:text-[13px]",
                   isActive
                     ? meta.buttonClassName
                     : "ui-status-button"
@@ -262,7 +262,7 @@ const StudentNumberCard = memo(function StudentNumberCard({
       {(number.answerLatex || notesEnabled) ? (
         <div className="mt-2.5 grid gap-2.5 sm:mt-3 sm:gap-3 lg:grid-cols-2">
           {number.answerLatex ? (
-            <div className="student-answer-panel min-w-0 rounded-[12px] border p-2 sm:rounded-[18px] sm:p-2.5">
+            <div className="student-answer-panel min-w-0 rounded-[12px] border p-2 sm:rounded-[10px] sm:p-2.5">
               <p className="ui-kicker mb-1.5">Ответ</p>
 
               <TelegramSpoiler
@@ -275,7 +275,7 @@ const StudentNumberCard = memo(function StudentNumberCard({
           ) : null}
 
           {notesEnabled ? (
-            <div className="student-note-panel min-w-0 rounded-[12px] border px-2.5 py-2 sm:rounded-[18px] sm:px-3 sm:py-2.5">
+            <div className="student-note-panel min-w-0 rounded-[12px] border px-2.5 py-2 sm:rounded-[10px] sm:px-3 sm:py-2.5">
               <div className="flex items-center justify-between gap-2">
                 <p className="ui-kicker">Заметка</p>
                 <button
@@ -325,7 +325,7 @@ const StudentNumberCard = memo(function StudentNumberCard({
                   }}
                   autoFocus
                   placeholder="Короткая заметка"
-                  className="ui-input mt-1.5 w-full rounded-[10px] px-2.5 py-1.5 text-sm leading-5 sm:rounded-[14px] sm:px-3 sm:py-2"
+                  className="ui-input mt-1.5 w-full rounded-[8px] px-2.5 py-1.5 text-sm leading-5 sm:rounded-[10px] sm:px-3 sm:py-2"
                 />
               ) : (
                 <p
@@ -334,7 +334,7 @@ const StudentNumberCard = memo(function StudentNumberCard({
                   onClick={() => setIsNoteOpen(true)}
                   onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setIsNoteOpen(true); } }}
                   className={cx(
-                    "mt-1.5 cursor-pointer truncate rounded-[10px] px-2.5 py-1.5 text-sm leading-5 transition hover:bg-[var(--theme-surface-soft)] sm:rounded-[14px] sm:px-3 sm:py-2",
+                    "mt-1.5 cursor-pointer truncate rounded-[8px] px-2.5 py-1.5 text-sm leading-5 transition hover:bg-[var(--theme-surface-soft)] sm:rounded-[10px] sm:px-3 sm:py-2",
                     notePreview ? "text-[var(--theme-text-default)]" : "text-[var(--theme-text-muted)]"
                   )}
                 >
@@ -575,10 +575,10 @@ function StudentNumberList({
   }, []);
 
   return (
-    <div className="student-virtual-shell rounded-[14px] border border-[var(--theme-border-soft)] p-2 sm:rounded-[24px] sm:p-3">
+    <div className="student-virtual-shell rounded-[8px] border border-[var(--theme-border-soft)] p-2 sm:rounded-[12px] sm:p-3">
       <div
         ref={scrollRef}
-        className="student-virtual-scroll rounded-[12px] sm:rounded-[18px]"
+        className="student-virtual-scroll rounded-[12px] sm:rounded-[10px]"
         style={{
           maxHeight: "72vh"
         }}
@@ -1089,7 +1089,7 @@ export function StudentTopicStatusBoard({
         }
       >
         {saveError ? (
-          <div className="ui-notice-error mb-4 rounded-[12px] px-3.5 py-3 text-sm font-medium sm:mb-5 sm:rounded-[18px] sm:px-4 sm:py-4">
+          <div className="ui-notice-error mb-4 rounded-[12px] px-3.5 py-3 text-sm font-medium sm:mb-5 sm:rounded-[10px] sm:px-4 sm:py-4">
             {saveError}
           </div>
         ) : null}
@@ -1103,7 +1103,7 @@ export function StudentTopicStatusBoard({
                 const isActive = activeFilter === group.id;
                 const isCompleted = group.isCompleted;
                 const baseFilterClassName =
-                  "ui-pressable w-full rounded-[12px] border px-3 py-2 text-left text-sm font-medium transition sm:inline-flex sm:w-auto sm:shrink-0 sm:items-center sm:gap-2 sm:rounded-[16px] sm:px-5 sm:py-2.5";
+                  "ui-pressable w-full rounded-[12px] border px-3 py-2 text-left text-sm font-medium transition sm:inline-flex sm:w-auto sm:shrink-0 sm:items-center sm:gap-2 sm:rounded-[10px] sm:px-5 sm:py-2.5";
                 const activeFilterClassName =
                   "border-[var(--theme-border-soft)] bg-[var(--theme-tab-active)] text-[var(--theme-tab-text-active)] shadow-[0_4px_10px_rgba(15,23,42,0.06)]";
                 const inactiveFilterClassName =
@@ -1151,7 +1151,7 @@ export function StudentTopicStatusBoard({
         ) : null}
 
         {isTopicCompleted ? (
-          <details className="rounded-[12px] border border-[var(--theme-success-border)] bg-[var(--theme-success-soft)] sm:rounded-[20px]">
+          <details className="rounded-[12px] border border-[var(--theme-success-border)] bg-[var(--theme-success-soft)] sm:rounded-[12px]">
             <summary className="ui-pressable flex cursor-pointer list-none items-center justify-between gap-3 px-3 py-3 sm:gap-4 sm:px-4 sm:py-4 [&::-webkit-details-marker]:hidden">
               <div>
                 <p className="text-sm font-semibold text-[var(--theme-success-text)]">Тема полностью решена</p>
@@ -1176,7 +1176,7 @@ export function StudentTopicStatusBoard({
                   onNoteBlur={flushNumberNote}
                 />
               ) : (
-                <div className="ui-panel-soft rounded-[12px] border border-dashed px-3.5 py-6 text-center text-sm text-[var(--theme-text-muted)] sm:rounded-[22px] sm:px-4 sm:py-8">
+                <div className="ui-panel-soft rounded-[12px] border border-dashed px-3.5 py-6 text-center text-sm text-[var(--theme-text-muted)] sm:rounded-[12px] sm:px-4 sm:py-8">
                   По выбранному фильтру здесь пока ничего нет.
                 </div>
               )}
@@ -1197,7 +1197,7 @@ export function StudentTopicStatusBoard({
                 onNoteBlur={flushNumberNote}
               />
             ) : (
-              <div className="ui-panel-soft rounded-[14px] border border-dashed px-4 py-8 text-center sm:rounded-[24px] sm:py-10">
+              <div className="ui-panel-soft rounded-[8px] border border-dashed px-4 py-8 text-center sm:rounded-[12px] sm:py-10">
                 <p className="font-display text-[1.45rem] font-semibold text-[var(--theme-text-strong)] sm:text-2xl">Ничего не найдено</p>
                 <p className="ui-hint mt-1.5 text-sm leading-6 text-[var(--theme-text-muted)] sm:mt-2">Попробуйте другой фильтр.</p>
               </div>

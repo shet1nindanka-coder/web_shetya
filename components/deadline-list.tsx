@@ -14,7 +14,7 @@ type DeadlineListProps = {
 export function DeadlineList({ items, emptyMessage = "На эту дату дедлайнов нет.", compact = false }: DeadlineListProps) {
   if (items.length === 0) {
     return (
-      <div className="ui-panel-soft rounded-[14px] border border-dashed px-3 py-4 text-sm text-[var(--theme-text-muted)]">
+      <div className="ui-panel-soft rounded-[8px] border border-dashed px-3 py-4 text-sm text-[var(--theme-text-muted)]">
         {emptyMessage}
       </div>
     );
@@ -33,7 +33,7 @@ export function DeadlineList({ items, emptyMessage = "На эту дату де�
         const deadlineLabel = `ДЗ до ${formatDate(item.deadlineAt)}`;
 
         return (
-          <li key={item.id} className="ui-surface rounded-[14px] border p-3 sm:p-3.5">
+          <li key={item.id} className="ui-surface rounded-[8px] border p-3 sm:p-3.5">
             <div className={compact ? "min-w-0 space-y-2" : "space-y-3"}>
               <div className={compact ? "min-w-0" : "flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between"}>
                 <div className="min-w-0 flex-1">

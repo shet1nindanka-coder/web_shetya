@@ -39,7 +39,7 @@ export function ProgressTimelineChart({
     <div className="space-y-4">
       <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
         <div className="space-y-3">
-          <div className="ui-tab-shell ui-tab-strip inline-flex w-full flex-wrap gap-1.5 rounded-[14px] p-1.5 sm:w-auto">
+          <div className="ui-tab-shell ui-tab-strip inline-flex w-full flex-wrap gap-1.5 rounded-[8px] p-1.5 sm:w-auto">
             {PERIOD_OPTIONS.map((option) => {
               const isActive = option.key === period;
 
@@ -85,7 +85,7 @@ export function ProgressTimelineChart({
         </div>
       </div>
 
-      <div key={period} className="progress-timeline-stage rounded-[18px] border border-[var(--theme-border-soft)] bg-[linear-gradient(180deg,var(--theme-surface-soft),var(--theme-surface-strong))] px-3 py-4 sm:px-4 sm:py-5">
+      <div key={period} className="progress-timeline-stage rounded-[10px] border border-[var(--theme-border-soft)] bg-[linear-gradient(180deg,var(--theme-surface-soft),var(--theme-surface-strong))] px-3 py-4 sm:px-4 sm:py-5">
         <div className="flex flex-col gap-2 border-b border-[var(--theme-border-soft)] pb-3 sm:flex-row sm:items-start sm:justify-between">
           <div>
             <h3 className="font-display text-[1.05rem] font-semibold text-[var(--theme-text-strong)] sm:text-[1.15rem]">
@@ -123,7 +123,7 @@ export function ProgressTimelineChart({
                   return (
                     <div key={point.key} className="relative min-w-0">
                       {isActive ? (
-                        <div className="progress-timeline-tooltip absolute inset-x-1 top-0 z-20 -translate-y-[calc(100%+0.5rem)] rounded-[14px] px-3 py-2 text-left shadow-[var(--theme-shadow-hover)]">
+                        <div className="progress-timeline-tooltip absolute inset-x-1 top-0 z-20 -translate-y-[calc(100%+0.5rem)] rounded-[8px] px-3 py-2 text-left shadow-[var(--theme-shadow-hover)]">
                           <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[var(--theme-text-soft)]">
                             {point.tooltip}
                           </p>
@@ -149,7 +149,7 @@ export function ProgressTimelineChart({
                         onBlur={() => setActivePointKey((current) => (current === point.key ? null : current))}
                         aria-label={`${point.tooltip}: закрыто ${point.closedCount}, красных ${point.redCount}`}
                       >
-                        <div className="relative flex h-44 items-end justify-center gap-1.5 rounded-[18px] border border-[var(--theme-border-soft)] bg-[var(--theme-surface-soft)]/75 px-2 pb-3 pt-5 transition-all duration-200 group-hover:border-[var(--theme-accent-border)] group-hover:bg-[var(--theme-surface-strong)] group-focus-visible:border-[var(--theme-accent-border)] group-focus-visible:bg-[var(--theme-surface-strong)]">
+                        <div className="relative flex h-44 items-end justify-center gap-1.5 rounded-[10px] border border-[var(--theme-border-soft)] bg-[var(--theme-surface-soft)]/75 px-2 pb-3 pt-5 transition-all duration-200 group-hover:border-[var(--theme-accent-border)] group-hover:bg-[var(--theme-surface-strong)] group-focus-visible:border-[var(--theme-accent-border)] group-focus-visible:bg-[var(--theme-surface-strong)]">
                           <div className="absolute inset-x-3 bottom-2 h-px bg-[var(--theme-border)]" />
                           {point.isEmpty ? (
                             <span className="progress-timeline-empty-dot absolute bottom-[7px] left-1/2 h-2.5 w-2.5 -translate-x-1/2 rounded-full" />

@@ -13,7 +13,7 @@ type LoginFormProps = {
 
 export function LoginForm({ error }: LoginFormProps) {
   return (
-    <div className="ui-pop-in ui-surface w-full max-w-[380px] rounded-[12px] border p-6 sm:max-w-md sm:rounded-[16px] sm:p-8">
+    <div className="ui-pop-in ui-dialog-shell w-full max-w-[380px] rounded-[10px] p-6 sm:max-w-md sm:rounded-[12px] sm:p-8">
       <div className="mb-6 flex flex-col items-center text-center sm:mb-8">
         <span className="app-logo-mark mb-3 flex h-11 w-11 items-center justify-center rounded-[8px] text-base font-semibold text-white sm:mb-4 sm:h-12 sm:w-12 sm:rounded-[8px]">
           T
@@ -28,7 +28,7 @@ export function LoginForm({ error }: LoginFormProps) {
             type="text"
             name="login"
             placeholder="teacher@example.com"
-            className="ui-input w-full rounded-[12px] px-3.5 py-2.5 text-sm sm:rounded-[14px] sm:px-4 sm:py-3"
+            className="ui-input w-full rounded-[12px] px-3.5 py-2.5 text-sm sm:px-4 sm:py-3"
             required
             autoComplete="username"
             autoCapitalize="none"
@@ -43,7 +43,7 @@ export function LoginForm({ error }: LoginFormProps) {
             type="password"
             name="password"
             placeholder="Введите пароль"
-            className="ui-input w-full rounded-[12px] px-3.5 py-2.5 text-sm sm:rounded-[14px] sm:px-4 sm:py-3"
+            className="ui-input w-full rounded-[12px] px-3.5 py-2.5 text-sm sm:px-4 sm:py-3"
             required
             autoComplete="current-password"
             spellCheck={false}
@@ -58,7 +58,7 @@ export function LoginForm({ error }: LoginFormProps) {
 
         <button
           type="submit"
-          className="ui-pressable ui-button-primary w-full rounded-[12px] px-4 py-2.5 text-sm font-semibold transition sm:rounded-[14px] sm:py-3"
+          className="ui-pressable ui-button-primary w-full rounded-[12px] px-4 py-2.5 text-sm font-semibold transition sm:py-3"
         >
           Войти
         </button>

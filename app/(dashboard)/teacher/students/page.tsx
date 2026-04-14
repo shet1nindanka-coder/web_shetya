@@ -80,8 +80,8 @@ export default async function TeacherStudentsPage({ searchParams }: TeacherStude
         <div
           className={
             notice.tone === "success"
-              ? "ui-notice-success rounded-[14px] px-4 py-3 text-sm font-medium sm:rounded-[16px]"
-              : "ui-notice-error rounded-[14px] px-4 py-3 text-sm font-medium sm:rounded-[16px]"
+              ? "ui-notice-success rounded-[8px] px-4 py-3 text-sm font-medium sm:rounded-[10px]"
+              : "ui-notice-error rounded-[8px] px-4 py-3 text-sm font-medium sm:rounded-[10px]"
           }
           aria-live="polite"
         >
@@ -101,7 +101,7 @@ export default async function TeacherStudentsPage({ searchParams }: TeacherStude
       >
         <form
           action={createStudentAction}
-          className="ui-panel-soft space-y-3 rounded-[14px] p-3.5 sm:space-y-4 sm:rounded-[16px] sm:p-4"
+          className="ui-panel-soft space-y-3 rounded-[8px] p-3.5 sm:space-y-4 sm:rounded-[10px] sm:p-4"
         >
           <div className="grid gap-3 xl:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)_minmax(0,0.85fr)_auto] xl:items-end">
             <label className="block space-y-1.5">
@@ -110,7 +110,7 @@ export default async function TeacherStudentsPage({ searchParams }: TeacherStude
                 type="text"
                 name="name"
                 placeholder="Например, Мария Смирнова"
-                className="ui-input w-full rounded-[12px] px-3.5 py-2.5 sm:rounded-[14px]"
+                className="ui-input w-full rounded-[8px] px-3.5 py-2.5 sm:rounded-[10px]"
                 required
                 autoComplete="name"
               />
@@ -122,7 +122,7 @@ export default async function TeacherStudentsPage({ searchParams }: TeacherStude
                 type="text"
                 name="login"
                 placeholder="maria@example.com"
-                className="ui-input w-full rounded-[12px] px-3.5 py-2.5 sm:rounded-[14px]"
+                className="ui-input w-full rounded-[8px] px-3.5 py-2.5 sm:rounded-[10px]"
                 required
                 autoCapitalize="none"
                 autoCorrect="off"
@@ -137,7 +137,7 @@ export default async function TeacherStudentsPage({ searchParams }: TeacherStude
                 name="password"
                 placeholder="Минимум 8 символов"
                 minLength={8}
-                className="ui-input w-full rounded-[12px] px-3.5 py-2.5 sm:rounded-[14px]"
+                className="ui-input w-full rounded-[8px] px-3.5 py-2.5 sm:rounded-[10px]"
                 required
                 autoComplete="new-password"
                 spellCheck={false}
@@ -159,11 +159,11 @@ export default async function TeacherStudentsPage({ searchParams }: TeacherStude
         description={`${data.students.length} аккаунтов ученика`}
       >
         {data.students.length === 0 ? (
-          <div className="ui-panel-soft rounded-[14px] border-dashed px-4 py-6 text-center text-sm text-[var(--theme-text-muted)]">
+          <div className="ui-panel-soft rounded-[8px] border-dashed px-4 py-6 text-center text-sm text-[var(--theme-text-muted)]">
             Пока ни одного ученика не добавлено.
           </div>
         ) : (
-          <div className="overflow-hidden rounded-[14px] border border-[var(--theme-border-soft)] bg-[color-mix(in_srgb,var(--theme-surface-soft)_90%,white_10%)] sm:rounded-[16px]">
+          <div className="overflow-hidden rounded-[8px] border border-[var(--theme-border-soft)] bg-[color-mix(in_srgb,var(--theme-surface-soft)_90%,white_10%)] sm:rounded-[10px]">
             <div className="hidden lg:grid lg:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)_auto] lg:items-center lg:gap-4 lg:border-b lg:border-[var(--theme-border-soft)] lg:bg-[color-mix(in_srgb,var(--theme-surface)_96%,white_4%)] lg:px-4 lg:py-2.5">
               <p className="ui-kicker">Ученик</p>
               <p className="ui-kicker">Логин</p>

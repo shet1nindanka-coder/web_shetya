@@ -45,7 +45,7 @@ export function TeacherProgressTimelineFilter({
             });
           });
         }}
-        className="ui-input w-full rounded-[14px] px-4 py-2.5 text-sm font-medium"
+        className="ui-input w-full rounded-[8px] px-4 py-2.5 text-sm font-medium"
         aria-label="Фильтр статистики по ученику"
         disabled={isPending}
       >

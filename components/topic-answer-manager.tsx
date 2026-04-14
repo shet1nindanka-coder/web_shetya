@@ -473,7 +473,7 @@ export function TopicAnswerManager({ topicId, initialNumber = null, numbers }: T
 
   return (
     <div className="space-y-5">
-      <div className="topic-answer-nav ui-surface ui-panel-soft rounded-[20px] p-4 sm:rounded-[22px] sm:p-5">
+      <div className="topic-answer-nav ui-toolbar-shell rounded-[10px] p-4 sm:rounded-[10px] sm:p-5">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div>
             <p className="text-sm font-medium text-[var(--theme-text-muted)]">Навигация по условиям и ответам</p>
@@ -492,7 +492,7 @@ export function TopicAnswerManager({ topicId, initialNumber = null, numbers }: T
               <select
                 value={currentPage}
                 onChange={(event) => setCurrentPage(Number(event.target.value))}
-                className="ui-input rounded-[14px] px-4 py-2 text-sm font-medium"
+                className="ui-input rounded-[12px] px-4 py-2 text-sm font-medium"
               >
                 {Array.from({ length: pageCount }, (_, index) => index + 1).map((page) => (
                   <option key={page} value={page}>
@@ -507,7 +507,7 @@ export function TopicAnswerManager({ topicId, initialNumber = null, numbers }: T
                 type="button"
                 onClick={() => setCurrentPage((page) => Math.max(1, page - 1))}
                 disabled={currentPage === 1}
-                className="ui-pressable ui-button-secondary rounded-[14px] px-4 py-2 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-50"
+                className="ui-pressable ui-button-secondary rounded-[12px] px-4 py-2 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-50"
               >
                 Назад
               </button>
@@ -515,7 +515,7 @@ export function TopicAnswerManager({ topicId, initialNumber = null, numbers }: T
                 type="button"
                 onClick={() => setCurrentPage((page) => Math.min(pageCount, page + 1))}
                 disabled={currentPage === pageCount}
-                className="ui-pressable ui-button-secondary rounded-[14px] px-4 py-2 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-50"
+                className="ui-pressable ui-button-secondary rounded-[12px] px-4 py-2 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-50"
               >
                 Вперед
               </button>
@@ -535,7 +535,7 @@ export function TopicAnswerManager({ topicId, initialNumber = null, numbers }: T
                   type="button"
                   onClick={() => setCurrentPage(page)}
                   className={cx(
-                    "ui-pressable rounded-[14px] px-4 py-2 text-sm font-semibold transition",
+                    "ui-pressable rounded-[12px] px-4 py-2 text-sm font-semibold transition",
                     page === currentPage ? "ui-button-tonal" : "ui-button-secondary"
                   )}
                 >
@@ -555,7 +555,7 @@ export function TopicAnswerManager({ topicId, initialNumber = null, numbers }: T
             <article
               key={item.id}
               className={cx(
-                "topic-answer-card ui-fade-slide ui-surface ui-panel-soft rounded-[20px] p-4 shadow-[0_10px_24px_rgba(15,23,42,0.05)] sm:p-4.5",
+                "topic-answer-card ui-fade-slide ui-panel-soft rounded-[10px] p-4 shadow-[0_10px_24px_rgba(15,23,42,0.05)] sm:p-4.5",
                 item.number === initialNumber
                   ? "ring-2 ring-[var(--theme-accent-border)] ring-offset-2 ring-offset-transparent"
                   : ""
@@ -616,7 +616,7 @@ export function TopicAnswerManager({ topicId, initialNumber = null, numbers }: T
                       placeholder={
                         "Например:\nРешите уравнение $$2x^2-3x-5=0$$\n\nМожно добавлять текст и формулы в одном поле."
                       }
-                      className="ui-input min-h-[124px] w-full rounded-[20px] px-4 py-3 text-sm outline-none transition focus:-translate-y-[1px]"
+                      className="ui-input min-h-[124px] w-full rounded-[8px] px-4 py-3 text-sm outline-none transition focus:-translate-y-[1px]"
                       disabled={item.isSavingCondition || item.isDeletingCondition}
                     />
                     <p className="ui-hint text-xs leading-5 text-[var(--theme-text-muted)]">
@@ -625,20 +625,20 @@ export function TopicAnswerManager({ topicId, initialNumber = null, numbers }: T
                   </label>
 
                   {item.draftConditionLatex.trim() ? (
-                    <div className="ui-panel-soft rounded-[20px] p-3">
+                    <div className="ui-panel-soft rounded-[8px] p-3">
                       <p className="text-xs font-medium tracking-[0.18em] text-[var(--theme-text-soft)]">Предпросмотр условия</p>
                       <div className="mt-2.5">
                         <LatexAnswerPreview value={item.draftConditionLatex} />
                       </div>
                     </div>
                   ) : (
-                    <div className="ui-hint ui-panel-soft rounded-[20px] border-dashed px-4 py-5 text-sm leading-6 text-[var(--theme-text-muted)]">
+                    <div className="ui-hint ui-panel-soft rounded-[8px] border-dashed px-4 py-5 text-sm leading-6 text-[var(--theme-text-muted)]">
                       Пока условие к этому номеру не добавлено.
                     </div>
                   )}
 
                   {item.conditionError ? (
-                    <div className="ui-notice-error rounded-2xl px-4 py-4 text-sm font-medium">{item.conditionError}</div>
+                    <div className="ui-notice-error rounded-[8px] px-4 py-4 text-sm font-medium">{item.conditionError}</div>
                   ) : null}
 
                   <div className="flex flex-wrap gap-3">
@@ -648,7 +648,7 @@ export function TopicAnswerManager({ topicId, initialNumber = null, numbers }: T
                       disabled={
                         item.isSavingCondition || item.isDeletingCondition || !item.draftConditionLatex.trim()
                       }
-                      className="ui-pressable ui-button-primary rounded-[14px] px-3.5 py-2 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-60 disabled:shadow-none"
+                      className="ui-pressable ui-button-primary rounded-[12px] px-3.5 py-2 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-60 disabled:shadow-none"
                     >
                       {item.isSavingCondition ? "Сохраняем..." : "Сохранить условие"}
                     </button>
@@ -658,7 +658,7 @@ export function TopicAnswerManager({ topicId, initialNumber = null, numbers }: T
                         type="button"
                         onClick={() => void removeCondition(item.id)}
                         disabled={item.isDeletingCondition || item.isSavingCondition}
-                        className="ui-pressable ui-button-danger rounded-[14px] px-3.5 py-2 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-60"
+                        className="ui-pressable ui-button-danger rounded-[12px] px-3.5 py-2 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-60"
                       >
                         {item.isDeletingCondition ? "Удаляем..." : "Удалить условие"}
                       </button>
@@ -688,7 +688,7 @@ export function TopicAnswerManager({ topicId, initialNumber = null, numbers }: T
                       placeholder={
                         "Например:\n$$x = \\frac{-b \\pm \\sqrt{D}}{2a}$$\n\nИли с текстом:\nПодставим в формулу: $D=b^2-4ac$"
                       }
-                      className="ui-input min-h-[138px] w-full rounded-[20px] px-4 py-3 text-sm outline-none transition focus:-translate-y-[1px]"
+                      className="ui-input min-h-[138px] w-full rounded-[8px] px-4 py-3 text-sm outline-none transition focus:-translate-y-[1px]"
                       disabled={item.isSavingAnswer || item.isDeletingAnswer}
                     />
                     <p className="ui-hint text-xs leading-5 text-[var(--theme-text-muted)]">
@@ -697,20 +697,20 @@ export function TopicAnswerManager({ topicId, initialNumber = null, numbers }: T
                   </label>
 
                   {item.draftAnswerLatex.trim() ? (
-                    <div className="ui-panel-soft rounded-[20px] p-3">
+                    <div className="ui-panel-soft rounded-[8px] p-3">
                       <p className="text-xs font-medium tracking-[0.18em] text-[var(--theme-text-soft)]">Предпросмотр ответа</p>
                       <div className="mt-2.5">
                         <LatexAnswerPreview value={item.draftAnswerLatex} />
                       </div>
                     </div>
                   ) : (
-                    <div className="ui-hint ui-panel-soft rounded-[20px] border-dashed px-4 py-5 text-sm leading-6 text-[var(--theme-text-muted)]">
+                    <div className="ui-hint ui-panel-soft rounded-[8px] border-dashed px-4 py-5 text-sm leading-6 text-[var(--theme-text-muted)]">
                       Пока ответ к этому номеру не добавлен.
                     </div>
                   )}
 
                   {item.answerError ? (
-                    <div className="ui-notice-error rounded-2xl px-4 py-4 text-sm font-medium">{item.answerError}</div>
+                    <div className="ui-notice-error rounded-[8px] px-4 py-4 text-sm font-medium">{item.answerError}</div>
                   ) : null}
 
                   <div className="flex flex-wrap gap-3">
@@ -718,7 +718,7 @@ export function TopicAnswerManager({ topicId, initialNumber = null, numbers }: T
                       type="button"
                       onClick={() => void saveAnswer(item.id)}
                       disabled={item.isSavingAnswer || item.isDeletingAnswer || !item.draftAnswerLatex.trim()}
-                      className="ui-pressable ui-button-primary rounded-[14px] px-3.5 py-2 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-60 disabled:shadow-none"
+                      className="ui-pressable ui-button-primary rounded-[12px] px-3.5 py-2 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-60 disabled:shadow-none"
                     >
                       {item.isSavingAnswer ? "Сохраняем..." : "Сохранить ответ"}
                     </button>
@@ -728,7 +728,7 @@ export function TopicAnswerManager({ topicId, initialNumber = null, numbers }: T
                         type="button"
                         onClick={() => void removeAnswer(item.id)}
                         disabled={item.isDeletingAnswer || item.isSavingAnswer}
-                        className="ui-pressable ui-button-danger rounded-[14px] px-3.5 py-2 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-60"
+                        className="ui-pressable ui-button-danger rounded-[12px] px-3.5 py-2 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-60"
                       >
                         {item.isDeletingAnswer ? "Удаляем..." : "Удалить ответ"}
                       </button>
@@ -742,7 +742,7 @@ export function TopicAnswerManager({ topicId, initialNumber = null, numbers }: T
       </div>
 
       {pageCount > 1 ? (
-        <div className="ui-panel-soft flex flex-wrap items-center justify-between gap-3 rounded-[24px] px-4 py-4">
+        <div className="ui-panel-soft flex flex-wrap items-center justify-between gap-3 rounded-[10px] px-4 py-4">
           <p className="text-sm text-[var(--theme-text-muted)]">
             Страница {currentPage} из {pageCount}
           </p>
@@ -751,7 +751,7 @@ export function TopicAnswerManager({ topicId, initialNumber = null, numbers }: T
               type="button"
               onClick={() => setCurrentPage((page) => Math.max(1, page - 1))}
               disabled={currentPage === 1}
-              className="ui-pressable ui-button-secondary rounded-[14px] px-4 py-2 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-50"
+              className="ui-pressable ui-button-secondary rounded-[12px] px-4 py-2 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-50"
             >
               Предыдущая страница
             </button>
@@ -759,7 +759,7 @@ export function TopicAnswerManager({ topicId, initialNumber = null, numbers }: T
               type="button"
               onClick={() => setCurrentPage((page) => Math.min(pageCount, page + 1))}
               disabled={currentPage === pageCount}
-              className="ui-pressable ui-button-secondary rounded-[14px] px-4 py-2 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-50"
+              className="ui-pressable ui-button-secondary rounded-[12px] px-4 py-2 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-50"
             >
               Следующая страница
             </button>

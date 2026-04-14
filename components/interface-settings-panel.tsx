@@ -97,7 +97,7 @@ export function InterfaceSettingsPanel() {
   ];
 
   return (
-    <section className="ui-fade-slide ui-surface rounded-[18px] border p-4 sm:rounded-[20px] sm:p-5 lg:rounded-[22px] lg:p-6">
+    <section className="ui-fade-slide ui-surface rounded-[10px] border p-4 sm:rounded-[10px] sm:p-5 lg:p-6">
       <div className="mb-4 flex flex-col gap-2 border-b pb-4">
         <h2 className="font-display text-[1.35rem] font-semibold text-[var(--theme-text-strong)] sm:text-[1.5rem] lg:text-[1.65rem]">
           Интерфейс
@@ -106,7 +106,7 @@ export function InterfaceSettingsPanel() {
       </div>
 
       <div className="grid gap-4 xl:grid-cols-[1.15fr_0.95fr_0.95fr]">
-        <div className="ui-settings-card rounded-[18px] p-4 sm:rounded-[20px] sm:p-5">
+        <div className="ui-settings-card rounded-[10px] p-4 sm:rounded-[10px] sm:p-5">
           <div className="flex items-start justify-between gap-3">
             <div>
               <p className="ui-kicker">Тема</p>
@@ -124,7 +124,7 @@ export function InterfaceSettingsPanel() {
                   type="button"
                   onClick={() => setThemeMode(option.value)}
                   aria-pressed={isActive}
-                  className={`ui-settings-option ui-pressable rounded-[14px] px-3.5 py-3 text-left text-sm transition ${
+                  className={`ui-settings-option ui-pressable rounded-[12px] px-3.5 py-3 text-left text-sm transition ${
                     isActive ? "ui-button-tonal" : "ui-button-secondary"
                   }`}
                 >
@@ -140,7 +140,7 @@ export function InterfaceSettingsPanel() {
           <p className="ui-hint ui-copy-muted mt-auto pt-4 text-sm leading-6">{effectiveThemeLabel}.</p>
         </div>
 
-        <div className="ui-settings-card rounded-[18px] p-4 sm:rounded-[20px] sm:p-5">
+        <div className="ui-settings-card rounded-[10px] p-4 sm:rounded-[10px] sm:p-5">
           <div className="flex items-start justify-between gap-3">
             <div>
               <p className="ui-kicker">Подсказки</p>
@@ -158,7 +158,7 @@ export function InterfaceSettingsPanel() {
                   type="button"
                   onClick={() => setHintsMode(option.value)}
                   aria-pressed={isActive}
-                  className={`ui-settings-option ui-pressable rounded-[14px] px-3.5 py-3 text-left text-sm transition ${
+                  className={`ui-settings-option ui-pressable rounded-[12px] px-3.5 py-3 text-left text-sm transition ${
                     isActive ? "ui-button-tonal" : "ui-button-secondary"
                   }`}
                 >
@@ -172,7 +172,7 @@ export function InterfaceSettingsPanel() {
           </div>
         </div>
 
-        <div className="ui-settings-card rounded-[18px] p-4 sm:rounded-[20px] sm:p-5">
+        <div className="ui-settings-card rounded-[10px] p-4 sm:rounded-[10px] sm:p-5">
           <div className="flex items-start justify-between gap-3">
             <div>
               <p className="ui-kicker">Плотность</p>
@@ -190,7 +190,7 @@ export function InterfaceSettingsPanel() {
                   type="button"
                   onClick={() => setDensityMode(option.value)}
                   aria-pressed={isActive}
-                  className={`ui-settings-option ui-pressable rounded-[14px] px-3.5 py-3 text-left text-sm transition ${
+                  className={`ui-settings-option ui-pressable rounded-[12px] px-3.5 py-3 text-left text-sm transition ${
                     isActive ? "ui-button-tonal" : "ui-button-secondary"
                   }`}
                 >

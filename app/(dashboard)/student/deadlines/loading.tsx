@@ -3,7 +3,7 @@ import { StudentDeadlinesCalendarSkeleton } from "@/components/student-deadlines
 export default function StudentDeadlinesLoading() {
   return (
     <div className="space-y-5 sm:space-y-6 min-h-[70vh]">
-      <section className="ui-page-header ui-surface rounded-[14px] border p-3.5 sm:rounded-[18px] sm:p-5 lg:rounded-[20px]">
+      <section className="ui-page-header ui-surface rounded-[8px] border p-3.5 sm:rounded-[10px] sm:p-5 lg:rounded-[12px]">
         <div className="space-y-2">
           <div className="ui-skeleton h-3 w-24 rounded-full" />
           <div className="ui-skeleton h-8 w-64 rounded-2xl" />

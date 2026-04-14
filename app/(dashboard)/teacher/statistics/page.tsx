@@ -223,7 +223,7 @@ export default async function TeacherStatisticsPage({ searchParams }: TeacherSta
         description={headlineDescription}
       />
 
-      <nav className="ui-fade-slide ui-tab-shell ui-tab-strip flex gap-1.5 rounded-[14px] sm:rounded-[16px] p-1.5 sm:flex-wrap sm:rounded-[14px] sm:rounded-[16px] sm:p-2">
+      <nav className="ui-fade-slide ui-tab-shell ui-tab-strip flex gap-1.5 rounded-[8px] p-1.5 sm:flex-wrap sm:rounded-[10px] sm:p-2">
         {statisticsViews.map((item) => {
           const isActive = item.key === view;
 
@@ -231,7 +231,7 @@ export default async function TeacherStatisticsPage({ searchParams }: TeacherSta
             <Link
               key={item.key}
               href={item.href}
-              className={cx("ui-pressable ui-tab shrink-0 rounded-[14px] px-4 py-2.5 text-sm font-medium sm:px-4.5", isActive && "data-[active=true]:shadow-none")}
+              className={cx("ui-pressable ui-tab shrink-0 rounded-[8px] px-4 py-2.5 text-sm font-medium sm:px-4.5", isActive && "data-[active=true]:shadow-none")}
               data-active={isActive}
             >
               {item.label}
@@ -296,7 +296,7 @@ export default async function TeacherStatisticsPage({ searchParams }: TeacherSta
 
           <SectionCard title="Как распределяется прогресс">
             <div className="grid gap-4 xl:grid-cols-[0.9fr_1.1fr]">
-              <article className="ui-surface ui-panel-soft rounded-[14px] sm:rounded-[16px] p-3.5 sm:rounded-[14px] sm:rounded-[16px] sm:p-6">
+              <article className="ui-surface ui-panel-soft rounded-[8px] p-3.5 sm:rounded-[10px] sm:p-6">
                 <div className="flex flex-col items-center gap-6 lg:flex-row">
                   <DonutChart segments={distributionSegments} total={totalStatusSlots} centerValue={`${solvedPercent}%`} centerLabel="решено" />
                   <div className="w-full space-y-3">
@@ -321,7 +321,7 @@ export default async function TeacherStatisticsPage({ searchParams }: TeacherSta
                 </div>
               </article>
 
-              <article className="ui-surface ui-panel-soft rounded-[14px] sm:rounded-[16px] p-3.5 sm:rounded-[14px] sm:rounded-[16px] sm:p-6">
+              <article className="ui-surface ui-panel-soft rounded-[8px] p-3.5 sm:rounded-[10px] sm:p-6">
                 <div className="space-y-5">
                   <div>
                     <div className="mb-2 flex items-center justify-between gap-3 text-sm text-[var(--theme-text-muted)]">
@@ -353,7 +353,7 @@ export default async function TeacherStatisticsPage({ searchParams }: TeacherSta
                     <ProgressBar value={activeStudentsPercent} size="sm" />
                   </div>
 
-                  <div className="ui-card-soft rounded-[14px] sm:rounded-[16px] px-4 py-4">
+                  <div className="ui-card-soft rounded-[8px] sm:rounded-[10px] px-4 py-4">
                     <p className="text-sm font-medium text-[var(--theme-text-muted)]">Ключевой вывод</p>
                     <p className="mt-2 text-base font-semibold text-[var(--theme-text-strong)]">
                       {totalUnfilled > totalSolved
@@ -480,17 +480,17 @@ function RankingCard({
   }>;
 }) {
   return (
-    <article className="ui-surface ui-panel-soft rounded-[14px] sm:rounded-[16px] p-3.5 sm:rounded-[14px] sm:rounded-[16px] sm:p-6">
+    <article className="ui-surface ui-panel-soft rounded-[8px] p-3.5 sm:rounded-[10px] sm:p-6">
       <h2 className="font-display text-[1.4rem] font-semibold text-[var(--theme-text-strong)] sm:text-[1.15rem] sm:text-[1.1rem] sm:text-[1.25rem]">{title}</h2>
 
       {items.length === 0 ? (
-        <div className="ui-panel-soft mt-5 rounded-[14px] sm:rounded-[16px] border-dashed px-4 py-8 text-center text-sm text-[var(--theme-text-muted)]">
+        <div className="ui-panel-soft mt-5 rounded-[8px] sm:rounded-[10px] border-dashed px-4 py-8 text-center text-sm text-[var(--theme-text-muted)]">
           {emptyMessage}
         </div>
       ) : (
         <div className="mt-5 space-y-3">
           {items.map((item, index) => (
-            <article key={item.key} className="ui-card-soft rounded-[14px] sm:rounded-[16px] px-4 py-4">
+            <article key={item.key} className="ui-card-soft rounded-[8px] sm:rounded-[10px] px-4 py-4">
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <div className="flex items-center gap-2">

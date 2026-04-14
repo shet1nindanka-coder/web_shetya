@@ -92,7 +92,7 @@ export function FileDropInput({
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
         className={cx(
-          "rounded-[20px] border border-dashed px-4 py-5 transition sm:px-5",
+          "rounded-[10px] border border-dashed px-4 py-5 transition sm:px-5",
           isDragging
             ? "border-[var(--theme-accent-border)] bg-[var(--theme-accent-soft)] shadow-[0_14px_30px_rgba(59,130,246,0.12)]"
             : "ui-panel-soft"
@@ -111,7 +111,7 @@ export function FileDropInput({
           <button
             type="button"
             onClick={() => inputRef.current?.click()}
-            className="ui-pressable ui-button-primary inline-flex shrink-0 justify-center rounded-[14px] px-4 py-2 text-sm font-semibold transition"
+            className="ui-pressable ui-button-primary inline-flex shrink-0 justify-center rounded-[12px] px-4 py-2 text-sm font-semibold transition"
           >
             {selectedFileName ? "Выбрать другой файл" : "Выбрать файл"}
           </button>

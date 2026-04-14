@@ -20,7 +20,7 @@ export function UpcomingDeadlinesCard({
     .slice(0, limit);
 
   return (
-    <section className="ui-section-card ui-fade-slide ui-surface rounded-[14px] border p-3.5 sm:rounded-[18px] sm:p-4 lg:rounded-[20px] lg:p-5">
+    <section className="ui-section-card ui-fade-slide ui-surface rounded-[8px] border p-3.5 sm:rounded-[10px] sm:p-4 lg:rounded-[12px] lg:p-5">
       <div className="mb-3.5 border-b pb-3.5">
         <h2 className="font-display text-[1.15rem] font-semibold text-[var(--theme-text-strong)] sm:text-[1.3rem] lg:text-[1.45rem]">
           {title}

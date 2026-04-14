@@ -98,8 +98,8 @@ export function AccountSettingsView({ user, notice }: AccountSettingsViewProps) 
         <div
           className={
             notice.tone === "success"
-              ? "ui-notice-success rounded-[18px] px-5 py-4 text-sm font-medium"
-              : "ui-notice-error rounded-[18px] px-5 py-4 text-sm font-medium"
+              ? "ui-notice-success rounded-[10px] px-5 py-4 text-sm font-medium"
+              : "ui-notice-error rounded-[10px] px-5 py-4 text-sm font-medium"
           }
           aria-live="polite"
         >
@@ -126,7 +126,7 @@ export function AccountSettingsView({ user, notice }: AccountSettingsViewProps) 
               name="name"
               defaultValue={user.name}
               placeholder="Ваше имя"
-              className="ui-input w-full rounded-[16px] px-4 py-3"
+              className="ui-input w-full rounded-[10px] px-4 py-3"
               required
               autoComplete="name"
             />
@@ -134,13 +134,13 @@ export function AccountSettingsView({ user, notice }: AccountSettingsViewProps) 
 
           <div className="space-y-2">
             <span className="ui-form-label">Логин для входа</span>
-            <div className="ui-readonly-field rounded-[16px] px-4 py-3">{user.email}</div>
+            <div className="ui-readonly-field rounded-[10px] px-4 py-3">{user.email}</div>
           </div>
 
           <div className="lg:col-span-2 flex flex-wrap items-center gap-3">
             <button
               type="submit"
-              className="ui-pressable ui-button-primary rounded-[16px] px-5 py-3 text-sm font-semibold transition"
+              className="ui-pressable ui-button-primary rounded-[10px] px-5 py-3 text-sm font-semibold transition"
             >
               Сохранить
             </button>
@@ -160,7 +160,7 @@ export function AccountSettingsView({ user, notice }: AccountSettingsViewProps) 
               type="password"
               name="currentPassword"
               placeholder="Введите текущий пароль"
-              className="ui-input w-full rounded-[16px] px-4 py-3"
+              className="ui-input w-full rounded-[10px] px-4 py-3"
               required
               autoComplete="current-password"
               spellCheck={false}
@@ -174,7 +174,7 @@ export function AccountSettingsView({ user, notice }: AccountSettingsViewProps) 
               name="newPassword"
               placeholder="Минимум 8 символов"
               minLength={8}
-              className="ui-input w-full rounded-[16px] px-4 py-3"
+              className="ui-input w-full rounded-[10px] px-4 py-3"
               required
               autoComplete="new-password"
               spellCheck={false}
@@ -188,7 +188,7 @@ export function AccountSettingsView({ user, notice }: AccountSettingsViewProps) 
               name="confirmPassword"
               placeholder="Повторите новый пароль"
               minLength={8}
-              className="ui-input w-full rounded-[16px] px-4 py-3"
+              className="ui-input w-full rounded-[10px] px-4 py-3"
               required
               autoComplete="new-password"
               spellCheck={false}
@@ -198,7 +198,7 @@ export function AccountSettingsView({ user, notice }: AccountSettingsViewProps) 
           <div className="xl:col-span-3 flex flex-wrap items-center gap-3">
             <button
               type="submit"
-              className="ui-pressable ui-button-primary rounded-[16px] px-5 py-3 text-sm font-semibold transition"
+              className="ui-pressable ui-button-primary rounded-[10px] px-5 py-3 text-sm font-semibold transition"
             >
               Обновить пароль
             </button>

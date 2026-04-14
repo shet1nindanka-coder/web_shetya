@@ -24,7 +24,7 @@ export default async function StudentTopicsPage() {
 
       <SectionCard title="Список тем">
         {data.topics.length === 0 ? (
-          <div className="ui-panel-soft rounded-[16px] border border-dashed px-4 py-8 text-center sm:rounded-[20px] sm:px-5 sm:py-10">
+          <div className="ui-panel-soft rounded-[10px] border border-dashed px-4 py-8 text-center sm:rounded-[12px] sm:px-5 sm:py-10">
             <p className="font-display text-lg font-semibold text-[var(--theme-text-strong)] sm:text-xl">Темы пока не добавлены</p>
           </div>
         ) : (
@@ -35,7 +35,7 @@ export default async function StudentTopicsPage() {
               const isCompleted = topic.totalNumbers > 0 && solvedCount === topic.totalNumbers;
 
               return (
-                <article key={topic.id} className="ui-surface rounded-[14px] border p-3.5 sm:rounded-[16px] sm:p-4">
+                <article key={topic.id} className="ui-surface rounded-[8px] border p-3.5 sm:rounded-[10px] sm:p-4">
                   <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                     <div className="min-w-0 flex-1 space-y-2">
                       <div className="flex flex-wrap items-center gap-2">

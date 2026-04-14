@@ -41,7 +41,7 @@ export default async function TeacherStudentPage({ params }: TeacherStudentPageP
           <>
             <a
               href={`/teacher/students/${data.student.id}/export`}
-              className="ui-pressable ui-button-secondary inline-flex justify-center rounded-[14px] px-4 py-2.5 text-sm font-semibold transition"
+              className="ui-pressable ui-button-secondary inline-flex justify-center rounded-[8px] px-4 py-2.5 text-sm font-semibold transition"
             >
               Экспорт прогресса Excel
             </a>
@@ -56,7 +56,7 @@ export default async function TeacherStudentPage({ params }: TeacherStudentPageP
 
       <SectionCard title="Темы ученика">
         {!data.notesEnabled ? (
-          <div className="ui-notice-warning rounded-[24px] px-4 py-3 text-sm">
+          <div className="ui-notice-warning rounded-[12px] px-4 py-3 text-sm">
             Заметки ученика появятся здесь после обновления базы данных до актуальной версии.
           </div>
         ) : null}

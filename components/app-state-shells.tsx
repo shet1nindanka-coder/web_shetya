@@ -15,23 +15,23 @@ export function AuthLoadingState() {
       <div className="pointer-events-none absolute left-1/2 top-24 h-72 w-72 -translate-x-1/2 rounded-full bg-brand-300/18 blur-3xl" />
 
       <div className="content-shell mx-auto flex min-h-screen w-full max-w-7xl items-center justify-center px-4 py-8 sm:px-6 lg:px-8">
-        <div className="ui-surface w-full max-w-md rounded-[36px] border p-8 backdrop-blur">
+        <div className="ui-state-shell w-full max-w-md rounded-[12px] p-6 sm:rounded-[12px] sm:p-8">
           <div className="mb-8 flex flex-col items-center text-center">
-            <div className="ui-skeleton h-14 w-14 rounded-2xl" />
+            <div className="ui-skeleton h-14 w-14 rounded-[8px]" />
             <div className="ui-skeleton mt-4 h-3 w-28 rounded-full" />
-            <div className="ui-skeleton mt-5 h-10 w-52 rounded-2xl" />
+            <div className="ui-skeleton mt-5 h-10 w-52 rounded-[8px]" />
           </div>
 
           <div className="space-y-4">
             <div className="space-y-2">
               <div className="ui-skeleton h-3 w-16 rounded-full" />
-              <div className="ui-skeleton h-12 w-full rounded-2xl" />
+              <div className="ui-skeleton h-12 w-full rounded-[8px]" />
             </div>
             <div className="space-y-2">
               <div className="ui-skeleton h-3 w-20 rounded-full" />
-              <div className="ui-skeleton h-12 w-full rounded-2xl" />
+              <div className="ui-skeleton h-12 w-full rounded-[8px]" />
             </div>
-            <div className="ui-skeleton h-12 w-full rounded-2xl" />
+            <div className="ui-skeleton h-12 w-full rounded-[8px]" />
           </div>
         </div>
       </div>
@@ -54,7 +54,7 @@ export function DashboardLoadingState({ showSectionTabs = false }: { showSection
             </div>
           </div>
 
-          <div className="ui-surface rounded-[24px] border px-5 py-4 shadow-sm">
+          <div className="ui-state-shell rounded-[10px] px-4 py-3 sm:px-5 sm:py-4">
             <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">
               <div className="space-y-2">
                 <div className="ui-skeleton h-4 w-32 rounded-full" />
@@ -77,7 +77,7 @@ export function DashboardSectionLoadingState({ showSectionTabs = false }: { show
   return (
     <>
       {showSectionTabs ? (
-        <div className="ui-surface mb-8 flex flex-wrap gap-2 rounded-[28px] border p-3 shadow-sm backdrop-blur">
+        <div className="ui-toolbar-shell mb-8 flex flex-wrap gap-2 rounded-[10px] p-2.5">
           <div className="ui-skeleton h-11 w-28 rounded-full" />
           <div className="ui-skeleton h-11 w-28 rounded-full" />
           <div className="ui-skeleton h-11 w-32 rounded-full" />
@@ -87,14 +87,14 @@ export function DashboardSectionLoadingState({ showSectionTabs = false }: { show
 
       <div className="space-y-8">
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-          <div className="ui-skeleton h-40 rounded-[28px]" />
-          <div className="ui-skeleton h-40 rounded-[28px]" />
-          <div className="ui-skeleton h-40 rounded-[28px]" />
-          <div className="ui-skeleton h-40 rounded-[28px]" />
+          <div className="ui-skeleton h-40 rounded-[10px]" />
+          <div className="ui-skeleton h-40 rounded-[10px]" />
+          <div className="ui-skeleton h-40 rounded-[10px]" />
+          <div className="ui-skeleton h-40 rounded-[10px]" />
         </div>
 
-        <div className="ui-skeleton h-[220px] rounded-[32px]" />
-        <div className="ui-skeleton h-[340px] rounded-[32px]" />
+        <div className="ui-skeleton h-[220px] rounded-[12px]" />
+        <div className="ui-skeleton h-[340px] rounded-[12px]" />
       </div>
     </>
   );
@@ -103,8 +103,8 @@ export function DashboardSectionLoadingState({ showSectionTabs = false }: { show
 export function RouteErrorState({ title, description, reset, homeHref, homeLabel }: RouteErrorStateProps) {
   return (
       <div className="mx-auto flex min-h-[60vh] w-full max-w-3xl items-center justify-center px-4 py-10">
-      <div className="ui-pop-in ui-surface w-full rounded-[36px] border p-8 text-center backdrop-blur">
-        <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-[var(--theme-danger-soft)] text-lg font-semibold text-[var(--theme-danger-text)] shadow-sm">
+      <div className="ui-pop-in ui-state-shell w-full rounded-[12px] p-6 text-center sm:rounded-[12px] sm:p-8">
+        <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-[8px] bg-[var(--theme-danger-soft)] text-lg font-semibold text-[var(--theme-danger-text)] shadow-sm">
           !
         </div>
         <h1 className="font-display mt-5 text-3xl font-semibold text-[var(--theme-text-strong)]">{title}</h1>
@@ -114,13 +114,13 @@ export function RouteErrorState({ title, description, reset, homeHref, homeLabel
           <button
             type="button"
             onClick={reset}
-            className="ui-pressable ui-button-primary rounded-full px-5 py-3 text-sm font-semibold transition"
+            className="ui-pressable ui-button-primary rounded-[12px] px-5 py-3 text-sm font-semibold transition"
           >
             Попробовать снова
           </button>
           <Link
             href={homeHref}
-            className="ui-pressable ui-button-secondary rounded-full px-5 py-3 text-sm font-semibold transition"
+            className="ui-pressable ui-button-secondary rounded-[12px] px-5 py-3 text-sm font-semibold transition"
           >
             {homeLabel}
           </Link>

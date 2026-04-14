@@ -81,8 +81,8 @@ export default async function TeacherTopicPage({ params, searchParams }: Teacher
         <div
           className={
             notice.tone === "success"
-              ? "ui-notice-success rounded-[14px] px-4 py-3 text-sm font-medium sm:rounded-[16px]"
-              : "ui-notice-error rounded-[14px] px-4 py-3 text-sm font-medium sm:rounded-[16px]"
+              ? "ui-notice-success rounded-[8px] px-4 py-3 text-sm font-medium sm:rounded-[10px]"
+              : "ui-notice-error rounded-[8px] px-4 py-3 text-sm font-medium sm:rounded-[10px]"
           }
         >
           {notice.message}
@@ -111,7 +111,7 @@ export default async function TeacherTopicPage({ params, searchParams }: Teacher
         <form action={updateTopicAction} className="space-y-4 sm:space-y-5" encType="multipart/form-data">
           <input type="hidden" name="topicId" value={data.topic.id} />
 
-          <div className="ui-panel-soft space-y-3 rounded-[14px] p-3.5 sm:space-y-4 sm:rounded-[18px] sm:p-4">
+          <div className="ui-panel-soft space-y-3 rounded-[8px] p-3.5 sm:space-y-4 sm:rounded-[10px] sm:p-4">
             <h3 className="text-base font-semibold text-[var(--theme-text-strong)] sm:text-lg">Основная информация</h3>
 
             <div className="grid gap-3 sm:gap-4">
@@ -121,7 +121,7 @@ export default async function TeacherTopicPage({ params, searchParams }: Teacher
                   type="text"
                   name="title"
                   defaultValue={data.topic.title}
-                  className="ui-input w-full rounded-[12px] px-3.5 py-2.5 sm:rounded-[14px]"
+                  className="ui-input w-full rounded-[8px] px-3.5 py-2.5 sm:rounded-[10px]"
                   required
                 />
               </label>
@@ -132,14 +132,14 @@ export default async function TeacherTopicPage({ params, searchParams }: Teacher
                   name="description"
                   rows={3}
                   defaultValue={data.topic.description}
-                  className="ui-input w-full rounded-[12px] px-3.5 py-2.5 sm:rounded-[14px]"
+                  className="ui-input w-full rounded-[8px] px-3.5 py-2.5 sm:rounded-[10px]"
                   required
                 />
               </label>
             </div>
           </div>
 
-          <div className="ui-panel-soft space-y-3 rounded-[14px] p-3.5 sm:space-y-4 sm:rounded-[18px] sm:p-4">
+          <div className="ui-panel-soft space-y-3 rounded-[8px] p-3.5 sm:space-y-4 sm:rounded-[10px] sm:p-4">
             <h3 className="text-base font-semibold text-[var(--theme-text-strong)] sm:text-lg">Номера</h3>
             <TopicNumbersField
               name="numbers"
@@ -149,11 +149,11 @@ export default async function TeacherTopicPage({ params, searchParams }: Teacher
             />
           </div>
 
-          <div className="ui-panel-soft space-y-3 rounded-[14px] p-3.5 sm:space-y-4 sm:rounded-[18px] sm:p-4">
+          <div className="ui-panel-soft space-y-3 rounded-[8px] p-3.5 sm:space-y-4 sm:rounded-[10px] sm:p-4">
             <h3 className="text-base font-semibold text-[var(--theme-text-strong)] sm:text-lg">Файлы</h3>
 
             <div className="grid gap-4 xl:grid-cols-2">
-              <div className="ui-card-soft space-y-3 rounded-[12px] p-3 sm:space-y-4 sm:rounded-[16px] sm:p-3.5">
+              <div className="ui-card-soft space-y-3 rounded-[12px] p-3 sm:space-y-4 sm:rounded-[10px] sm:p-3.5">
                 <FileResourceCard title="Теория" file={data.topic.theoryFile} showPreview={false} />
                 <FileDropInput
                   name="theoryFile"
@@ -176,7 +176,7 @@ export default async function TeacherTopicPage({ params, searchParams }: Teacher
                 ) : null}
               </div>
 
-              <div className="ui-card-soft space-y-3 rounded-[12px] p-3 sm:space-y-4 sm:rounded-[16px] sm:p-3.5">
+              <div className="ui-card-soft space-y-3 rounded-[12px] p-3 sm:space-y-4 sm:rounded-[10px] sm:p-3.5">
                 <FileResourceCard title="Задания" file={data.topic.homeworkFile} showPreview={false} />
                 <FileDropInput
                   name="homeworkFile"
@@ -201,7 +201,7 @@ export default async function TeacherTopicPage({ params, searchParams }: Teacher
             </div>
           </div>
 
-          <div className="ui-card-soft space-y-2.5 rounded-[14px] p-3.5 sm:rounded-[18px] sm:p-4">
+          <div className="ui-card-soft space-y-2.5 rounded-[8px] p-3.5 sm:rounded-[10px] sm:p-4">
             <h3 className="text-base font-semibold text-[var(--theme-text-strong)] sm:text-lg">Сохранение</h3>
             <TopicEditSubmitButton />
           </div>

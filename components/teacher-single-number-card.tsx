@@ -178,7 +178,7 @@ export function TeacherSingleNumberCard({
 
       <div className="grid gap-4 lg:grid-cols-2">
         {/* Условие */}
-        <div className="space-y-2.5 rounded-[14px] border border-[var(--theme-border-soft)] p-3 sm:rounded-[18px] sm:p-4">
+        <div className="space-y-2.5 rounded-[8px] border border-[var(--theme-border-soft)] p-3 sm:rounded-[10px] sm:p-4">
           <p className="ui-kicker">Условие (LaTeX)</p>
 
           <textarea
@@ -227,7 +227,7 @@ export function TeacherSingleNumberCard({
         </div>
 
         {/* Ответ */}
-        <div className="space-y-2.5 rounded-[14px] border border-[var(--theme-border-soft)] p-3 sm:rounded-[18px] sm:p-4">
+        <div className="space-y-2.5 rounded-[8px] border border-[var(--theme-border-soft)] p-3 sm:rounded-[10px] sm:p-4">
           <p className="ui-kicker">Ответ (LaTeX)</p>
 
           <textarea
