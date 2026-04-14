@@ -48,24 +48,22 @@ export function DashboardNav({ user, studentStreak }: DashboardNavProps) {
         </Link>
 
         {/* Desktop profile */}
-        <div className="app-topbar-profile hidden items-center gap-2.5 rounded-[14px] border px-3 py-2 sm:flex sm:rounded-[16px]">
+        <div className="app-topbar-profile hidden items-center gap-2 rounded-[14px] border px-3 py-2 sm:flex sm:rounded-[16px]">
           <div className="min-w-0">
-            <div className="flex items-center gap-2">
-              <p className="truncate text-sm font-semibold text-[var(--theme-text-strong)]">{user.name}</p>
+            <p className="truncate text-sm font-semibold text-[var(--theme-text-strong)]">{user.name}</p>
+            <div className="mt-0.75 flex flex-wrap items-center gap-2 text-xs text-[var(--theme-text-muted)]">
               {user.role === UserRole.STUDENT && studentStreak ? (
                 <StudentStreakBadge currentStreak={studentStreak.currentStreak} />
               ) : null}
-            </div>
-            <div className="mt-0.5 flex items-center gap-1.5 text-xs text-[var(--theme-text-muted)]">
               <p className="truncate">{user.email}</p>
-              <span className="hidden text-[var(--theme-text-soft)] lg:inline">•</span>
-              <span className="hidden whitespace-nowrap lg:inline">{roleLabel}</span>
+              <span className="text-[var(--theme-text-soft)]">•</span>
+              <span className="whitespace-nowrap">{roleLabel}</span>
             </div>
           </div>
           <form action={logoutAction}>
             <button
               type="submit"
-              className="ui-pressable ui-button-secondary rounded-[10px] px-3 py-1.5 text-xs font-medium transition"
+              className="ui-pressable rounded-[10px] border border-[var(--theme-border-soft)] px-2.5 py-1.5 text-xs font-medium text-[var(--theme-text-muted)] transition hover:border-[var(--theme-border)] hover:text-[var(--theme-text-strong)]"
             >
               Выйти
             </button>
@@ -108,13 +106,13 @@ export function DashboardNav({ user, studentStreak }: DashboardNavProps) {
                   {user.name.charAt(0).toUpperCase()}
                 </div>
                 <div className="min-w-0 flex-1">
-                  <div className="flex flex-wrap items-center gap-2">
-                    <p className="truncate text-sm font-semibold text-[var(--theme-text-strong)]">{user.name}</p>
+                  <p className="truncate text-sm font-semibold text-[var(--theme-text-strong)]">{user.name}</p>
+                  <div className="mt-1 flex flex-wrap items-center gap-2">
                     {user.role === UserRole.STUDENT && studentStreak ? (
                       <StudentStreakBadge currentStreak={studentStreak.currentStreak} />
                     ) : null}
+                    <p className="truncate text-xs text-[var(--theme-text-muted)]">{user.email}</p>
                   </div>
-                  <p className="truncate text-xs text-[var(--theme-text-muted)]">{user.email}</p>
                   <p className="mt-0.5 text-[11px] uppercase tracking-[0.12em] text-[var(--theme-text-soft)]">{roleLabel}</p>
                 </div>
               </div>
