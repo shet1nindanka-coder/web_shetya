@@ -1,32 +1,43 @@
+"use client";
+
 import { SectionCard } from "@/components/section-card";
 import { StudentStreakBadge } from "@/components/student-streak-badge";
 import type { StudentStreak } from "@/lib/student-streak";
 import { getStudentStreakColorMeta } from "@/lib/student-streak-colors";
+import { useStudentStreak } from "@/components/student-streak-provider";
+import { useStreakMotion } from "@/components/use-streak-motion";
 
 type StudentWeeklyActivityProps = {
   streak: StudentStreak;
 };
 
 export function StudentWeeklyActivity({ streak }: StudentWeeklyActivityProps) {
-  const maxCount = Math.max(1, ...streak.dailyActivity.map((d) => d.count));
-  const streakColorMeta = getStudentStreakColorMeta(streak.currentStreak);
+  const liveStreak = useStudentStreak();
+  const currentStreak = liveStreak?.streak ?? streak;
+  const motionState = useStreakMotion(currentStreak.currentStreak);
+  const maxCount = Math.max(1, ...currentStreak.dailyActivity.map((d) => d.count));
+  const streakColorMeta = getStudentStreakColorMeta(currentStreak.currentStreak);
   const solvedTodayLabel =
-    streak.solvedToday > 0 ? `${streak.solvedToday} ${formatSolvedLabel(streak.solvedToday)}` : "Без закрытых номеров";
+    currentStreak.solvedToday > 0
+      ? `${currentStreak.solvedToday} ${formatSolvedLabel(currentStreak.solvedToday)}`
+      : "Без закрытых номеров";
   const goalTitle = streakColorMeta.nextThreshold
     ? `${streakColorMeta.nextThreshold} ${formatDaysLabel(streakColorMeta.nextThreshold)}`
     : "Максимальный цвет";
   const goalHint =
     streakColorMeta.nextThreshold && streakColorMeta.daysToNextThreshold !== null
-      ? streak.currentStreak > 0
+      ? currentStreak.currentStreak > 0
         ? `До нового цвета осталось ${streakColorMeta.daysToNextThreshold} ${formatDaysLabel(streakColorMeta.daysToNextThreshold)}.`
         : `Первый цвет откроется на ${streakColorMeta.nextThreshold}-м дне.`
       : "Вы уже открыли последний цветовой уровень.";
   const streakHeadline =
-    streak.currentStreak > 0 ? `${streak.currentStreak} ${formatDaysLabel(streak.currentStreak)} подряд` : "Зажгите первый день";
+    currentStreak.currentStreak > 0
+      ? `${currentStreak.currentStreak} ${formatDaysLabel(currentStreak.currentStreak)} подряд`
+      : "Зажгите первый день";
   const streakHint =
-    streak.solvedToday > 0
+    currentStreak.solvedToday > 0
       ? "Сегодняшний шаг уже засчитан — огонек сохранён."
-      : streak.currentStreak > 0
+      : currentStreak.currentStreak > 0
         ? "Закройте хотя бы один номер сегодня, чтобы серия не оборвалась."
         : "Закройте хотя бы один номер сегодня, и огонек начнётся.";
 
@@ -34,7 +45,10 @@ export function StudentWeeklyActivity({ streak }: StudentWeeklyActivityProps) {
     <SectionCard title="Огонек и ритм" description="Стрик держится, пока каждый день закрывается хотя бы один номер.">
       <div className="grid gap-4 xl:grid-cols-[minmax(0,0.92fr)_minmax(0,1.08fr)]">
         <div className="space-y-3">
-          <div className="student-streak-hero rounded-[22px] border px-4 py-4 sm:px-5 sm:py-5">
+          <div
+            className="student-streak-hero rounded-[22px] border px-4 py-4 sm:px-5 sm:py-5"
+            data-streak-animate={motionState ?? undefined}
+          >
             <div className="flex items-start justify-between gap-3">
               <div className="space-y-2">
                 <p className="ui-kicker text-[var(--theme-text-soft)]">Огонек</p>
@@ -42,7 +56,7 @@ export function StudentWeeklyActivity({ streak }: StudentWeeklyActivityProps) {
                   {streakHeadline}
                 </h3>
               </div>
-              <StudentStreakBadge currentStreak={streak.currentStreak} size="md" className="shrink-0" />
+                <StudentStreakBadge currentStreak={currentStreak.currentStreak} size="md" className="shrink-0" />
             </div>
             <p className="ui-hint mt-3 max-w-lg text-sm leading-relaxed text-[var(--theme-text-muted)]">
               {streakHint}
@@ -69,15 +83,15 @@ export function StudentWeeklyActivity({ streak }: StudentWeeklyActivityProps) {
             <div>
               <p className="ui-kicker">За неделю</p>
               <p className="mt-1 text-sm text-[var(--theme-text-muted)]">
-                {streak.solvedThisWeek} {formatSolvedLabel(streak.solvedThisWeek)} закрыто за последние 7 дней.
+                {currentStreak.solvedThisWeek} {formatSolvedLabel(currentStreak.solvedThisWeek)} закрыто за последние 7 дней.
               </p>
             </div>
           </div>
 
           <div className="flex items-end justify-between gap-1.5 sm:gap-2" style={{ height: 118 }}>
-            {streak.dailyActivity.map((day) => {
+            {currentStreak.dailyActivity.map((day) => {
               const heightPercent = maxCount > 0 ? Math.max(day.count > 0 ? 12 : 4, (day.count / maxCount) * 100) : 4;
-              const isToday = day.date === streak.dailyActivity.at(-1)?.date;
+              const isToday = day.date === currentStreak.dailyActivity.at(-1)?.date;
 
               return (
                 <div key={day.date} className="flex flex-1 flex-col items-center gap-2">

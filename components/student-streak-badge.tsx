@@ -1,6 +1,9 @@
+"use client";
+
 import type { CSSProperties } from "react";
 import { cx } from "@/lib/utils";
 import { getStudentStreakColorMeta, type StudentStreakColorTier } from "@/lib/student-streak-colors";
+import { useStreakMotion } from "@/components/use-streak-motion";
 
 type StudentStreakBadgeProps = {
   currentStreak: number;
@@ -14,6 +17,7 @@ export function StudentStreakBadge({
   className
 }: StudentStreakBadgeProps) {
   const active = currentStreak > 0;
+  const motionState = useStreakMotion(currentStreak);
   const streakColorMeta = getStudentStreakColorMeta(currentStreak);
   const palette = STREAK_TIER_PALETTES[streakColorMeta.tier];
   const style = active
@@ -42,6 +46,7 @@ export function StudentStreakBadge({
       data-active={active}
       data-size={size}
       data-tier={streakColorMeta.tier}
+      data-animate={motionState ?? undefined}
       aria-label={active ? `Стрик: ${currentStreak} ${formatFullDays(currentStreak)}. ${nextColorLabel}` : "Стрик пока не начат"}
       title={active ? nextColorLabel : "Стрик пока не начат"}
       style={style}

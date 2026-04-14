@@ -3,6 +3,7 @@
 import { UserRole } from "@prisma/client";
 import { startTransition, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
+import { STUDENT_STREAK_REALTIME_EVENT } from "@/lib/student-streak-realtime";
 
 type DashboardRealtimeListenerProps = {
   userId: string;
@@ -20,7 +21,7 @@ type DashboardRealtimeEvent =
       topicId?: string;
     }
   | {
-      kind: "student-progress-changed";
+      kind: "student-progress-changed" | "student-deadlines-changed";
       occurredAt: string;
       studentId: string;
       topicId?: string;
@@ -41,6 +42,10 @@ function shouldRefresh(userId: string, role: UserRole, event: DashboardRealtimeE
 
   if (event.kind === "topic-content-changed") {
     return true;
+  }
+
+  if (event.kind === "student-deadlines-changed") {
+    return event.studentId === userId;
   }
 
   if (event.kind !== "student-progress-changed") {
@@ -76,6 +81,15 @@ export function DashboardRealtimeListener({
     source.onmessage = (message) => {
       try {
         const event = JSON.parse(message.data) as DashboardRealtimeEvent;
+
+        if (
+          role === UserRole.STUDENT &&
+          event.kind === "student-progress-changed" &&
+          event.studentId === userId
+        ) {
+          window.dispatchEvent(new CustomEvent(STUDENT_STREAK_REALTIME_EVENT, { detail: event }));
+          return;
+        }
 
         if (shouldRefresh(userId, role, event)) {
           scheduleRefresh();

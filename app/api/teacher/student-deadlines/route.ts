@@ -215,7 +215,7 @@ export async function POST(request: Request) {
 
   revalidateDeadlineRoutes(studentId, topicId);
   publishDashboardRealtimeEvent({
-    kind: "student-progress-changed",
+    kind: "student-deadlines-changed",
     studentId,
     topicId
   });

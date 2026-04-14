@@ -16,6 +16,12 @@ export type DashboardRealtimeEvent =
       occurredAt: string;
       studentId: string;
       topicId?: string;
+    }
+  | {
+      kind: "student-deadlines-changed";
+      occurredAt: string;
+      studentId: string;
+      topicId?: string;
     };
 
 type DashboardRealtimeListener = (event: DashboardRealtimeEvent) => void;
