@@ -41,7 +41,7 @@ export function DashboardNav({ user, studentStreak }: DashboardNavProps) {
 
   return (
     <header className="app-topbar border-b sm:sticky sm:top-0 sm:z-20">
-      <div className="flex w-full items-center justify-between gap-3 px-3 py-2.5 sm:px-6 sm:py-3 lg:px-8">
+      <div className="mx-auto flex w-full max-w-[1360px] items-center justify-between gap-3 px-2 py-2.5 sm:px-4 sm:py-3 lg:px-6">
         {/* Logo */}
         <Link href="/" className="app-brand-link inline-flex items-center gap-2.5 text-[var(--theme-text-strong)]">
           <span className="app-logo-mark flex h-9 w-9 items-center justify-center rounded-[8px] text-sm font-semibold text-white sm:h-10 sm:w-10">
