@@ -7,6 +7,7 @@ import { LatexAnswerPreview } from "@/components/latex-answer-preview";
 import { SectionCard } from "@/components/section-card";
 import { TelegramSpoiler } from "@/components/telegram-spoiler";
 import { markStudentTopicsNeedsRefresh } from "@/components/student-topics-refresh-bridge";
+import { useStudentStreak } from "@/components/student-streak-provider";
 import { cx, homeworkStatusMeta } from "@/lib/utils";
 
 type StudentSingleNumberCardProps = {
@@ -34,6 +35,7 @@ export function StudentSingleNumberCard({
   deadlineAt: _deadlineAt,
   notesEnabled
 }: StudentSingleNumberCardProps) {
+  const streakContext = useStudentStreak();
   const [status, setStatus] = useState(initialStatus);
   const [note, setNote] = useState(initialNote);
   const [savedNote, setSavedNote] = useState(initialNote);
@@ -74,6 +76,7 @@ export function StudentSingleNumberCard({
       }
 
       markStudentTopicsNeedsRefresh();
+      streakContext?.refresh();
     } catch (error) {
       if (controller.signal.aborted) return;
       setStatus(previousStatus);
@@ -83,7 +86,7 @@ export function StudentSingleNumberCard({
         setIsSavingStatus(false);
       }
     }
-  }, [homeworkNumberId, isSavingStatus, status, topicId]);
+  }, [homeworkNumberId, isSavingStatus, status, streakContext, topicId]);
 
   const saveNote = useCallback(async (value?: string) => {
     const draft = (value ?? note).trim();

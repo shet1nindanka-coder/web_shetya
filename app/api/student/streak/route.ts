@@ -1,7 +1,7 @@
 import { UserRole } from "@prisma/client";
 import { NextResponse } from "next/server";
 import { tryGetCurrentUser } from "@/lib/auth";
-import { getStudentStreakSnapshot } from "@/lib/student-streak";
+import { computeStudentStreak } from "@/lib/student-streak";
 
 export const runtime = "nodejs";
 
@@ -12,7 +12,7 @@ export async function GET() {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const streak = await getStudentStreakSnapshot(user.id);
+  const streak = await computeStudentStreak(user.id);
 
   return NextResponse.json({ streak });
 }

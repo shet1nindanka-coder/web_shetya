@@ -80,7 +80,14 @@ export function buildStudentStreak(entries: TimelineEntry[]): StudentStreak {
   };
 }
 
-export const getStudentStreakSnapshot = cache(async (studentId: string) => {
+// Uncached version: safe to call from Route Handlers (outside the RSC render scope,
+// React's cache() can leak results across requests in the same Node process,
+// which would freeze the streak after the first fetch).
+export async function computeStudentStreak(studentId: string): Promise<StudentStreak> {
   const entries = await getProgressTimeline(studentId, 112);
   return buildStudentStreak(entries);
-});
+}
+
+// Cached version: dedupes calls within a single Server Component render
+// (e.g. layout + page in the same request both reading the streak).
+export const getStudentStreakSnapshot = cache(computeStudentStreak);

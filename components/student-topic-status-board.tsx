@@ -9,6 +9,7 @@ import { LatexAnswerPreview } from "@/components/latex-answer-preview";
 import { ProgressBar } from "@/components/progress-bar";
 import { SectionCard } from "@/components/section-card";
 import { markStudentTopicsNeedsRefresh } from "@/components/student-topics-refresh-bridge";
+import { useStudentStreak } from "@/components/student-streak-provider";
 import { TelegramSpoiler } from "@/components/telegram-spoiler";
 import { completionPercent, cx, getStatusCounts, homeworkStatusMeta } from "@/lib/utils";
 
@@ -644,6 +645,7 @@ export function StudentTopicStatusBoard({
   initialNumber,
   initialNumbers
 }: StudentTopicStatusBoardProps) {
+  const streakContext = useStudentStreak();
   const initialState = useMemo<StudentNumberState[]>(
     () =>
       initialNumbers.map((number) => ({
@@ -897,6 +899,7 @@ export function StudentTopicStatusBoard({
         )
       );
       markStudentTopicsNeedsRefresh();
+      streakContext?.refresh();
     } catch (error) {
       if (controller.signal.aborted || statusRequestVersionRef.current[homeworkNumberId] !== nextVersion) {
         return;
@@ -920,7 +923,7 @@ export function StudentTopicStatusBoard({
         delete statusControllersRef.current[homeworkNumberId];
       }
     }
-  }, [topicId, updateNumbersState]);
+  }, [streakContext, topicId, updateNumbersState]);
 
   const saveNumberNote = useCallback(
     async (homeworkNumberId: string, nextDraft?: string) => {

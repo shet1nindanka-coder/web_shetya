@@ -18,6 +18,43 @@ enum HomeworkNumberStatus {
   RED
 }
 
+enum Subject {
+  MATH
+  INFORMATICS
+}
+
+enum LessonStatus {
+  PLANNED
+  ACTIVE
+  FINISHED
+}
+
+enum AttendanceStatus {
+  UNKNOWN
+  PRESENT
+  LATE
+  ABSENT
+  EXCUSED
+}
+
+enum TestKind {
+  PLACEMENT
+  LESSON
+}
+
+enum AttemptStatus {
+  IN_PROGRESS
+  SUBMITTED
+  GRADED
+}
+
+enum AssignmentReason {
+  NEW
+  REVIEW
+  GAP
+  DIAGNOSTIC
+}
+
 model User {
   id             String                    @id @default(cuid())
   name           String
@@ -29,6 +66,13 @@ model User {
   sessions       Session[]
   uploadedFiles  StoredFile[]              @relation("UploadedFiles")
   numberStatuses StudentTopicNumberStatus[]
+  studentProfile       StudentProfile?
+  groupsLed            StudentGroup[]      @relation("GroupTeacher")
+  lessonsTaught        Lesson[]            @relation("LessonTeacher")
+  lessonParticipations LessonParticipant[]
+  testsCreated         Test[]              @relation("TestCreator")
+  testAttempts         TestAttempt[]
+  topicMasteries       TopicMastery[]
 }
 
 model Session {
@@ -68,8 +112,16 @@ model Topic {
   theoryFile     StoredFile?         @relation("TheoryFile", fields: [theoryFileId], references: [id], onDelete: SetNull)
   homeworkFile   StoredFile?         @relation("HomeworkFile", fields: [homeworkFileId], references: [id], onDelete: SetNull)
   homeworkNumbers TopicHomeworkNumber[]
+  subject        Subject             @default(MATH)
+  grade          Int?
+  prerequisites  Topic[]             @relation("TopicPrereqs")
+  requiredFor    Topic[]             @relation("TopicPrereqs")
+  masteries      TopicMastery[]
+  tests          Test[]              @relation("TestTopic")
+  lessons        Lesson[]            @relation("LessonTopic")
 
   @@index([displayOrder])
+  @@index([subject, grade])
 }
 
 model TopicHomeworkNumber {
@@ -80,13 +132,19 @@ model TopicHomeworkNumber {
   answerFileId String?
   conditionLatex String?
   answerLatex  String?
+  difficulty         Int?
+  estimatedMinutes   Int?
+  usableInDiagnostic Boolean               @default(false)
   topic        Topic                     @relation(fields: [topicId], references: [id], onDelete: Cascade)
   answerFile   StoredFile?               @relation("NumberAnswerFile", fields: [answerFileId], references: [id], onDelete: SetNull)
   statuses     StudentTopicNumberStatus[]
+  assignmentItems LessonAssignmentItem[]
+  testQuestions   TestQuestion[]
 
   @@unique([topicId, number])
   @@index([answerFileId])
   @@index([topicId, displayOrder])
+  @@index([usableInDiagnostic])
 }
 
 model StudentTopicNumberStatus {
@@ -105,4 +163,178 @@ model StudentTopicNumberStatus {
   @@index([studentId, deadlineAt])
   @@index([studentId, status])
   @@index([homeworkNumberId])
+}
+
+model StudentProfile {
+  id         String        @id @default(cuid())
+  userId     String        @unique
+  subject    Subject?
+  grade      Int?
+  levelScore Int?
+  placedAt   DateTime?
+  groupId    String?
+  createdAt  DateTime      @default(now())
+  updatedAt  DateTime      @updatedAt
+  user       User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  group      StudentGroup? @relation(fields: [groupId], references: [id], onDelete: SetNull)
+
+  @@index([groupId])
+}
+
+model StudentGroup {
+  id        String           @id @default(cuid())
+  name      String
+  subject   Subject          @default(MATH)
+  grade     Int?
+  teacherId String
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
+  teacher   User             @relation("GroupTeacher", fields: [teacherId], references: [id], onDelete: Cascade)
+  members   StudentProfile[]
+  lessons   Lesson[]
+
+  @@index([teacherId])
+}
+
+model Lesson {
+  id           String              @id @default(cuid())
+  title        String
+  subject      Subject             @default(MATH)
+  teacherId    String
+  groupId      String?
+  topicId      String?
+  status       LessonStatus        @default(PLANNED)
+  startsAt     DateTime?
+  startedAt    DateTime?
+  finishedAt   DateTime?
+  createdAt    DateTime            @default(now())
+  updatedAt    DateTime            @updatedAt
+  teacher      User                @relation("LessonTeacher", fields: [teacherId], references: [id], onDelete: Cascade)
+  group        StudentGroup?       @relation(fields: [groupId], references: [id], onDelete: SetNull)
+  topic        Topic?              @relation("LessonTopic", fields: [topicId], references: [id], onDelete: SetNull)
+  participants LessonParticipant[]
+  tests        Test[]
+
+  @@index([teacherId])
+  @@index([groupId])
+  @@index([status])
+}
+
+model LessonParticipant {
+  id         String                 @id @default(cuid())
+  lessonId   String
+  studentId  String
+  attendance AttendanceStatus       @default(UNKNOWN)
+  joinedAt   DateTime?
+  queueOrder Int?
+  helpedAt   DateTime?
+  createdAt  DateTime               @default(now())
+  updatedAt  DateTime               @updatedAt
+  lesson     Lesson                 @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  student    User                   @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  items      LessonAssignmentItem[]
+
+  @@unique([lessonId, studentId])
+  @@index([lessonId, queueOrder])
+  @@index([studentId])
+}
+
+model LessonAssignmentItem {
+  id               String              @id @default(cuid())
+  participantId    String
+  homeworkNumberId String
+  order            Int                 @default(0)
+  reason           AssignmentReason    @default(NEW)
+  forReview        Boolean             @default(false)
+  createdAt        DateTime            @default(now())
+  participant      LessonParticipant   @relation(fields: [participantId], references: [id], onDelete: Cascade)
+  homeworkNumber   TopicHomeworkNumber @relation(fields: [homeworkNumberId], references: [id], onDelete: Cascade)
+
+  @@unique([participantId, homeworkNumberId])
+  @@index([participantId, order])
+  @@index([homeworkNumberId])
+}
+
+model Test {
+  id              String         @id @default(cuid())
+  kind            TestKind
+  title           String
+  subject         Subject        @default(MATH)
+  lessonId        String?
+  topicId         String?
+  durationMinutes Int            @default(15)
+  createdById     String
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+  lesson          Lesson?        @relation(fields: [lessonId], references: [id], onDelete: SetNull)
+  topic           Topic?         @relation("TestTopic", fields: [topicId], references: [id], onDelete: SetNull)
+  createdBy       User           @relation("TestCreator", fields: [createdById], references: [id], onDelete: Cascade)
+  questions       TestQuestion[]
+  attempts        TestAttempt[]
+
+  @@index([lessonId])
+  @@index([kind])
+}
+
+model TestQuestion {
+  id               String               @id @default(cuid())
+  testId           String
+  homeworkNumberId String?
+  promptLatex      String?
+  correctAnswer    String?
+  points           Int                  @default(1)
+  order            Int                  @default(0)
+  test             Test                 @relation(fields: [testId], references: [id], onDelete: Cascade)
+  homeworkNumber   TopicHomeworkNumber? @relation(fields: [homeworkNumberId], references: [id], onDelete: SetNull)
+  answers          TestAnswer[]
+
+  @@index([testId, order])
+  @@index([homeworkNumberId])
+}
+
+model TestAttempt {
+  id          String        @id @default(cuid())
+  testId      String
+  studentId   String
+  status      AttemptStatus @default(IN_PROGRESS)
+  score       Int?
+  maxScore    Int?
+  startedAt   DateTime      @default(now())
+  submittedAt DateTime?
+  test        Test          @relation(fields: [testId], references: [id], onDelete: Cascade)
+  student     User          @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  answers     TestAnswer[]
+
+  @@unique([testId, studentId])
+  @@index([studentId])
+}
+
+model TestAnswer {
+  id            String       @id @default(cuid())
+  attemptId     String
+  questionId    String
+  response      String?
+  isCorrect     Boolean?
+  awardedPoints Int          @default(0)
+  attempt       TestAttempt  @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+  question      TestQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
+
+  @@unique([attemptId, questionId])
+  @@index([questionId])
+}
+
+model TopicMastery {
+  id         String    @id @default(cuid())
+  studentId  String
+  topicId    String
+  mastered   Boolean   @default(false)
+  masteredAt DateTime?
+  source     String?
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  student    User      @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  topic      Topic     @relation(fields: [topicId], references: [id], onDelete: Cascade)
+
+  @@unique([studentId, topicId])
+  @@index([topicId])
 }
