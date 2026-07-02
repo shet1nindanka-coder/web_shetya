@@ -1,5 +1,6 @@
 import { UserRole } from "@prisma/client";
-import { PageHeader } from "@/components/page-header";
+import { ShbzNumberSearch } from "@/components/shbz-number-search";
+import { ShbzPageHeader } from "@/components/shbz-page-header";
 import { StudentWeeklyActivity } from "@/components/student-weekly-activity";
 import { UpcomingDeadlinesCard } from "@/components/upcoming-deadlines-card";
 import { requireUser } from "@/lib/auth";
@@ -16,16 +17,13 @@ export default async function StudentPage() {
   const assignmentDeadlines = groupStudentDeadlinesAsAssignments(deadlines);
 
   return (
-    <div className="space-y-5 sm:space-y-6">
-      <PageHeader
-        eyebrow="Обзор"
-        title="Ваш кабинет"
-        description="Только то, что помогает понять следующий шаг в учебе."
-      />
+    <div>
+      <ShbzPageHeader kicker="Обзор" title="Ваш кабинет" aside={<ShbzNumberSearch />} />
 
-      <UpcomingDeadlinesCard deadlines={assignmentDeadlines} limit={4} />
-
-      <StudentWeeklyActivity streak={streak} />
+      <div className="space-y-11">
+        <UpcomingDeadlinesCard deadlines={assignmentDeadlines} limit={4} />
+        <StudentWeeklyActivity streak={streak} />
+      </div>
     </div>
   );
 }

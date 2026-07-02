@@ -1,6 +1,7 @@
 import { UserRole } from "@prisma/client";
 import { DeadlinesCalendar } from "@/components/deadlines-calendar";
-import { PageHeader } from "@/components/page-header";
+import { ShbzNumberSearch } from "@/components/shbz-number-search";
+import { ShbzPageHeader } from "@/components/shbz-page-header";
 import { requireUser } from "@/lib/auth";
 import { getStudentDeadlines } from "@/lib/platform-data";
 import { groupStudentDeadlinesAsAssignments } from "@/lib/student-deadline-groups";
@@ -11,12 +12,8 @@ export default async function StudentDeadlinesPage() {
   const assignmentDeadlines = groupStudentDeadlinesAsAssignments(deadlines);
 
   return (
-    <div className="space-y-5 sm:space-y-6 min-h-[70vh]">
-      <PageHeader
-        eyebrow="Дедлайны"
-        title="Календарь домашних заданий"
-        description="Отмечайте приоритет на ближайшие дни и не пропускайте сроки."
-      />
+    <div className="min-h-[70vh]">
+      <ShbzPageHeader kicker="Дедлайны" title="Календарь домашних заданий" aside={<ShbzNumberSearch />} />
 
       <DeadlinesCalendar deadlines={assignmentDeadlines} />
     </div>

@@ -15,16 +15,19 @@ export default async function DashboardLayout({
   const studentStreak = user.role === UserRole.STUDENT ? await getStudentStreakSnapshot(user.id) : null;
 
   return (
-    <div className="app-dashboard-shell soft-grid min-h-screen">
+    <div
+      className="min-h-screen antialiased"
+      style={{
+        color: "var(--shbz-text-strong)",
+        background: "var(--shbz-page-bg)",
+        backgroundImage: "radial-gradient(640px 320px at 100% 0%, rgba(54, 224, 164, 0.07), rgba(90, 200, 234, 0) 70%)"
+      }}
+    >
       <StudentStreakProvider role={user.role} initialStreak={studentStreak}>
         <DashboardRealtimeListener userId={user.id} role={user.role} />
         <DashboardNav user={user} studentStreak={studentStreak} />
-        <main className="content-shell mx-auto w-full max-w-[1360px] px-2 py-3 sm:px-4 sm:py-5 lg:px-6">
-          <div className="app-dashboard-frame">
-            <div className="app-dashboard-inner">
-              {children}
-            </div>
-          </div>
+        <main className="mx-auto w-full max-w-[1180px] px-4 pb-16 pt-8 sm:px-8 sm:pb-[72px]">
+          {children}
         </main>
       </StudentStreakProvider>
     </div>

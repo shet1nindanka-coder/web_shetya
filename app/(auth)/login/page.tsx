@@ -21,15 +21,20 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
 
   return (
     <main
-      className="relative flex min-h-screen w-full items-center justify-center bg-white p-6 text-[#0A0A0A] antialiased"
+      className="relative flex min-h-screen w-full items-center justify-center p-6 antialiased"
       style={{
-        backgroundImage:
-          "radial-gradient(720px 420px at 50% -8%, rgba(54,224,164,0.12), rgba(90,200,234,0) 70%)"
+        color: "var(--shbz-text-strong)",
+        backgroundColor: "var(--shbz-page-bg)",
+        backgroundImage: "var(--shbz-page-glow)"
       }}
     >
       <div className="absolute left-9 top-8 flex flex-col gap-1">
-        <div className="text-[26px] font-black leading-none tracking-[-1.2px] text-[#0A0A0A]">ШБЗ</div>
-        <div className="text-[11px] font-semibold tracking-[0.2px] text-[#8B8F96]">Школа Базовых Знаний</div>
+        <div className="text-[26px] font-black leading-none tracking-[-1.2px]" style={{ color: "var(--shbz-text-strong)" }}>
+          ШБЗ
+        </div>
+        <div className="text-[11px] font-semibold tracking-[0.2px]" style={{ color: "var(--shbz-text-soft)" }}>
+          Школа Базовых Знаний
+        </div>
       </div>
 
       <LoginForm error={error} />

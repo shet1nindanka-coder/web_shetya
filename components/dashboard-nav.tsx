@@ -5,7 +5,6 @@ import { useState, useCallback, useEffect } from "react";
 import { usePathname } from "next/navigation";
 import { UserRole } from "@prisma/client";
 import { logoutAction } from "@/actions/auth";
-import { StudentStreakBadge } from "@/components/student-streak-badge";
 import { useStudentStreak } from "@/components/student-streak-provider";
 
 type DashboardNavProps = {
@@ -19,12 +18,50 @@ type DashboardNavProps = {
   } | null;
 };
 
+const studentItems = [
+  { href: "/student", label: "обзор", match: (p: string) => p === "/student" },
+  { href: "/student/topics", label: "темы", match: (p: string) => p.startsWith("/student/topics") },
+  { href: "/student/deadlines", label: "дедлайны", match: (p: string) => p.startsWith("/student/deadlines") },
+  { href: "/student/info", label: "общая инфа", match: (p: string) => p.startsWith("/student/info") },
+  {
+    href: "/student/settings",
+    label: "настройки",
+    match: (p: string) => p.startsWith("/student/settings") || p.startsWith("/student/account")
+  }
+];
+
+function initialsOf(name: string) {
+  const parts = name.trim().split(/\s+/).filter(Boolean);
+  if (parts.length === 0) {
+    return "?";
+  }
+  return parts
+    .slice(0, 2)
+    .map((part) => part.charAt(0).toUpperCase())
+    .join("");
+}
+
+function StreakFlame({ days }: { days: number }) {
+  return (
+    <span className="flex items-center gap-[5px]">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="var(--shbz-streak-flame)" aria-hidden="true">
+        <path d="M12 2c1 3-1.5 4.5-1.5 7A3.5 3.5 0 0 0 14 12c0-2 1.5-3 1.5-3 1 4 .5 5-.5 7a4 4 0 1 1-7-3.5C9.5 9 11 7 12 2z" />
+      </svg>
+      <span className="font-bold" style={{ color: "var(--shbz-streak-text)" }}>
+        {days} дн.
+      </span>
+    </span>
+  );
+}
+
 export function DashboardNav({ user, studentStreak }: DashboardNavProps) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const pathname = usePathname();
-  const roleLabel = user.role === UserRole.TEACHER ? "Преподаватель" : "Ученик";
+  const isStudent = user.role === UserRole.STUDENT;
+  const roleLabel = isStudent ? "Ученик" : "Преподаватель";
   const liveStreak = useStudentStreak();
   const streakValue = liveStreak?.streak ?? studentStreak;
+  const items = isStudent ? studentItems : [];
 
   const closeMobile = useCallback(() => setMobileOpen(false), []);
 
@@ -34,50 +71,68 @@ export function DashboardNav({ user, studentStreak }: DashboardNavProps) {
 
   useEffect(() => {
     if (!mobileOpen) return;
-    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") closeMobile(); };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") closeMobile();
+    };
     document.addEventListener("keydown", onKey);
     return () => document.removeEventListener("keydown", onKey);
   }, [mobileOpen, closeMobile]);
 
   return (
-    <header className="app-topbar border-b sm:sticky sm:top-0 sm:z-20">
-      <div className="mx-auto flex w-full max-w-[1360px] items-center justify-between gap-3 px-2 py-2.5 sm:px-4 sm:py-3 lg:px-6">
-        {/* Logo */}
-        <Link href="/" className="app-brand-link inline-flex items-center gap-2.5 text-[var(--theme-text-strong)]">
-          <span className="app-logo-mark flex h-9 w-9 items-center justify-center rounded-[8px] text-sm font-semibold text-white sm:h-10 sm:w-10">
-            T
+    <header className="shbz-topbar">
+      <div className="mx-auto flex w-full max-w-[1180px] flex-wrap items-center justify-between gap-x-7 gap-y-5 px-4 py-3.5 sm:px-8">
+        {/* Логотип */}
+        <Link href="/" className="flex shrink-0 items-center gap-3">
+          <span className="text-2xl font-black leading-none tracking-[-1.2px]" style={{ color: "var(--shbz-text-strong)" }}>
+            ШБЗ
           </span>
-          <p className="app-brand-title font-display text-[0.95rem] font-semibold leading-none sm:text-base">TutorFlow</p>
+          <span className="hidden h-[22px] w-px sm:block" style={{ background: "var(--shbz-divider)" }} />
+          <span className="hidden text-[13px] font-semibold sm:block" style={{ color: "var(--shbz-text-soft)" }}>
+            Школа Базовых Знаний
+          </span>
         </Link>
 
-        {/* Desktop profile */}
-        <div className="app-topbar-profile hidden items-center gap-2 rounded-[8px] border px-3 py-2 sm:flex sm:rounded-[10px]">
-          <div className="min-w-0">
-            <p className="truncate text-sm font-semibold text-[var(--theme-text-strong)]">{user.name}</p>
-            <div className="mt-0.75 flex flex-wrap items-center gap-2 text-xs text-[var(--theme-text-muted)]">
-              {user.role === UserRole.STUDENT && streakValue ? (
-                <StudentStreakBadge currentStreak={streakValue.currentStreak} />
+        {/* Таббар */}
+        {items.length > 0 ? (
+          <nav className="shbz-tabbar order-3 hidden w-auto md:inline-flex lg:order-none" aria-label="Разделы">
+            {items.map((item) => (
+              <Link key={item.href} href={item.href} prefetch data-active={item.match(pathname)} className="shbz-tab">
+                {item.label}
+              </Link>
+            ))}
+          </nav>
+        ) : null}
+
+        {/* Профиль */}
+        <div className="hidden shrink-0 items-center gap-3.5 md:flex">
+          <div className="shbz-avatar">{initialsOf(user.name)}</div>
+          <div className="leading-[1.3]">
+            <div className="text-sm font-bold" style={{ color: "var(--shbz-text-strong)" }}>
+              {user.name}
+            </div>
+            <div className="mt-0.5 flex items-center gap-[5px] text-xs" style={{ color: "var(--shbz-text-soft)" }}>
+              <span>{roleLabel}</span>
+              {isStudent && streakValue ? (
+                <>
+                  <span style={{ color: "var(--shbz-divider)" }}>·</span>
+                  <StreakFlame days={streakValue.currentStreak} />
+                </>
               ) : null}
-              <p className="truncate">{user.email}</p>
-              <span className="text-[var(--theme-text-soft)]">•</span>
-              <span className="whitespace-nowrap">{roleLabel}</span>
             </div>
           </div>
           <form action={logoutAction}>
-            <button
-              type="submit"
-              className="ui-pressable rounded-[10px] border border-[var(--theme-border-soft)] px-2.5 py-1.5 text-xs font-medium text-[var(--theme-text-muted)] transition hover:border-[var(--theme-border)] hover:text-[var(--theme-text-strong)]"
-            >
+            <button type="submit" className="shbz-btn-outline">
               Выйти
             </button>
           </form>
         </div>
 
-        {/* Mobile hamburger */}
+        {/* Мобильное меню */}
         <button
           type="button"
           onClick={() => setMobileOpen(!mobileOpen)}
-          className="flex h-9 w-9 items-center justify-center rounded-[10px] text-[var(--theme-text-default)] transition hover:bg-[var(--theme-accent-soft)] sm:hidden"
+          className="flex h-10 w-10 items-center justify-center rounded-full border-[1.5px] md:hidden"
+          style={{ borderColor: "var(--shbz-outline-border)", color: "var(--shbz-text-strong)" }}
           aria-label="Меню"
           aria-expanded={mobileOpen}
         >
@@ -98,41 +153,52 @@ export function DashboardNav({ user, studentStreak }: DashboardNavProps) {
         </button>
       </div>
 
-      {/* Mobile dropdown */}
-      {mobileOpen && (
+      {mobileOpen ? (
         <>
-          <div className="mobile-overlay fixed inset-0 z-30 bg-black/20 backdrop-blur-sm sm:hidden" onClick={closeMobile} />
-          <div className="mobile-panel absolute left-0 right-0 top-full z-40 border-b border-[var(--theme-border)] bg-[var(--theme-header)] p-3 shadow-lg sm:hidden">
-            <div className="rounded-[8px] border border-[var(--theme-border-soft)] bg-[var(--theme-surface)] p-3 space-y-3">
-              <div className="flex items-center gap-3">
-                <div className="flex h-9 w-9 items-center justify-center rounded-[10px] bg-[var(--theme-accent-soft)] text-sm font-bold text-[var(--theme-accent-text)]">
-                  {user.name.charAt(0).toUpperCase()}
-                </div>
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-semibold text-[var(--theme-text-strong)]">{user.name}</p>
-                  <div className="mt-1 flex flex-wrap items-center gap-2">
-                    {user.role === UserRole.STUDENT && streakValue ? (
-                      <StudentStreakBadge currentStreak={streakValue.currentStreak} />
-                    ) : null}
-                    <p className="truncate text-xs text-[var(--theme-text-muted)]">{user.email}</p>
-                  </div>
-                  <p className="mt-0.5 text-[11px] uppercase tracking-[0.12em] text-[var(--theme-text-soft)]">{roleLabel}</p>
-                </div>
-              </div>
-              <div className="border-t border-[var(--theme-border-soft)] pt-3">
-                <form action={logoutAction}>
-                  <button
-                    type="submit"
-                    className="ui-pressable ui-button-secondary w-full rounded-[10px] px-3 py-2 text-sm font-medium transition"
+          <div className="fixed inset-0 z-30 bg-black/20 backdrop-blur-sm md:hidden" onClick={closeMobile} />
+          <div
+            className="absolute left-0 right-0 top-full z-40 border-b p-4 md:hidden"
+            style={{ background: "var(--shbz-card-bg)", borderColor: "var(--shbz-header-border)" }}
+          >
+            {items.length > 0 ? (
+              <nav className="mb-4 flex flex-col gap-1" aria-label="Разделы">
+                {items.map((item) => (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    data-active={item.match(pathname)}
+                    className="shbz-tab"
                   >
-                    Выйти из аккаунта
-                  </button>
-                </form>
+                    {item.label}
+                  </Link>
+                ))}
+              </nav>
+            ) : null}
+            <div className="flex items-center gap-3.5 border-t pt-4" style={{ borderColor: "var(--shbz-soft-border)" }}>
+              <div className="shbz-avatar">{initialsOf(user.name)}</div>
+              <div className="min-w-0 flex-1 leading-[1.3]">
+                <div className="truncate text-sm font-bold" style={{ color: "var(--shbz-text-strong)" }}>
+                  {user.name}
+                </div>
+                <div className="mt-0.5 flex items-center gap-[5px] text-xs" style={{ color: "var(--shbz-text-soft)" }}>
+                  <span>{roleLabel}</span>
+                  {isStudent && streakValue ? (
+                    <>
+                      <span style={{ color: "var(--shbz-divider)" }}>·</span>
+                      <StreakFlame days={streakValue.currentStreak} />
+                    </>
+                  ) : null}
+                </div>
               </div>
+              <form action={logoutAction}>
+                <button type="submit" className="shbz-btn-outline">
+                  Выйти
+                </button>
+              </form>
             </div>
           </div>
         </>
-      )}
+      ) : null}
     </header>
   );
 }

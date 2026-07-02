@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 
 type ThemeMode = "system" | "light" | "dark";
 type HintsMode = "on" | "off";
@@ -30,6 +30,26 @@ function applyPreferences(themeMode: ThemeMode, hintsMode: HintsMode, densityMod
   root.dataset.theme = resolvedTheme;
   root.dataset.hints = hintsMode;
   root.dataset.density = densityMode;
+}
+
+type SettingBlockProps = {
+  label: string;
+  hint: string;
+  children: React.ReactNode;
+};
+
+function SettingBlock({ label, hint, children }: SettingBlockProps) {
+  return (
+    <div className="shbz-panel-soft p-5">
+      <div className="mb-3.5 text-[11px] font-bold uppercase tracking-[1.2px]" style={{ color: "var(--shbz-kicker)" }}>
+        {label}
+      </div>
+      {children}
+      <div className="ui-hint mt-3 text-[12.5px] leading-[1.5]" style={{ color: "var(--shbz-kicker)" }}>
+        {hint}
+      </div>
+    </div>
+  );
 }
 
 export function InterfaceSettingsPanel() {
@@ -70,138 +90,77 @@ export function InterfaceSettingsPanel() {
     return () => mediaQuery.removeEventListener("change", handleChange);
   }, [themeMode, hintsMode, densityMode]);
 
-  const effectiveThemeLabel = useMemo(() => {
-    switch (getPreferredTheme(themeMode)) {
-      case "dark":
-        return "Сейчас активна темная тема";
-      case "light":
-      default:
-        return "Сейчас активна светлая тема";
-    }
-  }, [themeMode]);
-
-  const themeOptions: Array<{ value: ThemeMode; label: string; caption: string }> = [
-    { value: "system", label: "Системная", caption: "как на устройстве" },
-    { value: "light", label: "Светлая", caption: "дневной режим" },
-    { value: "dark", label: "Темная", caption: "вечерний режим" }
+  const themeOptions: Array<{ value: ThemeMode; label: string }> = [
+    { value: "system", label: "Системная" },
+    { value: "light", label: "Светлая" },
+    { value: "dark", label: "Тёмная" }
   ];
 
-  const hintsOptions: Array<{ value: HintsMode; label: string; caption: string }> = [
-    { value: "on", label: "Включены", caption: "больше пояснений" },
-    { value: "off", label: "Скрыты", caption: "меньше шума" }
+  const hintsOptions: Array<{ value: HintsMode; label: string }> = [
+    { value: "on", label: "Включены" },
+    { value: "off", label: "Скрыты" }
   ];
 
-  const densityOptions: Array<{ value: DensityMode; label: string; caption: string }> = [
-    { value: "comfortable", label: "Обычный", caption: "больше воздуха" },
-    { value: "compact", label: "Компактный", caption: "больше на экране" }
+  const densityOptions: Array<{ value: DensityMode; label: string }> = [
+    { value: "comfortable", label: "Обычный" },
+    { value: "compact", label: "Компактный" }
   ];
 
   return (
-    <section className="ui-fade-slide ui-surface rounded-[10px] border p-4 sm:rounded-[10px] sm:p-5 lg:p-6">
-      <div className="mb-4 flex flex-col gap-2 border-b pb-4">
-        <h2 className="font-display text-[1.35rem] font-semibold text-[var(--theme-text-strong)] sm:text-[1.5rem] lg:text-[1.65rem]">
-          Интерфейс
-        </h2>
-        <p className="ui-hint ui-copy-muted max-w-2xl text-sm leading-6">Тема, подсказки и плотность на этом устройстве.</p>
-      </div>
-
-      <div className="grid gap-4 xl:grid-cols-[1.15fr_0.95fr_0.95fr]">
-        <div className="ui-settings-card rounded-[10px] p-4 sm:rounded-[10px] sm:p-5">
-          <div className="flex items-start justify-between gap-3">
-            <div>
-              <p className="ui-kicker">Тема</p>
-              <p className="ui-hint ui-copy-muted mt-2 text-sm leading-6">Светлая, темная или системная.</p>
-            </div>
-          </div>
-
-          <div className="mt-4 grid gap-2 sm:grid-cols-3">
-            {themeOptions.map((option) => {
-              const isActive = themeMode === option.value;
-
-              return (
+    <section className="mb-11">
+      <h2 className="shbz-section-title">Интерфейс</h2>
+      <div className="shbz-card shbz-section-pad">
+        <div className="grid gap-4" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))" }}>
+          <SettingBlock label="Тема" hint="Светлое, тёмное или системное оформление интерфейса.">
+            <div className="shbz-seg">
+              {themeOptions.map((option) => (
                 <button
                   key={option.value}
                   type="button"
                   onClick={() => setThemeMode(option.value)}
-                  aria-pressed={isActive}
-                  className={`ui-settings-option ui-pressable rounded-[12px] px-3.5 py-3 text-left text-sm transition ${
-                    isActive ? "ui-button-tonal" : "ui-button-secondary"
-                  }`}
+                  data-active={themeMode === option.value}
+                  aria-pressed={themeMode === option.value}
+                  className="shbz-seg-btn"
                 >
-                  <span className="ui-settings-option-copy">
-                    <span className="font-medium">{option.label}</span>
-                    <span className="ui-hint mt-1 text-xs text-[var(--theme-text-muted)]">{option.caption}</span>
-                  </span>
+                  {option.label}
                 </button>
-              );
-            })}
-          </div>
-
-          <p className="ui-hint ui-copy-muted mt-auto pt-4 text-sm leading-6">{effectiveThemeLabel}.</p>
-        </div>
-
-        <div className="ui-settings-card rounded-[10px] p-4 sm:rounded-[10px] sm:p-5">
-          <div className="flex items-start justify-between gap-3">
-            <div>
-              <p className="ui-kicker">Подсказки</p>
-              <p className="ui-hint ui-copy-muted mt-2 text-sm leading-6">Подробные пояснения по интерфейсу.</p>
+              ))}
             </div>
-          </div>
+          </SettingBlock>
 
-          <div className="mt-4 grid gap-2 sm:grid-cols-2">
-            {hintsOptions.map((option) => {
-              const isActive = hintsMode === option.value;
-
-              return (
+          <SettingBlock label="Подсказки" hint="Пояснения к настройкам под каждым блоком.">
+            <div className="shbz-seg">
+              {hintsOptions.map((option) => (
                 <button
                   key={option.value}
                   type="button"
                   onClick={() => setHintsMode(option.value)}
-                  aria-pressed={isActive}
-                  className={`ui-settings-option ui-pressable rounded-[12px] px-3.5 py-3 text-left text-sm transition ${
-                    isActive ? "ui-button-tonal" : "ui-button-secondary"
-                  }`}
+                  data-active={hintsMode === option.value}
+                  aria-pressed={hintsMode === option.value}
+                  className="shbz-seg-btn"
                 >
-                  <span className="ui-settings-option-copy">
-                    <span className="font-medium">{option.label}</span>
-                    <span className="ui-hint mt-1 text-xs text-[var(--theme-text-muted)]">{option.caption}</span>
-                  </span>
+                  {option.label}
                 </button>
-              );
-            })}
-          </div>
-        </div>
-
-        <div className="ui-settings-card rounded-[10px] p-4 sm:rounded-[10px] sm:p-5">
-          <div className="flex items-start justify-between gap-3">
-            <div>
-              <p className="ui-kicker">Плотность</p>
-              <p className="ui-hint ui-copy-muted mt-2 text-sm leading-6">Больше воздуха или больше контента на экране.</p>
+              ))}
             </div>
-          </div>
+          </SettingBlock>
 
-          <div className="mt-4 grid gap-2 sm:grid-cols-2">
-            {densityOptions.map((option) => {
-              const isActive = densityMode === option.value;
-
-              return (
+          <SettingBlock label="Плотность" hint="Компактный режим уменьшает отступы карточек.">
+            <div className="shbz-seg">
+              {densityOptions.map((option) => (
                 <button
                   key={option.value}
                   type="button"
                   onClick={() => setDensityMode(option.value)}
-                  aria-pressed={isActive}
-                  className={`ui-settings-option ui-pressable rounded-[12px] px-3.5 py-3 text-left text-sm transition ${
-                    isActive ? "ui-button-tonal" : "ui-button-secondary"
-                  }`}
+                  data-active={densityMode === option.value}
+                  aria-pressed={densityMode === option.value}
+                  className="shbz-seg-btn"
                 >
-                  <span className="ui-settings-option-copy">
-                    <span className="font-medium">{option.label}</span>
-                    <span className="ui-hint mt-1 text-xs text-[var(--theme-text-muted)]">{option.caption}</span>
-                  </span>
+                  {option.label}
                 </button>
-              );
-            })}
-          </div>
+              ))}
+            </div>
+          </SettingBlock>
         </div>
       </div>
     </section>

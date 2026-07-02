@@ -1,7 +1,6 @@
 "use client";
 
 import Link from "next/link";
-import { ProgressBar } from "@/components/progress-bar";
 import { type StudentDeadlineAssignment } from "@/lib/student-deadline-groups";
 import { completionPercent, formatDate } from "@/lib/utils";
 
@@ -14,54 +13,72 @@ type DeadlineListProps = {
 export function DeadlineList({ items, emptyMessage = "На эту дату дедлайнов нет.", compact = false }: DeadlineListProps) {
   if (items.length === 0) {
     return (
-      <div className="ui-panel-soft rounded-[8px] border border-dashed px-3 py-4 text-sm text-[var(--theme-text-muted)]">
+      <div
+        className="rounded-full px-3.5 py-2 text-[13px] font-medium"
+        style={{ background: "var(--shbz-tab-hover)", color: "var(--shbz-kicker)", display: "inline-block" }}
+      >
         {emptyMessage}
       </div>
     );
   }
 
   return (
-    <ul className={compact ? "space-y-2" : "space-y-3"}>
+    <ul className={compact ? "space-y-2" : "space-y-4"}>
       {items.map((item) => {
         const progressPercent = completionPercent(item.solvedNumbers, item.totalNumbers);
         const progressLabel =
           progressPercent === 100
             ? "ДЗ выполнено полностью"
             : progressPercent === 0
-            ? "ДЗ ещё не начато"
-            : `Прогресс ДЗ: ${progressPercent}%`;
-        const deadlineLabel = `ДЗ до ${formatDate(item.deadlineAt)}`;
+              ? "ДЗ ещё не начато"
+              : `Прогресс ДЗ: ${progressPercent}%`;
+        const metaLabel = `ДЗ до ${formatDate(item.deadlineAt)} · Выполнено ${item.solvedNumbers} из ${item.totalNumbers}`;
+
+        if (compact) {
+          return (
+            <li
+              key={item.id}
+              className="rounded-[12px] border px-4 py-3.5"
+              style={{ borderColor: "var(--shbz-soft-border)", background: "var(--shbz-card-bg)" }}
+            >
+              <div className="text-base font-extrabold" style={{ color: "var(--shbz-text-strong)" }}>
+                {item.topicTitle}
+              </div>
+              <div className="mt-1.5 text-[13px] leading-[1.45]" style={{ color: "var(--shbz-text-muted)" }}>
+                {metaLabel}
+              </div>
+              <div className="mt-3 shbz-progress-track" style={{ height: 7 }}>
+                <div className="shbz-progress-fill" style={{ width: `${progressPercent}%` }} />
+              </div>
+              <div className="mt-2 flex items-baseline justify-between">
+                <span className="text-[12.5px] font-semibold" style={{ color: "var(--shbz-kicker)" }}>
+                  {progressLabel}
+                </span>
+                <span className="text-[13px] font-extrabold" style={{ color: "var(--shbz-text-strong)" }}>
+                  {item.solvedNumbers}/{item.totalNumbers}
+                </span>
+              </div>
+            </li>
+          );
+        }
 
         return (
-          <li key={item.id} className="ui-surface rounded-[8px] border p-3 sm:p-3.5">
-            <div className={compact ? "min-w-0 space-y-2" : "space-y-3"}>
-              <div className={compact ? "min-w-0" : "flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between"}>
-                <div className="min-w-0 flex-1">
-                  <p className="font-medium text-[var(--theme-text-strong)]">{item.topicTitle}</p>
-                  <p className="mt-1 text-sm text-[var(--theme-text-muted)]">
-                    {deadlineLabel} · Выполнено {item.solvedNumbers} из {item.totalNumbers}
-                  </p>
+          <li key={item.id} className="shbz-card px-[26px] py-6" style={{ borderRadius: 18 }}>
+            <div className="mb-[18px] flex flex-wrap items-start justify-between gap-5">
+              <div>
+                <div className="text-[19px] font-extrabold tracking-[-0.3px]" style={{ color: "var(--shbz-text-strong)" }}>
+                  {item.topicTitle}
                 </div>
-
-                {!compact ? (
-                  <Link
-                    href={`/student/topics/${item.topicId}`}
-                    className="ui-pressable ui-button-secondary inline-flex w-full justify-center rounded-[10px] px-2.5 py-1.5 text-xs font-semibold sm:w-auto sm:shrink-0"
-                  >
-                    Открыть ДЗ
-                  </Link>
-                ) : null}
-              </div>
-
-              <div className="space-y-1.5">
-                <ProgressBar value={progressPercent} size="sm" />
-                <div className="flex items-center justify-between gap-3 text-xs">
-                  <span className="text-[var(--theme-text-muted)]">{progressLabel}</span>
-                  <span className="font-semibold text-[var(--theme-text-default)]">
-                    {item.solvedNumbers}/{item.totalNumbers}
-                  </span>
+                <div className="mt-1.5 text-sm" style={{ color: "var(--shbz-text-muted)" }}>
+                  {metaLabel}
                 </div>
               </div>
+              <Link href={`/student/topics/${item.topicId}`} className="shbz-btn-primary shrink-0 px-6 py-3 text-[14.5px]">
+                Открыть ДЗ
+              </Link>
+            </div>
+            <div className="shbz-progress-track">
+              <div className="shbz-progress-fill" style={{ width: `${progressPercent}%` }} />
             </div>
           </li>
         );

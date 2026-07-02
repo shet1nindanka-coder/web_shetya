@@ -1,5 +1,5 @@
-import { PageHeader } from "@/components/page-header";
-import { SectionCard } from "@/components/section-card";
+import { ShbzNumberSearch } from "@/components/shbz-number-search";
+import { ShbzPageHeader } from "@/components/shbz-page-header";
 
 const scoreTable = [
   [1, 6], [2, 11], [3, 17], [4, 22], [5, 27], [6, 34], [7, 40], [8, 46],
@@ -9,46 +9,76 @@ const scoreTable = [
 ] as const;
 
 const taskScoring = [
-  "№ 1-12 оцениваются в 1 первичный балл.",
-  "№ 13, 15, 16 оцениваются в 2 первичных балла.",
-  "№ 14 и 17 оцениваются в 3 первичных балла.",
-  "№ 18 и 19 оцениваются в 4 первичных балла каждая."
+  { badge: "1", text: "№ 1–12 оцениваются в 1 первичный балл" },
+  { badge: "2", text: "№ 13, 15, 16 оцениваются в 2 первичных балла" },
+  { badge: "3", text: "№ 14 и 17 оцениваются в 3 первичных балла" },
+  { badge: "4", text: "№ 18 и 19 оцениваются в 4 первичных балла каждая" }
 ];
 
 export default function StudentInfoPage() {
   return (
-    <div className="space-y-5 sm:space-y-6">
-      <PageHeader
-        eyebrow="Общая инфа"
-        title="Баллы и разбалловка"
-      />
+    <div>
+      <ShbzPageHeader kicker="Общая инфа" title="Баллы и разбалловка" aside={<ShbzNumberSearch />} />
 
-      <SectionCard title="Соответствие баллов">
-        <div className="ui-table-shell">
-          <div className="ui-table-head grid grid-cols-2 text-xs font-semibold text-[var(--theme-text-default)] sm:text-sm">
-            <div className="ui-table-cell">Первичный балл</div>
-            <div className="ui-table-cell border-l border-[var(--theme-border-soft)]">Тестовый балл</div>
-          </div>
-          <div>
+      <section className="mb-11">
+        <h2 className="shbz-section-title">Соответствие баллов</h2>
+        <div className="shbz-card shbz-section-pad">
+          <div className="grid gap-2.5" style={{ gridTemplateColumns: "repeat(auto-fill, minmax(120px, 1fr))" }}>
             {scoreTable.map(([primary, test]) => (
-              <div key={primary} className="ui-table-row grid grid-cols-2 text-xs sm:text-sm">
-                <div className="ui-table-cell font-semibold text-[var(--theme-text-strong)]">{primary}</div>
-                <div className="ui-table-cell border-l border-[var(--theme-border-soft)]">{test}</div>
+              <div
+                key={primary}
+                className="flex items-center justify-center gap-2 rounded-[14px] border px-3.5 py-3"
+                style={{ background: "var(--shbz-soft-bg)", borderColor: "var(--shbz-soft-border)" }}
+              >
+                <span className="text-sm font-bold" style={{ color: "var(--shbz-kicker)" }}>
+                  {primary}
+                </span>
+                <svg
+                  width="12"
+                  height="12"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="var(--shbz-week-dot-off)"
+                  strokeWidth="2.4"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  aria-hidden="true"
+                >
+                  <path d="M5 12h14M13 6l6 6-6 6" />
+                </svg>
+                <span className="text-[17px] font-extrabold" style={{ color: "var(--shbz-text-strong)" }}>
+                  {test}
+                </span>
               </div>
             ))}
           </div>
         </div>
-      </SectionCard>
+      </section>
 
-      <SectionCard title="Разбалловка номеров ЕГЭ">
-        <div className="grid gap-2.5 sm:gap-3 md:grid-cols-2">
-          {taskScoring.map((item) => (
-            <article key={item} className="ui-mini-stat-card">
-              <p className="text-sm leading-relaxed text-[var(--theme-text-default)]">{item}</p>
-            </article>
-          ))}
+      <section>
+        <h2 className="shbz-section-title">Разбалловка номеров ЕГЭ</h2>
+        <div className="shbz-card shbz-section-pad">
+          <div className="grid gap-3.5" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))" }}>
+            {taskScoring.map((item) => (
+              <div
+                key={item.badge}
+                className="flex items-center gap-3.5 rounded-[14px] border px-5 py-[18px]"
+                style={{ background: "var(--shbz-soft-bg)", borderColor: "var(--shbz-soft-border)" }}
+              >
+                <span
+                  className="min-w-[44px] shrink-0 rounded-full px-3 py-[7px] text-center text-[13px] font-extrabold text-white"
+                  style={{ background: "var(--shbz-accent-grad)" }}
+                >
+                  {item.badge}
+                </span>
+                <span className="text-[15px] font-semibold" style={{ color: "var(--shbz-text-strong)" }}>
+                  {item.text}
+                </span>
+              </div>
+            ))}
+          </div>
         </div>
-      </SectionCard>
+      </section>
     </div>
   );
 }

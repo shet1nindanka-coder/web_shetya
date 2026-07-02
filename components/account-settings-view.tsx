@@ -1,8 +1,7 @@
 import { UserRole } from "@prisma/client";
 import { updatePasswordAction, updateProfileInfoAction } from "@/actions/profile";
 import { InterfaceSettingsPanel } from "@/components/interface-settings-panel";
-import { PageHeader } from "@/components/page-header";
-import { SectionCard } from "@/components/section-card";
+import { ShbzNumberSearch } from "@/components/shbz-number-search";
 import { formatDate } from "@/lib/utils";
 
 type ResolvedSearchParams = Record<string, string | string[] | undefined>;
@@ -91,15 +90,24 @@ export function resolveAccountNotice(searchParams: ResolvedSearchParams) {
 export function AccountSettingsView({ user, notice }: AccountSettingsViewProps) {
   const isTeacher = user.role === UserRole.TEACHER;
   const roleLabel = isTeacher ? "Преподаватель" : "Ученик";
+  const searchEndpoint = isTeacher ? "/api/teacher/topics/find-number" : "/api/student/topics/find-number";
 
   return (
-    <div className="space-y-8">
+    <div>
+      <div className="mb-10 flex flex-wrap items-end justify-between gap-6">
+        <h1 className="shbz-h1" style={{ margin: 0 }}>
+          Настройки
+          <span className="shbz-dot h-3 w-3 shrink-0 self-center" />
+        </h1>
+        <ShbzNumberSearch endpoint={searchEndpoint} />
+      </div>
+
       {notice ? (
         <div
           className={
             notice.tone === "success"
-              ? "ui-notice-success rounded-[10px] px-5 py-4 text-sm font-medium"
-              : "ui-notice-error rounded-[10px] px-5 py-4 text-sm font-medium"
+              ? "shbz-notice-success mb-8 px-5 py-4 text-sm font-medium"
+              : "shbz-notice-error mb-8 px-5 py-4 text-sm font-medium"
           }
           aria-live="polite"
         >
@@ -107,121 +115,141 @@ export function AccountSettingsView({ user, notice }: AccountSettingsViewProps) 
         </div>
       ) : null}
 
-      <PageHeader
-        eyebrow="Настройки"
-        title="Настройки"
-      />
-
       <InterfaceSettingsPanel />
 
-      <SectionCard
-        title="Личная информация"
-        description="Логин остаётся фиксированным, имя можно обновить."
-      >
-        <form action={updateProfileInfoAction} className="grid gap-4 lg:grid-cols-2">
-          <label className="block space-y-2">
-            <span className="ui-form-label">Имя</span>
-            <input
-              type="text"
-              name="name"
-              defaultValue={user.name}
-              placeholder="Ваше имя"
-              className="ui-input w-full rounded-[10px] px-4 py-3"
-              required
-              autoComplete="name"
-            />
-          </label>
+      <section className="mb-11">
+        <h2 className="shbz-section-title">Личная информация</h2>
+        <div className="shbz-card shbz-section-pad">
+          <form action={updateProfileInfoAction}>
+            <div className="mb-[22px] grid gap-5" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))" }}>
+              <label className="block">
+                <span className="mb-[9px] block text-[13px] font-semibold" style={{ color: "var(--shbz-label)" }}>
+                  Имя
+                </span>
+                <input
+                  type="text"
+                  name="name"
+                  defaultValue={user.name}
+                  placeholder="Ваше имя"
+                  className="shbz-input"
+                  required
+                  autoComplete="name"
+                />
+              </label>
 
-          <div className="space-y-2">
-            <span className="ui-form-label">Логин для входа</span>
-            <div className="ui-readonly-field rounded-[10px] px-4 py-3">{user.email}</div>
-          </div>
+              <div>
+                <span className="mb-[9px] block text-[13px] font-semibold" style={{ color: "var(--shbz-label)" }}>
+                  Логин для входа
+                </span>
+                <div
+                  className="shbz-input flex items-center"
+                  style={{ color: "var(--shbz-text-muted)", cursor: "not-allowed", userSelect: "all" }}
+                >
+                  {user.email}
+                </div>
+              </div>
+            </div>
 
-          <div className="lg:col-span-2 flex flex-wrap items-center gap-3">
-            <button
-              type="submit"
-              className="ui-pressable ui-button-primary rounded-[10px] px-5 py-3 text-sm font-semibold transition"
-            >
-              Сохранить
-            </button>
-            <p className="ui-hint ui-copy-muted text-sm leading-6">Имя в шапке обновится сразу.</p>
-          </div>
-        </form>
-      </SectionCard>
-
-      <SectionCard
-        title="Сменить пароль"
-        description="Сначала введите текущий пароль, затем новый."
-      >
-        <form action={updatePasswordAction} className="grid gap-4 xl:grid-cols-3">
-          <label className="block space-y-2">
-            <span className="ui-form-label">Текущий пароль</span>
-            <input
-              type="password"
-              name="currentPassword"
-              placeholder="Введите текущий пароль"
-              className="ui-input w-full rounded-[10px] px-4 py-3"
-              required
-              autoComplete="current-password"
-              spellCheck={false}
-            />
-          </label>
-
-          <label className="block space-y-2">
-            <span className="ui-form-label">Новый пароль</span>
-            <input
-              type="password"
-              name="newPassword"
-              placeholder="Минимум 8 символов"
-              minLength={8}
-              className="ui-input w-full rounded-[10px] px-4 py-3"
-              required
-              autoComplete="new-password"
-              spellCheck={false}
-            />
-          </label>
-
-          <label className="block space-y-2">
-            <span className="ui-form-label">Повторите новый пароль</span>
-            <input
-              type="password"
-              name="confirmPassword"
-              placeholder="Повторите новый пароль"
-              minLength={8}
-              className="ui-input w-full rounded-[10px] px-4 py-3"
-              required
-              autoComplete="new-password"
-              spellCheck={false}
-            />
-          </label>
-
-          <div className="xl:col-span-3 flex flex-wrap items-center gap-3">
-            <button
-              type="submit"
-              className="ui-pressable ui-button-primary rounded-[10px] px-5 py-3 text-sm font-semibold transition"
-            >
-              Обновить пароль
-            </button>
-            <p className="ui-hint ui-copy-muted text-sm leading-6">Текущая сессия сохранится.</p>
-          </div>
-        </form>
-      </SectionCard>
-
-      <SectionCard
-        title="Статус профиля"
-        description="Короткая служебная информация по аккаунту."
-      >
-        <div className="ui-mini-stat-grid md:grid-cols-2">
-          <article className="ui-mini-stat-card">
-            <span className="ui-mini-stat-card-label">Роль</span>
-            <span className="ui-mini-stat-card-value">{roleLabel}</span>
-          </article>
-          <article className="ui-mini-stat-card">
-            <span className="ui-mini-stat-card-label">На платформе</span>
-            <span className="ui-mini-stat-card-value">{formatDate(user.createdAt)}</span>
-          </article>
+            <div className="flex flex-wrap items-center gap-3">
+              <button type="submit" className="shbz-btn-primary px-[26px] py-[13px] text-[15px]">
+                Сохранить
+              </button>
+              <p className="ui-hint text-sm" style={{ color: "var(--shbz-text-muted)" }}>
+                Имя в шапке обновится сразу.
+              </p>
+            </div>
+          </form>
         </div>
-      </SectionCard>
+      </section>
+
+      <section className="mb-11">
+        <h2 className="shbz-section-title">Сменить пароль</h2>
+        <div className="shbz-card shbz-section-pad">
+          <form action={updatePasswordAction}>
+            <div className="mb-[22px] grid gap-5" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))" }}>
+              <label className="block">
+                <span className="mb-[9px] block text-[13px] font-semibold" style={{ color: "var(--shbz-label)" }}>
+                  Текущий пароль
+                </span>
+                <input
+                  type="password"
+                  name="currentPassword"
+                  placeholder="Введите текущий пароль"
+                  className="shbz-input"
+                  required
+                  autoComplete="current-password"
+                  spellCheck={false}
+                />
+              </label>
+
+              <label className="block">
+                <span className="mb-[9px] block text-[13px] font-semibold" style={{ color: "var(--shbz-label)" }}>
+                  Новый пароль
+                </span>
+                <input
+                  type="password"
+                  name="newPassword"
+                  placeholder="Минимум 8 символов"
+                  minLength={8}
+                  className="shbz-input"
+                  required
+                  autoComplete="new-password"
+                  spellCheck={false}
+                />
+              </label>
+
+              <label className="block">
+                <span className="mb-[9px] block text-[13px] font-semibold" style={{ color: "var(--shbz-label)" }}>
+                  Повторите новый пароль
+                </span>
+                <input
+                  type="password"
+                  name="confirmPassword"
+                  placeholder="Повторите новый пароль"
+                  minLength={8}
+                  className="shbz-input"
+                  required
+                  autoComplete="new-password"
+                  spellCheck={false}
+                />
+              </label>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-3">
+              <button type="submit" className="shbz-btn-primary px-[26px] py-[13px] text-[15px]">
+                Обновить пароль
+              </button>
+              <p className="ui-hint text-sm" style={{ color: "var(--shbz-text-muted)" }}>
+                Текущая сессия сохранится.
+              </p>
+            </div>
+          </form>
+        </div>
+      </section>
+
+      <section>
+        <h2 className="shbz-section-title">Статус профиля</h2>
+        <div className="shbz-card shbz-section-pad">
+          <div className="grid gap-4" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))" }}>
+            <div className="rounded-[14px] border px-[22px] py-5" style={{ background: "var(--shbz-soft-bg)", borderColor: "var(--shbz-soft-border)" }}>
+              <div className="text-[11px] font-bold uppercase tracking-[1.2px]" style={{ color: "var(--shbz-kicker)" }}>
+                Роль
+              </div>
+              <div className="mt-2 text-[19px] font-extrabold" style={{ color: "var(--shbz-text-strong)" }}>
+                {roleLabel}
+              </div>
+            </div>
+            <div className="rounded-[14px] border px-[22px] py-5" style={{ background: "var(--shbz-soft-bg)", borderColor: "var(--shbz-soft-border)" }}>
+              <div className="text-[11px] font-bold uppercase tracking-[1.2px]" style={{ color: "var(--shbz-kicker)" }}>
+                На платформе
+              </div>
+              <div className="mt-2 text-[19px] font-extrabold" style={{ color: "var(--shbz-text-strong)" }}>
+                {formatDate(user.createdAt)}
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
     </div>
   );
 }

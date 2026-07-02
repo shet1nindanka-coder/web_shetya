@@ -1,11 +1,8 @@
 "use client";
 
-import { SectionCard } from "@/components/section-card";
-import { StudentStreakBadge } from "@/components/student-streak-badge";
 import type { StudentStreak } from "@/lib/student-streak";
 import { getStudentStreakColorMeta } from "@/lib/student-streak-colors";
 import { useStudentStreak } from "@/components/student-streak-provider";
-import { useStreakMotion } from "@/components/use-streak-motion";
 
 type StudentWeeklyActivityProps = {
   streak: StudentStreak;
@@ -14,9 +11,9 @@ type StudentWeeklyActivityProps = {
 export function StudentWeeklyActivity({ streak }: StudentWeeklyActivityProps) {
   const liveStreak = useStudentStreak();
   const currentStreak = liveStreak?.streak ?? streak;
-  const motionState = useStreakMotion(currentStreak.currentStreak);
-  const maxCount = Math.max(1, ...currentStreak.dailyActivity.map((d) => d.count));
   const streakColorMeta = getStudentStreakColorMeta(currentStreak.currentStreak);
+  const todayDate = currentStreak.dailyActivity.at(-1)?.date;
+
   const solvedTodayLabel =
     currentStreak.solvedToday > 0
       ? `${currentStreak.solvedToday} ${formatSolvedLabel(currentStreak.solvedToday)}`
@@ -24,118 +21,98 @@ export function StudentWeeklyActivity({ streak }: StudentWeeklyActivityProps) {
   const goalTitle = streakColorMeta.nextThreshold
     ? `${streakColorMeta.nextThreshold} ${formatDaysLabel(streakColorMeta.nextThreshold)}`
     : "Максимальный цвет";
-  const goalHint =
-    streakColorMeta.nextThreshold && streakColorMeta.daysToNextThreshold !== null
-      ? currentStreak.currentStreak > 0
-        ? `До нового цвета осталось ${streakColorMeta.daysToNextThreshold} ${formatDaysLabel(streakColorMeta.daysToNextThreshold)}.`
-        : `Первый цвет откроется на ${streakColorMeta.nextThreshold}-м дне.`
-      : "Вы уже открыли последний цветовой уровень.";
   const streakHeadline =
     currentStreak.currentStreak > 0
       ? `${currentStreak.currentStreak} ${formatDaysLabel(currentStreak.currentStreak)} подряд`
       : "Зажгите первый день";
-  const streakHint =
-    currentStreak.solvedToday > 0
-      ? "Сегодняшний шаг уже засчитан — огонек сохранён."
-      : currentStreak.currentStreak > 0
-        ? "Закройте хотя бы один номер сегодня, чтобы серия не оборвалась."
-        : "Закройте хотя бы один номер сегодня, и огонек начнётся.";
 
   return (
-    <SectionCard title="Огонек и ритм" description="Стрик держится, пока каждый день закрывается хотя бы один номер.">
-      <div className="grid gap-4 xl:grid-cols-[minmax(0,0.92fr)_minmax(0,1.08fr)]">
-        <div className="space-y-3">
-          <div
-            className="student-streak-hero rounded-[12px] border px-4 py-4 sm:px-5 sm:py-5"
-            data-streak-animate={motionState ?? undefined}
-          >
-            <div className="flex items-start justify-between gap-3">
-              <div className="space-y-2">
-                <p className="ui-kicker text-[var(--theme-text-soft)]">Огонек</p>
-                <h3 className="font-display text-[1.65rem] font-semibold leading-none text-[var(--theme-text-strong)] sm:text-[1.95rem]">
-                  {streakHeadline}
-                </h3>
-              </div>
-                <StudentStreakBadge currentStreak={currentStreak.currentStreak} size="md" className="shrink-0" />
-            </div>
-            <p className="ui-hint mt-3 max-w-lg text-sm leading-relaxed text-[var(--theme-text-muted)]">
-              {streakHint}
-            </p>
-          </div>
-
-          <div className="grid gap-3 sm:grid-cols-2">
-            <div className="ui-card-soft rounded-[10px] px-4 py-4">
-              <p className="ui-kicker">Сегодня сделано</p>
-              <p className="mt-2 font-display text-[1.3rem] font-semibold text-[var(--theme-text-strong)]">
-                {solvedTodayLabel}
-              </p>
-            </div>
-            <div className="ui-card-soft rounded-[10px] px-4 py-4">
-              <p className="ui-kicker">Следующая цель</p>
-              <p className="mt-2 font-display text-[1.3rem] font-semibold text-[var(--theme-text-strong)]">{goalTitle}</p>
-              <p className="ui-hint mt-2 text-sm text-[var(--theme-text-muted)]">{goalHint}</p>
-            </div>
-          </div>
-        </div>
-
-        <div className="ui-panel-soft rounded-[10px] px-4 py-4">
-          <div className="mb-4 flex items-center justify-between gap-3">
-            <div>
-              <p className="ui-kicker">За неделю</p>
-              <p className="mt-1 text-sm text-[var(--theme-text-muted)]">
-                {currentStreak.solvedThisWeek} {formatSolvedLabel(currentStreak.solvedThisWeek)} закрыто за последние 7 дней.
-              </p>
-            </div>
-          </div>
-
-          <div className="flex items-end justify-between gap-1.5 sm:gap-2" style={{ height: 118 }}>
-            {currentStreak.dailyActivity.map((day) => {
-              const heightPercent = maxCount > 0 ? Math.max(day.count > 0 ? 12 : 4, (day.count / maxCount) * 100) : 4;
-              const isToday = day.date === currentStreak.dailyActivity.at(-1)?.date;
-
-              return (
-                <div key={day.date} className="flex flex-1 flex-col items-center gap-2">
-                  <span
-                    className={
-                      day.count > 0
-                        ? "text-[11px] font-semibold text-[var(--theme-text-strong)]"
-                        : "text-[11px] text-[var(--theme-text-soft)]"
-                    }
-                  >
-                    {day.count > 0 ? day.count : ""}
-                  </span>
-                  <div
-                    className="flex h-full w-full items-end rounded-[10px] border border-[var(--theme-border-soft)] bg-[var(--theme-surface-soft)] px-1.5 py-1.5"
-                  >
-                    <div
-                      className="w-full rounded-[7px] transition-all duration-300 sm:rounded-[8px]"
-                      style={{
-                        height: `${heightPercent}%`,
-                        minHeight: day.count > 0 ? 8 : 3,
-                        background: day.count > 0
-                          ? isToday
-                            ? "linear-gradient(180deg, color-mix(in srgb, var(--theme-accent) 72%, white 28%), var(--theme-accent))"
-                            : "linear-gradient(180deg, color-mix(in srgb, var(--theme-accent-soft) 35%, white 65%), var(--theme-accent-soft))"
-                          : "var(--theme-border-soft)"
-                      }}
-                    />
-                  </div>
-                  <span
-                    className={
-                      isToday
-                        ? "text-[11px] font-semibold text-[var(--theme-accent-text)]"
-                        : "text-[11px] text-[var(--theme-text-muted)]"
-                    }
-                  >
-                    {day.dayLabel}
+    <section>
+      <h2 className="shbz-section-title">Огонёк и ритм</h2>
+      <div className="shbz-card shbz-section-pad">
+        <div className="grid items-stretch gap-6 lg:grid-cols-[minmax(280px,380px)_1fr]">
+          <div className="flex flex-col gap-3.5">
+            <div className="shbz-streak-hero px-6 py-[22px]">
+              <div className="flex items-start justify-between gap-3">
+                <div
+                  className="text-[11px] font-bold uppercase tracking-[1.2px]"
+                  style={{ color: "var(--shbz-streak-text)" }}
+                >
+                  Огонёк
+                </div>
+                <div
+                  className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5"
+                  style={{ background: "var(--shbz-streak-pill-bg)" }}
+                >
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="var(--shbz-streak-flame)" aria-hidden="true">
+                    <path d="M12 2c1 3-1.5 4.5-1.5 7A3.5 3.5 0 0 0 14 12c0-2 1.5-3 1.5-3 1 4 .5 5-.5 7a4 4 0 1 1-7-3.5C9.5 9 11 7 12 2z" />
+                  </svg>
+                  <span className="text-[12.5px] font-extrabold" style={{ color: "var(--shbz-streak-text)" }}>
+                    {currentStreak.currentStreak} дн.
                   </span>
                 </div>
-              );
-            })}
+              </div>
+              <div className="mt-3 text-[26px] font-extrabold tracking-[-0.5px]" style={{ color: "var(--shbz-text-strong)" }}>
+                {streakHeadline}
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 gap-3.5 sm:grid-cols-2">
+              <div className="shbz-panel-soft px-5 py-[18px]">
+                <div className="text-[11px] font-bold uppercase tracking-[1px]" style={{ color: "var(--shbz-kicker)" }}>
+                  Сегодня сделано
+                </div>
+                <div className="mt-2 text-[17px] font-extrabold leading-[1.25]" style={{ color: "var(--shbz-text-strong)" }}>
+                  {solvedTodayLabel}
+                </div>
+              </div>
+              <div className="shbz-panel-soft px-5 py-[18px]">
+                <div className="text-[11px] font-bold uppercase tracking-[1px]" style={{ color: "var(--shbz-kicker)" }}>
+                  Следующая цель
+                </div>
+                <div className="mt-2 text-[22px] font-extrabold" style={{ color: "var(--shbz-text-strong)" }}>
+                  {goalTitle}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div
+            className="flex flex-col rounded-2xl border p-6"
+            style={{ background: "var(--shbz-panel-bg)", borderColor: "var(--shbz-soft-border)" }}
+          >
+            <div className="text-[11px] font-bold uppercase tracking-[1.2px]" style={{ color: "var(--shbz-kicker)" }}>
+              За неделю
+            </div>
+            <div className="mt-2 text-[15px]" style={{ color: "var(--shbz-label)" }}>
+              {currentStreak.solvedThisWeek} {formatSolvedLabel(currentStreak.solvedThisWeek)} закрыто за последние 7 дней.
+            </div>
+            <div className="mt-auto flex items-end justify-between gap-2.5 pt-7">
+              {currentStreak.dailyActivity.map((day) => {
+                const isToday = day.date === todayDate;
+                const dotColor = day.count > 0 ? "var(--shbz-accent-solid)" : "var(--shbz-week-dot-off)";
+                const labelColor = isToday ? "var(--shbz-accent-solid)" : "var(--shbz-kicker)";
+
+                return (
+                  <div key={day.date} className="flex flex-1 flex-col items-center gap-3">
+                    <div
+                      className="flex h-16 w-full items-end justify-center rounded-[10px] pb-2"
+                      style={{ background: "var(--shbz-week-cell)" }}
+                      title={day.count > 0 ? `Закрыто номеров: ${day.count}` : "Нет закрытых номеров"}
+                    >
+                      <span className="h-2 w-2 rounded-full" style={{ background: dotColor }} />
+                    </div>
+                    <span className="text-xs font-bold" style={{ color: labelColor }}>
+                      {day.dayLabel}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
           </div>
         </div>
       </div>
-    </SectionCard>
+    </section>
   );
 }
 

@@ -1,9 +1,7 @@
 import Link from "next/link";
 import { UserRole } from "@prisma/client";
-import { Badge } from "@/components/badge";
-import { PageHeader } from "@/components/page-header";
-import { ProgressBar } from "@/components/progress-bar";
-import { SectionCard } from "@/components/section-card";
+import { ShbzNumberSearch } from "@/components/shbz-number-search";
+import { ShbzPageHeader } from "@/components/shbz-page-header";
 import { StudentTopicsRefreshBridge } from "@/components/student-topics-refresh-bridge";
 import { requireUser } from "@/lib/auth";
 import { getStudentTopicsOverview } from "@/lib/platform-data";
@@ -13,59 +11,63 @@ export default async function StudentTopicsPage() {
   const data = await getStudentTopicsOverview(user.id);
 
   return (
-    <div className="space-y-5 sm:space-y-6">
+    <div>
       <StudentTopicsRefreshBridge />
 
-      <PageHeader
-        eyebrow="Темы"
-        title="Список тем"
-        description="Откройте нужную тему и продолжайте работу по заданиям."
-      />
+      <ShbzPageHeader kicker="Темы" title="Список тем" aside={<ShbzNumberSearch />} />
 
-      <SectionCard title="Список тем">
-        {data.topics.length === 0 ? (
-          <div className="ui-panel-soft rounded-[10px] border border-dashed px-4 py-8 text-center sm:rounded-[12px] sm:px-5 sm:py-10">
-            <p className="font-display text-lg font-semibold text-[var(--theme-text-strong)] sm:text-xl">Темы пока не добавлены</p>
-          </div>
-        ) : (
-          <div className="space-y-3 sm:space-y-4">
-            {data.topics.map((topic) => {
-              const solvedCount = topic.greenCount + topic.yellowCount;
-              const solvedPercent = topic.totalNumbers > 0 ? Math.round((solvedCount / topic.totalNumbers) * 100) : 0;
-              const isCompleted = topic.totalNumbers > 0 && solvedCount === topic.totalNumbers;
+      {data.topics.length === 0 ? (
+        <div className="shbz-card px-6 py-10 text-center">
+          <p className="text-lg font-bold" style={{ color: "var(--shbz-text-strong)" }}>
+            Темы пока не добавлены
+          </p>
+        </div>
+      ) : (
+        <div className="flex flex-col gap-4">
+          {data.topics.map((topic) => {
+            const solvedCount = topic.greenCount + topic.yellowCount;
+            const solvedPercent = topic.totalNumbers > 0 ? Math.round((solvedCount / topic.totalNumbers) * 100) : 0;
+            const isCompleted = topic.totalNumbers > 0 && solvedCount === topic.totalNumbers;
 
-              return (
-                <article key={topic.id} className="ui-surface rounded-[8px] border p-3.5 sm:rounded-[10px] sm:p-4">
-                  <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                    <div className="min-w-0 flex-1 space-y-2">
-                      <div className="flex flex-wrap items-center gap-2">
-                        <h2 className="font-display text-[1.1rem] font-semibold text-[var(--theme-text-strong)] sm:text-[1.25rem]">
-                          {topic.title}
-                        </h2>
-                        {isCompleted ? <Badge className="ui-status-surface ui-status-green">Тема завершена</Badge> : null}
-                      </div>
-                      {topic.description ? (
-                        <p className="ui-hint max-w-2xl text-sm leading-relaxed text-[var(--theme-text-muted)]">{topic.description}</p>
-                      ) : null}
-                      <p className={isCompleted ? "text-sm font-medium text-[var(--theme-success-text)]" : "text-sm text-[var(--theme-text-muted)]"}>
-                        {isCompleted ? "Все номера в теме закрыты." : `${solvedCount} из ${topic.totalNumbers} задач выполнено`}
-                      </p>
-                      <ProgressBar value={solvedPercent} size="sm" />
+            return (
+              <article key={topic.id} className="shbz-card shbz-card-hover px-[26px] py-6" style={{ borderRadius: 18 }}>
+                <div className="mb-[18px] flex flex-wrap items-start justify-between gap-5">
+                  <div className="min-w-0">
+                    <div className="flex flex-wrap items-center gap-3">
+                      <h2 className="text-xl font-extrabold tracking-[-0.3px]" style={{ color: "var(--shbz-text-strong)" }}>
+                        {topic.title}
+                      </h2>
+                      {isCompleted ? <span className="shbz-chip shbz-chip-green">Тема завершена</span> : null}
                     </div>
-
-                    <Link
-                      href={`/student/topics/${topic.id}`}
-                      className="ui-pressable ui-button-primary inline-flex w-full justify-center rounded-[10px] px-3.5 py-2 text-sm font-semibold transition sm:w-auto sm:rounded-[12px]"
+                    {topic.description ? (
+                      <p className="ui-hint mt-2 max-w-2xl text-sm leading-relaxed" style={{ color: "var(--shbz-text-muted)" }}>
+                        {topic.description}
+                      </p>
+                    ) : null}
+                    <p
+                      className="mt-2 text-sm"
+                      style={
+                        isCompleted
+                          ? { color: "var(--shbz-green-text)", fontWeight: 600 }
+                          : { color: "var(--shbz-text-muted)" }
+                      }
                     >
-                      Открыть
-                    </Link>
+                      {isCompleted ? "Все номера в теме закрыты." : `${solvedCount} из ${topic.totalNumbers} задач выполнено`}
+                    </p>
                   </div>
-                </article>
-              );
-            })}
-          </div>
-        )}
-      </SectionCard>
+
+                  <Link href={`/student/topics/${topic.id}`} className="shbz-btn-primary shrink-0 px-6 py-3 text-[14.5px]">
+                    Открыть
+                  </Link>
+                </div>
+                <div className="shbz-progress-track">
+                  <div className="shbz-progress-fill" style={{ width: `${solvedPercent}%` }} />
+                </div>
+              </article>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }
