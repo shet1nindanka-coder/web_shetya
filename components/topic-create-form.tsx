@@ -4,7 +4,6 @@ import { upload as uploadToBlob } from "@vercel/blob/client";
 import { useCallback, useRef, useState, type FormEvent } from "react";
 import { useRouter } from "next/navigation";
 import { FileDropInput } from "@/components/file-drop-input";
-import { ProgressBar } from "@/components/progress-bar";
 import { TopicNumbersField } from "@/components/topic-numbers-field";
 import { getSafeUploadFileName } from "@/lib/upload-file-name";
 
@@ -96,11 +95,8 @@ function FileUploadField({
   state: UploadState;
   onFileSelect: (file: File | null) => void;
 }) {
-  const uploadBadgeClassName =
-    "inline-flex items-center rounded-[12px] border border-[var(--theme-success-border)] bg-[var(--theme-surface-strong)] px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-[var(--theme-success-text)]";
-
   return (
-    <div className="space-y-3">
+    <div className="flex flex-col gap-3">
       <FileDropInput
         name={name}
         label={label}
@@ -110,30 +106,31 @@ function FileUploadField({
       />
 
       {state.status === "uploading" ? (
-        <div className="space-y-2 rounded-2xl border border-[var(--theme-accent-border)] bg-[var(--theme-accent-soft)] px-4 py-4" aria-live="polite">
-          <div className="flex items-center justify-between text-sm text-[var(--theme-text-default)]">
+        <div className="shbz-panel-soft px-4 py-3.5" aria-live="polite">
+          <div className="flex items-center justify-between text-sm" style={{ color: "var(--shbz-label)" }}>
             <span>Загрузка файла...</span>
-            <span className="font-semibold">{state.progress}%</span>
+            <span className="font-bold">{state.progress}%</span>
           </div>
-          <ProgressBar value={state.progress} size="lg" />
+          <div className="shbz-progress-track mt-2">
+            <div className="shbz-progress-fill" style={{ width: `${state.progress}%` }} />
+          </div>
         </div>
       ) : null}
 
       {state.status === "uploaded" && state.file ? (
-        <div className="ui-notice-success space-y-3 rounded-2xl px-4 py-4">
-          <div className="flex flex-wrap items-center gap-2">
-            <span className={uploadBadgeClassName}>Загружено</span>
-            <span className={uploadBadgeClassName}>{state.file.mimeType}</span>
-            <span className={uploadBadgeClassName}>
-              {formatUploadFileSize(state.file.size)}
-            </span>
-          </div>
-          <p className="text-sm font-medium">{state.file.originalName}</p>
+        <div
+          className="rounded-[14px] px-4 py-3 text-sm"
+          style={{ background: "var(--shbz-green-soft)", color: "var(--shbz-green-text)" }}
+        >
+          <span className="font-bold">Загружено:</span>{" "}
+          <span className="font-medium">
+            {state.file.originalName} · {formatUploadFileSize(state.file.size)}
+          </span>
         </div>
       ) : null}
 
       {state.status === "error" && state.error ? (
-        <div className="ui-notice-error rounded-2xl px-4 py-4 text-sm font-medium" aria-live="polite">
+        <div className="shbz-notice-error px-4 py-3 text-sm font-medium" aria-live="polite">
           {state.error}
         </div>
       ) : null}
@@ -383,78 +380,80 @@ export function TopicCreateForm({
   }
 
   return (
-    <form onSubmit={handleSubmit} className="grid gap-4 lg:grid-cols-2">
-      <label className="block space-y-2 lg:col-span-2">
-        <span className="ui-form-label">Название темы</span>
+    <form onSubmit={handleSubmit} className="flex flex-col gap-6">
+      <label className="block">
+        <span className="mb-[9px] block text-[13px] font-semibold" style={{ color: "var(--shbz-label)" }}>
+          Название темы
+        </span>
         <input
           type="text"
           value={title}
           onChange={(event) => setTitle(event.target.value)}
           placeholder="Например, Логарифмы и их свойства"
-          className="ui-input w-full rounded-2xl px-4 py-3"
+          className="shbz-input"
           required
         />
       </label>
 
-      <label className="block space-y-2 lg:col-span-2">
-        <span className="ui-form-label">Описание</span>
+      <label className="block">
+        <span className="mb-[9px] block text-[13px] font-semibold" style={{ color: "var(--shbz-label)" }}>
+          Описание
+        </span>
         <textarea
           value={description}
           onChange={(event) => setDescription(event.target.value)}
-          rows={4}
           placeholder="Что нужно изучить в теории и на что обратить внимание в заданиях по теме."
-          className="ui-input w-full rounded-2xl px-4 py-3"
+          className="shbz-textarea"
+          style={{ minHeight: 128 }}
           required
         />
       </label>
 
-      <FileUploadField
-        name="theoryFile"
-        label="Файл теории"
-        state={theoryUpload}
-        onFileSelect={handleTheoryFileSelect}
-      />
+      <div className="grid gap-5" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(300px, 1fr))" }}>
+        <FileUploadField
+          name="theoryFile"
+          label="Файл теории"
+          state={theoryUpload}
+          onFileSelect={handleTheoryFileSelect}
+        />
 
-      <FileUploadField
-        name="homeworkFile"
-        label="Файл заданий"
-        state={homeworkUpload}
-        onFileSelect={handleHomeworkFileSelect}
-      />
-
-      <div className="lg:col-span-2">
-        <TopicNumbersField
-          name="numbers"
-          value={numbers}
-          onValueChange={setNumbers}
-          rows={5}
-          description="Подходит и для коротких списков, и для больших тем на сотни номеров."
+        <FileUploadField
+          name="homeworkFile"
+          label="Файл заданий"
+          state={homeworkUpload}
+          onFileSelect={handleHomeworkFileSelect}
         />
       </div>
 
-      <div className="space-y-3 lg:col-span-2">
-        <div className="ui-hint ui-panel-soft rounded-2xl px-4 py-4 text-sm text-[var(--theme-text-muted)]">
-          {isUploading
-            ? "Дождитесь окончания загрузки файлов. Кнопка создания станет доступной автоматически."
-            : isReadyToCreate
-              ? "Оба файла загружены. Теперь можно создавать тему."
-              : "Сначала загрузите файл теории и файл заданий."}
-        </div>
+      <TopicNumbersField
+        name="numbers"
+        value={numbers}
+        onValueChange={setNumbers}
+        rows={4}
+        description="Подходит и для коротких списков, и для больших тем на сотни номеров."
+      />
 
-        {submitError ? (
-          <div className="ui-notice-error rounded-2xl px-4 py-4 text-sm font-medium" aria-live="polite">
-            {submitError}
-          </div>
-        ) : null}
-
-        <button
-          type="submit"
-          disabled={isSubmitDisabled}
-          className="ui-pressable ui-button-primary rounded-2xl px-5 py-3 text-sm font-semibold transition"
-        >
-          {isSubmitting ? "Создаем тему..." : "Создать тему"}
-        </button>
+      <div className="ui-hint shbz-panel-soft px-4 py-3 text-sm" style={{ color: "var(--shbz-text-muted)" }}>
+        {isUploading
+          ? "Дождитесь окончания загрузки файлов. Кнопка создания станет доступной автоматически."
+          : isReadyToCreate
+            ? "Оба файла загружены. Теперь можно создавать тему."
+            : "Сначала загрузите файл теории и файл заданий."}
       </div>
+
+      {submitError ? (
+        <div className="shbz-notice-error px-4 py-3.5 text-sm font-medium" aria-live="polite">
+          {submitError}
+        </div>
+      ) : null}
+
+      <button
+        type="submit"
+        disabled={isSubmitDisabled}
+        className="shbz-btn-primary self-start px-[22px] py-3 text-sm"
+      >
+        {isSubmitting ? "Создаем тему..." : "Создать тему"}
+      </button>
     </form>
   );
 }

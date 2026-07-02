@@ -1,8 +1,9 @@
 import Link from "next/link";
 import { UserRole } from "@prisma/client";
 import { DeleteTopicDialog } from "@/components/delete-topic-dialog";
-import { PageHeader } from "@/components/page-header";
-import { SectionCard } from "@/components/section-card";
+import { ShbzNavCard } from "@/components/shbz-nav-card";
+import { ShbzNumberSearch } from "@/components/shbz-number-search";
+import { ShbzPageHeader } from "@/components/shbz-page-header";
 import { TopicCreateForm } from "@/components/topic-create-form";
 import { requireUser } from "@/lib/auth";
 import { getTeacherTopicsOverview } from "@/lib/platform-data";
@@ -39,6 +40,21 @@ const topicNotices = {
   }
 } as const;
 
+function pluralizeNumbers(count: number) {
+  const mod10 = count % 10;
+  const mod100 = count % 100;
+
+  if (mod10 === 1 && mod100 !== 11) {
+    return `${count} номер`;
+  }
+
+  if (mod10 >= 2 && mod10 <= 4 && (mod100 < 12 || mod100 > 14)) {
+    return `${count} номера`;
+  }
+
+  return `${count} номеров`;
+}
+
 export default async function TeacherTopicsPage({ searchParams }: TeacherTopicsPageProps) {
   await requireUser(UserRole.TEACHER);
   const data = await getTeacherTopicsOverview();
@@ -59,84 +75,64 @@ export default async function TeacherTopicsPage({ searchParams }: TeacherTopicsP
   const notice = noticeKey ? topicNotices[noticeKey] : null;
 
   return (
-    <div className="space-y-5 sm:space-y-6">
+    <div>
+      <ShbzPageHeader
+        kicker="Темы"
+        title="Материалы и номера"
+        aside={<ShbzNumberSearch endpoint="/api/teacher/topics/find-number" />}
+      />
+
       {notice ? (
         <div
           className={
             notice.tone === "success"
-              ? "ui-notice-success rounded-[8px] px-4 py-3 text-sm font-medium sm:rounded-[10px]"
-              : "ui-notice-error rounded-[8px] px-4 py-3 text-sm font-medium sm:rounded-[10px]"
+              ? "shbz-notice-success mb-8 px-5 py-4 text-sm font-medium"
+              : "shbz-notice-error mb-8 px-5 py-4 text-sm font-medium"
           }
         >
           {notice.message}
         </div>
       ) : null}
 
-      <PageHeader
-        eyebrow="Темы"
-        title="Материалы и номера"
-        description="Создание тем, загрузка файлов и настройка ответов в одном рабочем разделе."
-      />
-
-      <SectionCard title="Создать новую тему" description="Название, файлы и список номеров сохраняются одной формой." className="scroll-mt-20">
-        <div id="create-topic" className="scroll-mt-20">
+      <section id="create-topic" className="scroll-mt-24">
+        <h2 className="shbz-section-title">Создать новую тему</h2>
+        <div className="shbz-card shbz-section-pad">
           <TopicCreateForm uploadMode={uploadMode} blobAccess={blobAccess} />
         </div>
-      </SectionCard>
+      </section>
 
-      <SectionCard title="Все темы">
+      <section className="mt-11">
+        <h2 className="shbz-section-title" style={{ marginBottom: 22 }}>
+          Все темы
+        </h2>
+
         {data.topics.length === 0 ? (
-          <div className="ui-panel-soft rounded-[10px] border-dashed px-4 py-8 text-center sm:rounded-[12px] sm:px-5 sm:py-10">
-            <p className="font-display text-lg font-semibold text-[var(--theme-text-strong)] sm:text-xl">Пока нет ни одной темы</p>
+          <div className="shbz-card px-6 py-10 text-center">
+            <p className="text-lg font-bold" style={{ color: "var(--shbz-text-strong)" }}>
+              Пока нет ни одной темы
+            </p>
           </div>
         ) : (
-          <div className="grid gap-3 sm:gap-4 xl:grid-cols-2">
+          <div className="grid gap-5" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))" }}>
             {data.topics.map((topic) => (
-              <article key={topic.id} className="ui-surface rounded-[8px] border p-3.5 sm:rounded-[10px] sm:p-4">
-                <div className="flex flex-col gap-3">
-                  <div className="space-y-1.5">
-                    <h2 className="font-display text-[1.15rem] font-semibold text-[var(--theme-text-strong)] sm:text-[1.35rem]">
-                      {topic.title}
-                    </h2>
-                    {topic.description ? (
-                      <p className="ui-hint text-sm leading-relaxed text-[var(--theme-text-muted)]">{topic.description}</p>
-                    ) : null}
-                  </div>
-
-                  <div className="grid grid-cols-3 gap-2">
-                    <div className="ui-mini-stat-card">
-                      <p className="ui-mini-stat-card-label">Номера</p>
-                      <p className="ui-mini-stat-card-value mt-1.5">{topic.totalNumbers}</p>
-                    </div>
-                    <div className="ui-mini-stat-card">
-                      <p className="ui-mini-stat-card-label">Активных</p>
-                      <p className="ui-mini-stat-card-value mt-1.5">{topic.studentsWithActivity}</p>
-                    </div>
-                    <div className="ui-mini-stat-card">
-                      <p className="ui-mini-stat-card-label">Статусов</p>
-                      <p className="ui-mini-stat-card-value mt-1.5">{topic.markedCount}</p>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="mt-3 flex flex-col gap-2 sm:flex-row sm:flex-wrap sm:gap-3">
-                  <Link
-                    href={`/teacher/topics/${topic.id}`}
-                    className="ui-pressable ui-button-primary inline-flex w-full justify-center rounded-[10px] px-3.5 py-2 text-sm font-semibold transition sm:w-auto sm:rounded-[12px]"
-                  >
-                    Открыть и редактировать
-                  </Link>
-                  <DeleteTopicDialog
-                    topicId={topic.id}
-                    topicTitle={topic.title}
-                    triggerClassName="ui-pressable ui-button-danger inline-flex w-full justify-center rounded-[10px] px-3.5 py-2 text-sm font-semibold transition sm:w-auto sm:rounded-[12px]"
-                  />
-                </div>
-              </article>
+              <ShbzNavCard
+                key={topic.id}
+                kicker="Тема"
+                title={topic.title}
+                meta={`${pluralizeNumbers(topic.totalNumbers)} · ${topic.studentsWithActivity} активных`}
+                footer={
+                  <>
+                    <Link href={`/teacher/topics/${topic.id}`} className="shbz-btn-primary px-[18px] py-2.5 text-[13px]">
+                      Открыть
+                    </Link>
+                    <DeleteTopicDialog topicId={topic.id} topicTitle={topic.title} triggerClassName="shbz-btn-danger" />
+                  </>
+                }
+              />
             ))}
           </div>
         )}
-      </SectionCard>
+      </section>
     </div>
   );
 }

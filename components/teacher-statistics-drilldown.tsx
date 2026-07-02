@@ -1,8 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { ProgressBar } from "@/components/progress-bar";
-import { completionPercent, cx, formatDate } from "@/lib/utils";
+import { completionPercent, formatDate } from "@/lib/utils";
 
 type DrilldownStatus = "GREEN" | "YELLOW" | "RED" | null;
 
@@ -42,21 +41,24 @@ type AssignmentOption = {
 const statusCards = [
   {
     key: "green",
-    label: "Зеленые",
+    label: "Зелёные",
     valueKey: "greenCount" as const,
-    className: "border-[var(--theme-success-border)] bg-[var(--theme-success-soft)] text-[var(--theme-success-text)]"
+    bg: "var(--shbz-green-soft)",
+    labelColor: "var(--shbz-green-text)"
   },
   {
     key: "yellow",
-    label: "Желтые",
+    label: "Жёлтые",
     valueKey: "yellowCount" as const,
-    className: "border-[var(--theme-warning-border)] bg-[var(--theme-warning-soft)] text-[var(--theme-warning-text)]"
+    bg: "var(--shbz-yellow-soft)",
+    labelColor: "var(--shbz-yellow-text)"
   },
   {
     key: "red",
     label: "Красные",
     valueKey: "redCount" as const,
-    className: "border-[var(--theme-danger-border)] bg-[var(--theme-danger-soft)] text-[var(--theme-danger-text)]"
+    bg: "var(--shbz-red-soft)",
+    labelColor: "var(--shbz-red-text)"
   }
 ];
 
@@ -221,128 +223,128 @@ export function TeacherStatisticsDrilldown({
 
   if (!topics.length || !students.length) {
     return (
-      <div className="ui-panel-soft rounded-[28px] border-dashed px-5 py-10 text-center">
-        <p className="font-display text-2xl font-semibold text-[var(--theme-text-strong)]">Пока недостаточно данных для персонального среза</p>
+      <div className="shbz-panel-soft px-6 py-10 text-center">
+        <p className="text-lg font-bold" style={{ color: "var(--shbz-text-strong)" }}>
+          Пока недостаточно данных для персонального среза
+        </p>
       </div>
     );
   }
 
   return (
-    <div className="grid gap-4 xl:grid-cols-[0.86fr_1.14fr]">
-      <article className="ui-surface rounded-[12px] border p-4 sm:p-5">
-        <div className="grid gap-4">
-          <label className="space-y-2">
-            <span className="text-sm font-medium text-[var(--theme-text-muted)]">Тема</span>
-            <select
-              value={selectedTopic?.id ?? ""}
-              onChange={(event) => setSelectedTopicId(event.target.value)}
-              className="ui-input w-full rounded-[10px] px-4 py-3 text-sm font-medium"
-            >
-              {topics.map((topic) => (
-                <option key={topic.id} value={topic.id}>
-                  {topic.title}
-                </option>
-              ))}
-            </select>
-          </label>
+    <div className="grid items-start gap-7 lg:grid-cols-[minmax(280px,360px)_1fr]">
+      <div className="flex flex-col gap-5">
+        <label className="flex flex-col gap-2">
+          <span className="text-[13px] font-semibold" style={{ color: "var(--shbz-label)" }}>
+            Тема
+          </span>
+          <select
+            value={selectedTopic?.id ?? ""}
+            onChange={(event) => setSelectedTopicId(event.target.value)}
+            className="shbz-select"
+          >
+            {topics.map((topic) => (
+              <option key={topic.id} value={topic.id}>
+                {topic.title}
+              </option>
+            ))}
+          </select>
+        </label>
 
-          <label className="space-y-2">
-            <span className="text-sm font-medium text-[var(--theme-text-muted)]">Ученик</span>
-            <select
-              value={selectedStudent?.id ?? ""}
-              onChange={(event) => setSelectedStudentId(event.target.value)}
-              className="ui-input w-full rounded-[10px] px-4 py-3 text-sm font-medium"
-            >
-              {students.map((student) => (
-                <option key={student.id} value={student.id}>
-                  {student.name}
-                </option>
-              ))}
-            </select>
-          </label>
+        <label className="flex flex-col gap-2">
+          <span className="text-[13px] font-semibold" style={{ color: "var(--shbz-label)" }}>
+            Ученик
+          </span>
+          <select
+            value={selectedStudent?.id ?? ""}
+            onChange={(event) => setSelectedStudentId(event.target.value)}
+            className="shbz-select"
+          >
+            {students.map((student) => (
+              <option key={student.id} value={student.id}>
+                {student.name}
+              </option>
+            ))}
+          </select>
+        </label>
 
-          <label className="space-y-2">
-            <span className="text-sm font-medium text-[var(--theme-text-muted)]">ДЗ</span>
-            <select
-              value={selectedAssignmentId}
-              onChange={(event) => setSelectedAssignmentId(event.target.value)}
-              className="ui-input w-full rounded-[10px] px-4 py-3 text-sm font-medium"
-            >
-              <option value="__all__">Вся тема</option>
-              {assignmentOptions.map((assignment) => (
-                <option key={assignment.id} value={assignment.id}>
-                  {assignment.label} · {assignment.deadlineLabel}
-                </option>
-              ))}
-            </select>
-          </label>
-        </div>
+        <label className="flex flex-col gap-2">
+          <span className="text-[13px] font-semibold" style={{ color: "var(--shbz-label)" }}>
+            ДЗ
+          </span>
+          <select
+            value={selectedAssignmentId}
+            onChange={(event) => setSelectedAssignmentId(event.target.value)}
+            className="shbz-select"
+          >
+            <option value="__all__">Вся тема</option>
+            {assignmentOptions.map((assignment) => (
+              <option key={assignment.id} value={assignment.id}>
+                {assignment.label} · {assignment.deadlineLabel}
+              </option>
+            ))}
+          </select>
+        </label>
 
-        <div className="mt-5 space-y-4">
-          <div>
-            <div className="mb-2 flex items-center justify-between gap-3 text-sm text-[var(--theme-text-muted)]">
-              <span>Решено в теме</span>
-              <span className="font-semibold text-[var(--theme-text-strong)]">
-                {metrics.solvedCount} / {metrics.totalNumbers}
-              </span>
-            </div>
-            <ProgressBar value={metrics.solvedPercent} size="sm" />
+        <div className="mt-1">
+          <div className="mb-2 flex items-baseline justify-between">
+            <span className="text-[13px] font-semibold" style={{ color: "var(--shbz-text-muted)" }}>
+              Решено в теме
+            </span>
+            <span className="text-sm font-extrabold" style={{ color: "var(--shbz-text-strong)" }}>
+              {metrics.solvedCount} / {metrics.totalNumbers}
+            </span>
           </div>
-
-          <div>
-            <div className="mb-2 flex items-center justify-between gap-3 text-sm text-[var(--theme-text-muted)]">
-              <span>Отмечено вообще</span>
-              <span className="font-semibold text-[var(--theme-text-strong)]">
-                {metrics.markedCount} / {metrics.totalNumbers}
-              </span>
-            </div>
-            <ProgressBar value={metrics.markedPercent} size="sm" />
+          <div className="shbz-progress-track">
+            <div className="shbz-progress-fill" style={{ width: `${metrics.solvedPercent}%` }} />
           </div>
         </div>
-      </article>
 
-      <article className="ui-surface rounded-[12px] border p-4 sm:p-5">
-        <div className="grid gap-3 sm:grid-cols-3">
+        <div>
+          <div className="mb-2 flex items-baseline justify-between">
+            <span className="text-[13px] font-semibold" style={{ color: "var(--shbz-text-muted)" }}>
+              Отмечено вообще
+            </span>
+            <span className="text-sm font-extrabold" style={{ color: "var(--shbz-text-strong)" }}>
+              {metrics.markedCount} / {metrics.totalNumbers}
+            </span>
+          </div>
+          <div className="shbz-progress-track">
+            <div className="shbz-progress-fill" style={{ width: `${metrics.markedPercent}%` }} />
+          </div>
+        </div>
+      </div>
+
+      <div className="flex flex-col gap-5">
+        <div className="grid grid-cols-1 gap-3.5 sm:grid-cols-3">
           {statusCards.map((card) => (
-            <div key={card.key} className={cx("rounded-[10px] border px-4 py-4", card.className)}>
-              <p className="text-sm font-medium">{card.label}</p>
-              <p className="mt-2 font-display text-3xl font-semibold">
+            <div key={card.key} className="rounded-2xl px-5 py-[18px]" style={{ background: card.bg }}>
+              <div className="text-sm font-semibold" style={{ color: card.labelColor }}>
+                {card.label}
+              </div>
+              <div className="mt-1.5 text-[40px] font-extrabold leading-none" style={{ color: "var(--shbz-text-strong)" }}>
                 {metrics[card.valueKey]}
-              </p>
+              </div>
             </div>
           ))}
         </div>
 
-        <div className="ui-progress-track mt-5 overflow-hidden rounded-full border border-[var(--theme-border-soft)] bg-[var(--theme-surface-soft)] shadow-[inset_0_1px_1px_rgba(15,23,42,0.06)]">
-          <div className="flex h-2.5 w-full">
-            <RatioSegment value={metrics.greenCount} total={metrics.totalNumbers} className="bg-[rgba(16,185,129,0.72)]" />
-            <RatioSegment value={metrics.yellowCount} total={metrics.totalNumbers} className="bg-[rgba(245,158,11,0.72)]" />
-            <RatioSegment value={metrics.redCount} total={metrics.totalNumbers} className="bg-[rgba(244,63,94,0.72)]" />
-            <RatioSegment value={metrics.unmarkedCount} total={metrics.totalNumbers} className="bg-[rgba(148,163,184,0.55)]" />
+        <div className="shbz-progress-track" style={{ height: 10 }}>
+          <div
+            className="h-full rounded-full"
+            style={{ width: `${metrics.solvedPercent}%`, background: "linear-gradient(90deg, #36C77E, #2BB871)" }}
+          />
+        </div>
+
+        <div className="shbz-panel-soft px-[22px] py-5">
+          <div className="text-[11px] font-bold uppercase tracking-[1.2px]" style={{ color: "var(--shbz-kicker)" }}>
+            Сейчас
+          </div>
+          <div className="mt-2 text-[17px] font-bold leading-[1.45]" style={{ color: "var(--shbz-text-strong)" }}>
+            {insight}
           </div>
         </div>
-
-        <div className="ui-panel-soft mt-5 rounded-[12px] px-4 py-4">
-          <p className="text-sm font-medium text-[var(--theme-text-muted)]">Сейчас</p>
-          <p className="mt-2 text-base font-semibold leading-7 text-[var(--theme-text-strong)]">{insight}</p>
-        </div>
-      </article>
+      </div>
     </div>
   );
-}
-
-function RatioSegment({
-  value,
-  total,
-  className
-}: {
-  value: number;
-  total: number;
-  className: string;
-}) {
-  if (!value || !total) {
-    return null;
-  }
-
-  return <div className={cx("transition-[width] duration-300 ease-out", className)} style={{ width: `${(value / total) * 100}%` }} />;
 }

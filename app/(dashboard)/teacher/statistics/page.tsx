@@ -1,15 +1,13 @@
 import Link from "next/link";
 import { HomeworkNumberStatus, UserRole } from "@prisma/client";
-import { PageHeader } from "@/components/page-header";
 import { ProgressTimelineChart } from "@/components/progress-timeline-chart";
-import { ProgressBar } from "@/components/progress-bar";
 import { TeacherProgressTimelineFilter } from "@/components/teacher-progress-timeline-filter";
-import { SectionCard } from "@/components/section-card";
-import { StatCard } from "@/components/stat-card";
+import { ShbzNumberSearch } from "@/components/shbz-number-search";
+import { ShbzPageHeader } from "@/components/shbz-page-header";
 import { TeacherStatisticsDrilldown } from "@/components/teacher-statistics-drilldown";
 import { requireUser } from "@/lib/auth";
 import { getProgressTimeline, getTeacherTopicsOverview } from "@/lib/platform-data";
-import { completionPercent, cx, toIsoDateTimeString } from "@/lib/utils";
+import { completionPercent, toIsoDateTimeString } from "@/lib/utils";
 
 type TeacherTopicsOverview = Awaited<ReturnType<typeof getTeacherTopicsOverview>>;
 type TopicOverview = TeacherTopicsOverview["topics"][number];
@@ -156,44 +154,38 @@ export default async function TeacherStatisticsPage({ searchParams }: TeacherSta
       label: "Зеленые",
       note: "Уверенно решены",
       value: totalGreen,
-      color: "#34d399",
-      badgeClassName: "border-[var(--theme-success-border)] bg-[var(--theme-success-soft)] text-[var(--theme-success-text)]"
+      color: "#36C77E",
+      badgeClassName: ""
     },
     {
       key: "yellow",
       label: "Желтые",
       note: "Исправлены после самопроверки",
       value: totalYellow,
-      color: "#fbbf24",
-      badgeClassName: "border-[var(--theme-warning-border)] bg-[var(--theme-warning-soft)] text-[var(--theme-warning-text)]"
+      color: "#F2A93B",
+      badgeClassName: ""
     },
     {
       key: "red",
       label: "Красные",
       note: "Требуют помощи преподавателя",
       value: totalRed,
-      color: "#fb7185",
-      badgeClassName: "border-[var(--theme-danger-border)] bg-[var(--theme-danger-soft)] text-[var(--theme-danger-text)]"
+      color: "#E5484D",
+      badgeClassName: ""
     },
     {
       key: "empty",
       label: "Без статуса",
       note: "Номер еще не отмечен",
       value: totalUnfilled,
-      color: "#cbd5e1",
-      badgeClassName: "border-[var(--theme-border)] bg-[var(--theme-surface-soft)] text-[var(--theme-text-muted)]"
+      color: "#C7CAD0",
+      badgeClassName: ""
     }
   ];
 
   const activeTopicsPercent = completionPercent(activeTopics.length, data.stats.totalTopics);
   const activeStudentsPercent = completionPercent(activeStudents.length, data.stats.totalStudents);
   const solvedPercent = completionPercent(totalSolved, totalStatusSlots);
-  const headlineTitle =
-    view === "teacher" ? "Статистика для подготовки к занятиям" : "Общая аналитика платформы";
-  const headlineDescription =
-    view === "teacher"
-      ? "Темп прогресса по времени и точечный срез по теме и ученику."
-      : "Общие метрики и аналитика платформы.";
   const progressTimelineEntries = await getProgressTimeline(selectedTimelineStudent?.id, 112);
   const drilldownTopics = data.topics.map((topic) => ({
     id: topic.id,
@@ -216,35 +208,33 @@ export default async function TeacherStatisticsPage({ searchParams }: TeacherSta
   }));
 
   return (
-    <div className="space-y-5 sm:space-y-6">
-      <PageHeader
-        eyebrow="Статистика"
-        title={headlineTitle}
-        description={headlineDescription}
+    <div>
+      <ShbzPageHeader
+        kicker="Статистика"
+        title="Статистика занятий"
+        aside={<ShbzNumberSearch endpoint="/api/teacher/topics/find-number" />}
       />
 
-      <nav className="ui-fade-slide ui-tab-shell ui-tab-strip flex gap-1.5 rounded-[8px] p-1.5 sm:flex-wrap sm:rounded-[10px] sm:p-2">
-        {statisticsViews.map((item) => {
-          const isActive = item.key === view;
-
-          return (
-            <Link
-              key={item.key}
-              href={item.href}
-              className={cx("ui-pressable ui-tab shrink-0 rounded-[8px] px-4 py-2.5 text-sm font-medium sm:px-4.5", isActive && "data-[active=true]:shadow-none")}
-              data-active={isActive}
-            >
-              {item.label}
-            </Link>
-          );
-        })}
+      <nav className="shbz-seg mb-7" aria-label="Режим статистики">
+        {statisticsViews.map((item) => (
+          <Link
+            key={item.key}
+            href={item.href}
+            className="shbz-seg-btn shbz-seg-btn--plain"
+            data-active={item.key === view}
+          >
+            {item.label}
+          </Link>
+        ))}
       </nav>
 
       {view === "teacher" ? (
-        <>
-          <SectionCard
-            title="Динамика прогресса"
-            action={
+        <div className="flex flex-col gap-6">
+          <section className="shbz-card shbz-section-pad">
+            <div className="mb-[22px] flex flex-wrap items-start justify-between gap-6">
+              <h2 className="text-xl font-bold" style={{ color: "var(--shbz-text-strong)" }}>
+                Динамика прогресса
+              </h2>
               <TeacherProgressTimelineFilter
                 students={data.students.map((student) => ({
                   id: student.id,
@@ -252,110 +242,113 @@ export default async function TeacherStatisticsPage({ searchParams }: TeacherSta
                 }))}
                 selectedStudentId={selectedTimelineStudent?.id ?? ""}
               />
-            }
-          >
+            </div>
             <ProgressTimelineChart
               entries={progressTimelineEntries}
               selectedStudentName={selectedTimelineStudent?.name ?? null}
             />
-          </SectionCard>
+          </section>
 
-          <SectionCard title="Срез по теме и ученику">
+          <section className="shbz-card shbz-section-pad">
+            <h2 className="mb-6 text-xl font-bold" style={{ color: "var(--shbz-text-strong)" }}>
+              Срез по теме и ученику
+            </h2>
             <TeacherStatisticsDrilldown topics={drilldownTopics} students={drilldownStudents} />
-          </SectionCard>
-
-        </>
+          </section>
+        </div>
       ) : (
-        <>
-          <div className="grid grid-cols-2 gap-2.5 sm:gap-3 xl:grid-cols-4">
-            <StatCard
-              label="Решено"
-              value={totalSolved}
-              stagger={1}
-              accent={<span className="font-semibold text-[var(--theme-success-text)]">{solvedPercent}% от всех слотов</span>}
-            />
-            <StatCard
+        <div className="flex flex-col gap-6">
+          <div className="grid grid-cols-2 gap-3.5 xl:grid-cols-4">
+            <DevMetricCard label="Решено" value={totalSolved} note={`${solvedPercent}% от всех слотов`} noteColor="var(--shbz-green-text)" />
+            <DevMetricCard
               label="Нужна помощь"
               value={totalRed}
-              stagger={2}
-              accent={<span className="font-semibold text-[var(--theme-danger-text)]">{completionPercent(totalRed, totalStatusSlots)}% от всех слотов</span>}
+              note={`${completionPercent(totalRed, totalStatusSlots)}% от всех слотов`}
+              noteColor="var(--shbz-red-text)"
             />
-            <StatCard
+            <DevMetricCard
               label="Без статуса"
               value={totalUnfilled}
-              stagger={3}
-              accent={<span className="font-semibold text-[var(--theme-text-default)]">{completionPercent(totalUnfilled, totalStatusSlots)}% от всех слотов</span>}
+              note={`${completionPercent(totalUnfilled, totalStatusSlots)}% от всех слотов`}
+              noteColor="var(--shbz-text-muted)"
             />
-            <StatCard
+            <DevMetricCard
               label="Активные ученики"
               value={`${activeStudents.length} / ${data.stats.totalStudents}`}
-              stagger={4}
-              accent={<span className="font-semibold text-[var(--theme-accent-text)]">{activeStudentsPercent}% охвата</span>}
+              note={`${activeStudentsPercent}% охвата`}
+              noteColor="var(--shbz-accent-solid)"
             />
           </div>
 
-          <SectionCard title="Как распределяется прогресс">
-            <div className="grid gap-4 xl:grid-cols-[0.9fr_1.1fr]">
-              <article className="ui-surface ui-panel-soft rounded-[8px] p-3.5 sm:rounded-[10px] sm:p-6">
+          <section className="shbz-card shbz-section-pad">
+            <h2 className="mb-6 text-xl font-bold" style={{ color: "var(--shbz-text-strong)" }}>
+              Как распределяется прогресс
+            </h2>
+            <div className="grid gap-6 xl:grid-cols-[0.9fr_1.1fr]">
+              <div className="shbz-panel-soft p-6">
                 <div className="flex flex-col items-center gap-6 lg:flex-row">
-                  <DonutChart segments={distributionSegments} total={totalStatusSlots} centerValue={`${solvedPercent}%`} centerLabel="решено" />
+                  <DonutChart
+                    segments={distributionSegments}
+                    total={totalStatusSlots}
+                    centerValue={`${solvedPercent}%`}
+                    centerLabel="решено"
+                  />
                   <div className="w-full space-y-3">
                     {distributionSegments.map((segment) => (
-                      <div key={segment.key} className="ui-card-soft rounded-2xl px-4 py-3">
+                      <div
+                        key={segment.key}
+                        className="rounded-2xl border px-4 py-3"
+                        style={{ background: "var(--shbz-card-bg)", borderColor: "var(--shbz-soft-border)" }}
+                      >
                         <div className="flex items-center justify-between gap-3">
                           <div className="flex items-center gap-3">
                             <span className="h-3 w-3 rounded-full" style={{ backgroundColor: segment.color }} />
                             <div>
-                              <p className="text-sm font-semibold text-[var(--theme-text-strong)]">{segment.label}</p>
-                              <p className="text-xs leading-5 text-[var(--theme-text-muted)]">{segment.note}</p>
+                              <p className="text-sm font-bold" style={{ color: "var(--shbz-text-strong)" }}>
+                                {segment.label}
+                              </p>
+                              <p className="text-xs leading-5" style={{ color: "var(--shbz-text-muted)" }}>
+                                {segment.note}
+                              </p>
                             </div>
                           </div>
                           <div className="text-right">
-                            <p className="text-sm font-semibold text-[var(--theme-text-strong)]">{segment.value}</p>
-                            <p className="text-xs text-[var(--theme-text-muted)]">{completionPercent(segment.value, totalStatusSlots)}%</p>
+                            <p className="text-sm font-extrabold" style={{ color: "var(--shbz-text-strong)" }}>
+                              {segment.value}
+                            </p>
+                            <p className="text-xs" style={{ color: "var(--shbz-text-muted)" }}>
+                              {completionPercent(segment.value, totalStatusSlots)}%
+                            </p>
                           </div>
                         </div>
                       </div>
                     ))}
                   </div>
                 </div>
-              </article>
+              </div>
 
-              <article className="ui-surface ui-panel-soft rounded-[8px] p-3.5 sm:rounded-[10px] sm:p-6">
+              <div className="shbz-panel-soft p-6">
                 <div className="space-y-5">
-                  <div>
-                    <div className="mb-2 flex items-center justify-between gap-3 text-sm text-[var(--theme-text-muted)]">
-                      <span>Решено уверенно</span>
-                      <span className="font-semibold text-[var(--theme-text-strong)]">
-                        {totalSolved} / {totalStatusSlots}
-                      </span>
-                    </div>
-                    <ProgressBar value={solvedPercent} size="sm" />
-                  </div>
+                  <DevProgressRow label="Решено уверенно" value={`${totalSolved} / ${totalStatusSlots}`} percent={solvedPercent} />
+                  <DevProgressRow
+                    label="Темы с активностью"
+                    value={`${activeTopics.length} / ${data.stats.totalTopics}`}
+                    percent={activeTopicsPercent}
+                  />
+                  <DevProgressRow
+                    label="Ученики в работе"
+                    value={`${activeStudents.length} / ${data.stats.totalStudents}`}
+                    percent={activeStudentsPercent}
+                  />
 
-                  <div>
-                    <div className="mb-2 flex items-center justify-between gap-3 text-sm text-[var(--theme-text-muted)]">
-                      <span>Темы с активностью</span>
-                      <span className="font-semibold text-[var(--theme-text-strong)]">
-                        {activeTopics.length} / {data.stats.totalTopics}
-                      </span>
+                  <div
+                    className="rounded-2xl border px-[22px] py-5"
+                    style={{ background: "var(--shbz-card-bg)", borderColor: "var(--shbz-soft-border)" }}
+                  >
+                    <div className="text-[11px] font-bold uppercase tracking-[1.2px]" style={{ color: "var(--shbz-kicker)" }}>
+                      Ключевой вывод
                     </div>
-                    <ProgressBar value={activeTopicsPercent} size="sm" />
-                  </div>
-
-                  <div>
-                    <div className="mb-2 flex items-center justify-between gap-3 text-sm text-[var(--theme-text-muted)]">
-                      <span>Ученики в работе</span>
-                      <span className="font-semibold text-[var(--theme-text-strong)]">
-                        {activeStudents.length} / {data.stats.totalStudents}
-                      </span>
-                    </div>
-                    <ProgressBar value={activeStudentsPercent} size="sm" />
-                  </div>
-
-                  <div className="ui-card-soft rounded-[8px] sm:rounded-[10px] px-4 py-4">
-                    <p className="text-sm font-medium text-[var(--theme-text-muted)]">Ключевой вывод</p>
-                    <p className="mt-2 text-base font-semibold text-[var(--theme-text-strong)]">
+                    <p className="mt-2 text-base font-bold leading-normal" style={{ color: "var(--shbz-text-strong)" }}>
                       {totalUnfilled > totalSolved
                         ? "Неотмеченных номеров пока больше, чем реально решенных. Здесь главный резерв роста."
                         : totalRed > 0
@@ -364,12 +357,15 @@ export default async function TeacherStatisticsPage({ searchParams }: TeacherSta
                     </p>
                   </div>
                 </div>
-              </article>
+              </div>
             </div>
-          </SectionCard>
+          </section>
 
-          <SectionCard title="Что происходит по темам">
-            <div className="grid gap-3 sm:gap-4 xl:grid-cols-2">
+          <section className="shbz-card shbz-section-pad">
+            <h2 className="mb-6 text-xl font-bold" style={{ color: "var(--shbz-text-strong)" }}>
+              Что происходит по темам
+            </h2>
+            <div className="grid gap-5 xl:grid-cols-2">
               <RankingCard
                 title="Лучшее усвоение"
                 emptyMessage="Пока нет тем с прогрессом."
@@ -379,7 +375,7 @@ export default async function TeacherStatisticsPage({ searchParams }: TeacherSta
                   subtitle: `${topic.solvedCount} решено · ${topic.studentsWithActivity} учеников в работе`,
                   valueLabel: `${topic.solvedPercent}%`,
                   progress: topic.solvedPercent,
-                  tone: "emerald"
+                  tone: "emerald" as const
                 }))}
               />
 
@@ -392,14 +388,17 @@ export default async function TeacherStatisticsPage({ searchParams }: TeacherSta
                   subtitle: `${topic.redCount} красных · ${topic.markedCount} отмеченных статусов`,
                   valueLabel: `${topic.redPercent}%`,
                   progress: topic.redPercent,
-                  tone: "rose"
+                  tone: "rose" as const
                 }))}
               />
             </div>
-          </SectionCard>
+          </section>
 
-          <SectionCard title="Что происходит по ученикам">
-            <div className="grid gap-3 sm:gap-4 xl:grid-cols-2">
+          <section className="shbz-card shbz-section-pad">
+            <h2 className="mb-6 text-xl font-bold" style={{ color: "var(--shbz-text-strong)" }}>
+              Что происходит по ученикам
+            </h2>
+            <div className="grid gap-5 xl:grid-cols-2">
               <RankingCard
                 title="Самые вовлеченные"
                 emptyMessage="Пока у учеников нет отмеченных номеров."
@@ -409,7 +408,7 @@ export default async function TeacherStatisticsPage({ searchParams }: TeacherSta
                   subtitle: `${student.solvedCount} решено · ${student.markedCount} отмечено`,
                   valueLabel: `${student.solvedPercent}%`,
                   progress: student.solvedPercent,
-                  tone: "brand"
+                  tone: "brand" as const
                 }))}
               />
 
@@ -422,13 +421,57 @@ export default async function TeacherStatisticsPage({ searchParams }: TeacherSta
                   subtitle: `${student.redCount} красных · ${student.solvedCount} решено`,
                   valueLabel: `${student.redPercent}%`,
                   progress: student.redPercent,
-                  tone: "rose"
+                  tone: "rose" as const
                 }))}
               />
             </div>
-          </SectionCard>
-        </>
+          </section>
+        </div>
       )}
+    </div>
+  );
+}
+
+function DevMetricCard({
+  label,
+  value,
+  note,
+  noteColor
+}: {
+  label: string;
+  value: string | number;
+  note: string;
+  noteColor: string;
+}) {
+  return (
+    <div className="shbz-panel-soft rounded-[14px] px-5 py-[18px]">
+      <div className="text-xs font-semibold" style={{ color: "var(--shbz-kicker)" }}>
+        {label}
+      </div>
+      <div className="mt-1.5 text-[26px] font-extrabold leading-tight" style={{ color: "var(--shbz-text-strong)" }}>
+        {value}
+      </div>
+      <div className="mt-1 text-xs font-semibold" style={{ color: noteColor }}>
+        {note}
+      </div>
+    </div>
+  );
+}
+
+function DevProgressRow({ label, value, percent }: { label: string; value: string; percent: number }) {
+  return (
+    <div>
+      <div className="mb-2 flex items-center justify-between gap-3">
+        <span className="text-[13px] font-semibold" style={{ color: "var(--shbz-text-muted)" }}>
+          {label}
+        </span>
+        <span className="text-sm font-extrabold" style={{ color: "var(--shbz-text-strong)" }}>
+          {value}
+        </span>
+      </div>
+      <div className="shbz-progress-track">
+        <div className="shbz-progress-fill" style={{ width: `${percent}%` }} />
+      </div>
     </div>
   );
 }
@@ -448,16 +491,18 @@ function DonutChart({
 
   return (
     <div className="relative mx-auto h-52 w-52 shrink-0 sm:h-56 sm:w-56">
+      <div className="h-full w-full rounded-full" style={{ background: backgroundImage }} />
       <div
-        className="h-full w-full rounded-full border border-[var(--theme-border-soft)] shadow-inner"
-        style={{
-          background: backgroundImage
-        }}
+        className="absolute inset-6 rounded-full border"
+        style={{ background: "var(--shbz-card-bg)", borderColor: "var(--shbz-soft-border)" }}
       />
-      <div className="absolute inset-6 rounded-full border border-[var(--theme-border)] bg-[var(--theme-surface-strong)] shadow-[inset_0_1px_0_rgba(255,255,255,0.9)]" />
       <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
-        <span className="font-display text-xl sm:text-2xl font-semibold text-[var(--theme-text-strong)]">{centerValue}</span>
-        <span className="mt-1 text-sm text-[var(--theme-text-muted)]">{centerLabel}</span>
+        <span className="text-2xl font-extrabold" style={{ color: "var(--shbz-text-strong)" }}>
+          {centerValue}
+        </span>
+        <span className="mt-1 text-sm" style={{ color: "var(--shbz-text-muted)" }}>
+          {centerLabel}
+        </span>
       </div>
     </div>
   );
@@ -479,73 +524,66 @@ function RankingCard({
     tone: "brand" | "emerald" | "rose";
   }>;
 }) {
+  const toneColors: Record<"brand" | "emerald" | "rose", string> = {
+    brand: "var(--shbz-accent-solid)",
+    emerald: "#36C77E",
+    rose: "var(--shbz-danger-solid)"
+  };
+
   return (
-    <article className="ui-surface ui-panel-soft rounded-[8px] p-3.5 sm:rounded-[10px] sm:p-6">
-      <h2 className="font-display text-[1.4rem] font-semibold text-[var(--theme-text-strong)] sm:text-[1.15rem] sm:text-[1.1rem] sm:text-[1.25rem]">{title}</h2>
+    <div className="shbz-panel-soft p-6">
+      <h3 className="text-[17px] font-bold" style={{ color: "var(--shbz-text-strong)" }}>
+        {title}
+      </h3>
 
       {items.length === 0 ? (
-        <div className="ui-panel-soft mt-5 rounded-[8px] sm:rounded-[10px] border-dashed px-4 py-8 text-center text-sm text-[var(--theme-text-muted)]">
+        <div className="mt-5 py-6 text-center text-sm" style={{ color: "var(--shbz-text-muted)" }}>
           {emptyMessage}
         </div>
       ) : (
         <div className="mt-5 space-y-3">
           {items.map((item, index) => (
-            <article key={item.key} className="ui-card-soft rounded-[8px] sm:rounded-[10px] px-4 py-4">
+            <div
+              key={item.key}
+              className="rounded-2xl border px-4 py-4"
+              style={{ background: "var(--shbz-card-bg)", borderColor: "var(--shbz-soft-border)" }}
+            >
               <div className="flex items-start justify-between gap-3">
                 <div>
                   <div className="flex items-center gap-2">
-                    <span className="ui-badge-soft rounded-[10px] px-2.5 py-1 text-xs font-medium">
+                    <span className="shbz-badge-muted" style={{ padding: "4px 10px", fontSize: 12 }}>
                       #{index + 1}
                     </span>
-                    <h3 className="text-base font-semibold text-[var(--theme-text-strong)]">{item.title}</h3>
+                    <h4 className="text-base font-bold" style={{ color: "var(--shbz-text-strong)" }}>
+                      {item.title}
+                    </h4>
                   </div>
-                  <p className="mt-2 text-sm leading-relaxed text-[var(--theme-text-muted)]">{item.subtitle}</p>
+                  <p className="mt-2 text-sm leading-relaxed" style={{ color: "var(--shbz-text-muted)" }}>
+                    {item.subtitle}
+                  </p>
                 </div>
-                <span className="text-sm font-semibold text-[var(--theme-text-strong)]">{item.valueLabel}</span>
+                <span className="text-sm font-extrabold" style={{ color: "var(--shbz-text-strong)" }}>
+                  {item.valueLabel}
+                </span>
               </div>
 
-              <div className="mt-4">
-                <CompactBar value={item.progress} tone={item.tone} />
+              <div className="shbz-progress-track mt-4">
+                <div
+                  className="h-full rounded-full"
+                  style={{ width: `${Math.min(100, Math.max(0, item.progress))}%`, background: toneColors[item.tone] }}
+                />
               </div>
-            </article>
+            </div>
           ))}
         </div>
       )}
-    </article>
-  );
-}
-
-function CompactBar({
-  value,
-  tone
-}: {
-  value: number;
-  tone: "brand" | "emerald" | "rose";
-}) {
-  const normalizedValue = Math.min(100, Math.max(0, value)) / 100;
-
-  return (
-    <div className="h-2.5 overflow-hidden rounded-full bg-[var(--theme-surface-soft)] border border-[var(--theme-border-soft)]">
-      <div
-        className={cx(
-          "h-full rounded-full transition-transform duration-[280ms] ease-[cubic-bezier(0.23,1,0.32,1)]",
-          tone === "emerald" && "bg-[var(--theme-success-text)]",
-          tone === "rose" && "bg-[var(--theme-danger-solid)]",
-          tone === "brand" && "bg-[var(--theme-accent)]"
-        )}
-        style={{
-          width: "100%",
-          transform: `scaleX(${normalizedValue})`,
-          transformOrigin: "left center"
-        }}
-      />
     </div>
   );
 }
 
 function buildConicGradient(segments: DistributionSegment[], total: number) {
   if (!total || segments.every((segment) => segment.value <= 0)) {
-    return "conic-gradient(#e2e8f0 0deg 360deg)";
+    return "conic-gradient(var(--shbz-progress-track) 0deg 360deg)";
   }
 
   let currentAngle = 0;

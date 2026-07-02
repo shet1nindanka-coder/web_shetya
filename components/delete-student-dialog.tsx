@@ -3,7 +3,6 @@
 import { useEffect, useState } from "react";
 import { useFormStatus } from "react-dom";
 import { deleteStudentAction } from "@/actions/student";
-import { cx } from "@/lib/utils";
 
 type DeleteStudentDialogProps = {
   studentId: string;
@@ -19,7 +18,7 @@ function DeleteStudentSubmitButton() {
     <button
       type="submit"
       disabled={pending}
-      className="ui-pressable ui-button-danger rounded-[12px] px-4 py-2.5 text-sm font-semibold transition disabled:cursor-not-allowed"
+      className="shbz-btn-danger-solid"
     >
       {pending ? "Удаляем..." : "Да, удалить"}
     </button>
@@ -59,10 +58,7 @@ export function DeleteStudentDialog({
       <button
         type="button"
         onClick={() => setIsOpen(true)}
-        className={cx(
-          "ui-pressable ui-button-danger inline-flex items-center justify-center rounded-[12px] px-5 py-3 text-sm font-semibold transition",
-          triggerClassName
-        )}
+        className={triggerClassName ?? "shbz-btn-danger"}
       >
         {triggerLabel}
       </button>
@@ -73,14 +69,14 @@ export function DeleteStudentDialog({
           onClick={() => setIsOpen(false)}
         >
           <div
-            className="ui-pop-in ui-dialog-shell w-full max-w-md rounded-[12px] p-5 sm:rounded-[12px] sm:p-6"
+            className="shbz-card w-full max-w-md p-6"
             onClick={(event) => event.stopPropagation()}
           >
             <div className="space-y-3">
-              <p className="text-sm font-semibold uppercase tracking-[0.24em] text-[var(--theme-danger-text)]">Подтверждение</p>
-              <h3 className="font-display text-2xl font-semibold text-[var(--theme-text-strong)]">Удалить ученика?</h3>
-              <p className="text-sm leading-6 text-[var(--theme-text-default)]">
-                Аккаунт <span className="font-semibold text-[var(--theme-text-strong)]">«{studentName}»</span> будет удалён вместе
+              <p className="text-xs font-bold uppercase tracking-[1.6px]" style={{ color: "var(--shbz-danger-solid)" }}>Подтверждение</p>
+              <h3 className="text-2xl font-extrabold tracking-[-0.5px]" style={{ color: "var(--shbz-text-strong)" }}>Удалить ученика?</h3>
+              <p className="text-sm leading-6">
+                Аккаунт <span className="font-semibold">«{studentName}»</span> будет удалён вместе
                 со статусами по номерам и назначенными дедлайнами. Это действие нельзя отменить.
               </p>
             </div>
@@ -89,7 +85,7 @@ export function DeleteStudentDialog({
               <button
                 type="button"
                 onClick={() => setIsOpen(false)}
-                className="ui-pressable ui-button-secondary rounded-[12px] px-4 py-2.5 text-sm font-semibold transition"
+                className="shbz-btn-outline"
               >
                 Отмена
               </button>

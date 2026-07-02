@@ -1,8 +1,7 @@
 "use client";
 
 import { useDeferredValue, useMemo, useState } from "react";
-import { Badge } from "@/components/badge";
-import { cx, parseNumbersInput } from "@/lib/utils";
+import { parseNumbersInput } from "@/lib/utils";
 
 type TopicNumbersFieldProps = {
   name: string;
@@ -68,7 +67,7 @@ export function TopicNumbersField({
   label = "Номера заданий",
   description = "Запятая, пробел, новая строка или диапазон через тире.",
   placeholder = "1-5, 8, 12-14",
-  rows = 5,
+  rows = 4,
   value,
   initialValue = "",
   onValueChange
@@ -91,55 +90,57 @@ export function TopicNumbersField({
   };
 
   return (
-    <div className="space-y-3">
-      <div className="space-y-2">
-        <span className="text-sm font-medium text-[var(--theme-text-default)]">{label}</span>
-        <textarea
-          name={name}
-          value={resolvedValue}
-          onChange={(event) => handleChange(event.target.value)}
-          rows={rows}
-          placeholder={placeholder}
-          className={cx(
-            "ui-input w-full rounded-2xl px-4 py-3 outline-none transition focus:-translate-y-[1px]",
-            hasInput && !hasParsedNumbers ? "border-[var(--theme-danger-border)] bg-[var(--theme-danger-soft)]" : ""
-          )}
-          required
-        />
-      </div>
+    <div>
+      <span className="mb-[9px] block text-[13px] font-semibold" style={{ color: "var(--shbz-label)" }}>
+        {label}
+      </span>
+      <textarea
+        name={name}
+        value={resolvedValue}
+        onChange={(event) => handleChange(event.target.value)}
+        rows={rows}
+        placeholder={placeholder}
+        className="shbz-textarea"
+        style={
+          hasInput && !hasParsedNumbers
+            ? { borderColor: "var(--shbz-danger-outline)", background: "var(--shbz-red-soft)" }
+            : undefined
+        }
+        required
+      />
 
-      <div className="flex flex-wrap gap-2">
-        <Badge className="ui-badge-soft">
+      <div className="mt-3 flex flex-wrap gap-2">
+        <span className="shbz-badge-muted">
           {hasParsedNumbers ? pluralizeNumbers(parsedNumbers.length) : "Пока нет номеров"}
-        </Badge>
+        </span>
         {hasParsedNumbers ? (
-          <Badge className="ui-badge-soft">
+          <span className="shbz-badge-muted">
             {`Диапазон ${parsedNumbers[0]}-${parsedNumbers[parsedNumbers.length - 1]}`}
-          </Badge>
+          </span>
         ) : null}
       </div>
 
-      {isComputing || (hasInput && !hasParsedNumbers) || hasParsedNumbers ? (
+      {isComputing || (hasInput && !hasParsedNumbers) ? (
         <div
-          className={cx(
-            "rounded-2xl border px-4 py-4 text-sm leading-6",
-            hasInput && !hasParsedNumbers
-              ? "ui-notice-error"
-              : "ui-panel-soft text-[var(--theme-text-muted)]"
-          )}
+          className={
+            hasInput && !hasParsedNumbers && !isComputing
+              ? "shbz-notice-error mt-3 px-4 py-3 text-sm"
+              : "shbz-panel-soft mt-3 px-4 py-3 text-sm"
+          }
+          style={hasInput && !hasParsedNumbers && !isComputing ? undefined : { color: "var(--shbz-text-muted)" }}
         >
           {isComputing ? (
             <p>Обновляем список номеров...</p>
-          ) : hasInput && !hasParsedNumbers ? (
-            <p>Не удалось распознать номера. Используйте числа и диапазоны вроде `1-5`.</p>
           ) : (
-            <div className="ui-hint space-y-2">
-              <p>{description}</p>
-              <p className="text-[var(--theme-text-default)]">
-                Будет сохранено как: <span className="font-medium">{truncatePreview(normalizedRanges)}</span>
-              </p>
-            </div>
+            <p>Не удалось распознать номера. Используйте числа и диапазоны вроде 1-5.</p>
           )}
+        </div>
+      ) : hasParsedNumbers ? (
+        <div className="ui-hint shbz-panel-soft mt-3 px-4 py-3 text-sm leading-6" style={{ color: "var(--shbz-text-muted)" }}>
+          <p>{description}</p>
+          <p className="mt-1" style={{ color: "var(--shbz-label)" }}>
+            Итоговый список: {truncatePreview(normalizedRanges)}
+          </p>
         </div>
       ) : null}
     </div>

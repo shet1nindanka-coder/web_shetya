@@ -2,8 +2,7 @@ import Link from "next/link";
 import { UserRole } from "@prisma/client";
 import { createStudentAction } from "@/actions/student";
 import { DeleteStudentDialog } from "@/components/delete-student-dialog";
-import { PageHeader } from "@/components/page-header";
-import { SectionCard } from "@/components/section-card";
+import { ShbzPageHeader } from "@/components/shbz-page-header";
 import { requireUser } from "@/lib/auth";
 import { getTeacherTopicsOverview } from "@/lib/platform-data";
 
@@ -75,13 +74,15 @@ export default async function TeacherStudentsPage({ searchParams }: TeacherStude
   const notice = noticeKey ? studentNotices[noticeKey] : null;
 
   return (
-    <div className="space-y-5 sm:space-y-6">
+    <div>
+      <ShbzPageHeader kicker="Ученики" title="Аккаунты и прогресс" />
+
       {notice ? (
         <div
           className={
             notice.tone === "success"
-              ? "ui-notice-success rounded-[8px] px-4 py-3 text-sm font-medium sm:rounded-[10px]"
-              : "ui-notice-error rounded-[8px] px-4 py-3 text-sm font-medium sm:rounded-[10px]"
+              ? "shbz-notice-success mb-8 px-5 py-4 text-sm font-medium"
+              : "shbz-notice-error mb-8 px-5 py-4 text-sm font-medium"
           }
           aria-live="polite"
         >
@@ -89,123 +90,125 @@ export default async function TeacherStudentsPage({ searchParams }: TeacherStude
         </div>
       ) : null}
 
-      <PageHeader
-        eyebrow="Ученики"
-        title="Аккаунты и прогресс"
-        description="Создавайте доступы ученикам и открывайте их личные результаты из одного списка."
-      />
+      <section>
+        <h2 className="shbz-section-title">Добавить ученика</h2>
+        <div className="shbz-card shbz-section-pad">
+          <form action={createStudentAction}>
+            <div className="flex flex-wrap items-end gap-4">
+              <label className="min-w-[200px] flex-1">
+                <span className="mb-[9px] block text-[13px] font-semibold" style={{ color: "var(--shbz-label)" }}>
+                  Имя ученика
+                </span>
+                <input
+                  type="text"
+                  name="name"
+                  placeholder="Например, Мария Смирнова"
+                  className="shbz-input"
+                  required
+                  autoComplete="name"
+                />
+              </label>
 
-      <SectionCard
-        title="Добавить ученика"
-        description="Создайте логин и пароль для нового ученика. Можно использовать e-mail как логин."
-      >
-        <form
-          action={createStudentAction}
-          className="ui-panel-soft space-y-3 rounded-[8px] p-3.5 sm:space-y-4 sm:rounded-[10px] sm:p-4"
-        >
-          <div className="grid gap-3 xl:grid-cols-[minmax(0,1.2fr)_minmax(0,1fr)_minmax(0,0.85fr)_auto] xl:items-end">
-            <label className="block space-y-1.5">
-              <span className="ui-form-label">Имя ученика</span>
-              <input
-                type="text"
-                name="name"
-                placeholder="Например, Мария Смирнова"
-                className="ui-input w-full rounded-[8px] px-3.5 py-2.5 sm:rounded-[10px]"
-                required
-                autoComplete="name"
-              />
-            </label>
+              <label className="min-w-[200px] flex-1">
+                <span className="mb-[9px] block text-[13px] font-semibold" style={{ color: "var(--shbz-label)" }}>
+                  Логин ученика
+                </span>
+                <input
+                  type="text"
+                  name="login"
+                  placeholder="maria@example.com"
+                  className="shbz-input"
+                  required
+                  autoCapitalize="none"
+                  autoCorrect="off"
+                  spellCheck={false}
+                />
+              </label>
 
-            <label className="block space-y-1.5">
-              <span className="ui-form-label">Логин ученика</span>
-              <input
-                type="text"
-                name="login"
-                placeholder="maria@example.com"
-                className="ui-input w-full rounded-[8px] px-3.5 py-2.5 sm:rounded-[10px]"
-                required
-                autoCapitalize="none"
-                autoCorrect="off"
-                spellCheck={false}
-              />
-            </label>
+              <label className="min-w-[200px] flex-1">
+                <span className="mb-[9px] block text-[13px] font-semibold" style={{ color: "var(--shbz-label)" }}>
+                  Пароль
+                </span>
+                <input
+                  type="password"
+                  name="password"
+                  placeholder="Минимум 8 символов"
+                  minLength={8}
+                  className="shbz-input"
+                  required
+                  autoComplete="new-password"
+                  spellCheck={false}
+                />
+              </label>
 
-            <label className="block space-y-1.5">
-              <span className="ui-form-label">Пароль</span>
-              <input
-                type="password"
-                name="password"
-                placeholder="Минимум 8 символов"
-                minLength={8}
-                className="ui-input w-full rounded-[8px] px-3.5 py-2.5 sm:rounded-[10px]"
-                required
-                autoComplete="new-password"
-                spellCheck={false}
-              />
-            </label>
+              <button type="submit" className="shbz-btn-primary h-[54px] shrink-0 px-[26px] text-[15px]">
+                Добавить ученика
+              </button>
+            </div>
+          </form>
+        </div>
+      </section>
 
-            <button
-              type="submit"
-              className="ui-pressable ui-button-primary w-full rounded-[10px] px-4 py-2.5 text-sm font-semibold transition xl:min-w-[12.5rem] xl:w-auto sm:rounded-[12px]"
-            >
-              Добавить ученика
-            </button>
-          </div>
-        </form>
-      </SectionCard>
+      <section className="mt-11">
+        <h2 className="shbz-section-title">Текущие ученики</h2>
 
-      <SectionCard
-        title="Текущие ученики"
-        description={`${data.students.length} аккаунтов ученика`}
-      >
         {data.students.length === 0 ? (
-          <div className="ui-panel-soft rounded-[8px] border-dashed px-4 py-6 text-center text-sm text-[var(--theme-text-muted)]">
-            Пока ни одного ученика не добавлено.
+          <div className="shbz-card px-6 py-10 text-center">
+            <p className="text-lg font-bold" style={{ color: "var(--shbz-text-strong)" }}>
+              Пока ни одного ученика не добавлено.
+            </p>
           </div>
         ) : (
-          <div className="overflow-hidden rounded-[8px] border border-[var(--theme-border-soft)] bg-[color-mix(in_srgb,var(--theme-surface-soft)_90%,white_10%)] sm:rounded-[10px]">
-            <div className="hidden lg:grid lg:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)_auto] lg:items-center lg:gap-4 lg:border-b lg:border-[var(--theme-border-soft)] lg:bg-[color-mix(in_srgb,var(--theme-surface)_96%,white_4%)] lg:px-4 lg:py-2.5">
-              <p className="ui-kicker">Ученик</p>
-              <p className="ui-kicker">Логин</p>
-              <p className="ui-kicker text-right">Действия</p>
-            </div>
-
-            <div className="max-h-[36rem] overflow-y-auto">
-              <div className="divide-y divide-[var(--theme-border-soft)]">
-                {data.students.map((student) => (
-                  <article key={student.id} className="px-3.5 py-3 sm:px-4 sm:py-3.5">
-                    <div className="flex flex-col gap-3 lg:grid lg:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)_auto] lg:items-center lg:gap-4">
-                      <div className="min-w-0">
-                        <p className="truncate font-semibold text-[var(--theme-text-strong)]">{student.name}</p>
-                        <p className="mt-1 text-xs text-[var(--theme-text-muted)] lg:hidden">Ученик</p>
-                      </div>
-
-                      <div className="min-w-0">
-                        <p className="text-xs text-[var(--theme-text-muted)] lg:hidden">Логин</p>
-                        <p className="truncate text-sm font-medium text-[var(--theme-text-default)]">{student.email}</p>
-                      </div>
-
-                      <div className="flex flex-wrap gap-2 lg:justify-end">
-                        <Link
-                          href={`/teacher/students/${student.id}`}
-                          className="ui-pressable ui-button-primary inline-flex w-full justify-center rounded-[10px] px-3.5 py-1.5 text-sm font-semibold transition sm:w-auto"
-                        >
-                          Смотреть прогресс
-                        </Link>
-                        <DeleteStudentDialog
-                          studentId={student.id}
-                          studentName={student.name}
-                          triggerClassName="w-full sm:w-auto"
-                        />
-                      </div>
-                    </div>
-                  </article>
-                ))}
+          <div className="shbz-card px-7 py-2">
+            <div
+              className="hidden items-center gap-5 border-b py-[18px] md:grid md:grid-cols-[1.2fr_1.6fr_auto]"
+              style={{ borderColor: "var(--shbz-soft-border)" }}
+            >
+              <div className="text-[11px] font-bold uppercase tracking-[1.2px]" style={{ color: "var(--shbz-kicker)" }}>
+                Ученик
+              </div>
+              <div className="text-[11px] font-bold uppercase tracking-[1.2px]" style={{ color: "var(--shbz-kicker)" }}>
+                Логин
+              </div>
+              <div
+                className="text-right text-[11px] font-bold uppercase tracking-[1.2px]"
+                style={{ color: "var(--shbz-kicker)" }}
+              >
+                Действия
               </div>
             </div>
+
+            {data.students.map((student, index) => (
+              <div
+                key={student.id}
+                className="flex flex-col gap-3 py-5 md:grid md:grid-cols-[1.2fr_1.6fr_auto] md:items-center md:gap-5"
+                style={
+                  index < data.students.length - 1
+                    ? { borderBottom: "1px solid var(--shbz-row-border)" }
+                    : undefined
+                }
+              >
+                <div className="min-w-0 truncate text-base font-bold" style={{ color: "var(--shbz-text-strong)" }}>
+                  {student.name}
+                </div>
+                <div className="min-w-0 truncate text-[15px]" style={{ color: "var(--shbz-text-muted)" }}>
+                  {student.email}
+                </div>
+                <div className="flex flex-wrap items-center gap-2.5 md:justify-end">
+                  <Link
+                    href={`/teacher/students/${student.id}`}
+                    className="shbz-btn-primary px-5 py-[11px] text-sm"
+                    style={{ boxShadow: "0 5px 14px var(--shbz-accent-shadow)" }}
+                  >
+                    Смотреть прогресс
+                  </Link>
+                  <DeleteStudentDialog studentId={student.id} studentName={student.name} triggerClassName="shbz-btn-danger" />
+                </div>
+              </div>
+            ))}
           </div>
         )}
-      </SectionCard>
+      </section>
     </div>
   );
 }

@@ -1,7 +1,6 @@
 "use client";
 
 import { useId, useRef, useState, type ChangeEvent, type DragEvent } from "react";
-import { cx } from "@/lib/utils";
 
 type FileDropInputProps = {
   name: string;
@@ -70,53 +69,48 @@ export function FileDropInput({
   };
 
   return (
-    <div className="space-y-3">
-      <div className="space-y-2">
-        <label htmlFor={inputId} className="ui-form-label">
-          {label}
-        </label>
-        <input
-          id={inputId}
-          ref={inputRef}
-          type="file"
-          name={name}
-          accept={accept}
-          onChange={handleInputChange}
-          className="sr-only"
-          aria-describedby={helperText ? helperId : undefined}
-        />
-      </div>
+    <div>
+      <label htmlFor={inputId} className="mb-[9px] block text-[13px] font-semibold" style={{ color: "var(--shbz-label)" }}>
+        {label}
+      </label>
+      <input
+        id={inputId}
+        ref={inputRef}
+        type="file"
+        name={name}
+        accept={accept}
+        onChange={handleInputChange}
+        className="sr-only"
+        aria-describedby={helperText ? helperId : undefined}
+      />
 
       <div
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
-        className={cx(
-          "rounded-[10px] border border-dashed px-4 py-5 transition sm:px-5",
-          isDragging
-            ? "border-[var(--theme-accent-border)] bg-[var(--theme-accent-soft)] shadow-[0_14px_30px_rgba(59,130,246,0.12)]"
-            : "ui-panel-soft"
-        )}
+        className="flex items-center justify-between gap-3.5 rounded-[14px] border py-[13px] pl-[18px] pr-3.5 transition-shadow"
+        style={{
+          background: "var(--shbz-soft-bg)",
+          borderColor: isDragging ? "var(--shbz-accent-solid)" : "var(--shbz-soft-border)",
+          boxShadow: isDragging ? "0 0 0 4px var(--shbz-input-ring)" : "none"
+        }}
       >
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <div className="space-y-1">
-            <p className="text-sm font-medium text-[var(--theme-text-strong)]" aria-live="polite">
-              {selectedFileName ? selectedFileName : "Файл пока не выбран"}
-            </p>
-            <p id={helperId} className="ui-hint text-sm leading-6 text-[var(--theme-text-muted)]">
-              {helperText}
-            </p>
-          </div>
+        <span
+          className="min-w-0 truncate text-sm"
+          style={{ color: selectedFileName ? "var(--shbz-text-strong)" : "var(--shbz-text-soft)", fontWeight: selectedFileName ? 600 : 400 }}
+          aria-live="polite"
+        >
+          {selectedFileName ?? "Файл пока не выбран"}
+        </span>
 
-          <button
-            type="button"
-            onClick={() => inputRef.current?.click()}
-            className="ui-pressable ui-button-primary inline-flex shrink-0 justify-center rounded-[12px] px-4 py-2 text-sm font-semibold transition"
-          >
-            {selectedFileName ? "Выбрать другой файл" : "Выбрать файл"}
-          </button>
-        </div>
+        <button type="button" onClick={() => inputRef.current?.click()} className="shbz-btn-dark">
+          {selectedFileName ? "Заменить файл" : "Выбрать файл"}
+        </button>
       </div>
+
+      <p id={helperId} className="ui-hint mt-2 text-[12.5px] leading-[1.5]" style={{ color: "var(--shbz-kicker)" }}>
+        {helperText}
+      </p>
     </div>
   );
 }

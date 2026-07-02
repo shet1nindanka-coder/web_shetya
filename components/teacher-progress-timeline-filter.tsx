@@ -21,8 +21,8 @@ export function TeacherProgressTimelineFilter({
   const [isPending, startTransition] = useTransition();
 
   return (
-    <label className="flex w-full min-w-0 flex-col gap-1.5 sm:min-w-[220px] sm:max-w-[280px]">
-      <span className="text-xs font-medium uppercase tracking-[0.18em] text-[var(--theme-text-muted)]">
+    <label className="flex w-full min-w-0 flex-col gap-[7px] sm:min-w-[220px] sm:max-w-[280px]">
+      <span className="text-[11px] font-bold uppercase tracking-[1.2px]" style={{ color: "var(--shbz-kicker)" }}>
         Ученик
       </span>
       <select
@@ -45,7 +45,7 @@ export function TeacherProgressTimelineFilter({
             });
           });
         }}
-        className="ui-input w-full rounded-[8px] px-4 py-2.5 text-sm font-medium"
+        className="shbz-select shbz-select--sm"
         aria-label="Фильтр статистики по ученику"
         disabled={isPending}
       >
