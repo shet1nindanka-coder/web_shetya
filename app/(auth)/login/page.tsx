@@ -20,13 +20,19 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
   const error = typeof resolvedSearchParams.error === "string" ? resolvedSearchParams.error : undefined;
 
   return (
-    <main className="soft-grid relative overflow-hidden">
-      <div className="pointer-events-none absolute inset-x-0 top-0 h-[380px] bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.88),transparent_55%)]" />
-      <div className="pointer-events-none absolute left-1/2 top-24 h-72 w-72 -translate-x-1/2 rounded-full bg-brand-300/18 blur-3xl" />
-
-      <div className="content-shell mx-auto flex min-h-screen w-full max-w-7xl items-center justify-center px-4 py-8 sm:px-6 lg:px-8">
-        <LoginForm error={error} />
+    <main
+      className="relative flex min-h-screen w-full items-center justify-center bg-white p-6 text-[#0A0A0A] antialiased"
+      style={{
+        backgroundImage:
+          "radial-gradient(720px 420px at 50% -8%, rgba(54,224,164,0.12), rgba(90,200,234,0) 70%)"
+      }}
+    >
+      <div className="absolute left-9 top-8 flex flex-col gap-1">
+        <div className="text-[26px] font-black leading-none tracking-[-1.2px] text-[#0A0A0A]">ШБЗ</div>
+        <div className="text-[11px] font-semibold tracking-[0.2px] text-[#8B8F96]">Школа Базовых Знаний</div>
       </div>
+
+      <LoginForm error={error} />
     </main>
   );
 }
