@@ -112,7 +112,7 @@ export function InterfaceSettingsPanel() {
       <div className="shbz-card shbz-section-pad">
         <div className="grid gap-4" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))" }}>
           <SettingBlock label="Тема" hint="Светлое, тёмное или системное оформление интерфейса.">
-            <div className="shbz-seg">
+            <div className="shbz-seg shbz-seg--fill">
               {themeOptions.map((option) => (
                 <button
                   key={option.value}
@@ -129,7 +129,7 @@ export function InterfaceSettingsPanel() {
           </SettingBlock>
 
           <SettingBlock label="Подсказки" hint="Пояснения к настройкам под каждым блоком.">
-            <div className="shbz-seg">
+            <div className="shbz-seg shbz-seg--fill">
               {hintsOptions.map((option) => (
                 <button
                   key={option.value}
@@ -146,7 +146,7 @@ export function InterfaceSettingsPanel() {
           </SettingBlock>
 
           <SettingBlock label="Плотность" hint="Компактный режим уменьшает отступы карточек.">
-            <div className="shbz-seg">
+            <div className="shbz-seg shbz-seg--fill">
               {densityOptions.map((option) => (
                 <button
                   key={option.value}
