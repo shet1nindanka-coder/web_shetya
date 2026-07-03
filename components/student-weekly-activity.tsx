@@ -3,6 +3,7 @@
 import type { StudentStreak } from "@/lib/student-streak";
 import { getStudentStreakColorMeta } from "@/lib/student-streak-colors";
 import { useStudentStreak } from "@/components/student-streak-provider";
+import { useStreakMotion } from "@/components/use-streak-motion";
 
 type StudentWeeklyActivityProps = {
   streak: StudentStreak;
@@ -12,6 +13,7 @@ export function StudentWeeklyActivity({ streak }: StudentWeeklyActivityProps) {
   const liveStreak = useStudentStreak();
   const currentStreak = liveStreak?.streak ?? streak;
   const streakColorMeta = getStudentStreakColorMeta(currentStreak.currentStreak);
+  const motionState = useStreakMotion(currentStreak.currentStreak);
   const todayDate = currentStreak.dailyActivity.at(-1)?.date;
 
   const solvedTodayLabel =
@@ -32,7 +34,7 @@ export function StudentWeeklyActivity({ streak }: StudentWeeklyActivityProps) {
       <div className="shbz-card shbz-section-pad">
         <div className="grid items-stretch gap-6 lg:grid-cols-[minmax(280px,380px)_1fr]">
           <div className="flex flex-col gap-3.5">
-            <div className="shbz-streak-hero px-6 py-[22px]">
+            <div className="shbz-streak-hero px-6 py-[22px]" data-animate={motionState ?? undefined}>
               <div className="flex items-start justify-between gap-3">
                 <div
                   className="text-[11px] font-bold uppercase tracking-[1.2px]"
@@ -41,13 +43,14 @@ export function StudentWeeklyActivity({ streak }: StudentWeeklyActivityProps) {
                   Огонёк
                 </div>
                 <div
-                  className="inline-flex items-center gap-1.5 rounded-full px-3 py-1.5"
+                  className="shbz-streak-flame inline-flex items-center gap-1.5 rounded-full px-3 py-1.5"
+                  data-animate={motionState ?? undefined}
                   style={{ background: "var(--shbz-streak-pill-bg)" }}
                 >
                   <svg width="13" height="13" viewBox="0 0 24 24" fill="var(--shbz-streak-flame)" aria-hidden="true">
                     <path d="M12 2c1 3-1.5 4.5-1.5 7A3.5 3.5 0 0 0 14 12c0-2 1.5-3 1.5-3 1 4 .5 5-.5 7a4 4 0 1 1-7-3.5C9.5 9 11 7 12 2z" />
                   </svg>
-                  <span className="text-[12.5px] font-extrabold" style={{ color: "var(--shbz-streak-text)" }}>
+                  <span className="shbz-streak-count text-[12.5px] font-extrabold" style={{ color: "var(--shbz-streak-text)" }}>
                     {currentStreak.currentStreak} дн.
                   </span>
                 </div>

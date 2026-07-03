@@ -11,6 +11,7 @@ import { SectionCard } from "@/components/section-card";
 import { markStudentTopicsNeedsRefresh } from "@/components/student-topics-refresh-bridge";
 import { useStudentStreak } from "@/components/student-streak-provider";
 import { TelegramSpoiler } from "@/components/telegram-spoiler";
+import { notifyStudentStreakChanged } from "@/lib/student-streak-realtime";
 import { completionPercent, cx, getStatusCounts, homeworkStatusMeta } from "@/lib/utils";
 
 type StudentTopicStatusBoardProps = {
@@ -887,6 +888,8 @@ export function StudentTopicStatusBoard({
       if (!response.ok) {
         throw new Error(result?.error || getStatusSaveErrorMessage(response.status));
       }
+
+      notifyStudentStreakChanged();
 
       updateNumbersState((current) =>
         current.map((number) =>

@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { UserRole } from "@prisma/client";
 import { logoutAction } from "@/actions/auth";
 import { useStudentStreak } from "@/components/student-streak-provider";
+import { useStreakMotion } from "@/components/use-streak-motion";
 
 type DashboardNavProps = {
   user: {
@@ -54,12 +55,14 @@ function initialsOf(name: string) {
 }
 
 function StreakFlame({ days }: { days: number }) {
+  const motionState = useStreakMotion(days);
+
   return (
-    <span className="flex items-center gap-[5px]">
+    <span className="shbz-streak-flame flex items-center gap-[5px]" data-animate={motionState ?? undefined}>
       <svg width="12" height="12" viewBox="0 0 24 24" fill="var(--shbz-streak-flame)" aria-hidden="true">
         <path d="M12 2c1 3-1.5 4.5-1.5 7A3.5 3.5 0 0 0 14 12c0-2 1.5-3 1.5-3 1 4 .5 5-.5 7a4 4 0 1 1-7-3.5C9.5 9 11 7 12 2z" />
       </svg>
-      <span className="font-bold" style={{ color: "var(--shbz-streak-text)" }}>
+      <span className="shbz-streak-count font-bold" style={{ color: "var(--shbz-streak-text)" }}>
         {days} дн.
       </span>
     </span>

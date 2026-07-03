@@ -2650,3 +2650,59 @@ html[data-theme="dark"] .ui-button-danger:disabled,
   filter: none;
   cursor: not-allowed;
 }
+
+/* ШБЗ: анимация огонька-стрика */
+@keyframes shbz-flame-pop {
+  0% { transform: scale(1) rotate(0deg); }
+  30% { transform: scale(1.45) rotate(-8deg); }
+  60% { transform: scale(0.92) rotate(5deg); }
+  100% { transform: scale(1) rotate(0deg); }
+}
+@keyframes shbz-flame-glow {
+  0%, 100% { filter: drop-shadow(0 0 0 rgba(242, 146, 46, 0)); }
+  40% { filter: drop-shadow(0 0 10px rgba(242, 146, 46, 0.85)); }
+}
+@keyframes shbz-count-pop {
+  0% { transform: translateY(0) scale(1); }
+  35% { transform: translateY(-3px) scale(1.18); }
+  100% { transform: translateY(0) scale(1); }
+}
+@keyframes shbz-streak-shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-3px); }
+  50% { transform: translateX(3px); }
+  75% { transform: translateX(-2px); }
+}
+@keyframes shbz-hero-bump {
+  0% { transform: scale(1); box-shadow: 0 0 0 rgba(242, 146, 46, 0); }
+  40% { transform: scale(1.015); box-shadow: 0 8px 30px rgba(242, 146, 46, 0.35); }
+  100% { transform: scale(1); box-shadow: 0 0 0 rgba(242, 146, 46, 0); }
+}
+
+.shbz-streak-flame svg { transform-origin: 50% 80%; }
+.shbz-streak-count { display: inline-block; }
+.shbz-streak-flame[data-animate="ignite"] svg,
+.shbz-streak-flame[data-animate="grow"] svg {
+  animation: shbz-flame-pop 900ms cubic-bezier(0.22, 1.4, 0.36, 1), shbz-flame-glow 900ms ease;
+}
+.shbz-streak-flame[data-animate="ignite"] .shbz-streak-count,
+.shbz-streak-flame[data-animate="grow"] .shbz-streak-count {
+  animation: shbz-count-pop 700ms cubic-bezier(0.22, 1.4, 0.36, 1);
+}
+.shbz-streak-flame[data-animate="drop"] {
+  animation: shbz-streak-shake 500ms ease;
+}
+
+.shbz-streak-hero[data-animate="ignite"],
+.shbz-streak-hero[data-animate="grow"] {
+  animation: shbz-hero-bump 900ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .shbz-streak-flame[data-animate] svg,
+  .shbz-streak-flame[data-animate] .shbz-streak-count,
+  .shbz-streak-flame[data-animate],
+  .shbz-streak-hero[data-animate] {
+    animation: none;
+  }
+}
