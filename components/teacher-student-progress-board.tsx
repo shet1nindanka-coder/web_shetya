@@ -1,6 +1,5 @@
 "use client";
 
-import Link from "next/link";
 import { HomeworkNumberStatus } from "@prisma/client";
 import { memo, useCallback, useDeferredValue, useEffect, useId, useMemo, useRef, useState } from "react";
 import { Badge } from "@/components/badge";
@@ -152,71 +151,47 @@ const TeacherNumberCard = memo(function TeacherNumberCard({
   onUpdateDeadlineValue,
   onFlushDeadline
 }: TeacherNumberCardProps) {
+  const deadlineLabel = formatDeadlineLabel(number.studentStatus?.deadlineAt ?? null);
+
   return (
-    <div
-      role="checkbox"
-      aria-checked={number.selectedForBulk}
-      tabIndex={0}
-      onClick={() => onToggleBulkSelection(topicId, number.id)}
-      onKeyDown={(event) => {
-        if (event.key === " " || event.key === "Enter") {
-          event.preventDefault();
-          onToggleBulkSelection(topicId, number.id);
-        }
-      }}
-      className="teacher-number-card cursor-pointer rounded-[14px] border px-4 py-3.5 transition-[border-color,background,box-shadow]"
-      style={{
-        borderColor: number.selectedForBulk ? "var(--shbz-accent-solid)" : "var(--shbz-soft-border)",
-        background: number.selectedForBulk ? "var(--theme-accent-soft)" : "var(--shbz-soft-bg)",
-        boxShadow: number.selectedForBulk ? "0 0 0 1px var(--shbz-accent-solid)" : "none"
-      }}
-    >
-      <div className="flex items-center justify-between gap-2.5">
-        <span className="flex min-w-0 items-center gap-2.5">
-          <span
-            aria-hidden
-            className="flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-[6px] border-[1.5px] transition-colors"
-            style={{
-              borderColor: number.selectedForBulk ? "var(--shbz-accent-solid)" : "var(--shbz-outline-border)",
-              background: number.selectedForBulk ? "var(--shbz-accent-grad)" : "var(--shbz-card-bg)"
-            }}
-          >
-            {number.selectedForBulk ? (
-              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#ffffff" strokeWidth="3.2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M5 13l4 4L19 7" />
-              </svg>
-            ) : null}
-          </span>
-          <span className="teacher-number-title truncate text-base font-extrabold text-[var(--theme-text-strong)]">
-            № {number.number}
-          </span>
-          {homeworkLabel ? (
-            <Badge className="border-[var(--theme-accent-border)] bg-[var(--theme-accent-soft)] text-[var(--theme-accent-text)]">
-              {homeworkLabel}
-            </Badge>
-          ) : null}
-        </span>
+    <div className="teacher-number-card rounded-[10px] border px-4 py-4">
+      <div className="flex items-center justify-between gap-3">
+        <label className="ui-copy-muted inline-flex items-center gap-2 text-xs font-semibold">
+          <input
+            type="checkbox"
+            checked={number.selectedForBulk}
+            onChange={() => onToggleBulkSelection(topicId, number.id)}
+            className="h-4 w-4 rounded border-[var(--theme-border)]"
+          />
+          Выбрать
+        </label>
         <HomeworkStatusBadge status={number.studentStatus?.status ?? null} />
       </div>
+      <div className="mt-3 flex items-center justify-between gap-3">
+        <p className="teacher-number-title text-lg font-semibold text-[var(--theme-text-strong)]">№ {number.number}</p>
+        {homeworkLabel ? <Badge className="border-[var(--theme-accent-border)] bg-[var(--theme-accent-soft)] text-[var(--theme-accent-text)]">{homeworkLabel}</Badge> : null}
+      </div>
       {number.studentStatus?.note ? (
-        <div className="mt-3 rounded-[10px] px-3 py-2" style={{ background: "var(--shbz-card-bg)" }}>
-          <p className="text-[13px] leading-5 text-[var(--theme-text-default)]">{number.studentStatus.note}</p>
+        <div className="ui-card-soft mt-3 rounded-[12px] px-3 py-2">
+          <p className="text-sm leading-6 text-[var(--theme-text-default)]">{number.studentStatus.note}</p>
         </div>
       ) : null}
-      <div
-        className="mt-3 flex items-center justify-between gap-2"
-        onClick={(event) => event.stopPropagation()}
-        onKeyDown={(event) => event.stopPropagation()}
-      >
+      <div className="teacher-deadline-panel mt-3 rounded-[12px] border px-3 py-3">
+        <div className="flex items-center justify-between gap-3">
+          <p className="ui-copy-muted text-sm font-medium">Дедлайн</p>
+          {number.isSavingDeadline ? <span className="ui-copy-soft text-xs">Сохраняем...</span> : null}
+        </div>
         <ShbzDateTimePicker
-          variant="compact"
           value={number.deadlineInputValue}
           disabled={!deadlinesEnabled}
           onChange={(nextValue) => onUpdateDeadlineValue(topicId, number.id, nextValue)}
           onCommit={() => onFlushDeadline(topicId, number.id)}
-          placeholder="Назначить дедлайн"
+          placeholder="Выбрать дедлайн"
+          className="mt-2"
         />
-        {number.isSavingDeadline ? <span className="ui-copy-soft shrink-0 text-xs">Сохраняем...</span> : null}
+        <p className="ui-copy-muted mt-2 text-xs leading-5">
+          {deadlineLabel ? `Назначен до ${deadlineLabel}` : "Дедлайн пока не назначен."}
+        </p>
       </div>
     </div>
   );
@@ -300,14 +275,6 @@ const TeacherTopicCard = memo(function TeacherTopicCard({
               <span className="font-semibold text-[var(--theme-text-strong)]">{topic.solvedPercent}%</span>
             </div>
             <ProgressBar value={topic.solvedPercent} size="sm" />
-          </div>
-          <div className="flex flex-wrap gap-3">
-            <Link
-              href={`/teacher/topics/${topic.id}`}
-              className="ui-pressable ui-button-secondary inline-flex rounded-[12px] px-4 py-2 text-sm font-semibold transition"
-            >
-              Открыть тему
-            </Link>
           </div>
         </div>
       </div>
