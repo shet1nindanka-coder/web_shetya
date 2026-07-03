@@ -1,6 +1,8 @@
 "use client";
 
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { createPortal } from "react-dom";
+import { ShbzSelect } from "@/components/shbz-select";
 
 type ShbzDateTimePickerProps = {
   value: string;
@@ -58,7 +60,24 @@ export function ShbzDateTimePicker({
   const [isOpen, setIsOpen] = useState(false);
   const [viewDate, setViewDate] = useState(() => selected ?? new Date());
   const containerRef = useRef<HTMLDivElement | null>(null);
+  const popoverRef = useRef<HTMLDivElement | null>(null);
   const wasOpenRef = useRef(false);
+  const [popoverPosition, setPopoverPosition] = useState<{ top: number; left: number } | null>(null);
+
+  const updatePosition = useCallback(() => {
+    const trigger = containerRef.current;
+
+    if (!trigger) {
+      return;
+    }
+
+    const rect = trigger.getBoundingClientRect();
+    const width = 308;
+    const viewportWidth = window.innerWidth;
+    const left = Math.min(Math.max(8, rect.left), Math.max(8, viewportWidth - width - 8));
+
+    setPopoverPosition({ top: rect.bottom + 8, left });
+  }, []);
 
   useEffect(() => {
     if (isOpen) {
@@ -78,12 +97,24 @@ export function ShbzDateTimePicker({
       return;
     }
 
+    updatePosition();
+
     const onDocumentClick = (event: MouseEvent) => {
       const target = event.target as Node | null;
 
-      if (target && containerRef.current && !containerRef.current.contains(target)) {
-        setIsOpen(false);
+      if (!target) {
+        return;
       }
+
+      if (containerRef.current?.contains(target) || popoverRef.current?.contains(target)) {
+        return;
+      }
+
+      if (target instanceof Element && target.closest("[data-shbz-portal]")) {
+        return;
+      }
+
+      setIsOpen(false);
     };
 
     const onEscape = (event: KeyboardEvent) => {
@@ -92,14 +123,20 @@ export function ShbzDateTimePicker({
       }
     };
 
+    const onReposition = () => updatePosition();
+
     document.addEventListener("mousedown", onDocumentClick);
     document.addEventListener("keydown", onEscape);
+    window.addEventListener("resize", onReposition);
+    window.addEventListener("scroll", onReposition, true);
 
     return () => {
       document.removeEventListener("mousedown", onDocumentClick);
       document.removeEventListener("keydown", onEscape);
+      window.removeEventListener("resize", onReposition);
+      window.removeEventListener("scroll", onReposition, true);
     };
-  }, [isOpen]);
+  }, [isOpen, updatePosition]);
 
   const monthCells = useMemo(() => {
     const monthStart = new Date(viewDate.getFullYear(), viewDate.getMonth(), 1);
@@ -161,10 +198,16 @@ export function ShbzDateTimePicker({
         </svg>
       </button>
 
-      {isOpen ? (
+      {isOpen && popoverPosition
+        ? createPortal(
         <div
-          className="absolute left-0 top-[calc(100%+8px)] z-40 w-[308px] max-w-[86vw] rounded-[18px] border p-4"
+          ref={popoverRef}
+          data-shbz-portal=""
+          className="fixed w-[308px] max-w-[92vw] rounded-[18px] border p-4"
           style={{
+            top: popoverPosition.top,
+            left: popoverPosition.left,
+            zIndex: 1000,
             background: "var(--shbz-card-bg)",
             borderColor: "var(--shbz-card-border)",
             boxShadow: "0 4px 10px rgba(10,10,10,0.06), 0 20px 48px rgba(10,10,10,0.18)"
@@ -232,39 +275,27 @@ export function ShbzDateTimePicker({
             <span className="text-[11px] font-bold uppercase tracking-[1px]" style={{ color: "var(--shbz-kicker)" }}>
               Время
             </span>
-            <select
-              value={selected ? selected.getHours() : ""}
-              onChange={(event) => pickTime(Number(event.target.value), selected ? selected.getMinutes() : 59)}
-              className="shbz-select shbz-select--sm"
-              style={{ height: 38, width: 72, padding: "0 28px 0 12px", backgroundPosition: "right 10px center" }}
-              aria-label="Часы"
-            >
-              <option value="" disabled>
-                --
-              </option>
-              {Array.from({ length: 24 }, (_, hour) => (
-                <option key={hour} value={hour}>
-                  {pad(hour)}
-                </option>
-              ))}
-            </select>
+            <div style={{ width: 78 }}>
+              <ShbzSelect
+                size="xs"
+                ariaLabel="Часы"
+                placeholder="--"
+                value={selected ? String(selected.getHours()) : ""}
+                onChange={(nextValue) => pickTime(Number(nextValue), selected ? selected.getMinutes() : 59)}
+                options={Array.from({ length: 24 }, (_, hour) => ({ value: String(hour), label: pad(hour) }))}
+              />
+            </div>
             <span className="font-bold" style={{ color: "var(--shbz-text-soft)" }}>:</span>
-            <select
-              value={selected ? selected.getMinutes() : ""}
-              onChange={(event) => pickTime(selected ? selected.getHours() : 23, Number(event.target.value))}
-              className="shbz-select shbz-select--sm"
-              style={{ height: 38, width: 72, padding: "0 28px 0 12px", backgroundPosition: "right 10px center" }}
-              aria-label="Минуты"
-            >
-              <option value="" disabled>
-                --
-              </option>
-              {Array.from({ length: 60 }, (_, minute) => (
-                <option key={minute} value={minute}>
-                  {pad(minute)}
-                </option>
-              ))}
-            </select>
+            <div style={{ width: 78 }}>
+              <ShbzSelect
+                size="xs"
+                ariaLabel="Минуты"
+                placeholder="--"
+                value={selected ? String(selected.getMinutes()) : ""}
+                onChange={(nextValue) => pickTime(selected ? selected.getHours() : 23, Number(nextValue))}
+                options={Array.from({ length: 60 }, (_, minute) => ({ value: String(minute), label: pad(minute) }))}
+              />
+            </div>
           </div>
 
           <div className="mt-3.5 flex items-center justify-between border-t pt-3" style={{ borderColor: "var(--shbz-soft-border)" }}>
@@ -298,8 +329,10 @@ export function ShbzDateTimePicker({
               </button>
             </div>
           </div>
-        </div>
-      ) : null}
+        </div>,
+        document.body
+      )
+        : null}
     </div>
   );
 }

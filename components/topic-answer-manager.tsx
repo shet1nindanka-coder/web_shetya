@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Badge } from "@/components/badge";
+import { ShbzSelect } from "@/components/shbz-select";
 import { LatexAnswerPreview } from "@/components/latex-answer-preview";
 import { cx } from "@/lib/utils";
 
@@ -489,17 +490,18 @@ export function TopicAnswerManager({ topicId, initialNumber = null, numbers }: T
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
             <label className="flex items-center gap-3 text-sm text-[var(--theme-text-muted)]">
               <span>Страница</span>
-              <select
-                value={currentPage}
-                onChange={(event) => setCurrentPage(Number(event.target.value))}
-                className="ui-input rounded-[12px] px-4 py-2 text-sm font-medium"
-              >
-                {Array.from({ length: pageCount }, (_, index) => index + 1).map((page) => (
-                  <option key={page} value={page}>
-                    {page}
-                  </option>
-                ))}
-              </select>
+              <div style={{ width: 96 }}>
+                <ShbzSelect
+                  size="xs"
+                  ariaLabel="Страница"
+                  value={String(currentPage)}
+                  onChange={(nextValue) => setCurrentPage(Number(nextValue))}
+                  options={Array.from({ length: pageCount }, (_, index) => ({
+                    value: String(index + 1),
+                    label: String(index + 1)
+                  }))}
+                />
+              </div>
             </label>
 
             <div className="flex flex-wrap gap-2">

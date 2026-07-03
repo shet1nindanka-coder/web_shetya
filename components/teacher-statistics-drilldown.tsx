@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { ShbzSelect } from "@/components/shbz-select";
 import { completionPercent, formatDate } from "@/lib/utils";
 
 type DrilldownStatus = "GREEN" | "YELLOW" | "RED" | null;
@@ -234,57 +235,47 @@ export function TeacherStatisticsDrilldown({
   return (
     <div className="grid items-start gap-7 lg:grid-cols-[minmax(280px,360px)_1fr]">
       <div className="flex flex-col gap-5">
-        <label className="flex flex-col gap-2">
+        <div className="flex flex-col gap-2">
           <span className="text-[13px] font-semibold" style={{ color: "var(--shbz-label)" }}>
             Тема
           </span>
-          <select
+          <ShbzSelect
+            ariaLabel="Тема"
             value={selectedTopic?.id ?? ""}
-            onChange={(event) => setSelectedTopicId(event.target.value)}
-            className="shbz-select"
-          >
-            {topics.map((topic) => (
-              <option key={topic.id} value={topic.id}>
-                {topic.title}
-              </option>
-            ))}
-          </select>
-        </label>
+            onChange={setSelectedTopicId}
+            options={topics.map((topic) => ({ value: topic.id, label: topic.title }))}
+          />
+        </div>
 
-        <label className="flex flex-col gap-2">
+        <div className="flex flex-col gap-2">
           <span className="text-[13px] font-semibold" style={{ color: "var(--shbz-label)" }}>
             Ученик
           </span>
-          <select
+          <ShbzSelect
+            ariaLabel="Ученик"
             value={selectedStudent?.id ?? ""}
-            onChange={(event) => setSelectedStudentId(event.target.value)}
-            className="shbz-select"
-          >
-            {students.map((student) => (
-              <option key={student.id} value={student.id}>
-                {student.name}
-              </option>
-            ))}
-          </select>
-        </label>
+            onChange={setSelectedStudentId}
+            options={students.map((student) => ({ value: student.id, label: student.name }))}
+          />
+        </div>
 
-        <label className="flex flex-col gap-2">
+        <div className="flex flex-col gap-2">
           <span className="text-[13px] font-semibold" style={{ color: "var(--shbz-label)" }}>
             ДЗ
           </span>
-          <select
+          <ShbzSelect
+            ariaLabel="ДЗ"
             value={selectedAssignmentId}
-            onChange={(event) => setSelectedAssignmentId(event.target.value)}
-            className="shbz-select"
-          >
-            <option value="__all__">Вся тема</option>
-            {assignmentOptions.map((assignment) => (
-              <option key={assignment.id} value={assignment.id}>
-                {assignment.label} · {assignment.deadlineLabel}
-              </option>
-            ))}
-          </select>
-        </label>
+            onChange={setSelectedAssignmentId}
+            options={[
+              { value: "__all__", label: "Вся тема" },
+              ...assignmentOptions.map((assignment) => ({
+                value: assignment.id,
+                label: `${assignment.label} · ${assignment.deadlineLabel}`
+              }))
+            ]}
+          />
+        </div>
 
         <div className="mt-1">
           <div className="mb-2 flex items-baseline justify-between">
