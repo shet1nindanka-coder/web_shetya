@@ -62,7 +62,12 @@ export function ShbzDateTimePicker({
   const containerRef = useRef<HTMLDivElement | null>(null);
   const popoverRef = useRef<HTMLDivElement | null>(null);
   const wasOpenRef = useRef(false);
-  const [popoverPosition, setPopoverPosition] = useState<{ top: number; left: number } | null>(null);
+  const [popoverPosition, setPopoverPosition] = useState<{
+    top?: number;
+    bottom?: number;
+    left: number;
+    maxHeight: number;
+  } | null>(null);
 
   const updatePosition = useCallback(() => {
     const trigger = containerRef.current;
@@ -73,10 +78,21 @@ export function ShbzDateTimePicker({
 
     const rect = trigger.getBoundingClientRect();
     const width = 308;
+    const estimatedHeight = 470;
     const viewportWidth = window.innerWidth;
+    const viewportHeight = window.innerHeight;
     const left = Math.min(Math.max(8, rect.left), Math.max(8, viewportWidth - width - 8));
+    const spaceBelow = viewportHeight - rect.bottom - 8;
+    const spaceAbove = rect.top - 8;
+    const openUp = spaceBelow < estimatedHeight && spaceAbove > spaceBelow;
+    const maxHeight = Math.max(300, Math.min(520, (openUp ? spaceAbove : spaceBelow) - 8));
 
-    setPopoverPosition({ top: rect.bottom + 8, left });
+    setPopoverPosition({
+      top: openUp ? undefined : rect.bottom + 8,
+      bottom: openUp ? viewportHeight - rect.top + 8 : undefined,
+      left,
+      maxHeight
+    });
   }, []);
 
   useEffect(() => {
@@ -203,10 +219,12 @@ export function ShbzDateTimePicker({
         <div
           ref={popoverRef}
           data-shbz-portal=""
-          className="fixed w-[308px] max-w-[92vw] rounded-[18px] border p-4"
+          className="fixed w-[308px] max-w-[92vw] overflow-y-auto rounded-[18px] border p-4"
           style={{
             top: popoverPosition.top,
+            bottom: popoverPosition.bottom,
             left: popoverPosition.left,
+            maxHeight: popoverPosition.maxHeight,
             zIndex: 1000,
             background: "var(--shbz-card-bg)",
             borderColor: "var(--shbz-card-border)",

@@ -38,7 +38,13 @@ export function ShbzSelect({
   menuWidth
 }: ShbzSelectProps) {
   const [isOpen, setIsOpen] = useState(false);
-  const [menuPosition, setMenuPosition] = useState<{ top: number; left: number; width: number } | null>(null);
+  const [menuPosition, setMenuPosition] = useState<{
+    top?: number;
+    bottom?: number;
+    left: number;
+    width: number;
+    maxHeight: number;
+  } | null>(null);
   const triggerRef = useRef<HTMLButtonElement | null>(null);
   const menuRef = useRef<HTMLDivElement | null>(null);
   const sizeStyle = SIZE_STYLES[size];
@@ -54,9 +60,20 @@ export function ShbzSelect({
     const rect = trigger.getBoundingClientRect();
     const width = Math.max(menuWidth ?? rect.width, 120);
     const viewportWidth = window.innerWidth;
+    const viewportHeight = window.innerHeight;
     const left = Math.min(Math.max(8, rect.left), Math.max(8, viewportWidth - width - 8));
+    const spaceBelow = viewportHeight - rect.bottom - 6;
+    const spaceAbove = rect.top - 6;
+    const openUp = spaceBelow < 240 && spaceAbove > spaceBelow;
+    const maxHeight = Math.max(160, Math.min(300, (openUp ? spaceAbove : spaceBelow) - 8));
 
-    setMenuPosition({ top: rect.bottom + 6, left, width });
+    setMenuPosition({
+      top: openUp ? undefined : rect.bottom + 6,
+      bottom: openUp ? viewportHeight - rect.top + 6 : undefined,
+      left,
+      width,
+      maxHeight
+    });
   }, [menuWidth]);
 
   useEffect(() => {
@@ -149,11 +166,13 @@ export function ShbzSelect({
               ref={menuRef}
               role="listbox"
               data-shbz-portal=""
-              className="fixed max-h-[300px] overflow-y-auto rounded-[14px] border p-1.5"
+              className="fixed overflow-y-auto rounded-[14px] border p-1.5"
               style={{
                 top: menuPosition.top,
+                bottom: menuPosition.bottom,
                 left: menuPosition.left,
                 width: menuPosition.width,
+                maxHeight: menuPosition.maxHeight,
                 zIndex: 1000,
                 background: "var(--shbz-card-bg)",
                 borderColor: "var(--shbz-card-border)",
