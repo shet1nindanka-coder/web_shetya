@@ -281,7 +281,7 @@ const TeacherTopicCard = memo(function TeacherTopicCard({
             <h2 className="teacher-topic-title font-display text-2xl font-semibold text-[var(--theme-text-strong)]">{topic.title}</h2>
             <p className="ui-copy-muted mt-2 text-sm">{topic.totalNumbers} номеров</p>
           </div>
-          <p className="ui-copy-muted max-w-3xl text-sm leading-6">{topic.description}</p>
+          <p className="ui-hint ui-copy-muted max-w-3xl text-sm leading-6">{topic.description}</p>
           <div className="ui-copy-muted flex flex-wrap gap-x-5 gap-y-2 text-sm">
             <span>Решено: <span className="font-semibold text-[var(--theme-text-strong)]">{topic.solvedCount}/{topic.totalNumbers}</span></span>
             <span>Отмечено: <span className="font-semibold text-[var(--theme-text-strong)]">{topic.markedCount}/{topic.totalNumbers}</span></span>
@@ -294,7 +294,7 @@ const TeacherTopicCard = memo(function TeacherTopicCard({
         </div>
 
         <div className="w-full max-w-md space-y-4">
-          <div className="ui-panel-soft space-y-2 rounded-[10px] p-4">
+          <div className="ui-hint ui-panel-soft space-y-2 rounded-[10px] p-4">
             <div className="ui-copy-muted flex items-center justify-between text-sm">
               <span>Решено по теме</span>
               <span className="font-semibold text-[var(--theme-text-strong)]">{topic.solvedPercent}%</span>
@@ -351,7 +351,7 @@ const TeacherTopicCard = memo(function TeacherTopicCard({
             </button>
           ) : null}
         </div>
-        <p className="mt-2.5 text-[13px] leading-5" style={{ color: "var(--shbz-text-muted)" }}>
+        <p className="ui-hint mt-2.5 text-[13px] leading-5" style={{ color: "var(--shbz-text-muted)" }}>
           1. Кликните по номерам ниже, чтобы выбрать их · 2. Задайте общий дедлайн · 3. Нажмите «Выдать ДЗ».
         </p>
 
