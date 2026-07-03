@@ -6,7 +6,9 @@ import { redirect } from "next/navigation";
 import { requireUser } from "@/lib/auth";
 import { logErrorEvent, logInfoEvent } from "@/lib/logger";
 import { revalidateAllPlatformData } from "@/lib/platform-data-cache";
-import { hashPassword, verifyPassword } from "@/lib/password";
+import { cookies } from "next/headers";
+import { hashPassword, hashSessionToken, verifyPassword } from "@/lib/password";
+import { validatePasswordStrength } from "@/lib/password-policy";
 import { prisma } from "@/lib/prisma";
 import { normalizeSingleLineText, roleHome } from "@/lib/utils";
 
@@ -85,6 +87,10 @@ export async function updatePasswordAction(formData: FormData) {
     redirectAccountWithStatus(user.role, new URLSearchParams({ passwordError: "mismatch" }));
   }
 
+  if (validatePasswordStrength(newPassword) !== null) {
+    redirectAccountWithStatus(user.role, new URLSearchParams({ passwordError: "invalid" }));
+  }
+
   const currentUser = await prisma.user.findUnique({
     where: {
       id: user.id
@@ -111,6 +117,16 @@ export async function updatePasswordAction(formData: FormData) {
       },
       data: {
         passwordHash
+      }
+    });
+
+    const cookieStore = await cookies();
+    const currentToken = cookieStore.get("tutor_session")?.value;
+
+    await prisma.session.deleteMany({
+      where: {
+        userId: user.id,
+        ...(currentToken ? { NOT: { tokenHash: hashSessionToken(currentToken) } } : {})
       }
     });
   } catch (error) {

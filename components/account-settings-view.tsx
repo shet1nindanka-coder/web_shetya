@@ -43,7 +43,7 @@ const accountNotices = {
   },
   passwordInvalid: {
     tone: "error",
-    message: "Введите текущий пароль и новый пароль не короче 8 символов."
+    message: "Новый пароль: минимум 8 символов, обязательно буквы и цифры, без слишком простых комбинаций."
   },
   passwordMismatch: {
     tone: "error",
@@ -188,7 +188,7 @@ export function AccountSettingsView({ user, notice }: AccountSettingsViewProps) 
                 <input
                   type="password"
                   name="newPassword"
-                  placeholder="Минимум 8 символов"
+                  placeholder="Минимум 8 символов, буквы и цифры"
                   minLength={8}
                   className="shbz-input"
                   required

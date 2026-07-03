@@ -2,6 +2,7 @@ import { UserRole } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { NextResponse } from "next/server";
 import { tryGetCurrentUser } from "@/lib/auth";
+import { enforceApiRateLimit } from "@/lib/api-rate-limit";
 import { publishDashboardRealtimeEvent } from "@/lib/dashboard-realtime";
 import { getRequestLogContext, logErrorEvent } from "@/lib/logger";
 import { revalidateAllPlatformData } from "@/lib/platform-data-cache";
@@ -26,6 +27,12 @@ export async function POST(request: Request) {
 
   if (!user || user.role !== UserRole.TEACHER) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const rateLimitResponse = enforceApiRateLimit(request, "api:number-conditions", user.id, 60, 60_000);
+
+  if (rateLimitResponse) {
+    return rateLimitResponse;
   }
 
   const body = (await request.json().catch(() => null)) as
@@ -94,6 +101,12 @@ export async function DELETE(request: Request) {
 
   if (!user || user.role !== UserRole.TEACHER) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const rateLimitResponse = enforceApiRateLimit(request, "api:number-conditions", user.id, 60, 60_000);
+
+  if (rateLimitResponse) {
+    return rateLimitResponse;
   }
 
   const body = (await request.json().catch(() => null)) as

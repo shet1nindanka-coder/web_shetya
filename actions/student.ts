@@ -9,6 +9,7 @@ import { publishDashboardRealtimeEvent } from "@/lib/dashboard-realtime";
 import { getHeadersLogContext, logErrorEvent, logInfoEvent, logWarnEvent } from "@/lib/logger";
 import { revalidateTeacherStudentsData, revalidateTeacherTopicsData } from "@/lib/platform-data-cache";
 import { hashPassword } from "@/lib/password";
+import { validatePasswordStrength } from "@/lib/password-policy";
 import { prisma } from "@/lib/prisma";
 import { assertRateLimit, getClientIpFromHeaders, RateLimitExceededError } from "@/lib/rate-limit";
 import { normalizeLoginInput, normalizeSingleLineText } from "@/lib/utils";
@@ -25,7 +26,7 @@ export async function createStudentAction(formData: FormData) {
   const login = normalizeLoginInput(String(formData.get("login") ?? ""));
   const password = String(formData.get("password") ?? "");
 
-  if (!name || !login || password.trim().length < 8) {
+  if (!name || !login || validatePasswordStrength(password) !== null) {
     redirectTeacherWithStudentStatus(new URLSearchParams({ studentError: "invalid" }));
   }
 

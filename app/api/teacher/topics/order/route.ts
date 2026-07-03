@@ -6,6 +6,7 @@ import { getRequestLogContext, logErrorEvent, logInfoEvent } from "@/lib/logger"
 import { revalidateAllPlatformData } from "@/lib/platform-data-cache";
 import { prisma } from "@/lib/prisma";
 import { tryGetCurrentUser } from "@/lib/auth";
+import { enforceApiRateLimit } from "@/lib/api-rate-limit";
 import { moveTopicByDirection } from "@/lib/teacher-topic-selection";
 
 export const runtime = "nodejs";
@@ -26,6 +27,12 @@ export async function POST(request: Request) {
 
   if (!user || user.role !== UserRole.TEACHER) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const rateLimitResponse = enforceApiRateLimit(request, "api:topics-order", user.id, 30, 60_000);
+
+  if (rateLimitResponse) {
+    return rateLimitResponse;
   }
 
   const body = (await request.json().catch(() => null)) as

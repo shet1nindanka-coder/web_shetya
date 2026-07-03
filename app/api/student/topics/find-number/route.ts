@@ -1,6 +1,7 @@
 import { UserRole } from "@prisma/client";
 import { NextResponse } from "next/server";
 import { tryGetCurrentUser } from "@/lib/auth";
+import { enforceApiRateLimit } from "@/lib/api-rate-limit";
 import { getRequestLogContext, logErrorEvent, logInfoEvent, logWarnEvent } from "@/lib/logger";
 import { prisma } from "@/lib/prisma";
 import { findTopicByHomeworkNumber } from "@/lib/teacher-topic-selection";
@@ -13,6 +14,12 @@ export async function GET(request: Request) {
 
   if (!user || user.role !== UserRole.STUDENT) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const rateLimitResponse = enforceApiRateLimit(request, "api:find-number", user.id, 30, 60_000);
+
+  if (rateLimitResponse) {
+    return rateLimitResponse;
   }
 
   const { searchParams } = new URL(request.url);

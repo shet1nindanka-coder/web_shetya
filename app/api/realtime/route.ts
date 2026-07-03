@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { tryGetCurrentUser } from "@/lib/auth";
+import { enforceApiRateLimit } from "@/lib/api-rate-limit";
 import {
   publishDashboardRealtimeEvent,
   shouldReceiveDashboardRealtimeEvent,
@@ -23,6 +24,12 @@ export async function GET(request: Request) {
 
   if (!user) {
     return new NextResponse("Unauthorized", { status: 401 });
+  }
+
+  const rateLimitResponse = enforceApiRateLimit(request, "api:realtime-connect", user.id, 30, 60_000);
+
+  if (rateLimitResponse) {
+    return rateLimitResponse;
   }
 
   const stream = new ReadableStream<Uint8Array>({

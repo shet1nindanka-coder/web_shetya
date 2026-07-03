@@ -17,7 +17,7 @@ const studentNotices = {
   },
   studentInvalid: {
     tone: "error",
-    message: "Укажите имя, логин и пароль не короче 8 символов."
+    message: "Укажите имя, логин и пароль: минимум 8 символов, обязательно буквы и цифры."
   },
   studentExists: {
     tone: "error",
@@ -132,7 +132,7 @@ export default async function TeacherStudentsPage({ searchParams }: TeacherStude
                 <input
                   type="password"
                   name="password"
-                  placeholder="Минимум 8 символов"
+                  placeholder="Минимум 8 символов, буквы и цифры"
                   minLength={8}
                   className="shbz-input"
                   required

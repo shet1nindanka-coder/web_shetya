@@ -51,6 +51,14 @@ export async function signIn(login: string, password: string) {
   const tokenHash = hashSessionToken(token);
   const expiresAt = new Date(Date.now() + SESSION_TTL_DAYS * 24 * 60 * 60 * 1000);
 
+  try {
+    await prisma.session.deleteMany({
+      where: { expiresAt: { lt: new Date() } }
+    });
+  } catch {
+    // Чистка просроченных сессий не должна блокировать вход.
+  }
+
   await prisma.session.create({
     data: {
       tokenHash,

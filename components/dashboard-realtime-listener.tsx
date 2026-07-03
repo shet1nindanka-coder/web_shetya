@@ -75,7 +75,7 @@ export function DashboardRealtimeListener({
         startTransition(() => {
           router.refresh();
         });
-      }, 180);
+      }, 1500);
     };
 
     source.onmessage = (message) => {
