@@ -5,6 +5,7 @@ import { HomeworkNumberStatus } from "@prisma/client";
 import { memo, useCallback, useDeferredValue, useEffect, useId, useMemo, useRef, useState } from "react";
 import { Badge } from "@/components/badge";
 import { HomeworkStatusBadge } from "@/components/homework-status-badge";
+import { ShbzDateTimePicker } from "@/components/shbz-datetime-picker";
 import { ProgressBar } from "@/components/progress-bar";
 import {
   filterTeacherTopicsByQuery,
@@ -181,13 +182,13 @@ const TeacherNumberCard = memo(function TeacherNumberCard({
           <p className="ui-copy-muted text-sm font-medium">Дедлайн</p>
           {number.isSavingDeadline ? <span className="ui-copy-soft text-xs">Сохраняем...</span> : null}
         </div>
-        <input
-          type="datetime-local"
+        <ShbzDateTimePicker
           value={number.deadlineInputValue}
           disabled={!deadlinesEnabled}
-          onChange={(event) => onUpdateDeadlineValue(topicId, number.id, event.target.value)}
-          onBlur={() => onFlushDeadline(topicId, number.id)}
-          className="ui-input mt-2 w-full rounded-[12px] px-3 py-2 text-sm"
+          onChange={(nextValue) => onUpdateDeadlineValue(topicId, number.id, nextValue)}
+          onCommit={() => onFlushDeadline(topicId, number.id)}
+          placeholder="Выбрать дедлайн"
+          className="mt-2"
         />
         <p className="ui-copy-muted mt-2 text-xs leading-5">
           {deadlineLabel ? `Назначен до ${deadlineLabel}` : "Дедлайн пока не назначен."}
@@ -297,12 +298,12 @@ const TeacherTopicCard = memo(function TeacherTopicCard({
         </div>
 
         <div className="mt-4 flex flex-col gap-3 lg:flex-row lg:items-center">
-          <input
-            type="datetime-local"
+          <ShbzDateTimePicker
             value={topic.bulkDeadlineInputValue}
             disabled={!deadlinesEnabled || topic.isSavingBulk}
-            onChange={(event) => onUpdateBulkDeadlineValue(topic.id, event.target.value)}
-            className="ui-input w-full rounded-[12px] px-3 py-3 text-sm lg:max-w-xs"
+            onChange={(nextValue) => onUpdateBulkDeadlineValue(topic.id, nextValue)}
+            placeholder="Выбрать дедлайн"
+            className="w-full lg:max-w-xs"
           />
           <button
             type="button"
