@@ -1,7 +1,7 @@
 import Link from "next/link";
 import { UserRole } from "@prisma/client";
-import { createStudentAction } from "@/actions/student";
 import { DeleteStudentDialog } from "@/components/delete-student-dialog";
+import { StudentCreateForm } from "@/components/student-create-form";
 import { ShbzPageHeader } from "@/components/shbz-page-header";
 import { requireUser } from "@/lib/auth";
 import { getTeacherTopicsOverview } from "@/lib/platform-data";
@@ -93,59 +93,7 @@ export default async function TeacherStudentsPage({ searchParams }: TeacherStude
       <section>
         <h2 className="shbz-section-title">Добавить ученика</h2>
         <div className="shbz-card shbz-section-pad">
-          <form action={createStudentAction}>
-            <div className="flex flex-wrap items-end gap-4">
-              <label className="min-w-[200px] flex-1">
-                <span className="mb-[9px] block text-[13px] font-semibold" style={{ color: "var(--shbz-label)" }}>
-                  Имя ученика
-                </span>
-                <input
-                  type="text"
-                  name="name"
-                  placeholder="Например, Мария Смирнова"
-                  className="shbz-input"
-                  required
-                  autoComplete="name"
-                />
-              </label>
-
-              <label className="min-w-[200px] flex-1">
-                <span className="mb-[9px] block text-[13px] font-semibold" style={{ color: "var(--shbz-label)" }}>
-                  Логин ученика
-                </span>
-                <input
-                  type="text"
-                  name="login"
-                  placeholder="maria@example.com"
-                  className="shbz-input"
-                  required
-                  autoCapitalize="none"
-                  autoCorrect="off"
-                  spellCheck={false}
-                />
-              </label>
-
-              <label className="min-w-[200px] flex-1">
-                <span className="mb-[9px] block text-[13px] font-semibold" style={{ color: "var(--shbz-label)" }}>
-                  Пароль
-                </span>
-                <input
-                  type="password"
-                  name="password"
-                  placeholder="Минимум 8 символов, буквы и цифры"
-                  minLength={8}
-                  className="shbz-input"
-                  required
-                  autoComplete="new-password"
-                  spellCheck={false}
-                />
-              </label>
-
-              <button type="submit" className="shbz-btn-primary h-[54px] shrink-0 px-[26px] text-[15px]">
-                Добавить ученика
-              </button>
-            </div>
-          </form>
+          <StudentCreateForm />
         </div>
       </section>
 
