@@ -2591,3 +2591,33 @@ html[data-theme="dark"] .app-topbar-profile {
   padding-right: 10px;
   white-space: nowrap;
 }
+
+/* Неактивные кнопки — нейтральный серый вместо старых синих */
+.ui-button-primary:disabled,
+html[data-theme="dark"] .ui-button-primary:disabled,
+.ui-button-secondary:disabled,
+html[data-theme="dark"] .ui-button-secondary:disabled,
+.ui-button-tonal:disabled,
+html[data-theme="dark"] .ui-button-tonal:disabled,
+.shbz-btn-primary:disabled,
+.shbz-btn-dark:disabled {
+  background: var(--shbz-progress-track);
+  border-color: transparent;
+  color: var(--shbz-text-soft);
+  box-shadow: none;
+  filter: none;
+  transform: none;
+  opacity: 1;
+  cursor: not-allowed;
+}
+
+.ui-button-danger:disabled,
+html[data-theme="dark"] .ui-button-danger:disabled,
+.shbz-btn-danger:disabled {
+  background: var(--shbz-card-bg);
+  border-color: var(--shbz-soft-border);
+  color: var(--shbz-text-soft);
+  box-shadow: none;
+  opacity: 1;
+  cursor: not-allowed;
+}
