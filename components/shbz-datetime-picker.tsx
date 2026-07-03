@@ -11,6 +11,7 @@ type ShbzDateTimePickerProps = {
   disabled?: boolean;
   placeholder?: string;
   className?: string;
+  variant?: "field" | "compact";
 };
 
 const WEEK_DAYS = ["ПН", "ВТ", "СР", "ЧТ", "ПТ", "СБ", "ВС"];
@@ -54,7 +55,8 @@ export function ShbzDateTimePicker({
   onCommit,
   disabled = false,
   placeholder = "Выбрать дату и время",
-  className
+  className,
+  variant = "field"
 }: ShbzDateTimePickerProps) {
   const selected = useMemo(() => parseValue(value), [value]);
   const [isOpen, setIsOpen] = useState(false);
@@ -190,6 +192,31 @@ export function ShbzDateTimePicker({
 
   return (
     <div ref={containerRef} className={`relative ${className ?? ""}`}>
+      {variant === "compact" ? (
+        <button
+          type="button"
+          disabled={disabled}
+          onClick={() => setIsOpen((current) => !current)}
+          aria-expanded={isOpen}
+          className="inline-flex max-w-full items-center gap-1.5 rounded-full border px-2.5 py-1.5 text-[12.5px] font-semibold transition-[border-color,box-shadow]"
+          style={{
+            background: "var(--shbz-card-bg)",
+            borderColor: isOpen ? "var(--shbz-input-border-focus)" : "var(--shbz-outline-border)",
+            boxShadow: isOpen ? "0 0 0 3px var(--shbz-input-ring)" : "none",
+            color: selected ? "var(--shbz-text-strong)" : "var(--shbz-text-soft)",
+            opacity: disabled ? 0.55 : 1,
+            cursor: disabled ? "not-allowed" : "pointer"
+          }}
+        >
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="var(--shbz-kicker)" strokeWidth="2.2" strokeLinecap="round" aria-hidden="true" className="shrink-0">
+            <rect x="3" y="5" width="18" height="16" rx="3" />
+            <line x1="3" y1="10" x2="21" y2="10" />
+            <line x1="8" y1="3" x2="8" y2="7" />
+            <line x1="16" y1="3" x2="16" y2="7" />
+          </svg>
+          <span className="truncate">{selected ? formatDisplay(selected) : placeholder}</span>
+        </button>
+      ) : (
       <button
         type="button"
         disabled={disabled}
@@ -213,6 +240,7 @@ export function ShbzDateTimePicker({
           <line x1="16" y1="3" x2="16" y2="7" />
         </svg>
       </button>
+      )}
 
       {isOpen && popoverPosition
         ? createPortal(

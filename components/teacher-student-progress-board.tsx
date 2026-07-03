@@ -152,47 +152,71 @@ const TeacherNumberCard = memo(function TeacherNumberCard({
   onUpdateDeadlineValue,
   onFlushDeadline
 }: TeacherNumberCardProps) {
-  const deadlineLabel = formatDeadlineLabel(number.studentStatus?.deadlineAt ?? null);
-
   return (
-    <div className="teacher-number-card rounded-[10px] border px-4 py-4">
-      <div className="flex items-center justify-between gap-3">
-        <label className="ui-copy-muted inline-flex items-center gap-2 text-xs font-semibold">
-          <input
-            type="checkbox"
-            checked={number.selectedForBulk}
-            onChange={() => onToggleBulkSelection(topicId, number.id)}
-            className="h-4 w-4 rounded border-[var(--theme-border)]"
-          />
-          Выбрать
-        </label>
+    <div
+      role="checkbox"
+      aria-checked={number.selectedForBulk}
+      tabIndex={0}
+      onClick={() => onToggleBulkSelection(topicId, number.id)}
+      onKeyDown={(event) => {
+        if (event.key === " " || event.key === "Enter") {
+          event.preventDefault();
+          onToggleBulkSelection(topicId, number.id);
+        }
+      }}
+      className="teacher-number-card cursor-pointer rounded-[14px] border px-4 py-3.5 transition-[border-color,background,box-shadow]"
+      style={{
+        borderColor: number.selectedForBulk ? "var(--shbz-accent-solid)" : "var(--shbz-soft-border)",
+        background: number.selectedForBulk ? "var(--theme-accent-soft)" : "var(--shbz-soft-bg)",
+        boxShadow: number.selectedForBulk ? "0 0 0 1px var(--shbz-accent-solid)" : "none"
+      }}
+    >
+      <div className="flex items-center justify-between gap-2.5">
+        <span className="flex min-w-0 items-center gap-2.5">
+          <span
+            aria-hidden
+            className="flex h-[18px] w-[18px] shrink-0 items-center justify-center rounded-[6px] border-[1.5px] transition-colors"
+            style={{
+              borderColor: number.selectedForBulk ? "var(--shbz-accent-solid)" : "var(--shbz-outline-border)",
+              background: number.selectedForBulk ? "var(--shbz-accent-grad)" : "var(--shbz-card-bg)"
+            }}
+          >
+            {number.selectedForBulk ? (
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="#ffffff" strokeWidth="3.2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M5 13l4 4L19 7" />
+              </svg>
+            ) : null}
+          </span>
+          <span className="teacher-number-title truncate text-base font-extrabold text-[var(--theme-text-strong)]">
+            № {number.number}
+          </span>
+          {homeworkLabel ? (
+            <Badge className="border-[var(--theme-accent-border)] bg-[var(--theme-accent-soft)] text-[var(--theme-accent-text)]">
+              {homeworkLabel}
+            </Badge>
+          ) : null}
+        </span>
         <HomeworkStatusBadge status={number.studentStatus?.status ?? null} />
       </div>
-      <div className="mt-3 flex items-center justify-between gap-3">
-        <p className="teacher-number-title text-lg font-semibold text-[var(--theme-text-strong)]">№ {number.number}</p>
-        {homeworkLabel ? <Badge className="border-[var(--theme-accent-border)] bg-[var(--theme-accent-soft)] text-[var(--theme-accent-text)]">{homeworkLabel}</Badge> : null}
-      </div>
       {number.studentStatus?.note ? (
-        <div className="ui-card-soft mt-3 rounded-[12px] px-3 py-2">
-          <p className="text-sm leading-6 text-[var(--theme-text-default)]">{number.studentStatus.note}</p>
+        <div className="mt-3 rounded-[10px] px-3 py-2" style={{ background: "var(--shbz-card-bg)" }}>
+          <p className="text-[13px] leading-5 text-[var(--theme-text-default)]">{number.studentStatus.note}</p>
         </div>
       ) : null}
-      <div className="teacher-deadline-panel mt-3 rounded-[12px] border px-3 py-3">
-        <div className="flex items-center justify-between gap-3">
-          <p className="ui-copy-muted text-sm font-medium">Дедлайн</p>
-          {number.isSavingDeadline ? <span className="ui-copy-soft text-xs">Сохраняем...</span> : null}
-        </div>
+      <div
+        className="mt-3 flex items-center justify-between gap-2"
+        onClick={(event) => event.stopPropagation()}
+        onKeyDown={(event) => event.stopPropagation()}
+      >
         <ShbzDateTimePicker
+          variant="compact"
           value={number.deadlineInputValue}
           disabled={!deadlinesEnabled}
           onChange={(nextValue) => onUpdateDeadlineValue(topicId, number.id, nextValue)}
           onCommit={() => onFlushDeadline(topicId, number.id)}
-          placeholder="Выбрать дедлайн"
-          className="mt-2"
+          placeholder="Назначить дедлайн"
         />
-        <p className="ui-copy-muted mt-2 text-xs leading-5">
-          {deadlineLabel ? `Назначен до ${deadlineLabel}` : "Дедлайн пока не назначен."}
-        </p>
+        {number.isSavingDeadline ? <span className="ui-copy-soft shrink-0 text-xs">Сохраняем...</span> : null}
       </div>
     </div>
   );
@@ -288,52 +312,60 @@ const TeacherTopicCard = memo(function TeacherTopicCard({
         </div>
       </div>
 
-      <div className="teacher-bulk-deadline-panel mt-5 rounded-[10px] border px-4 py-4">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div>
-            <p className="ui-copy-muted text-sm font-medium">Выдать ДЗ</p>
-            <p className="ui-copy-muted mt-2 text-sm leading-6">Выберите несколько номеров ниже и выдайте их как одно ДЗ с общим дедлайном.</p>
+      <div className="teacher-bulk-deadline-panel mt-5 rounded-[14px] border px-4 py-4">
+        <div className="flex flex-wrap items-center gap-3">
+          <p className="text-sm font-bold text-[var(--theme-text-strong)]">Выдать ДЗ</p>
+          <span
+            className="rounded-full px-3 py-1 text-[12.5px] font-bold"
+            style={{
+              background: selectedCount > 0 ? "var(--theme-accent-soft)" : "var(--shbz-tab-hover)",
+              color: selectedCount > 0 ? "var(--shbz-green-text)" : "var(--shbz-kicker)"
+            }}
+          >
+            Выбрано: {selectedCount}
+          </span>
+          <div className="w-full min-w-[220px] sm:w-auto sm:max-w-[280px] sm:flex-1">
+            <ShbzDateTimePicker
+              value={topic.bulkDeadlineInputValue}
+              disabled={!deadlinesEnabled || topic.isSavingBulk}
+              onChange={(nextValue) => onUpdateBulkDeadlineValue(topic.id, nextValue)}
+              placeholder="Общий дедлайн"
+            />
           </div>
-          <span className="ui-copy-muted text-sm">Выбрано: <span className="font-semibold text-[var(--theme-text-strong)]">{selectedCount}</span></span>
-        </div>
-
-        <div className="mt-4 flex flex-col gap-3 lg:flex-row lg:items-center">
-          <ShbzDateTimePicker
-            value={topic.bulkDeadlineInputValue}
-            disabled={!deadlinesEnabled || topic.isSavingBulk}
-            onChange={(nextValue) => onUpdateBulkDeadlineValue(topic.id, nextValue)}
-            placeholder="Выбрать дедлайн"
-            className="w-full lg:max-w-xs"
-          />
           <button
             type="button"
-            disabled={!deadlinesEnabled || !selectedCount || topic.isSavingBulk}
+            disabled={!deadlinesEnabled || !selectedCount || !topic.bulkDeadlineInputValue || topic.isSavingBulk}
             onClick={() => onApplyBulkDeadline(topic.id)}
-            className="ui-pressable ui-button-primary rounded-[12px] px-5 py-3 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-50"
+            className="ui-pressable ui-button-primary rounded-[12px] px-5 py-3 text-sm font-semibold transition disabled:cursor-not-allowed"
           >
             {topic.isSavingBulk ? "Выдаем..." : "Выдать ДЗ"}
           </button>
-          <button
-            type="button"
-            disabled={!selectedCount || topic.isSavingBulk}
-            onClick={() => onClearBulkSelection(topic.id)}
-            className="ui-pressable ui-button-secondary rounded-[12px] px-5 py-3 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            Снять выбор
-          </button>
+          {selectedCount > 0 ? (
+            <button
+              type="button"
+              disabled={topic.isSavingBulk}
+              onClick={() => onClearBulkSelection(topic.id)}
+              className="ui-pressable ui-button-secondary rounded-[12px] px-5 py-3 text-sm font-semibold transition disabled:cursor-not-allowed"
+            >
+              Снять выбор
+            </button>
+          ) : null}
         </div>
+        <p className="mt-2.5 text-[13px] leading-5" style={{ color: "var(--shbz-text-muted)" }}>
+          1. Кликните по номерам ниже, чтобы выбрать их · 2. Задайте общий дедлайн · 3. Нажмите «Выдать ДЗ».
+        </p>
 
         {homeworkGroups.length > 0 ? (
-          <div className="ui-panel-soft mt-4 rounded-[8px] px-3 py-3">
-            <p className="text-sm font-medium text-[var(--theme-text-muted)]">Выданные ДЗ</p>
-            <div className="mt-3 flex flex-wrap gap-2">
-              {homeworkGroups.map((group) => (
-                <Badge key={group.id} className="ui-badge-soft">
-                  {group.label} · {group.count}
-                  {group.deadlineLabel ? ` · ${group.deadlineLabel}` : ""}
-                </Badge>
-              ))}
-            </div>
+          <div className="mt-3 flex flex-wrap items-center gap-2">
+            <span className="text-[12.5px] font-semibold" style={{ color: "var(--shbz-kicker)" }}>
+              Выданные ДЗ:
+            </span>
+            {homeworkGroups.map((group) => (
+              <Badge key={group.id} className="ui-badge-soft">
+                {group.label} · {group.count}
+                {group.deadlineLabel ? ` · ${group.deadlineLabel}` : ""}
+              </Badge>
+            ))}
           </div>
         ) : null}
       </div>
