@@ -2139,3 +2139,440 @@ html[data-theme="dark"] .shbz-btn-dark:hover { filter: brightness(0.85); }
 .shbz-btn-danger-solid:disabled { opacity: 0.55; cursor: not-allowed; }
 
 .shbz-seg-btn--plain[data-active="true"] { color: var(--shbz-text-strong); }
+
+/* ═══════════════════════════════════════════════
+   ШБЗ: адаптация старой палитры --theme-* и ui-*
+   (переводит оставшиеся страницы на новый дизайн)
+   ═══════════════════════════════════════════════ */
+:root {
+  --theme-bg: var(--shbz-page-bg);
+  --theme-text: var(--shbz-text-strong);
+  --theme-surface: var(--shbz-card-bg);
+  --theme-surface-soft: var(--shbz-soft-bg);
+  --theme-surface-strong: var(--shbz-card-bg);
+  --theme-border: var(--shbz-card-border);
+  --theme-border-soft: var(--shbz-soft-border);
+  --theme-text-strong: var(--shbz-text-strong);
+  --theme-text-default: var(--shbz-label);
+  --theme-text-muted: var(--shbz-text-muted);
+  --theme-text-soft: var(--shbz-text-soft);
+  --theme-input: var(--shbz-input-bg);
+  --theme-input-border: var(--shbz-input-border);
+  --theme-header: var(--shbz-header-bg);
+  --theme-header-card: var(--shbz-soft-bg);
+  --theme-tab: var(--shbz-card-bg);
+  --theme-tab-active: var(--shbz-tab-active-bg);
+  --theme-tab-text: var(--shbz-tab-text);
+  --theme-tab-text-active: var(--shbz-tab-active-text);
+  --theme-tab-border: var(--shbz-tab-border);
+  --theme-shadow-soft: 0 1px 2px rgba(10, 10, 10, 0.04), 0 8px 24px rgba(10, 10, 10, 0.05);
+  --theme-shadow-hover: 0 2px 4px rgba(10, 10, 10, 0.05), 0 14px 36px rgba(10, 10, 10, 0.09);
+  --theme-accent: var(--shbz-accent-solid);
+  --theme-accent-strong: var(--shbz-accent-solid);
+  --theme-accent-soft: rgba(54, 224, 164, 0.12);
+  --theme-accent-soft-hover: rgba(54, 224, 164, 0.18);
+  --theme-accent-border: rgba(22, 176, 126, 0.35);
+  --theme-accent-text: var(--shbz-green-text);
+  --theme-success-soft: var(--shbz-green-soft);
+  --theme-success-border: rgba(27, 158, 99, 0.25);
+  --theme-success-text: var(--shbz-green-text);
+  --theme-warning-soft: var(--shbz-yellow-soft);
+  --theme-warning-border: rgba(201, 138, 30, 0.3);
+  --theme-warning-text: var(--shbz-yellow-text);
+  --theme-danger-soft: var(--shbz-red-soft);
+  --theme-danger-border: var(--shbz-danger-outline);
+  --theme-danger-text: var(--shbz-red-text);
+  --theme-danger-solid: var(--shbz-danger-solid);
+}
+
+html[data-theme="dark"] {
+  --theme-bg: var(--shbz-page-bg);
+  --theme-text: var(--shbz-text-strong);
+  --theme-surface: var(--shbz-card-bg);
+  --theme-surface-soft: var(--shbz-soft-bg);
+  --theme-surface-strong: var(--shbz-card-bg);
+  --theme-border: var(--shbz-card-border);
+  --theme-border-soft: var(--shbz-soft-border);
+  --theme-text-strong: var(--shbz-text-strong);
+  --theme-text-default: var(--shbz-label);
+  --theme-text-muted: var(--shbz-text-muted);
+  --theme-text-soft: var(--shbz-text-soft);
+  --theme-input: var(--shbz-input-bg);
+  --theme-input-border: var(--shbz-input-border);
+  --theme-header: var(--shbz-header-bg);
+  --theme-header-card: var(--shbz-soft-bg);
+  --theme-tab: var(--shbz-card-bg);
+  --theme-tab-active: var(--shbz-tab-active-bg);
+  --theme-tab-text: var(--shbz-tab-text);
+  --theme-tab-text-active: var(--shbz-tab-active-text);
+  --theme-shadow-soft: 0 1px 2px rgba(0, 0, 0, 0.4), 0 8px 24px rgba(0, 0, 0, 0.35);
+  --theme-shadow-hover: 0 2px 4px rgba(0, 0, 0, 0.45), 0 14px 36px rgba(0, 0, 0, 0.4);
+  --theme-hero: linear-gradient(145deg, #131417, #17181b);
+  --theme-accent: var(--shbz-accent-solid);
+  --theme-accent-strong: var(--shbz-accent-solid);
+  --theme-accent-soft: rgba(54, 224, 164, 0.14);
+  --theme-accent-soft-hover: rgba(54, 224, 164, 0.2);
+  --theme-accent-border: rgba(54, 224, 164, 0.35);
+  --theme-accent-text: var(--shbz-green-text);
+  --theme-success-soft: var(--shbz-green-soft);
+  --theme-success-border: rgba(89, 212, 157, 0.3);
+  --theme-success-text: var(--shbz-green-text);
+  --theme-warning-soft: var(--shbz-yellow-soft);
+  --theme-warning-border: rgba(232, 180, 92, 0.3);
+  --theme-warning-text: var(--shbz-yellow-text);
+  --theme-danger-soft: var(--shbz-red-soft);
+  --theme-danger-border: var(--shbz-danger-outline);
+  --theme-danger-text: var(--shbz-red-text);
+  --theme-danger-solid: var(--shbz-danger-solid);
+}
+
+/* Фоновые сетки/градиенты старого дизайна */
+.soft-grid {
+  background: var(--shbz-page-bg);
+  background-image: radial-gradient(640px 320px at 100% 0%, rgba(54, 224, 164, 0.07), rgba(90, 200, 234, 0) 70%);
+}
+.soft-grid::before,
+.soft-grid::after,
+html[data-theme="dark"] .soft-grid::before,
+html[data-theme="dark"] .soft-grid::after {
+  content: none;
+}
+
+/* Поверхности */
+.ui-surface,
+.ui-section-card,
+.ui-page-header,
+.ui-state-shell,
+.ui-dialog-shell,
+.ui-file-card,
+html[data-theme="dark"] .ui-surface,
+html[data-theme="dark"] .ui-state-shell,
+html[data-theme="dark"] .ui-dialog-shell {
+  background: var(--shbz-card-bg);
+  border: 1px solid var(--shbz-card-border);
+  border-radius: 18px;
+  box-shadow: 0 1px 2px rgba(10, 10, 10, 0.04), 0 8px 24px rgba(10, 10, 10, 0.05);
+}
+@media (hover: hover) {
+  .ui-surface:hover,
+  html[data-theme="dark"] .ui-surface:hover {
+    border-color: var(--shbz-card-border);
+    box-shadow: 0 2px 4px rgba(10, 10, 10, 0.05), 0 14px 36px rgba(10, 10, 10, 0.09);
+  }
+}
+
+.ui-panel-soft,
+.ui-card-soft,
+.ui-settings-card,
+.ui-toolbar-shell,
+html[data-theme="dark"] .ui-settings-card {
+  background: var(--shbz-soft-bg);
+  border: 1px solid var(--shbz-soft-border);
+  border-radius: 16px;
+  box-shadow: none;
+}
+
+/* Поля ввода */
+.ui-input,
+html[data-theme="dark"] .ui-input {
+  background: var(--shbz-input-bg);
+  border: 1.5px solid var(--shbz-input-border);
+  border-radius: 14px;
+  color: var(--shbz-text-strong);
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+.ui-input:focus,
+html[data-theme="dark"] .ui-input:focus {
+  outline: none;
+  border-color: var(--shbz-input-border-focus);
+  box-shadow: 0 0 0 4px var(--shbz-input-ring);
+}
+.ui-input::placeholder { color: var(--shbz-placeholder); }
+.ui-readonly-field {
+  background: var(--shbz-soft-bg);
+  border: 1.5px solid var(--shbz-soft-border);
+  border-radius: 14px;
+  color: var(--shbz-text-muted);
+}
+.ui-form-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--shbz-label);
+}
+
+/* Кнопки */
+.ui-button-primary,
+html[data-theme="dark"] .ui-button-primary {
+  border: 1.5px solid transparent;
+  border-radius: 999px;
+  background: var(--shbz-accent-grad);
+  color: #ffffff;
+  font-weight: 700;
+  box-shadow: 0 5px 14px var(--shbz-accent-shadow);
+}
+.ui-button-primary:hover,
+html[data-theme="dark"] .ui-button-primary:hover {
+  background: var(--shbz-accent-grad);
+  filter: brightness(1.04);
+  box-shadow: 0 8px 20px var(--shbz-accent-shadow-hover);
+}
+.ui-button-primary:disabled,
+html[data-theme="dark"] .ui-button-primary:disabled {
+  opacity: 0.55;
+  box-shadow: none;
+  filter: none;
+}
+
+.ui-button-secondary,
+html[data-theme="dark"] .ui-button-secondary {
+  border: 1.5px solid var(--shbz-outline-border);
+  border-radius: 999px;
+  background: var(--shbz-card-bg);
+  color: var(--shbz-tab-text);
+}
+.ui-button-secondary:hover,
+html[data-theme="dark"] .ui-button-secondary:hover {
+  border-color: var(--shbz-outline-hover);
+  background: var(--shbz-card-bg);
+  color: var(--shbz-text-strong);
+}
+
+.ui-button-tonal,
+html[data-theme="dark"] .ui-button-tonal {
+  border: 1.5px solid transparent;
+  border-radius: 999px;
+  background: var(--theme-accent-soft);
+  color: var(--shbz-green-text);
+}
+.ui-button-tonal:hover,
+html[data-theme="dark"] .ui-button-tonal:hover {
+  background: var(--theme-accent-soft-hover);
+}
+
+.ui-button-danger,
+html[data-theme="dark"] .ui-button-danger {
+  border: 1.5px solid var(--shbz-danger-outline);
+  border-radius: 999px;
+  background: var(--shbz-card-bg);
+  color: var(--shbz-danger-solid);
+}
+.ui-button-danger:hover,
+html[data-theme="dark"] .ui-button-danger:hover {
+  background: var(--shbz-red-soft);
+  border-color: var(--shbz-danger-outline);
+}
+
+/* Вкладки и переключатели */
+.ui-tab-shell,
+html[data-theme="dark"] .ui-tab-shell {
+  background: var(--shbz-card-bg);
+  border: 1.5px solid var(--shbz-tab-border);
+  border-radius: 999px;
+  padding: 6px;
+  box-shadow: none;
+}
+.ui-tab,
+html[data-theme="dark"] .ui-tab {
+  border-radius: 999px;
+  border: none;
+  background: transparent;
+  color: var(--shbz-tab-text);
+  font-weight: 600;
+  box-shadow: none;
+}
+.ui-tab:hover,
+html[data-theme="dark"] .ui-tab:hover {
+  background: var(--shbz-tab-hover);
+  color: var(--shbz-tab-text);
+}
+.ui-tab[data-active="true"],
+html[data-theme="dark"] .ui-tab[data-active="true"],
+.ui-tab[data-active="true"]:hover,
+html[data-theme="dark"] .ui-tab[data-active="true"]:hover {
+  background: var(--shbz-tab-active-bg);
+  color: var(--shbz-tab-active-text);
+  box-shadow: none;
+}
+
+/* Типографика и бейджи */
+.ui-kicker {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1.2px;
+  text-transform: uppercase;
+  color: var(--shbz-kicker);
+}
+.ui-badge-soft,
+html[data-theme="dark"] .ui-badge-soft {
+  border: none;
+  border-radius: 999px;
+  background: var(--shbz-tab-hover);
+  color: var(--shbz-kicker);
+  font-weight: 600;
+}
+.ui-copy-muted { color: var(--shbz-text-muted); }
+.ui-copy-soft { color: var(--shbz-text-soft); }
+
+/* Уведомления */
+.ui-notice-success,
+html[data-theme="dark"] .ui-notice-success {
+  border: 1px solid var(--theme-success-border);
+  background: var(--shbz-green-soft);
+  color: var(--shbz-green-text);
+  border-radius: 14px;
+}
+.ui-notice-error,
+html[data-theme="dark"] .ui-notice-error {
+  border: 1px solid var(--shbz-danger-outline);
+  background: var(--shbz-red-soft);
+  color: var(--shbz-red-text);
+  border-radius: 14px;
+}
+.ui-notice-warning,
+html[data-theme="dark"] .ui-notice-warning {
+  border: 1px solid var(--theme-warning-border);
+  background: var(--shbz-yellow-soft);
+  color: var(--shbz-yellow-text);
+  border-radius: 14px;
+}
+
+/* Прогресс */
+.ui-progress-track,
+html[data-theme="dark"] .ui-progress-track {
+  background: var(--shbz-progress-track);
+  border: none;
+  box-shadow: none;
+  border-radius: 999px;
+}
+.ui-progress-fill,
+html[data-theme="dark"] .ui-progress-fill {
+  background: var(--shbz-accent-grad);
+}
+
+/* Метрики в шапках страниц */
+.ui-metric-pill {
+  background: var(--shbz-soft-bg);
+  border: 1px solid var(--shbz-soft-border);
+  border-radius: 14px;
+}
+
+/* Статусы (светофор) */
+.ui-status-button,
+html[data-theme="dark"] .ui-status-button {
+  border-radius: 999px;
+  background: var(--shbz-card-bg);
+  border-color: var(--shbz-outline-border);
+  color: var(--shbz-tab-text);
+}
+.ui-status-button:hover,
+html[data-theme="dark"] .ui-status-button:hover {
+  border-color: var(--shbz-outline-hover);
+  background: var(--shbz-card-bg);
+}
+.ui-status-surface { border-radius: 999px; }
+
+/* Логотип-плашка в старых скелетонах */
+.app-logo-mark,
+html[data-theme="dark"] .app-logo-mark {
+  background: var(--shbz-accent-grad-diag);
+  border: none;
+}
+
+/* Огонёк (если где-то остался старый блок) */
+.student-streak-hero,
+html[data-theme="dark"] .student-streak-hero {
+  background: var(--shbz-streak-bg);
+  border: 1px solid var(--shbz-streak-border);
+  border-radius: 18px;
+}
+
+/* ШБЗ: добивка тёмных правил, которые перебивали новый стиль */
+html[data-theme="dark"] .ui-panel-soft,
+html[data-theme="dark"] .ui-card-soft,
+html[data-theme="dark"] .ui-toolbar-shell,
+html[data-theme="dark"] .ui-settings-option,
+html[data-theme="dark"] .settings-summary-card,
+html[data-theme="dark"] .settings-summary-item {
+  background: var(--shbz-soft-bg);
+  border-color: var(--shbz-soft-border);
+  box-shadow: none;
+}
+
+.ui-mini-stat-card,
+html[data-theme="dark"] .ui-mini-stat-card,
+.ui-action-card,
+html[data-theme="dark"] .ui-action-card {
+  background: var(--shbz-soft-bg);
+  border: 1px solid var(--shbz-soft-border);
+  border-radius: 14px;
+  box-shadow: none;
+}
+
+html[data-theme="dark"] .ui-page-header,
+html[data-theme="dark"] .page-header-panel,
+html[data-theme="dark"] .ui-page-header-panel,
+html[data-theme="dark"] .ui-file-card,
+html[data-theme="dark"] .ui-section-card {
+  background: var(--shbz-card-bg);
+  border-color: var(--shbz-card-border);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 8px 24px rgba(0, 0, 0, 0.35);
+}
+
+html[data-theme="dark"] .ui-metric-pill {
+  background: var(--shbz-soft-bg);
+  border-color: var(--shbz-soft-border);
+}
+
+html[data-theme="dark"] .ui-readonly-field {
+  background: var(--shbz-soft-bg);
+  border-color: var(--shbz-soft-border);
+  color: var(--shbz-text-muted);
+}
+
+html[data-theme="dark"] .ui-hint { color: var(--shbz-text-muted); }
+
+.ui-status-green,
+html[data-theme="dark"] .ui-status-green {
+  border-color: var(--theme-success-border);
+  background: var(--shbz-green-soft);
+  color: var(--shbz-green-text);
+}
+.ui-status-yellow,
+html[data-theme="dark"] .ui-status-yellow {
+  border-color: var(--theme-warning-border);
+  background: var(--shbz-yellow-soft);
+  color: var(--shbz-yellow-text);
+}
+.ui-status-red,
+html[data-theme="dark"] .ui-status-red {
+  border-color: var(--shbz-danger-outline);
+  background: var(--shbz-red-soft);
+  color: var(--shbz-red-text);
+}
+.ui-status-button.ui-status-green:hover,
+html[data-theme="dark"] .ui-status-button.ui-status-green:hover {
+  border-color: var(--theme-success-border);
+  background: var(--shbz-green-soft);
+  color: var(--shbz-green-text);
+}
+.ui-status-button.ui-status-yellow:hover,
+html[data-theme="dark"] .ui-status-button.ui-status-yellow:hover {
+  border-color: var(--theme-warning-border);
+  background: var(--shbz-yellow-soft);
+  color: var(--shbz-yellow-text);
+}
+.ui-status-button.ui-status-red:hover,
+html[data-theme="dark"] .ui-status-button.ui-status-red:hover {
+  border-color: var(--shbz-danger-outline);
+  background: var(--shbz-red-soft);
+  color: var(--shbz-red-text);
+}
+
+html[data-theme="dark"] .app-dashboard-frame,
+html[data-theme="dark"] .app-dashboard-inner,
+html[data-theme="dark"] .app-topbar,
+html[data-theme="dark"] .app-topbar-profile {
+  background: transparent;
+  border-color: var(--shbz-header-border);
+  box-shadow: none;
+}

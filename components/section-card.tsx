@@ -9,30 +9,23 @@ type SectionCardProps = {
   className?: string;
 };
 
-export function SectionCard({
-  title,
-  description,
-  action,
-  children,
-  className
-}: SectionCardProps) {
+export function SectionCard({ title, description, action, children, className }: SectionCardProps) {
   return (
-    <section
-      className={cx(
-        "ui-section-card ui-fade-slide ui-surface rounded-[8px] border p-3.5 sm:rounded-[10px] sm:p-4 lg:rounded-[12px] lg:p-5",
-        className
-      )}
-    >
-      <div className="ui-section-card-header mb-3.5 flex flex-col gap-2.5 border-b pb-3.5 sm:mb-4 lg:flex-row lg:items-start lg:justify-between">
-        <div className={description ? "space-y-1" : undefined}>
-          <h2 className="ui-section-card-title font-display text-[1.15rem] font-semibold text-[var(--theme-text-strong)] sm:text-[1.3rem] lg:text-[1.45rem]">
+    <section className={className}>
+      <div className={cx("flex flex-wrap items-end justify-between gap-4", description ? "mb-3" : "mb-[18px]")}>
+        <div className="min-w-0">
+          <h2 className="shbz-section-title" style={{ marginBottom: 0 }}>
             {title}
           </h2>
-          {description ? <p className="ui-hint ui-copy-muted max-w-2xl text-sm leading-relaxed">{description}</p> : null}
+          {description ? (
+            <p className="ui-hint mt-1.5 max-w-2xl text-sm leading-relaxed" style={{ color: "var(--shbz-text-muted)" }}>
+              {description}
+            </p>
+          ) : null}
         </div>
         {action ? <div className="shrink-0">{action}</div> : null}
       </div>
-      {children}
+      <div className={cx("shbz-card shbz-section-pad", description ? "mt-[18px]" : undefined)}>{children}</div>
     </section>
   );
 }

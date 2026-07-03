@@ -22,12 +22,12 @@ type PageHeaderProps = {
   className?: string;
 };
 
-const metricToneClassNames: Record<PageHeaderMetricTone, string> = {
-  default: "ui-metric-pill",
-  accent: "ui-metric-pill ui-metric-pill-accent",
-  success: "ui-metric-pill ui-metric-pill-success",
-  warning: "ui-metric-pill ui-metric-pill-warning",
-  danger: "ui-metric-pill ui-metric-pill-danger"
+const metricToneColors: Record<PageHeaderMetricTone, string> = {
+  default: "var(--shbz-text-strong)",
+  accent: "var(--shbz-accent-solid)",
+  success: "var(--shbz-green-text)",
+  warning: "var(--shbz-yellow-text)",
+  danger: "var(--shbz-red-text)"
 };
 
 export function PageHeader({
@@ -42,45 +42,54 @@ export function PageHeader({
   className
 }: PageHeaderProps) {
   return (
-    <section className={cx("ui-page-header ui-surface rounded-[8px] border p-3.5 sm:rounded-[10px] sm:p-5 lg:rounded-[12px]", className)}>
-      <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
-        <div className="min-w-0 flex-1 space-y-3">
-          <div className="space-y-2">
-            {backHref && backLabel ? (
-              <Link href={backHref} className="inline-flex text-sm font-semibold text-brand-700 transition hover:text-brand-900">
-                {backLabel}
-              </Link>
-            ) : null}
+    <section className={cx("mb-9", className)}>
+      <div className="flex flex-col gap-6 xl:flex-row xl:items-start xl:justify-between">
+        <div className="min-w-0 flex-1">
+          {backHref && backLabel ? (
+            <Link
+              href={backHref}
+              className="mb-3 inline-block text-sm font-semibold transition-colors"
+              style={{ color: "var(--shbz-text-muted)" }}
+            >
+              {backLabel}
+            </Link>
+          ) : null}
 
-            {eyebrow ? <p className="ui-kicker">{eyebrow}</p> : null}
+          {eyebrow ? <p className="shbz-kicker">{eyebrow}</p> : null}
 
-            <div className="space-y-1.5">
-              <h1 className="font-display text-[1.5rem] font-semibold leading-tight text-[var(--theme-text-strong)] sm:text-[1.75rem] lg:text-[2rem]">
-                {title}
-              </h1>
-              {description ? (
-                <p className="ui-hint max-w-2xl text-sm leading-relaxed text-[var(--theme-text-muted)]">
-                  {description}
-                </p>
-              ) : null}
-            </div>
-          </div>
+          <h1
+            className="mt-2.5 flex items-baseline gap-3 text-[clamp(24px,4vw,34px)] font-extrabold leading-tight tracking-[-0.8px]"
+            style={{ color: "var(--shbz-text-strong)" }}
+          >
+            <span className="min-w-0">{title}</span>
+            <span className="shbz-dot h-2.5 w-2.5 shrink-0 self-center" />
+          </h1>
+
+          {description ? (
+            <p className="mt-2 max-w-2xl text-sm leading-relaxed" style={{ color: "var(--shbz-text-muted)" }}>
+              {description}
+            </p>
+          ) : null}
 
           {metrics?.length ? (
-            <div className="ui-page-header-metrics">
+            <div className="mt-4 flex flex-wrap gap-2.5">
               {metrics.map((metric) => (
-                <div key={metric.label} className={metricToneClassNames[metric.tone ?? "default"]}>
-                  <span className="ui-metric-pill-label">{metric.label}</span>
-                  <span className="ui-metric-pill-value">{metric.value}</span>
+                <div key={metric.label} className="ui-metric-pill flex items-baseline gap-2 px-3.5 py-2">
+                  <span className="text-xs font-semibold" style={{ color: "var(--shbz-kicker)" }}>
+                    {metric.label}
+                  </span>
+                  <span className="text-sm font-extrabold" style={{ color: metricToneColors[metric.tone ?? "default"] }}>
+                    {metric.value}
+                  </span>
                 </div>
               ))}
             </div>
           ) : null}
 
-          {actions ? <div className="flex flex-wrap gap-2.5">{actions}</div> : null}
+          {actions ? <div className="mt-5 flex flex-wrap gap-2.5">{actions}</div> : null}
         </div>
 
-        {aside ? <div className="ui-page-header-aside w-full xl:w-[300px] xl:flex-none">{aside}</div> : null}
+        {aside ? <div className="w-full xl:w-[300px] xl:flex-none">{aside}</div> : null}
       </div>
     </section>
   );

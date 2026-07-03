@@ -12,7 +12,7 @@ export function AuthLoadingState() {
   return (
     <main className="soft-grid relative overflow-hidden">
       <div className="pointer-events-none absolute inset-x-0 top-0 h-[380px] bg-[radial-gradient(circle_at_top,rgba(255,255,255,0.88),transparent_55%)]" />
-      <div className="pointer-events-none absolute left-1/2 top-24 h-72 w-72 -translate-x-1/2 rounded-full bg-brand-300/18 blur-3xl" />
+      <div className="pointer-events-none absolute left-1/2 top-24 h-72 w-72 -translate-x-1/2 rounded-full bg-[rgba(54,224,164,0.14)] blur-3xl" />
 
       <div className="content-shell mx-auto flex min-h-screen w-full max-w-7xl items-center justify-center px-4 py-8 sm:px-6 lg:px-8">
         <div className="ui-state-shell w-full max-w-md rounded-[12px] p-6 sm:rounded-[12px] sm:p-8">
