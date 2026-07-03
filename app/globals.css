@@ -2592,22 +2592,43 @@ html[data-theme="dark"] .app-topbar-profile {
   white-space: nowrap;
 }
 
-/* Неактивные кнопки — нейтральный серый вместо старых синих */
+/* Неактивные кнопки — родной цвет, но приглушённый */
 .ui-button-primary:disabled,
 html[data-theme="dark"] .ui-button-primary:disabled,
-.ui-button-secondary:disabled,
-html[data-theme="dark"] .ui-button-secondary:disabled,
-.ui-button-tonal:disabled,
-html[data-theme="dark"] .ui-button-tonal:disabled,
-.shbz-btn-primary:disabled,
-.shbz-btn-dark:disabled {
-  background: var(--shbz-progress-track);
+.shbz-btn-primary:disabled {
+  background: var(--shbz-accent-grad);
   border-color: transparent;
-  color: var(--shbz-text-soft);
+  color: #ffffff;
+  opacity: 0.45;
   box-shadow: none;
   filter: none;
   transform: none;
-  opacity: 1;
+  cursor: not-allowed;
+}
+
+.shbz-btn-dark:disabled {
+  background: var(--shbz-tab-active-bg);
+  color: var(--shbz-tab-active-text);
+  opacity: 0.45;
+  filter: none;
+  cursor: not-allowed;
+}
+
+.ui-button-secondary:disabled,
+html[data-theme="dark"] .ui-button-secondary:disabled {
+  background: var(--shbz-card-bg);
+  border-color: var(--shbz-outline-border);
+  color: var(--shbz-tab-text);
+  opacity: 0.45;
+  box-shadow: none;
+  cursor: not-allowed;
+}
+
+.ui-button-tonal:disabled,
+html[data-theme="dark"] .ui-button-tonal:disabled {
+  background: var(--theme-accent-soft);
+  color: var(--shbz-green-text);
+  opacity: 0.45;
   cursor: not-allowed;
 }
 
@@ -2615,9 +2636,17 @@ html[data-theme="dark"] .ui-button-tonal:disabled,
 html[data-theme="dark"] .ui-button-danger:disabled,
 .shbz-btn-danger:disabled {
   background: var(--shbz-card-bg);
-  border-color: var(--shbz-soft-border);
-  color: var(--shbz-text-soft);
+  border-color: var(--shbz-danger-outline);
+  color: var(--shbz-danger-solid);
+  opacity: 0.45;
   box-shadow: none;
-  opacity: 1;
+  cursor: not-allowed;
+}
+
+.shbz-btn-danger-solid:disabled {
+  background: var(--shbz-danger-solid);
+  color: #ffffff;
+  opacity: 0.45;
+  filter: none;
   cursor: not-allowed;
 }
