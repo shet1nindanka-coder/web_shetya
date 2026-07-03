@@ -181,11 +181,15 @@ async function getStudentTopicsOverviewUncached(studentId: string) {
   };
 }
 
+const getStudentTopicsOverviewCached = unstable_cache(getStudentTopicsOverviewUncached, ["student-topics-overview"], {
+  tags: [PLATFORM_DATA_TAGS.studentTopics, PLATFORM_DATA_TAGS.teacherTopics]
+});
+
 export async function getStudentTopicsOverview(
   studentId: string
 ): Promise<Awaited<ReturnType<typeof getStudentTopicsOverviewUncached>>> {
   try {
-    return await getStudentTopicsOverviewUncached(studentId);
+    return await getStudentTopicsOverviewCached(studentId);
   } catch (error) {
     if (!isRecoverablePlatformDataError(error)) {
       throw error;
@@ -370,12 +374,16 @@ async function getStudentTopicDetailUncached(studentId: string, topicId: string)
   };
 }
 
+const getStudentTopicDetailCached = unstable_cache(getStudentTopicDetailUncached, ["student-topic-detail"], {
+  tags: [PLATFORM_DATA_TAGS.studentTopics, PLATFORM_DATA_TAGS.teacherTopics]
+});
+
 export async function getStudentTopicDetail(
   studentId: string,
   topicId: string
 ): Promise<Awaited<ReturnType<typeof getStudentTopicDetailUncached>>> {
   try {
-    return await getStudentTopicDetailUncached(studentId, topicId);
+    return await getStudentTopicDetailCached(studentId, topicId);
   } catch (error) {
     if (!isRecoverablePlatformDataError(error)) {
       throw error;
@@ -786,10 +794,14 @@ async function getTeacherStudentDetailUncached(studentId: string) {
   };
 }
 
+const getTeacherStudentDetailCached = unstable_cache(getTeacherStudentDetailUncached, ["teacher-student-detail"], {
+  tags: [PLATFORM_DATA_TAGS.studentTopics, PLATFORM_DATA_TAGS.teacherTopics, PLATFORM_DATA_TAGS.teacherStudents]
+});
+
 export async function getTeacherStudentDetail(
   studentId: string
 ): Promise<Awaited<ReturnType<typeof getTeacherStudentDetailUncached>>> {
-  return getTeacherStudentDetailUncached(studentId);
+  return getTeacherStudentDetailCached(studentId);
 }
 
 
@@ -832,9 +844,13 @@ async function getStudentDeadlinesUncached(studentId: string) {
   }));
 }
 
+const getStudentDeadlinesCached = unstable_cache(getStudentDeadlinesUncached, ["student-deadlines"], {
+  tags: [PLATFORM_DATA_TAGS.studentTopics, PLATFORM_DATA_TAGS.teacherTopics, PLATFORM_DATA_TAGS.teacherStudents]
+});
+
 export async function getStudentDeadlines(studentId: string) {
   try {
-    return await getStudentDeadlinesUncached(studentId);
+    return await getStudentDeadlinesCached(studentId);
   } catch (error) {
     if (!isRecoverablePlatformDataError(error)) {
       throw error;
@@ -853,7 +869,7 @@ export async function getStudentDeadlines(studentId: string) {
 
 export type StudentDeadline = Awaited<ReturnType<typeof getStudentDeadlines>>[number];
 
-export async function getProgressTimeline(studentId?: string, days = 112): Promise<TimelineEntry[]> {
+async function getProgressTimelineUncached(studentId: string | null, days: number): Promise<TimelineEntry[]> {
   const normalizedDays = Math.max(1, Math.min(112, Math.floor(days)));
   const today = startOfTimelineDay(new Date());
   const timelineStart = addTimelineDays(today, -(normalizedDays - 1));
@@ -925,6 +941,15 @@ export async function getProgressTimeline(studentId?: string, days = 112): Promi
       };
     });
   }
+}
+
+const getProgressTimelineCached = unstable_cache(getProgressTimelineUncached, ["progress-timeline"], {
+  tags: [PLATFORM_DATA_TAGS.studentTopics, PLATFORM_DATA_TAGS.teacherTopics, PLATFORM_DATA_TAGS.teacherStudents],
+  revalidate: 300
+});
+
+export async function getProgressTimeline(studentId?: string, days = 112): Promise<TimelineEntry[]> {
+  return getProgressTimelineCached(studentId ?? null, days);
 }
 
 export async function getDashboardSummary(userId: string, role: UserRole) {

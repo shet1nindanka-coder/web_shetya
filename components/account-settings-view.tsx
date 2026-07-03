@@ -2,6 +2,7 @@ import { UserRole } from "@prisma/client";
 import { updatePasswordAction, updateProfileInfoAction } from "@/actions/profile";
 import { InterfaceSettingsPanel } from "@/components/interface-settings-panel";
 import { ShbzNumberSearch } from "@/components/shbz-number-search";
+import { ShbzPageHeader } from "@/components/shbz-page-header";
 import { formatDate } from "@/lib/utils";
 
 type ResolvedSearchParams = Record<string, string | string[] | undefined>;
@@ -94,13 +95,11 @@ export function AccountSettingsView({ user, notice }: AccountSettingsViewProps) 
 
   return (
     <div>
-      <div className="mb-10 flex flex-wrap items-end justify-between gap-6">
-        <h1 className="shbz-h1" style={{ margin: 0 }}>
-          Настройки
-          <span className="shbz-dot h-3 w-3 shrink-0 self-center" />
-        </h1>
-        <ShbzNumberSearch endpoint={searchEndpoint} />
-      </div>
+      <ShbzPageHeader
+        kicker="Профиль и интерфейс"
+        title="Настройки"
+        aside={<ShbzNumberSearch endpoint={searchEndpoint} />}
+      />
 
       {notice ? (
         <div
