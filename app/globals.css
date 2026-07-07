@@ -2706,3 +2706,8 @@ html[data-theme="dark"] .ui-button-danger:disabled,
     animation: none;
   }
 }
+
+/* На телефонах таббар-пилюля скрыта — навигация через мобильное меню */
+@media (max-width: 767px) {
+  .shbz-tabbar { display: none; }
+}
