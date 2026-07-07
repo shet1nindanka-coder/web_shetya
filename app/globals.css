@@ -2711,3 +2711,9 @@ html[data-theme="dark"] .ui-button-danger:disabled,
 @media (max-width: 767px) {
   .shbz-tabbar { display: none; }
 }
+
+/* Поиск номера: внутренний input всегда прозрачный (старое тёмное правило красило его в свой цвет) */
+html[data-theme="dark"] .shbz-search input {
+  background: transparent !important;
+  border-color: transparent !important;
+}
