@@ -19,6 +19,7 @@ function revalidateTopicRoutes(topicId: string) {
   revalidatePath("/teacher/topics");
   revalidatePath(`/student/topics/${topicId}`);
   revalidatePath(`/teacher/topics/${topicId}`);
+  revalidatePath(`/teacher/topics/${topicId}/edit`);
 }
 
 export async function POST(request: Request) {

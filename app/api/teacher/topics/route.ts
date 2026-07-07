@@ -24,6 +24,7 @@ function revalidateTopicRoutes(topicId?: string) {
   if (topicId) {
     revalidatePath(`/student/topics/${topicId}`);
     revalidatePath(`/teacher/topics/${topicId}`);
+  revalidatePath(`/teacher/topics/${topicId}/edit`);
   }
 }
 

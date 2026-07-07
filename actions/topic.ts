@@ -41,7 +41,7 @@ function redirectTeacherTopicsWithStatus(params: URLSearchParams) {
 
 function redirectTeacherTopicWithStatus(topicId: string, params: URLSearchParams) {
   const query = params.toString();
-  redirect(query ? `/teacher/topics/${topicId}?${query}` : `/teacher/topics/${topicId}`);
+  redirect(query ? `/teacher/topics/${topicId}/edit?${query}` : `/teacher/topics/${topicId}/edit`);
 }
 
 function getTopicFileKind(value: FormDataEntryValue | null) {

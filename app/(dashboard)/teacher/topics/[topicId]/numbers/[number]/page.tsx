@@ -33,7 +33,7 @@ export default async function TeacherNumberPage({ params }: TeacherNumberPagePro
   return (
     <div className="space-y-5 sm:space-y-6">
       <PageHeader
-        backHref={`/teacher/topics/${topicId}#topic-answers`}
+        backHref={`/teacher/topics/${topicId}/edit#topic-answers`}
         backLabel="← К теме"
         eyebrow={data.topic.title}
         title={`Номер ${data.number.number}`}
