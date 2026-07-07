@@ -41,9 +41,6 @@ type TopicState = TeacherStudentProgressBoardProps["initialTopics"][number];
 
 type TeacherStudentNumberState = TopicState["numbers"][number] & {
   selectedForBulk: boolean;
-  deadlineInputValue: string;
-  savedDeadlineAt: string | null;
-  isSavingDeadline: boolean;
 };
 
 type TeacherStudentTopicState = Omit<TopicState, "numbers"> & {
@@ -51,23 +48,6 @@ type TeacherStudentTopicState = Omit<TopicState, "numbers"> & {
   isSavingBulk: boolean;
   numbers: TeacherStudentNumberState[];
 };
-
-function formatDeadlineForInput(value: string | null) {
-  if (!value) {
-    return "";
-  }
-
-  const date = new Date(value);
-
-  if (Number.isNaN(date.getTime())) {
-    return "";
-  }
-
-  const offset = date.getTimezoneOffset();
-  const localDate = new Date(date.getTime() - offset * 60 * 1000);
-
-  return localDate.toISOString().slice(0, 16);
-}
 
 function formatDeadlineLabel(value: string | null) {
   if (!value) {
@@ -135,21 +115,15 @@ function buildHomeworkGroups(
 type TeacherNumberCardProps = {
   topicId: string;
   number: TeacherStudentNumberState;
-  deadlinesEnabled: boolean;
   homeworkLabel: string | null;
   onToggleBulkSelection: (topicId: string, homeworkNumberId: string) => void;
-  onUpdateDeadlineValue: (topicId: string, homeworkNumberId: string, value: string) => void;
-  onFlushDeadline: (topicId: string, homeworkNumberId: string) => void;
 };
 
 const TeacherNumberCard = memo(function TeacherNumberCard({
   topicId,
   number,
-  deadlinesEnabled,
   homeworkLabel,
-  onToggleBulkSelection,
-  onUpdateDeadlineValue,
-  onFlushDeadline
+  onToggleBulkSelection
 }: TeacherNumberCardProps) {
   const deadlineLabel = formatDeadlineLabel(number.studentStatus?.deadlineAt ?? null);
 
@@ -176,28 +150,13 @@ const TeacherNumberCard = memo(function TeacherNumberCard({
           <p className="text-sm leading-6 text-[var(--theme-text-default)]">{number.studentStatus.note}</p>
         </div>
       ) : null}
-      <div className="teacher-deadline-panel mt-3 rounded-[12px] border px-3 py-3">
-        <div className="flex items-center justify-between gap-3">
-          <p className="ui-copy-muted text-sm font-medium">Дедлайн</p>
-          {number.isSavingDeadline ? <span className="ui-copy-soft text-xs">Сохраняем...</span> : null}
-        </div>
-        <ShbzDateTimePicker
-          value={number.deadlineInputValue}
-          disabled={!deadlinesEnabled}
-          onChange={(nextValue) => onUpdateDeadlineValue(topicId, number.id, nextValue)}
-          onCommit={() => onFlushDeadline(topicId, number.id)}
-          placeholder="Выбрать дедлайн"
-          className="mt-2"
-        />
-        <p className="ui-copy-muted mt-2 text-xs leading-5">
-          {deadlineLabel ? `Назначен до ${deadlineLabel}` : "Дедлайн пока не назначен."}
-        </p>
-      </div>
+      {deadlineLabel ? (
+        <p className="ui-copy-muted mt-3 text-xs leading-5">Дедлайн: до {deadlineLabel}</p>
+      ) : null}
     </div>
   );
 }, (previousProps, nextProps) =>
   previousProps.topicId === nextProps.topicId &&
-  previousProps.deadlinesEnabled === nextProps.deadlinesEnabled &&
   previousProps.homeworkLabel === nextProps.homeworkLabel &&
   previousProps.number === nextProps.number
 );
@@ -209,8 +168,6 @@ type TeacherTopicCardProps = {
   onClearBulkSelection: (topicId: string) => void;
   onToggleBulkSelection: (topicId: string, homeworkNumberId: string) => void;
   onUpdateBulkDeadlineValue: (topicId: string, value: string) => void;
-  onUpdateDeadlineValue: (topicId: string, homeworkNumberId: string, value: string) => void;
-  onFlushDeadline: (topicId: string, homeworkNumberId: string) => void;
 };
 
 const TeacherTopicCard = memo(function TeacherTopicCard({
@@ -219,9 +176,7 @@ const TeacherTopicCard = memo(function TeacherTopicCard({
   onApplyBulkDeadline,
   onClearBulkSelection,
   onToggleBulkSelection,
-  onUpdateBulkDeadlineValue,
-  onUpdateDeadlineValue,
-  onFlushDeadline
+  onUpdateBulkDeadlineValue
 }: TeacherTopicCardProps) {
   const isCompleted = topic.totalNumbers > 0 && topic.solvedCount === topic.totalNumbers;
   const selectedCount = topic.numbers.filter((number) => number.selectedForBulk).length;
@@ -238,11 +193,8 @@ const TeacherTopicCard = memo(function TeacherTopicCard({
           key={number.id}
           topicId={topic.id}
           number={number}
-          deadlinesEnabled={deadlinesEnabled}
           homeworkLabel={number.studentStatus?.deadlineAt ? (homeworkLabelByDeadline.get(number.studentStatus.deadlineAt) ?? "ДЗ") : null}
           onToggleBulkSelection={onToggleBulkSelection}
-          onUpdateDeadlineValue={onUpdateDeadlineValue}
-          onFlushDeadline={onFlushDeadline}
         />
       ))}
     </div>
@@ -375,10 +327,7 @@ export function TeacherStudentProgressBoard({
         isSavingBulk: false,
         numbers: topic.numbers.map((number) => ({
           ...number,
-          selectedForBulk: false,
-          deadlineInputValue: formatDeadlineForInput(number.studentStatus?.deadlineAt ?? null),
-          savedDeadlineAt: number.studentStatus?.deadlineAt ?? null,
-          isSavingDeadline: false
+          selectedForBulk: false
         }))
       })),
     [initialTopics]
@@ -392,7 +341,6 @@ export function TeacherStudentProgressBoard({
   const [orderingTopicId, setOrderingTopicId] = useState<string | null>(null);
   const requestVersionRef = useRef<Record<string, number>>({});
   const controllersRef = useRef<Record<string, AbortController | undefined>>({});
-  const timersRef = useRef<Record<string, ReturnType<typeof setTimeout> | undefined>>({});
   const comboboxRef = useRef<HTMLDivElement>(null);
   const topicListboxId = useId();
   const deferredTopicQuery = useDeferredValue(topicQuery);
@@ -421,17 +369,10 @@ export function TeacherStudentProgressBoard({
 
   useEffect(() => {
     const controllers = controllersRef.current;
-    const timers = timersRef.current;
 
     return () => {
       for (const controller of Object.values(controllers)) {
         controller?.abort();
-      }
-
-      for (const timeoutId of Object.values(timers)) {
-        if (timeoutId) {
-          clearTimeout(timeoutId);
-        }
       }
     };
   }, []);
@@ -455,212 +396,6 @@ export function TeacherStudentProgressBoard({
     };
   }, [comboboxOpen]);
 
-
-  const saveDeadline = useCallback(
-    async (topicId: string, homeworkNumberId: string, nextDraft?: string) => {
-      if (!deadlinesEnabled) {
-        return;
-      }
-
-      const currentTopic = topicsRef.current.find((topic) => topic.id === topicId);
-      const currentNumber = currentTopic?.numbers.find((number) => number.id === homeworkNumberId);
-
-      if (!currentTopic || !currentNumber) {
-        return;
-      }
-
-      const draftValue = nextDraft ?? currentNumber.deadlineInputValue;
-      const nextDeadlineAt = inputToIso(draftValue);
-      const savedDeadlineAt = currentNumber.savedDeadlineAt;
-
-      if (nextDeadlineAt === savedDeadlineAt) {
-        if (currentNumber.deadlineInputValue !== formatDeadlineForInput(savedDeadlineAt)) {
-          updateTopicsState((current) =>
-            current.map((topic) =>
-              topic.id === topicId
-                ? {
-                    ...topic,
-                    numbers: topic.numbers.map((number) =>
-                      number.id === homeworkNumberId
-                        ? {
-                            ...number,
-                            deadlineInputValue: formatDeadlineForInput(savedDeadlineAt)
-                          }
-                        : number
-                    )
-                  }
-                : topic
-            )
-          );
-        }
-
-        return;
-      }
-
-      setSaveError(null);
-
-      const versionKey = `${topicId}:${homeworkNumberId}`;
-      const nextVersion = (requestVersionRef.current[versionKey] ?? 0) + 1;
-      requestVersionRef.current[versionKey] = nextVersion;
-
-      controllersRef.current[versionKey]?.abort();
-
-      const controller = new AbortController();
-      controllersRef.current[versionKey] = controller;
-
-      updateTopicsState((current) =>
-        current.map((topic) =>
-          topic.id === topicId
-            ? {
-                ...topic,
-                numbers: topic.numbers.map((number) =>
-                  number.id === homeworkNumberId
-                    ? {
-                        ...number,
-                        isSavingDeadline: true
-                      }
-                    : number
-                )
-              }
-            : topic
-        )
-      );
-
-      try {
-        const response = await fetch("/api/teacher/student-deadlines", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify({
-            studentId,
-            topicId,
-            homeworkNumberId,
-            deadlineAt: nextDeadlineAt
-          }),
-          signal: controller.signal
-        });
-
-        const result = (await response.json().catch(() => null)) as
-          | { error?: string; deadlineAt?: string | null; deadlinesEnabled?: boolean }
-          | null;
-
-        if (requestVersionRef.current[versionKey] !== nextVersion) {
-          return;
-        }
-
-        if (!response.ok) {
-          throw new Error(result?.error || "Не удалось сохранить дедлайн.");
-        }
-
-        const savedValue = typeof result?.deadlineAt === "string" ? result.deadlineAt : null;
-
-        updateTopicsState((current) =>
-          current.map((topic) =>
-            topic.id === topicId
-              ? {
-                  ...topic,
-                  numbers: topic.numbers.map((number) =>
-                    number.id === homeworkNumberId
-                      ? {
-                          ...number,
-                          savedDeadlineAt: savedValue,
-                          deadlineInputValue: formatDeadlineForInput(savedValue),
-                          isSavingDeadline: false,
-                          studentStatus: {
-                            status: number.studentStatus?.status ?? null,
-                            note: number.studentStatus?.note ?? "",
-                            deadlineAt: savedValue
-                          }
-                        }
-                      : number
-                  )
-                }
-              : topic
-          )
-        );
-      } catch (error) {
-        if (controller.signal.aborted || requestVersionRef.current[versionKey] !== nextVersion) {
-          return;
-        }
-
-        updateTopicsState((current) =>
-          current.map((topic) =>
-            topic.id === topicId
-              ? {
-                  ...topic,
-                  numbers: topic.numbers.map((number) =>
-                    number.id === homeworkNumberId
-                      ? {
-                          ...number,
-                          deadlineInputValue: formatDeadlineForInput(number.savedDeadlineAt),
-                          isSavingDeadline: false
-                        }
-                      : number
-                  )
-                }
-              : topic
-          )
-        );
-
-        setSaveError(error instanceof Error ? error.message : "Не удалось сохранить дедлайн.");
-      } finally {
-        if (requestVersionRef.current[versionKey] === nextVersion) {
-          delete controllersRef.current[versionKey];
-        }
-      }
-    },
-    [deadlinesEnabled, studentId, updateTopicsState]
-  );
-
-  const updateDeadlineValue = useCallback(
-    (topicId: string, homeworkNumberId: string, value: string) => {
-      updateTopicsState((current) =>
-        current.map((topic) =>
-          topic.id === topicId
-            ? {
-                ...topic,
-                numbers: topic.numbers.map((number) =>
-                  number.id === homeworkNumberId
-                    ? {
-                        ...number,
-                        deadlineInputValue: value
-                      }
-                    : number
-                )
-              }
-            : topic
-        )
-      );
-
-      const key = `${topicId}:${homeworkNumberId}`;
-      const existingTimer = timersRef.current[key];
-
-      if (existingTimer) {
-        clearTimeout(existingTimer);
-      }
-
-      timersRef.current[key] = setTimeout(() => {
-        void saveDeadline(topicId, homeworkNumberId, value);
-      }, 700);
-    },
-    [saveDeadline, updateTopicsState]
-  );
-
-  const flushDeadline = useCallback(
-    (topicId: string, homeworkNumberId: string) => {
-      const key = `${topicId}:${homeworkNumberId}`;
-      const existingTimer = timersRef.current[key];
-
-      if (existingTimer) {
-        clearTimeout(existingTimer);
-        delete timersRef.current[key];
-      }
-
-      void saveDeadline(topicId, homeworkNumberId);
-    },
-    [saveDeadline]
-  );
 
   const toggleBulkSelection = useCallback(
     (topicId: string, homeworkNumberId: string) => {
@@ -741,16 +476,6 @@ export function TeacherStudentProgressBoard({
 
       setSaveError(null);
 
-      for (const number of selectedNumbers) {
-        const timerKey = `${topicId}:${number.id}`;
-        const existingTimer = timersRef.current[timerKey];
-
-        if (existingTimer) {
-          clearTimeout(existingTimer);
-          delete timersRef.current[timerKey];
-        }
-      }
-
       const versionKey = `bulk:${topicId}`;
       const nextVersion = (requestVersionRef.current[versionKey] ?? 0) + 1;
       requestVersionRef.current[versionKey] = nextVersion;
@@ -766,15 +491,7 @@ export function TeacherStudentProgressBoard({
           topic.id === topicId
             ? {
                 ...topic,
-                isSavingBulk: true,
-                numbers: topic.numbers.map((number) =>
-                  number.selectedForBulk
-                    ? {
-                        ...number,
-                        isSavingDeadline: true
-                      }
-                    : number
-                )
+                isSavingBulk: true
               }
             : topic
         )
@@ -821,9 +538,6 @@ export function TeacherStudentProgressBoard({
                       ? {
                           ...number,
                           selectedForBulk: false,
-                          savedDeadlineAt: savedValue,
-                          deadlineInputValue: formatDeadlineForInput(savedValue),
-                          isSavingDeadline: false,
                           studentStatus: {
                             status: number.studentStatus?.status ?? null,
                             note: number.studentStatus?.note ?? "",
@@ -846,16 +560,7 @@ export function TeacherStudentProgressBoard({
             topic.id === topicId
               ? {
                   ...topic,
-                  isSavingBulk: false,
-                  numbers: topic.numbers.map((number) =>
-                    number.selectedForBulk
-                      ? {
-                          ...number,
-                          isSavingDeadline: false,
-                          deadlineInputValue: formatDeadlineForInput(number.savedDeadlineAt)
-                        }
-                      : number
-                  )
+                  isSavingBulk: false
                 }
               : topic
           )
@@ -1128,8 +833,6 @@ export function TeacherStudentProgressBoard({
           onClearBulkSelection={clearBulkSelection}
           onToggleBulkSelection={toggleBulkSelection}
           onUpdateBulkDeadlineValue={updateBulkDeadlineValue}
-          onUpdateDeadlineValue={updateDeadlineValue}
-          onFlushDeadline={flushDeadline}
         />
       ) : null}
     </div>
