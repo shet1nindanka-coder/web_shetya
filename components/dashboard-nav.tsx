@@ -121,7 +121,6 @@ export function DashboardNav({ user, studentStreak }: DashboardNavProps) {
 
         {/* Профиль */}
         <div className="hidden shrink-0 items-center gap-3.5 md:flex">
-          {isStudent ? <StudentNotificationsBell /> : null}
           <div className="shbz-avatar">{initialsOf(user.name)}</div>
           <div className="leading-[1.3]">
             <div className="text-sm font-bold" style={{ color: "var(--shbz-text-strong)" }}>
@@ -137,6 +136,7 @@ export function DashboardNav({ user, studentStreak }: DashboardNavProps) {
               ) : null}
             </div>
           </div>
+          {isStudent ? <StudentNotificationsBell /> : null}
           <form action={logoutAction}>
             <button type="submit" className="shbz-btn-outline">
               Выйти
