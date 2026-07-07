@@ -18,7 +18,7 @@ progress for different students. Never attach a `Topic` to a single student.
 
 - Next.js 15 (App Router + Server Actions) · React 19 · TypeScript (strict) · Node 20
 - Tailwind CSS 3 · PostgreSQL · Prisma 5
-- Custom cookie-session auth (no NextAuth) · pino structured logging · ExcelJS (exports) · KaTeX (math)
+- Custom cookie-session auth (no NextAuth) · pino structured logging · @react-pdf/renderer (PDF-отчёты) · KaTeX (math)
 
 Path alias: `@/*` → repo root (e.g. `import { requireUser } from "@/lib/auth"`).
 
@@ -64,7 +64,7 @@ Postgres service.
   - **API route handlers** (`app/api/**/route.ts`) for interactive client `fetch`/JSON:
     student status+note, teacher deadlines, LaTeX conditions, LaTeX answers, topic reorder,
     streak, number search, and pre-uploads. `app/files/[fileId]/route.ts` serves files;
-    `app/(dashboard)/teacher/students/[studentId]/export/route.ts` builds the Excel export.
+    `app/(dashboard)/teacher/students/[studentId]/export/pdf/route.ts` builds the weekly PDF report.
 - **Cache invalidation** — after every mutation call the helpers in `lib/platform-data-cache.ts`
   (`revalidateAllPlatformData`, `revalidateTeacherTopicsData`, `revalidateTeacherStudentsData`,
   `revalidateStudentTopicsData`) plus `revalidatePath(...)` for the affected routes.

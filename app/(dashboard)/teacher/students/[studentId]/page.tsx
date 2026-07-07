@@ -40,12 +40,6 @@ export default async function TeacherStudentPage({ params }: TeacherStudentPageP
         actions={
           <>
             <a
-              href={`/teacher/students/${data.student.id}/export`}
-              className="ui-pressable ui-button-secondary inline-flex justify-center rounded-[8px] px-4 py-2.5 text-sm font-semibold transition"
-            >
-              Экспорт прогресса Excel
-            </a>
-            <a
               href={`/teacher/students/${data.student.id}/export/pdf`}
               className="ui-pressable ui-button-secondary inline-flex justify-center rounded-[8px] px-4 py-2.5 text-sm font-semibold transition"
             >
