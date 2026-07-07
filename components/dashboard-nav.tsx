@@ -111,7 +111,7 @@ export function DashboardNav({ user, studentStreak }: DashboardNavProps) {
 
         {/* Таббар */}
         {items.length > 0 ? (
-          <nav className="shbz-tabbar order-3 hidden w-auto md:inline-flex lg:order-none" aria-label="Разделы">
+          <nav className="shbz-tabbar order-3 mx-auto hidden w-auto md:inline-flex xl:order-none xl:mx-0" aria-label="Разделы">
             {items.map((item) => (
               <Link key={item.href} href={item.href} prefetch data-active={item.match(pathname)} className="shbz-tab">
                 {item.label}
