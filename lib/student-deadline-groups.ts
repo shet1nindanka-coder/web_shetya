@@ -14,8 +14,12 @@ export type StudentDeadlineAssignment = {
   status: StudentDeadlineAssignmentStatus;
 };
 
+type StudentDeadlineInput = Omit<StudentDeadline, "deadlineAt"> & {
+  deadlineAt: Date | string;
+};
+
 export function groupStudentDeadlinesAsAssignments(
-  deadlines: StudentDeadline[]
+  deadlines: StudentDeadlineInput[]
 ): StudentDeadlineAssignment[] {
   const grouped = new Map<
     string,

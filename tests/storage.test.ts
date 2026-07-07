@@ -25,7 +25,7 @@ function withEnv(values: Partial<Record<(typeof ENV_KEYS)[number], string | unde
     if (typeof nextValue === "undefined") {
       delete process.env[key];
     } else {
-      process.env[key] = nextValue;
+      (process.env as Record<string, string | undefined>)[key] = nextValue;
     }
   }
 
@@ -38,7 +38,7 @@ function withEnv(values: Partial<Record<(typeof ENV_KEYS)[number], string | unde
       if (typeof previousValue === "undefined") {
         delete process.env[key];
       } else {
-        process.env[key] = previousValue;
+        (process.env as Record<string, string | undefined>)[key] = previousValue;
       }
     }
   }
