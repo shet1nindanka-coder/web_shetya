@@ -45,6 +45,12 @@ export default async function TeacherStudentPage({ params }: TeacherStudentPageP
             >
               Экспорт прогресса Excel
             </a>
+            <a
+              href={`/teacher/students/${data.student.id}/export?period=week`}
+              className="ui-pressable ui-button-secondary inline-flex justify-center rounded-[8px] px-4 py-2.5 text-sm font-semibold transition"
+            >
+              Что сделано за 7 дней
+            </a>
             <DeleteStudentDialog
               studentId={data.student.id}
               studentName={data.student.name}

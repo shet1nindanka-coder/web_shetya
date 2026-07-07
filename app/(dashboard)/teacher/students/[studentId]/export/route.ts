@@ -4,6 +4,7 @@ import { NextResponse } from "next/server";
 import { tryGetCurrentUser } from "@/lib/auth";
 import { getRequestLogContext, logErrorEvent, logInfoEvent, logWarnEvent } from "@/lib/logger";
 import { prisma } from "@/lib/prisma";
+import { getProgressTimeline } from "@/lib/platform-data";
 import { computeStudentStreak } from "@/lib/student-streak";
 import { formatDateTime } from "@/lib/utils";
 
@@ -617,6 +618,192 @@ export async function GET(
 
     const exportDate = new Date();
     const exportDateLabel = formatDateTime(exportDate);
+    const period = new URL(request.url).searchParams.get("period");
+
+    if (period === "week") {
+      const since = new Date(exportDate.getTime() - 7 * 24 * 60 * 60 * 1000);
+
+      type WeeklyRow = {
+        topicTitle: string;
+        number: number;
+        statusKey: string;
+        statusLabel: string;
+        note: string;
+        updatedAt: Date;
+      };
+
+      const weeklyRows: WeeklyRow[] = [];
+
+      for (const topic of data.topics) {
+        for (const numberEntry of topic.homeworkNumbers) {
+          const statusEntry = numberEntry.statuses[0] ?? null;
+
+          if (!statusEntry?.status || !statusEntry.updatedAt || statusEntry.updatedAt < since) {
+            continue;
+          }
+
+          weeklyRows.push({
+            topicTitle: topic.title,
+            number: numberEntry.number,
+            statusKey: statusEntry.status,
+            statusLabel: statusLabels[statusEntry.status] ?? "Пока без отметки",
+            note: data.notesEnabled ? ((statusEntry as { note?: string | null })?.note ?? "") : "",
+            updatedAt: statusEntry.updatedAt
+          });
+        }
+      }
+
+      weeklyRows.sort((left, right) => right.updatedAt.getTime() - left.updatedAt.getTime());
+
+      const [timeline, streak] = await Promise.all([
+        getProgressTimeline(studentId, 7),
+        computeStudentStreak(studentId).catch(() => null)
+      ]);
+
+      const greenCount = weeklyRows.filter((row) => row.statusKey === "GREEN").length;
+      const yellowCount = weeklyRows.filter((row) => row.statusKey === "YELLOW").length;
+      const redCount = weeklyRows.filter((row) => row.statusKey === "RED").length;
+      const activeDays = timeline.filter((entry) => entry.closedCount > 0 || entry.redCount > 0).length;
+      const periodLabel = `${formatDateTime(since).split(",")[0]} — ${formatDateTime(exportDate).split(",")[0]}`;
+
+      const workbook = new ExcelJS.Workbook();
+      workbook.creator = "TutorFlow";
+      workbook.created = exportDate;
+      workbook.modified = exportDate;
+
+      const weekSheet = workbook.addWorksheet("Неделя");
+      weekSheet.views = [{ showGridLines: false }];
+      weekSheet.pageSetup = { orientation: "portrait", fitToPage: true, fitToWidth: 1, fitToHeight: 0 };
+      weekSheet.columns = [{ width: 30 }, { width: 16 }, { width: 14 }, { width: 14 }];
+
+      setTitleRow(weekSheet, 1, "Активность за 7 дней", 4);
+
+      setSectionLabel(weekSheet, 3, "Ученик");
+      const infoRows: Array<[string, string]> = [
+        ["Имя", data.student.name],
+        ["Логин", data.student.email],
+        ["Период", periodLabel]
+      ];
+
+      infoRows.forEach(([label, value], index) => {
+        const rowNumber = 4 + index;
+        weekSheet.getCell(rowNumber, 1).value = label;
+        weekSheet.getCell(rowNumber, 2).value = value;
+        weekSheet.getCell(rowNumber, 1).font = { name: "Calibri", size: 11, bold: true, color: { argb: colors.muted } };
+        applyBaseCellStyle(weekSheet.getCell(rowNumber, 1));
+        applyBaseCellStyle(weekSheet.getCell(rowNumber, 2));
+      });
+
+      setSectionLabel(weekSheet, 8, "Итоги недели");
+      const summaryRows: Array<[string, number | string]> = [
+        ["Закрыто номеров", greenCount + yellowCount],
+        ["Из них с первого раза", greenCount],
+        ["После самопроверки", yellowCount],
+        ["Отмечено «нужен разбор»", redCount],
+        ["Дней с активностью", `${activeDays} из 7`],
+        ["Огонёк сейчас", `${streak?.currentStreak ?? 0} дн.`]
+      ];
+
+      summaryRows.forEach(([label, value], index) => {
+        const rowNumber = 9 + index;
+        weekSheet.getCell(rowNumber, 1).value = label;
+        weekSheet.getCell(rowNumber, 2).value = value;
+        applyBaseCellStyle(weekSheet.getCell(rowNumber, 1));
+        applyBaseCellStyle(weekSheet.getCell(rowNumber, 2));
+        weekSheet.getCell(rowNumber, 2).font = { name: "Calibri", size: 12, bold: true, color: { argb: colors.navy } };
+      });
+
+      setSectionLabel(weekSheet, 16, "По дням");
+      const daysHeader = weekSheet.getRow(17);
+      daysHeader.values = ["Дата", "День", "Закрыто", "Красных"];
+      setTableHeader(daysHeader);
+
+      timeline.forEach((entry, index) => {
+        const rowNumber = 18 + index;
+        const row = weekSheet.getRow(rowNumber);
+        const entryDate = new Date(`${entry.date}T12:00:00`);
+        row.values = [
+          new Intl.DateTimeFormat("ru-RU", { day: "2-digit", month: "2-digit" }).format(entryDate),
+          new Intl.DateTimeFormat("ru-RU", { weekday: "short" }).format(entryDate),
+          entry.closedCount,
+          entry.redCount
+        ];
+        setDataRow(row, index % 2 === 1);
+        weekSheet.getCell(rowNumber, 3).font = {
+          name: "Calibri",
+          size: 11,
+          bold: entry.closedCount > 0,
+          color: { argb: entry.closedCount > 0 ? colors.green : colors.muted }
+        };
+        weekSheet.getCell(rowNumber, 4).font = {
+          name: "Calibri",
+          size: 11,
+          bold: entry.redCount > 0,
+          color: { argb: entry.redCount > 0 ? colors.red : colors.muted }
+        };
+      });
+
+      const doneSheet = workbook.addWorksheet("Что сделано");
+      doneSheet.views = [{ state: "frozen", ySplit: 2 }];
+      doneSheet.autoFilter = "A2:E2";
+      doneSheet.pageSetup = { orientation: "landscape", fitToPage: true, fitToWidth: 1, fitToHeight: 0 };
+      doneSheet.columns = [{ width: 18 }, { width: 28 }, { width: 10 }, { width: 26 }, { width: 44 }];
+
+      setTitleRow(doneSheet, 1, "Разобранные номера за неделю", 5);
+      const doneHeader = doneSheet.getRow(2);
+      doneHeader.values = ["Когда", "Тема", "Номер", "Результат", "Комментарий ученика"];
+      setTableHeader(doneHeader);
+
+      if (weeklyRows.length === 0) {
+        doneSheet.mergeCells(3, 1, 3, 5);
+        const cell = doneSheet.getCell(3, 1);
+        cell.value = "За эту неделю ученик не отметил ни одного номера.";
+        cell.font = { name: "Calibri", size: 11, color: { argb: colors.muted } };
+        cell.alignment = { vertical: "middle" };
+      } else {
+        weeklyRows.forEach((rowData, index) => {
+          const rowNumber = index + 3;
+          const row = doneSheet.getRow(rowNumber);
+          row.values = [
+            formatDateTime(rowData.updatedAt),
+            rowData.topicTitle,
+            rowData.number,
+            rowData.statusLabel,
+            rowData.note || "—"
+          ];
+          setDataRow(row, index % 2 === 1);
+          doneSheet.getCell(rowNumber, 5).alignment = { wrapText: true, vertical: "middle" };
+          setStatusCellStyle(doneSheet.getCell(rowNumber, 4), rowData.statusKey);
+        });
+      }
+
+      const buffer = await workbook.xlsx.writeBuffer();
+      const datePart = exportDate.toISOString().slice(0, 10);
+      const asciiName = data.student.name.replace(/[^a-zA-Z0-9_-]+/g, "").slice(0, 30);
+      const asciiFileName = `week-progress-${asciiName ? `${asciiName}-` : ""}${datePart}.xlsx`;
+      const utfFileName = encodeURIComponent(`Неделя — ${data.student.name} — ${datePart}.xlsx`);
+
+      logInfoEvent(
+        "student.export.succeeded",
+        getRequestLogContext(request, {
+          userId: user.id,
+          studentId,
+          period: "week",
+          rows: weeklyRows.length,
+          workbookBytes: buffer.byteLength
+        }),
+        "Weekly student progress export was generated."
+      );
+
+      return new NextResponse(buffer, {
+        status: 200,
+        headers: {
+          "Content-Type": "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+          "Content-Disposition": `attachment; filename="${asciiFileName}"; filename*=UTF-8''${utfFileName}`,
+          "Cache-Control": "no-store"
+        }
+      });
+    }
 
     let totalNumbers = 0;
     let totalMarked = 0;
