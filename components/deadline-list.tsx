@@ -64,8 +64,8 @@ export function DeadlineList({ items, emptyMessage = "На эту дату де�
 
         return (
           <li key={item.id} className="shbz-card px-[26px] py-6" style={{ borderRadius: 18 }}>
-            <div className="mb-[18px] flex flex-wrap items-start justify-between gap-5">
-              <div>
+            <div className="mb-[18px] flex items-start justify-between gap-4">
+              <div className="min-w-0 flex-1">
                 <div className="text-[19px] font-extrabold tracking-[-0.3px]" style={{ color: "var(--shbz-text-strong)" }}>
                   {item.topicTitle}
                 </div>

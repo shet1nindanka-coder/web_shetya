@@ -31,8 +31,8 @@ export default async function StudentTopicsPage() {
 
             return (
               <article key={topic.id} className="shbz-card shbz-card-hover px-[26px] py-6" style={{ borderRadius: 18 }}>
-                <div className="mb-[18px] flex flex-wrap items-start justify-between gap-5">
-                  <div className="min-w-0">
+                <div className="mb-[18px] flex items-start justify-between gap-4">
+                  <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-3">
                       <h2 className="text-xl font-extrabold tracking-[-0.3px]" style={{ color: "var(--shbz-text-strong)" }}>
                         {topic.title}
