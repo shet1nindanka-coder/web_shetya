@@ -8,6 +8,7 @@ import { logInfoEvent } from "@/lib/logger";
 import { createNotification } from "@/lib/notifications";
 import { revalidateAllPlatformData } from "@/lib/platform-data-cache";
 import { prisma } from "@/lib/prisma";
+import { deleteStoredFileRecordIfUnused } from "@/lib/stored-files";
 
 export const runtime = "nodejs";
 
@@ -232,6 +233,7 @@ export async function DELETE(request: Request) {
     topicId: string;
     deadlineAt: Date | null;
     numbers: Array<{ homeworkNumberId: string }>;
+    photos: Array<{ fileId: string }>;
   } | null;
 
   try {
@@ -244,6 +246,9 @@ export async function DELETE(request: Request) {
         deadlineAt: true,
         numbers: {
           select: { homeworkNumberId: true }
+        },
+        photos: {
+          select: { fileId: true }
         }
       }
     });
@@ -292,6 +297,10 @@ export async function DELETE(request: Request) {
         ]
       : [])
   ]);
+
+  for (const photo of assignment.photos) {
+    await deleteStoredFileRecordIfUnused(photo.fileId);
+  }
 
   revalidateHomeworkRoutes(assignment.studentId, assignment.topicId);
   publishDashboardRealtimeEvent({

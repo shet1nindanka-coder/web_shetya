@@ -1,3 +1,4 @@
+import { UserRole } from "@prisma/client";
 import { tryGetCurrentUser } from "@/lib/auth";
 import { canAccessStoredFile, summarizeStoredFileAccess } from "@/lib/file-access";
 import { getRequestLogContext, logWarnEvent } from "@/lib/logger";
@@ -61,7 +62,23 @@ export async function GET(request: Request, { params }: FileRouteProps) {
     }
   };
 
-  if (!canAccessStoredFile(user, accessSnapshot)) {
+  let ownsSubmissionPhoto = false;
+
+  if (user.role === UserRole.STUDENT) {
+    ownsSubmissionPhoto = await prisma.homeworkSubmissionPhoto
+      .count({
+        where: {
+          fileId: file.id,
+          assignment: {
+            studentId: user.id
+          }
+        }
+      })
+      .then((count) => count > 0)
+      .catch(() => false);
+  }
+
+  if (!canAccessStoredFile(user, accessSnapshot) && !ownsSubmissionPhoto) {
     logWarnEvent(
       "file.read.denied",
       {

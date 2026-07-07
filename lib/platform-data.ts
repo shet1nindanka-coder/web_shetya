@@ -1133,7 +1133,7 @@ function isMissingHomeworkAssignmentTableError(error: unknown) {
   return (
     error instanceof Prisma.PrismaClientKnownRequestError &&
     error.code === "P2021" &&
-    error.message.includes("HomeworkAssignment")
+    (error.message.includes("HomeworkAssignment") || error.message.includes("HomeworkSubmissionPhoto"))
   );
 }
 
@@ -1165,6 +1165,20 @@ function queryTeacherStudentHomeworks(studentId: string, notesEnabled: boolean) 
                   ...(notesEnabled ? { note: true } : {})
                 }
               }
+            }
+          }
+        }
+      },
+      photos: {
+        orderBy: { createdAt: "asc" },
+        select: {
+          id: true,
+          createdAt: true,
+          file: {
+            select: {
+              id: true,
+              originalName: true,
+              mimeType: true
             }
           }
         }
@@ -1229,6 +1243,13 @@ async function getTeacherStudentHomeworksUncached(studentId: string) {
       deadlineAt: assignment.deadlineAt,
       createdAt: assignment.createdAt,
       numbers,
+      photos: assignment.photos.map((photo) => ({
+        id: photo.id,
+        fileId: photo.file.id,
+        originalName: photo.file.originalName,
+        mimeType: photo.file.mimeType,
+        createdAt: photo.createdAt
+      })),
       solvedCount,
       solvedPercent: completionPercent(solvedCount, summary.totalNumbers),
       ...summary
@@ -1243,6 +1264,12 @@ const getTeacherStudentHomeworksCached = unstable_cache(getTeacherStudentHomewor
 });
 
 export async function getTeacherStudentHomeworks(
+  studentId: string
+): Promise<Awaited<ReturnType<typeof getTeacherStudentHomeworksUncached>>> {
+  return getTeacherStudentHomeworksCached(studentId);
+}
+
+export async function getStudentHomeworks(
   studentId: string
 ): Promise<Awaited<ReturnType<typeof getTeacherStudentHomeworksUncached>>> {
   return getTeacherStudentHomeworksCached(studentId);

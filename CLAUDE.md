@@ -108,6 +108,10 @@ Postgres service.
   `StudentTopicNumberStatus`, so student views, deadline calendars and the PDF report keep working.
   Teacher UI: `/teacher/students/[studentId]` shows homework review/cancel (default tab) with an
   `/assign` sub-tab for issuing homework; there is no per-topic progress view for the teacher.
+- `HomeworkSubmissionPhoto` — a solution photo a student attaches to an assignment (links
+  `HomeworkAssignment` to `StoredFile`). Students upload via `/api/student/homework-submissions`
+  (PNG/JPG, max 10 per assignment) on `/student/deadlines`; the teacher sees the gallery in the
+  review tab. Files are served through `/files/[fileId]` with an ownership check for students.
 
 `prisma/migrations/` reflects the feature history: init → shared topics/files → answer files →
 LaTeX answers → student notes → student deadlines → LaTeX conditions.

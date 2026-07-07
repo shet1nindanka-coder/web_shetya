@@ -100,6 +100,7 @@ model StoredFile {
   theoryForTopics        Topic[]               @relation("TheoryFile")
   homeworkForTopics      Topic[]               @relation("HomeworkFile")
   answerForNumberEntries TopicHomeworkNumber[] @relation("NumberAnswerFile")
+  submissionPhotoEntries HomeworkSubmissionPhoto[] @relation("SubmissionPhotoFile")
 }
 
 model Notification {
@@ -369,6 +370,7 @@ model HomeworkAssignment {
   student    User                       @relation("StudentHomeworkAssignments", fields: [studentId], references: [id], onDelete: Cascade)
   topic      Topic                      @relation("TopicHomeworkAssignments", fields: [topicId], references: [id], onDelete: Cascade)
   numbers    HomeworkAssignmentNumber[]
+  photos     HomeworkSubmissionPhoto[]
 
   @@index([studentId, createdAt])
   @@index([topicId])
@@ -383,4 +385,16 @@ model HomeworkAssignmentNumber {
 
   @@unique([assignmentId, homeworkNumberId])
   @@index([homeworkNumberId])
+}
+
+model HomeworkSubmissionPhoto {
+  id           String             @id @default(cuid())
+  assignmentId String
+  fileId       String
+  createdAt    DateTime           @default(now())
+  assignment   HomeworkAssignment @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
+  file         StoredFile         @relation("SubmissionPhotoFile", fields: [fileId], references: [id], onDelete: Cascade)
+
+  @@index([assignmentId])
+  @@index([fileId])
 }

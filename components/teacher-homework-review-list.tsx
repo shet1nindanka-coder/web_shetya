@@ -19,6 +19,11 @@ type ReviewAssignment = {
   redCount: number;
   solvedCount: number;
   solvedPercent: number;
+  photos: Array<{
+    id: string;
+    fileId: string;
+    originalName: string;
+  }>;
   numbers: Array<{
     homeworkNumberId: string;
     number: number;
@@ -155,6 +160,33 @@ export function TeacherHomeworkReviewList({ assignments }: TeacherHomeworkReview
             <div className="mt-3">
               <ProgressBar value={assignment.solvedPercent} size="sm" />
             </div>
+
+            {assignment.photos.length > 0 ? (
+              <div className="mt-4">
+                <p className="ui-copy-muted text-sm font-medium">Фото решения ({assignment.photos.length})</p>
+                <div className="mt-2 flex flex-wrap gap-3">
+                  {assignment.photos.map((photo) => (
+                    <a
+                      key={photo.id}
+                      href={`/files/${photo.fileId}`}
+                      target="_blank"
+                      rel="noreferrer"
+                      title={photo.originalName}
+                    >
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img
+                        src={`/files/${photo.fileId}`}
+                        alt={photo.originalName}
+                        className="h-28 w-28 rounded-[12px] border object-cover transition hover:opacity-80"
+                        style={{ borderColor: "var(--shbz-soft-border)" }}
+                      />
+                    </a>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <p className="ui-copy-muted mt-4 text-sm">Ученик пока не прикрепил фото решения.</p>
+            )}
 
             <div className="teacher-number-grid mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
               {assignment.numbers.map((number) => (

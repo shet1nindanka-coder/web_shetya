@@ -14,7 +14,7 @@ function scheduleStoredFileCleanup(storageKey: string) {
 }
 
 export async function countStoredFileUsages(fileId: string) {
-  const [topicUsageCount, answerUsageCount] = await Promise.all([
+  const [topicUsageCount, answerUsageCount, submissionPhotoUsageCount] = await Promise.all([
     prisma.topic.count({
       where: {
         OR: [{ theoryFileId: fileId }, { homeworkFileId: fileId }]
@@ -24,10 +24,17 @@ export async function countStoredFileUsages(fileId: string) {
       where: {
         answerFileId: fileId
       }
-    })
+    }),
+    prisma.homeworkSubmissionPhoto
+      .count({
+        where: {
+          fileId
+        }
+      })
+      .catch(() => 0)
   ]);
 
-  return topicUsageCount + answerUsageCount;
+  return topicUsageCount + answerUsageCount + submissionPhotoUsageCount;
 }
 
 export async function deleteStoredFileRecordIfUnused(fileId: string | null | undefined) {

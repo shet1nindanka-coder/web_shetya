@@ -41,6 +41,11 @@ export default async function TeacherStudentPage({ params }: TeacherStudentPageP
             redCount: assignment.redCount,
             solvedCount: assignment.solvedCount,
             solvedPercent: assignment.solvedPercent,
+            photos: assignment.photos.map((photo) => ({
+              id: photo.id,
+              fileId: photo.fileId,
+              originalName: photo.originalName
+            })),
             numbers: assignment.numbers.map((number) => ({
               homeworkNumberId: number.homeworkNumberId,
               number: number.number,
