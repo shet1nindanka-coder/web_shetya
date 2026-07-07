@@ -23,7 +23,7 @@ function TopicCard({ topic }: { topic: StudentTopicListItem }) {
               {topic.title}
             </h2>
             {topic.isCompleted ? (
-              <span className="shbz-chip shbz-chip-green hidden sm:inline-block">Тема завершена</span>
+              <span className="shbz-chip shbz-chip-green shbz-chip--desktop">Тема завершена</span>
             ) : null}
           </div>
           {topic.description ? (

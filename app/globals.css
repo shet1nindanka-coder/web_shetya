@@ -2717,3 +2717,8 @@ html[data-theme="dark"] .shbz-search input {
   background: transparent !important;
   border-color: transparent !important;
 }
+
+/* Чип, который показывается только с планшета и шире */
+@media (max-width: 639px) {
+  .shbz-chip--desktop { display: none; }
+}
