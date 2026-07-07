@@ -42,6 +42,11 @@ export default async function StudentHomeworksPage() {
               totalNumbers: assignment.totalNumbers,
               solvedCount: assignment.solvedCount,
               solvedPercent: assignment.solvedPercent,
+              numbers: assignment.numbers.map((number) => ({
+                homeworkNumberId: number.homeworkNumberId,
+                number: number.number,
+                status: number.status
+              })),
               photos: assignment.photos.map((photo) => ({
                 id: photo.id,
                 fileId: photo.fileId,

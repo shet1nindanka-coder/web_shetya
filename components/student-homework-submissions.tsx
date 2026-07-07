@@ -1,8 +1,10 @@
 "use client";
 
+import { HomeworkNumberStatus } from "@prisma/client";
+import Link from "next/link";
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { formatDate } from "@/lib/utils";
+import { cx, formatDate, homeworkStatusMeta } from "@/lib/utils";
 
 type SubmissionAssignment = {
   id: string;
@@ -13,6 +15,11 @@ type SubmissionAssignment = {
   totalNumbers: number;
   solvedCount: number;
   solvedPercent: number;
+  numbers: Array<{
+    homeworkNumberId: string;
+    number: number;
+    status: HomeworkNumberStatus | null;
+  }>;
   photos: Array<{
     id: string;
     fileId: string;
@@ -144,6 +151,26 @@ export function StudentHomeworkSubmissions({ assignments }: StudentHomeworkSubmi
                 </button>
               </div>
             </div>
+
+            {assignment.numbers.length > 0 ? (
+              <div className="mt-4 flex flex-wrap gap-2">
+                {assignment.numbers.map((number) => (
+                  <Link
+                    key={number.homeworkNumberId}
+                    href={`/student/topics/${assignment.topicId}/numbers/${number.number}`}
+                    title={number.status ? homeworkStatusMeta[number.status].label : "Номер ещё не отмечен"}
+                    className={cx(
+                      "rounded-[10px] border px-3.5 py-2 text-sm font-bold transition hover:opacity-80",
+                      number.status
+                        ? homeworkStatusMeta[number.status].subtleClassName
+                        : "border-[var(--theme-border)] bg-[var(--theme-surface-strong)] text-[var(--theme-text-default)]"
+                    )}
+                  >
+                    № {number.number}
+                  </Link>
+                ))}
+              </div>
+            ) : null}
 
             {assignment.photos.length > 0 ? (
               <div className="mt-4 flex flex-wrap gap-3">
