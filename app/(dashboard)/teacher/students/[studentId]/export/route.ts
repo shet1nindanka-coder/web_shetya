@@ -1,20 +1,14 @@
 import ExcelJS from "exceljs";
-import { Prisma, UserRole } from "@prisma/client";
+import { UserRole } from "@prisma/client";
 import { NextResponse } from "next/server";
 import { tryGetCurrentUser } from "@/lib/auth";
 import { getRequestLogContext, logErrorEvent, logInfoEvent, logWarnEvent } from "@/lib/logger";
-import { prisma } from "@/lib/prisma";
+import { loadExportData, statusLabels } from "@/lib/student-export-data";
 import { getProgressTimeline } from "@/lib/platform-data";
 import { computeStudentStreak } from "@/lib/student-streak";
 import { formatDateTime } from "@/lib/utils";
 
 export const runtime = "nodejs";
-
-const statusLabels: Record<string, string> = {
-  GREEN: "Решён сразу и верно",
-  YELLOW: "Решён после самопроверки",
-  RED: "Нужен разбор с преподавателем"
-};
 
 const colors = {
   navy: "14161A",
@@ -70,71 +64,6 @@ type AssignmentSummary = {
   stateKind: "done" | "progress" | "attention" | "muted";
   note: string;
 };
-
-function isMissingColumn(error: unknown, column: "note" | "deadlineAt") {
-  return (
-    error instanceof Prisma.PrismaClientKnownRequestError &&
-    error.code === "P2022" &&
-    error.message.includes("StudentTopicNumberStatus") &&
-    error.message.includes(column)
-  );
-}
-
-async function loadExportData(studentId: string) {
-  const student = await prisma.user.findFirst({
-    where: { id: studentId, role: UserRole.STUDENT },
-    select: { id: true, name: true, email: true }
-  });
-
-  if (!student) {
-    return null;
-  }
-
-  let notesEnabled = true;
-  let deadlinesEnabled = true;
-
-  const query = () =>
-    prisma.topic.findMany({
-      orderBy: [{ displayOrder: "asc" }, { createdAt: "asc" }],
-      select: {
-        title: true,
-        homeworkNumbers: {
-          orderBy: { displayOrder: "asc" },
-          select: {
-            number: true,
-            statuses: {
-              where: { studentId },
-              select: {
-                status: true,
-                ...(notesEnabled ? { note: true } : {}),
-                ...(deadlinesEnabled ? { deadlineAt: true } : {}),
-                updatedAt: true
-              }
-            }
-          }
-        }
-      }
-    });
-
-  let topics: Awaited<ReturnType<typeof query>>;
-
-  try {
-    topics = await query();
-  } catch (error) {
-    const noteMissing = isMissingColumn(error, "note");
-    const deadlineMissing = isMissingColumn(error, "deadlineAt");
-
-    if (!noteMissing && !deadlineMissing) {
-      throw error;
-    }
-
-    notesEnabled = !noteMissing;
-    deadlinesEnabled = !deadlineMissing;
-    topics = await query();
-  }
-
-  return { student, topics, notesEnabled, deadlinesEnabled };
-}
 
 function buildAssignmentState(summary: {
   totalNumbers: number;
