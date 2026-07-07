@@ -23,6 +23,7 @@ type DashboardNavProps = {
 const studentItems = [
   { href: "/student", label: "обзор", match: (p: string) => p === "/student" },
   { href: "/student/topics", label: "темы", match: (p: string) => p.startsWith("/student/topics") },
+  { href: "/student/homeworks", label: "дз", match: (p: string) => p.startsWith("/student/homeworks") },
   { href: "/student/deadlines", label: "дедлайны", match: (p: string) => p.startsWith("/student/deadlines") },
   { href: "/student/info", label: "общая инфа", match: (p: string) => p.startsWith("/student/info") },
   {

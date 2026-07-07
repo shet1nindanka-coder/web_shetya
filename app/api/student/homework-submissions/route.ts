@@ -29,6 +29,7 @@ function revalidateSubmissionRoutes(studentId: string, topicId: string) {
   revalidateAllPlatformData();
   revalidatePath("/student");
   revalidatePath("/student/deadlines");
+  revalidatePath("/student/homeworks");
   revalidatePath(`/student/topics/${topicId}`);
   revalidatePath("/teacher");
   revalidatePath("/teacher/students");

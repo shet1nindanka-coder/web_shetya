@@ -34,6 +34,7 @@ function revalidateHomeworkRoutes(studentId: string, topicId: string) {
   revalidatePath("/dashboard");
   revalidatePath("/student");
   revalidatePath("/student/topics");
+  revalidatePath("/student/homeworks");
   revalidatePath(`/student/topics/${topicId}`);
   revalidatePath("/teacher");
   revalidatePath("/teacher/students");
