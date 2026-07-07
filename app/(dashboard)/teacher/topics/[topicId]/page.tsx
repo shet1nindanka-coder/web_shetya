@@ -48,7 +48,6 @@ export default async function TeacherTopicPage({ params }: TeacherTopicPageProps
 
       <SectionCard title="Номера и ответы" description="Условия и ответы к номерам темы.">
         <TeacherTopicViewNumbers
-          topicId={data.topic.id}
           numbers={data.topic.homeworkNumbers.map((number) => ({
             id: number.id,
             number: number.number,

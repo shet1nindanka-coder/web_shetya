@@ -1,10 +1,8 @@
 "use client";
 
-import Link from "next/link";
 import { LatexAnswerPreview } from "@/components/latex-answer-preview";
 
 type TeacherTopicViewNumbersProps = {
-  topicId: string;
   numbers: Array<{
     id: string;
     number: number;
@@ -13,7 +11,7 @@ type TeacherTopicViewNumbersProps = {
   }>;
 };
 
-export function TeacherTopicViewNumbers({ topicId, numbers }: TeacherTopicViewNumbersProps) {
+export function TeacherTopicViewNumbers({ numbers }: TeacherTopicViewNumbersProps) {
   if (numbers.length === 0) {
     return (
       <div className="ui-panel-soft rounded-[28px] border-dashed px-5 py-10 text-center">
@@ -27,15 +25,7 @@ export function TeacherTopicViewNumbers({ topicId, numbers }: TeacherTopicViewNu
     <div className="grid gap-3 xl:grid-cols-2">
       {numbers.map((number) => (
         <article key={number.id} className="teacher-number-card rounded-[10px] border px-4 py-4">
-          <div className="flex items-center justify-between gap-3">
-            <p className="teacher-number-title text-lg font-semibold text-[var(--theme-text-strong)]">№ {number.number}</p>
-            <Link
-              href={`/teacher/topics/${topicId}/numbers/${number.number}`}
-              className="ui-pressable ui-button-secondary rounded-[10px] px-3 py-1.5 text-xs font-semibold transition"
-            >
-              Редактировать
-            </Link>
-          </div>
+          <p className="teacher-number-title text-lg font-semibold text-[var(--theme-text-strong)]">№ {number.number}</p>
 
           {number.conditionLatex ? (
             <div className="mt-3">
