@@ -18,6 +18,7 @@ const securityHeaders = [
       "font-src 'self' data:",
       "connect-src 'self' https://*.blob.vercel-storage.com https://*.public.blob.vercel-storage.com",
       "frame-src 'self'",
+      "worker-src 'self' blob:",
       "object-src 'none'",
       "base-uri 'self'",
       "form-action 'self'",

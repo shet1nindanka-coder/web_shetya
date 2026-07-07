@@ -1,4 +1,5 @@
 import Image from "next/image";
+import { PdfPreview } from "@/components/pdf-preview";
 import { formatDateTime, formatFileSize, isImageMime, isOfficeMime, isPdfMime } from "@/lib/utils";
 
 type FileResource = {
@@ -77,10 +78,10 @@ export function FileResourceCard({
 
           {showPreview && isPdfMime(file.mimeType) ? (
             <div className="ui-card-soft overflow-hidden rounded-[10px]">
-              <iframe
-                src={`/files/${file.id}`}
-                title={file.originalName}
-                className={isExpanded ? "h-[380px] w-full sm:h-[520px] lg:h-[760px]" : "h-[300px] w-full sm:h-[380px] lg:h-[420px]"}
+              <PdfPreview
+                fileId={file.id}
+                fileName={file.originalName}
+                maxHeightClassName={isExpanded ? "max-h-[380px] sm:max-h-[520px] lg:max-h-[760px]" : "max-h-[300px] sm:max-h-[380px] lg:max-h-[420px]"}
               />
             </div>
           ) : null}
