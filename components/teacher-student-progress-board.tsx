@@ -4,7 +4,6 @@ import { HomeworkNumberStatus } from "@prisma/client";
 import { memo, useCallback, useDeferredValue, useEffect, useId, useMemo, useRef, useState } from "react";
 import { Badge } from "@/components/badge";
 import { HomeworkStatusBadge } from "@/components/homework-status-badge";
-import { ShbzDateTimePicker } from "@/components/shbz-datetime-picker";
 import { ProgressBar } from "@/components/progress-bar";
 import {
   filterTeacherTopicsByQuery,
@@ -13,9 +12,6 @@ import {
 } from "@/lib/teacher-topic-selection";
 
 type TeacherStudentProgressBoardProps = {
-  studentId: string;
-  notesEnabled: boolean;
-  deadlinesEnabled: boolean;
   initialTopics: Array<{
     id: string;
     title: string;
@@ -39,16 +35,6 @@ type TeacherStudentProgressBoardProps = {
 
 type TopicState = TeacherStudentProgressBoardProps["initialTopics"][number];
 
-type TeacherStudentNumberState = TopicState["numbers"][number] & {
-  selectedForBulk: boolean;
-};
-
-type TeacherStudentTopicState = Omit<TopicState, "numbers"> & {
-  bulkDeadlineInputValue: string;
-  isSavingBulk: boolean;
-  numbers: TeacherStudentNumberState[];
-};
-
 function formatDeadlineLabel(value: string | null) {
   if (!value) {
     return null;
@@ -66,20 +52,6 @@ function formatDeadlineLabel(value: string | null) {
     hour: "2-digit",
     minute: "2-digit"
   }).format(date);
-}
-
-function inputToIso(value: string) {
-  if (!value.trim()) {
-    return null;
-  }
-
-  const date = new Date(value);
-
-  if (Number.isNaN(date.getTime())) {
-    return null;
-  }
-
-  return date.toISOString();
 }
 
 function buildHomeworkGroups(
@@ -113,38 +85,26 @@ function buildHomeworkGroups(
 }
 
 type TeacherNumberCardProps = {
-  topicId: string;
-  number: TeacherStudentNumberState;
+  number: TopicState["numbers"][number];
   homeworkLabel: string | null;
-  onToggleBulkSelection: (topicId: string, homeworkNumberId: string) => void;
 };
 
-const TeacherNumberCard = memo(function TeacherNumberCard({
-  topicId,
-  number,
-  homeworkLabel,
-  onToggleBulkSelection
-}: TeacherNumberCardProps) {
+const TeacherNumberCard = memo(function TeacherNumberCard({ number, homeworkLabel }: TeacherNumberCardProps) {
   const deadlineLabel = formatDeadlineLabel(number.studentStatus?.deadlineAt ?? null);
 
   return (
     <div className="teacher-number-card rounded-[10px] border px-4 py-4">
       <div className="flex items-center justify-between gap-3">
-        <label className="ui-copy-muted inline-flex items-center gap-2 text-xs font-semibold">
-          <input
-            type="checkbox"
-            checked={number.selectedForBulk}
-            onChange={() => onToggleBulkSelection(topicId, number.id)}
-            className="h-4 w-4 rounded border-[var(--theme-border)]"
-          />
-          Выбрать
-        </label>
+        <p className="teacher-number-title text-lg font-semibold text-[var(--theme-text-strong)]">№ {number.number}</p>
         <HomeworkStatusBadge status={number.studentStatus?.status ?? null} />
       </div>
-      <div className="mt-3 flex items-center justify-between gap-3">
-        <p className="teacher-number-title text-lg font-semibold text-[var(--theme-text-strong)]">№ {number.number}</p>
-        {homeworkLabel ? <Badge className="border-[var(--theme-accent-border)] bg-[var(--theme-accent-soft)] text-[var(--theme-accent-text)]">{homeworkLabel}</Badge> : null}
-      </div>
+      {homeworkLabel ? (
+        <div className="mt-3">
+          <Badge className="border-[var(--theme-accent-border)] bg-[var(--theme-accent-soft)] text-[var(--theme-accent-text)]">
+            {homeworkLabel}
+          </Badge>
+        </div>
+      ) : null}
       {number.studentStatus?.note ? (
         <div className="ui-card-soft mt-3 rounded-[12px] px-3 py-2">
           <p className="text-sm leading-6 text-[var(--theme-text-default)]">{number.studentStatus.note}</p>
@@ -155,31 +115,14 @@ const TeacherNumberCard = memo(function TeacherNumberCard({
       ) : null}
     </div>
   );
-}, (previousProps, nextProps) =>
-  previousProps.topicId === nextProps.topicId &&
-  previousProps.homeworkLabel === nextProps.homeworkLabel &&
-  previousProps.number === nextProps.number
-);
+});
 
 type TeacherTopicCardProps = {
-  topic: TeacherStudentTopicState;
-  deadlinesEnabled: boolean;
-  onApplyBulkDeadline: (topicId: string) => void;
-  onClearBulkSelection: (topicId: string) => void;
-  onToggleBulkSelection: (topicId: string, homeworkNumberId: string) => void;
-  onUpdateBulkDeadlineValue: (topicId: string, value: string) => void;
+  topic: TopicState;
 };
 
-const TeacherTopicCard = memo(function TeacherTopicCard({
-  topic,
-  deadlinesEnabled,
-  onApplyBulkDeadline,
-  onClearBulkSelection,
-  onToggleBulkSelection,
-  onUpdateBulkDeadlineValue
-}: TeacherTopicCardProps) {
+const TeacherTopicCard = memo(function TeacherTopicCard({ topic }: TeacherTopicCardProps) {
   const isCompleted = topic.totalNumbers > 0 && topic.solvedCount === topic.totalNumbers;
-  const selectedCount = topic.numbers.filter((number) => number.selectedForBulk).length;
   const homeworkGroups = useMemo(() => buildHomeworkGroups(topic.numbers), [topic.numbers]);
   const homeworkLabelByDeadline = useMemo(
     () => new Map(homeworkGroups.map((group) => [group.id, group.label])),
@@ -191,10 +134,12 @@ const TeacherTopicCard = memo(function TeacherTopicCard({
       {topic.numbers.map((number) => (
         <TeacherNumberCard
           key={number.id}
-          topicId={topic.id}
           number={number}
-          homeworkLabel={number.studentStatus?.deadlineAt ? (homeworkLabelByDeadline.get(number.studentStatus.deadlineAt) ?? "ДЗ") : null}
-          onToggleBulkSelection={onToggleBulkSelection}
+          homeworkLabel={
+            number.studentStatus?.deadlineAt
+              ? (homeworkLabelByDeadline.get(number.studentStatus.deadlineAt) ?? "ДЗ")
+              : null
+          }
         />
       ))}
     </div>
@@ -231,63 +176,19 @@ const TeacherTopicCard = memo(function TeacherTopicCard({
         </div>
       </div>
 
-      <div className="teacher-bulk-deadline-panel mt-5 rounded-[14px] border px-4 py-4">
-        <div className="flex flex-wrap items-center gap-3">
-          <p className="text-sm font-bold text-[var(--theme-text-strong)]">Выдать ДЗ</p>
-          <span
-            className="rounded-full px-3 py-1 text-[12.5px] font-bold"
-            style={{
-              background: selectedCount > 0 ? "var(--theme-accent-soft)" : "var(--shbz-tab-hover)",
-              color: selectedCount > 0 ? "var(--shbz-green-text)" : "var(--shbz-kicker)"
-            }}
-          >
-            Выбрано: {selectedCount}
+      {homeworkGroups.length > 0 ? (
+        <div className="mt-4 flex flex-wrap items-center gap-2">
+          <span className="text-[12.5px] font-semibold" style={{ color: "var(--shbz-kicker)" }}>
+            Выданные ДЗ:
           </span>
-          <div className="w-full min-w-[220px] sm:w-auto sm:max-w-[280px] sm:flex-1">
-            <ShbzDateTimePicker
-              value={topic.bulkDeadlineInputValue}
-              disabled={!deadlinesEnabled || topic.isSavingBulk}
-              onChange={(nextValue) => onUpdateBulkDeadlineValue(topic.id, nextValue)}
-              placeholder="Общий дедлайн"
-            />
-          </div>
-          <button
-            type="button"
-            disabled={!deadlinesEnabled || !selectedCount || !topic.bulkDeadlineInputValue || topic.isSavingBulk}
-            onClick={() => onApplyBulkDeadline(topic.id)}
-            className="ui-pressable ui-button-primary rounded-[12px] px-5 py-3 text-sm font-semibold transition disabled:cursor-not-allowed"
-          >
-            {topic.isSavingBulk ? "Выдаем..." : "Выдать ДЗ"}
-          </button>
-          {selectedCount > 0 ? (
-            <button
-              type="button"
-              disabled={topic.isSavingBulk}
-              onClick={() => onClearBulkSelection(topic.id)}
-              className="ui-pressable ui-button-secondary rounded-[12px] px-5 py-3 text-sm font-semibold transition disabled:cursor-not-allowed"
-            >
-              Снять выбор
-            </button>
-          ) : null}
+          {homeworkGroups.map((group) => (
+            <Badge key={group.id} className="ui-badge-soft">
+              {group.label} · {group.count}
+              {group.deadlineLabel ? ` · ${group.deadlineLabel}` : ""}
+            </Badge>
+          ))}
         </div>
-        <p className="ui-hint mt-2.5 text-[13px] leading-5" style={{ color: "var(--shbz-text-muted)" }}>
-          1. Кликните по номерам ниже, чтобы выбрать их · 2. Задайте общий дедлайн · 3. Нажмите «Выдать ДЗ».
-        </p>
-
-        {homeworkGroups.length > 0 ? (
-          <div className="mt-3 flex flex-wrap items-center gap-2">
-            <span className="text-[12.5px] font-semibold" style={{ color: "var(--shbz-kicker)" }}>
-              Выданные ДЗ:
-            </span>
-            {homeworkGroups.map((group) => (
-              <Badge key={group.id} className="ui-badge-soft">
-                {group.label} · {group.count}
-                {group.deadlineLabel ? ` · ${group.deadlineLabel}` : ""}
-              </Badge>
-            ))}
-          </div>
-        ) : null}
-      </div>
+      ) : null}
 
       {isCompleted ? (
         <details className="mt-5 rounded-[10px] border border-[var(--theme-success-border)] bg-[var(--theme-success-soft)]">
@@ -309,73 +210,34 @@ const TeacherTopicCard = memo(function TeacherTopicCard({
       )}
     </article>
   );
-}, (previousProps, nextProps) =>
-  previousProps.deadlinesEnabled === nextProps.deadlinesEnabled &&
-  previousProps.topic === nextProps.topic
-);
+});
 
-export function TeacherStudentProgressBoard({
-  studentId,
-  deadlinesEnabled,
-  initialTopics
-}: TeacherStudentProgressBoardProps) {
-  const initialState = useMemo<TeacherStudentTopicState[]>(
-    () =>
-      initialTopics.map((topic) => ({
-        ...topic,
-        bulkDeadlineInputValue: "",
-        isSavingBulk: false,
-        numbers: topic.numbers.map((number) => ({
-          ...number,
-          selectedForBulk: false
-        }))
-      })),
-    [initialTopics]
-  );
-  const topicsRef = useRef(initialState);
-  const [topics, setTopics] = useState(initialState);
-  const [selectedTopicId, setSelectedTopicId] = useState<string | null>(() => getDefaultTeacherTopicId(initialState));
+export function TeacherStudentProgressBoard({ initialTopics }: TeacherStudentProgressBoardProps) {
+  const topicsRef = useRef(initialTopics);
+  const [topics, setTopics] = useState(initialTopics);
+  const [selectedTopicId, setSelectedTopicId] = useState<string | null>(() => getDefaultTeacherTopicId(initialTopics));
   const [topicQuery, setTopicQuery] = useState("");
   const [comboboxOpen, setComboboxOpen] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [orderingTopicId, setOrderingTopicId] = useState<string | null>(null);
-  const requestVersionRef = useRef<Record<string, number>>({});
-  const controllersRef = useRef<Record<string, AbortController | undefined>>({});
   const comboboxRef = useRef<HTMLDivElement>(null);
   const topicListboxId = useId();
   const deferredTopicQuery = useDeferredValue(topicQuery);
 
-  const updateTopicsState = useCallback(
-    (
-      updater: (
-        current: TeacherStudentTopicState[]
-      ) => TeacherStudentTopicState[]
-    ) => {
-      setTopics((current) => {
-        const next = updater(current);
-        topicsRef.current = next;
-        return next;
-      });
-    },
-    []
-  );
-
-  useEffect(() => {
-    topicsRef.current = initialState;
-    setTopics(initialState);
-    setSelectedTopicId(getDefaultTeacherTopicId(initialState));
-    setTopicQuery("");
-  }, [initialState]);
-
-  useEffect(() => {
-    const controllers = controllersRef.current;
-
-    return () => {
-      for (const controller of Object.values(controllers)) {
-        controller?.abort();
-      }
-    };
+  const updateTopicsState = useCallback((updater: (current: TopicState[]) => TopicState[]) => {
+    setTopics((current) => {
+      const next = updater(current);
+      topicsRef.current = next;
+      return next;
+    });
   }, []);
+
+  useEffect(() => {
+    topicsRef.current = initialTopics;
+    setTopics(initialTopics);
+    setSelectedTopicId(getDefaultTeacherTopicId(initialTopics));
+    setTopicQuery("");
+  }, [initialTopics]);
 
   useEffect(() => {
     if (!comboboxOpen) {
@@ -396,186 +258,6 @@ export function TeacherStudentProgressBoard({
     };
   }, [comboboxOpen]);
 
-
-  const toggleBulkSelection = useCallback(
-    (topicId: string, homeworkNumberId: string) => {
-      updateTopicsState((current) =>
-        current.map((topic) =>
-          topic.id === topicId
-            ? {
-                ...topic,
-                numbers: topic.numbers.map((number) =>
-                  number.id === homeworkNumberId
-                    ? {
-                        ...number,
-                        selectedForBulk: !number.selectedForBulk
-                      }
-                    : number
-                )
-              }
-            : topic
-        )
-      );
-    },
-    [updateTopicsState]
-  );
-
-  const clearBulkSelection = useCallback(
-    (topicId: string) => {
-      updateTopicsState((current) =>
-        current.map((topic) =>
-          topic.id === topicId
-            ? {
-                ...topic,
-                numbers: topic.numbers.map((number) => ({
-                  ...number,
-                  selectedForBulk: false
-                }))
-              }
-            : topic
-        )
-      );
-    },
-    [updateTopicsState]
-  );
-
-  const updateBulkDeadlineValue = useCallback(
-    (topicId: string, value: string) => {
-      updateTopicsState((current) =>
-        current.map((topic) =>
-          topic.id === topicId
-            ? {
-                ...topic,
-                bulkDeadlineInputValue: value
-              }
-            : topic
-        )
-      );
-    },
-    [updateTopicsState]
-  );
-
-  const applyBulkDeadline = useCallback(
-    async (topicId: string) => {
-      if (!deadlinesEnabled) {
-        return;
-      }
-
-      const currentTopic = topicsRef.current.find((topic) => topic.id === topicId);
-
-      if (!currentTopic) {
-        return;
-      }
-
-      const selectedNumbers = currentTopic.numbers.filter((number) => number.selectedForBulk);
-
-      if (!selectedNumbers.length) {
-        setSaveError("Сначала выберите номера, которым нужно назначить общий дедлайн.");
-        return;
-      }
-
-      setSaveError(null);
-
-      const versionKey = `bulk:${topicId}`;
-      const nextVersion = (requestVersionRef.current[versionKey] ?? 0) + 1;
-      requestVersionRef.current[versionKey] = nextVersion;
-
-      controllersRef.current[versionKey]?.abort();
-
-      const controller = new AbortController();
-      controllersRef.current[versionKey] = controller;
-      const nextDeadlineAt = inputToIso(currentTopic.bulkDeadlineInputValue);
-
-      updateTopicsState((current) =>
-        current.map((topic) =>
-          topic.id === topicId
-            ? {
-                ...topic,
-                isSavingBulk: true
-              }
-            : topic
-        )
-      );
-
-      try {
-        const response = await fetch("/api/teacher/student-deadlines", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json"
-          },
-          body: JSON.stringify({
-            studentId,
-            topicId,
-            homeworkNumberIds: selectedNumbers.map((number) => number.id),
-            deadlineAt: nextDeadlineAt
-          }),
-          signal: controller.signal
-        });
-
-        const result = (await response.json().catch(() => null)) as
-          | { error?: string; deadlineAt?: string | null; homeworkNumberIds?: string[] }
-          | null;
-
-        if (requestVersionRef.current[versionKey] !== nextVersion) {
-          return;
-        }
-
-        if (!response.ok) {
-          throw new Error(result?.error || "Не удалось сохранить общий дедлайн.");
-        }
-
-        const savedValue = typeof result?.deadlineAt === "string" ? result.deadlineAt : null;
-        const updatedIds = new Set(result?.homeworkNumberIds ?? selectedNumbers.map((number) => number.id));
-
-        updateTopicsState((current) =>
-          current.map((topic) =>
-            topic.id === topicId
-              ? {
-                  ...topic,
-                  isSavingBulk: false,
-                  numbers: topic.numbers.map((number) =>
-                    updatedIds.has(number.id)
-                      ? {
-                          ...number,
-                          selectedForBulk: false,
-                          studentStatus: {
-                            status: number.studentStatus?.status ?? null,
-                            note: number.studentStatus?.note ?? "",
-                            deadlineAt: savedValue
-                          }
-                        }
-                      : number
-                  )
-                }
-              : topic
-          )
-        );
-      } catch (error) {
-        if (controller.signal.aborted || requestVersionRef.current[versionKey] !== nextVersion) {
-          return;
-        }
-
-        updateTopicsState((current) =>
-          current.map((topic) =>
-            topic.id === topicId
-              ? {
-                  ...topic,
-                  isSavingBulk: false
-                }
-              : topic
-          )
-        );
-
-        setSaveError(error instanceof Error ? error.message : "Не удалось сохранить общий дедлайн.");
-      } finally {
-        if (requestVersionRef.current[versionKey] === nextVersion) {
-          delete controllersRef.current[versionKey];
-        }
-      }
-    },
-    [deadlinesEnabled, studentId, updateTopicsState]
-  );
-
   const filteredTopics = useMemo(
     () => filterTeacherTopicsByQuery(topics, deferredTopicQuery),
     [deferredTopicQuery, topics]
@@ -590,24 +272,6 @@ export function TeacherStudentProgressBoard({
     () => (selectedTopic ? topics.findIndex((topic) => topic.id === selectedTopic.id) : -1),
     [selectedTopic, topics]
   );
-
-  const previousTopic = selectedTopicIndex > 0 ? topics[selectedTopicIndex - 1] ?? null : null;
-  const nextTopic =
-    selectedTopicIndex >= 0 && selectedTopicIndex < topics.length - 1
-      ? topics[selectedTopicIndex + 1] ?? null
-      : null;
-
-  const selectOptions = useMemo(() => {
-    if (!selectedTopic) {
-      return filteredTopics;
-    }
-
-    if (filteredTopics.some((topic) => topic.id === selectedTopic.id)) {
-      return filteredTopics;
-    }
-
-    return [selectedTopic, ...filteredTopics];
-  }, [filteredTopics, selectedTopic]);
 
   useEffect(() => {
     if (!topics.length) {
@@ -690,12 +354,6 @@ export function TeacherStudentProgressBoard({
 
   return (
     <div className="space-y-5">
-      {!deadlinesEnabled ? (
-        <div className="ui-notice-warning rounded-[8px] px-4 py-3 text-sm">
-          Дедлайны появятся здесь после обновления базы данных до актуальной версии.
-        </div>
-      ) : null}
-
       {saveError ? (
         <div className="ui-notice-error rounded-[8px] px-4 py-3 text-sm">
           {saveError}
@@ -824,17 +482,7 @@ export function TeacherStudentProgressBoard({
         </section>
       ) : null}
 
-      {selectedTopic ? (
-        <TeacherTopicCard
-          key={selectedTopic.id}
-          topic={selectedTopic}
-          deadlinesEnabled={deadlinesEnabled}
-          onApplyBulkDeadline={applyBulkDeadline}
-          onClearBulkSelection={clearBulkSelection}
-          onToggleBulkSelection={toggleBulkSelection}
-          onUpdateBulkDeadlineValue={updateBulkDeadlineValue}
-        />
-      ) : null}
+      {selectedTopic ? <TeacherTopicCard key={selectedTopic.id} topic={selectedTopic} /> : null}
     </div>
   );
 }

@@ -62,7 +62,8 @@ Postgres service.
     `validate → mutate → revalidate → redirect("/path?error=… | saved=1")`. The UI reads the
     status from the query string; never throw an error to the user.
   - **API route handlers** (`app/api/**/route.ts`) for interactive client `fetch`/JSON:
-    student status+note, teacher deadlines, LaTeX conditions, LaTeX answers, topic reorder,
+    student status+note, teacher deadlines, homework assignments (`/api/teacher/homeworks`,
+  POST/DELETE), LaTeX conditions, LaTeX answers, topic reorder,
     streak, number search, and pre-uploads. `app/files/[fileId]/route.ts` serves files;
     `app/(dashboard)/teacher/students/[studentId]/export/pdf/route.ts` builds the weekly PDF report.
 - **Cache invalidation** — after every mutation call the helpers in `lib/platform-data-cache.ts`
@@ -102,6 +103,11 @@ Postgres service.
   `conditionLatex`, `answerLatex`, `answerFile`. Unique on `(topicId, number)`.
 - `StudentTopicNumberStatus` — per-student state: `status: GREEN | YELLOW | RED | null`, `note`,
   `deadlineAt`. Unique on `(studentId, homeworkNumberId)`.
+- `HomeworkAssignment` + `HomeworkAssignmentNumber` — a homework set issued to one student for one
+  topic (`title?`, `deadlineAt`, linked numbers). Issuing/cancelling also mirrors `deadlineAt` onto
+  `StudentTopicNumberStatus`, so student views, deadline calendars and the PDF report keep working.
+  Teacher UI: `/teacher/students/[studentId]` has sub-tabs — progress (read-only), `/assign`
+  (create assignments), `/homeworks` (review/cancel).
 
 `prisma/migrations/` reflects the feature history: init → shared topics/files → answer files →
 LaTeX answers → student notes → student deadlines → LaTeX conditions.

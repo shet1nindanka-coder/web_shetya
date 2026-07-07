@@ -74,6 +74,7 @@ model User {
   testsCreated         Test[]              @relation("TestCreator")
   testAttempts         TestAttempt[]
   topicMasteries       TopicMastery[]
+  homeworkAssignments  HomeworkAssignment[] @relation("StudentHomeworkAssignments")
 }
 
 model Session {
@@ -135,6 +136,7 @@ model Topic {
   masteries      TopicMastery[]
   tests          Test[]              @relation("TestTopic")
   lessons        Lesson[]            @relation("LessonTopic")
+  homeworkAssignments HomeworkAssignment[] @relation("TopicHomeworkAssignments")
 
   @@index([displayOrder])
   @@index([subject, grade])
@@ -156,6 +158,7 @@ model TopicHomeworkNumber {
   statuses     StudentTopicNumberStatus[]
   assignmentItems LessonAssignmentItem[]
   testQuestions   TestQuestion[]
+  assignmentEntries HomeworkAssignmentNumber[]
 
   @@unique([topicId, number])
   @@index([answerFileId])
@@ -353,4 +356,31 @@ model TopicMastery {
 
   @@unique([studentId, topicId])
   @@index([topicId])
+}
+
+model HomeworkAssignment {
+  id         String                     @id @default(cuid())
+  studentId  String
+  topicId    String
+  title      String?
+  deadlineAt DateTime?
+  createdAt  DateTime                   @default(now())
+  updatedAt  DateTime                   @updatedAt
+  student    User                       @relation("StudentHomeworkAssignments", fields: [studentId], references: [id], onDelete: Cascade)
+  topic      Topic                      @relation("TopicHomeworkAssignments", fields: [topicId], references: [id], onDelete: Cascade)
+  numbers    HomeworkAssignmentNumber[]
+
+  @@index([studentId, createdAt])
+  @@index([topicId])
+}
+
+model HomeworkAssignmentNumber {
+  id               String              @id @default(cuid())
+  assignmentId     String
+  homeworkNumberId String
+  assignment       HomeworkAssignment  @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
+  homeworkNumber   TopicHomeworkNumber @relation(fields: [homeworkNumberId], references: [id], onDelete: Cascade)
+
+  @@unique([assignmentId, homeworkNumberId])
+  @@index([homeworkNumberId])
 }

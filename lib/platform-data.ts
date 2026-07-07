@@ -1125,3 +1125,125 @@ function addTimelineDays(date: Date, days: number) {
 function getTimelineDateKey(date: Date) {
   return date.toISOString().slice(0, 10);
 }
+
+
+// ── Teacher: Homework Assignments (ДЗ) ─────────────────────────────
+
+function isMissingHomeworkAssignmentTableError(error: unknown) {
+  return (
+    error instanceof Prisma.PrismaClientKnownRequestError &&
+    error.code === "P2021" &&
+    error.message.includes("HomeworkAssignment")
+  );
+}
+
+function queryTeacherStudentHomeworks(studentId: string, notesEnabled: boolean) {
+  return prisma.homeworkAssignment.findMany({
+    where: { studentId },
+    orderBy: { createdAt: "asc" },
+    select: {
+      id: true,
+      title: true,
+      deadlineAt: true,
+      createdAt: true,
+      topic: {
+        select: {
+          id: true,
+          title: true
+        }
+      },
+      numbers: {
+        select: {
+          homeworkNumber: {
+            select: {
+              id: true,
+              number: true,
+              statuses: {
+                where: { studentId },
+                select: {
+                  status: true,
+                  ...(notesEnabled ? { note: true } : {})
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  });
+}
+
+async function getTeacherStudentHomeworksUncached(studentId: string) {
+  let assignments: Awaited<ReturnType<typeof queryTeacherStudentHomeworks>>;
+  let notesEnabled = true;
+
+  try {
+    assignments = await queryTeacherStudentHomeworks(studentId, true);
+  } catch (error) {
+    if (isMissingHomeworkAssignmentTableError(error)) {
+      logWarnEvent(
+        "platform.teacher_student_homeworks.table_missing",
+        { studentId },
+        undefined,
+        "HomeworkAssignment table is missing; apply the latest migration."
+      );
+
+      return { assignmentsEnabled: false as const, assignments: [] };
+    }
+
+    if (!isMissingStudentStatusColumnError(error, "note")) {
+      throw error;
+    }
+
+    notesEnabled = false;
+    assignments = await queryTeacherStudentHomeworks(studentId, false);
+  }
+
+  const orderByTopicId = new Map<string, number>();
+
+  const mapped = assignments.map((assignment) => {
+    const orderInTopic = (orderByTopicId.get(assignment.topic.id) ?? 0) + 1;
+    orderByTopicId.set(assignment.topic.id, orderInTopic);
+
+    const numbers = assignment.numbers
+      .map((entry) => {
+        const status = entry.homeworkNumber.statuses[0] ?? null;
+
+        return {
+          homeworkNumberId: entry.homeworkNumber.id,
+          number: entry.homeworkNumber.number,
+          status: status?.status ?? null,
+          note: notesEnabled ? ((status as { note?: string | null } | null)?.note ?? "") : ""
+        };
+      })
+      .sort((left, right) => left.number - right.number);
+
+    const summary = buildProgress(numbers.map((entry) => entry.status), numbers.length);
+    const solvedCount = summary.greenCount + summary.yellowCount;
+
+    return {
+      id: assignment.id,
+      label: assignment.title?.trim() || `ДЗ ${orderInTopic}`,
+      topicId: assignment.topic.id,
+      topicTitle: assignment.topic.title,
+      deadlineAt: assignment.deadlineAt,
+      createdAt: assignment.createdAt,
+      numbers,
+      solvedCount,
+      solvedPercent: completionPercent(solvedCount, summary.totalNumbers),
+      ...summary
+    };
+  });
+
+  return { assignmentsEnabled: true as const, assignments: mapped.reverse() };
+}
+
+const getTeacherStudentHomeworksCached = unstable_cache(getTeacherStudentHomeworksUncached, ["teacher-student-homeworks"], {
+  tags: [PLATFORM_DATA_TAGS.studentTopics, PLATFORM_DATA_TAGS.teacherTopics, PLATFORM_DATA_TAGS.teacherStudents]
+});
+
+export async function getTeacherStudentHomeworks(
+  studentId: string
+): Promise<Awaited<ReturnType<typeof getTeacherStudentHomeworksUncached>>> {
+  return getTeacherStudentHomeworksCached(studentId);
+}
