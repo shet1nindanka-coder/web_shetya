@@ -63,6 +63,7 @@ export function ShbzNumberSearch({
           inputMode="numeric"
           pattern="[0-9]*"
           autoComplete="off"
+          enterKeyHint="search"
           value={numberQuery}
           onChange={(event) => {
             setNumberQuery(event.target.value.replace(/[^\d]/g, ""));
@@ -74,6 +75,19 @@ export function ShbzNumberSearch({
           aria-label="Найти номер и открыть тему"
           disabled={isPending}
         />
+        {numberQuery.length > 0 ? (
+          <button
+            type="submit"
+            disabled={isPending}
+            aria-label="Найти"
+            className="flex h-[30px] w-[30px] shrink-0 items-center justify-center rounded-full text-white"
+            style={{ background: "var(--shbz-accent-grad)", opacity: isPending ? 0.55 : 1 }}
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <path d="M5 12h14M13 6l6 6-6 6" />
+            </svg>
+          </button>
+        ) : null}
       </label>
       {feedback ? (
         <p className="text-xs font-medium" style={{ color: "var(--shbz-red-text)" }}>
