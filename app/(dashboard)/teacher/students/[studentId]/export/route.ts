@@ -4,6 +4,7 @@ import { NextResponse } from "next/server";
 import { tryGetCurrentUser } from "@/lib/auth";
 import { getRequestLogContext, logErrorEvent, logInfoEvent, logWarnEvent } from "@/lib/logger";
 import { prisma } from "@/lib/prisma";
+import { computeStudentStreak } from "@/lib/student-streak";
 import { formatDateTime } from "@/lib/utils";
 
 export const runtime = "nodejs";
@@ -15,23 +16,23 @@ const statusLabels: Record<string, string> = {
 };
 
 const colors = {
-  navy: "0F172A",
-  text: "1E293B",
-  muted: "64748B",
-  border: "DCE6F2",
-  softBorder: "E8EEF6",
-  headerBg: "EEF4FF",
-  titleBg: "E6F0FF",
-  blue: "2F80ED",
-  blueSoft: "DBEAFE",
-  green: "166534",
-  greenSoft: "DCFCE7",
-  yellow: "854D0E",
-  yellowSoft: "FEF3C7",
-  red: "991B1B",
-  redSoft: "FEE2E2",
-  slateSoft: "F8FAFC",
-  track: "EDF2F7"
+  navy: "14161A",
+  text: "2C2E33",
+  muted: "6A6E75",
+  border: "ECECEE",
+  softBorder: "F0F0F1",
+  headerBg: "EAF7F0",
+  titleBg: "D9F3E7",
+  blue: "16B07E",
+  blueSoft: "D9F3E7",
+  green: "1B9E63",
+  greenSoft: "EAF7EF",
+  yellow: "C98A1E",
+  yellowSoft: "FEF4E3",
+  red: "D64550",
+  redSoft: "FCEDED",
+  slateSoft: "F8F9FA",
+  track: "EFEFF1"
 } as const;
 
 type AssignmentRow = {
@@ -244,9 +245,13 @@ function setTableHeader(row: ExcelJS.Row) {
   row.height = 22;
 }
 
-function setDataRow(row: ExcelJS.Row) {
+function setDataRow(row: ExcelJS.Row, zebra = false) {
   row.eachCell((cell) => {
     applyBaseCellStyle(cell);
+
+    if (zebra) {
+      cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: colors.slateSoft } };
+    }
   });
   row.height = 22;
 }
@@ -361,7 +366,9 @@ function setSummarySheet(
     issuedAssignments,
     doneAssignments,
     inProgressAssignments,
-    attentionAssignments
+    attentionAssignments,
+    currentStreak,
+    solvedThisWeek
   }: {
     studentName: string;
     studentEmail: string;
@@ -376,9 +383,12 @@ function setSummarySheet(
     doneAssignments: number;
     inProgressAssignments: number;
     attentionAssignments: number;
+    currentStreak: number;
+    solvedThisWeek: number;
   }
 ) {
   worksheet.views = [{ showGridLines: false }];
+  worksheet.pageSetup = { orientation: "portrait", fitToPage: true, fitToWidth: 1, fitToHeight: 0 };
   worksheet.columns = [
     { width: 28 },
     { width: 18 },
@@ -431,21 +441,41 @@ function setSummarySheet(
     };
   });
 
-  setSectionLabel(worksheet, 15, "Наглядный прогресс по номерам");
-  addProgressBarRow(worksheet, 16, "Решены с первого раза", totalGreen, totalNumbers, colors.green);
-  addProgressBarRow(worksheet, 17, "Решены после самопроверки", totalYellow, totalNumbers, colors.yellow);
-  addProgressBarRow(worksheet, 18, "Требуют разбора", totalRed, totalNumbers, colors.red);
+  setSectionLabel(worksheet, 14, "Активность");
+  const activityRows = [
+    ["Огонёк (дней подряд)", currentStreak],
+    ["Закрыто за последние 7 дней", solvedThisWeek]
+  ];
+
+  activityRows.forEach(([label, value], index) => {
+    const rowNumber = 15 + index;
+    worksheet.getCell(rowNumber, 1).value = label;
+    worksheet.getCell(rowNumber, 2).value = value;
+    applyBaseCellStyle(worksheet.getCell(rowNumber, 1));
+    applyBaseCellStyle(worksheet.getCell(rowNumber, 2));
+    worksheet.getCell(rowNumber, 2).font = {
+      name: "Calibri",
+      size: 12,
+      bold: true,
+      color: { argb: colors.blue }
+    };
+  });
+
+  setSectionLabel(worksheet, 18, "Наглядный прогресс по номерам");
+  addProgressBarRow(worksheet, 19, "Решены с первого раза", totalGreen, totalNumbers, colors.green);
+  addProgressBarRow(worksheet, 20, "Решены после самопроверки", totalYellow, totalNumbers, colors.yellow);
+  addProgressBarRow(worksheet, 21, "Требуют разбора", totalRed, totalNumbers, colors.red);
   addProgressBarRow(
     worksheet,
-    19,
+    22,
     "Пока без отметки",
     totalNumbers - totalMarked,
     totalNumbers,
     colors.muted
   );
-  addProgressBarRow(worksheet, 20, "Общий прогресс", totalSolved, totalNumbers, colors.blue);
+  addProgressBarRow(worksheet, 23, "Общий прогресс", totalSolved, totalNumbers, colors.blue);
 
-  setSectionLabel(worksheet, 22, "Как читать отчёт");
+  setSectionLabel(worksheet, 25, "Как читать отчёт");
   const explanations = [
     "Решён сразу и верно: ученик выполнил номер без ошибок.",
     "Решён после самопроверки: номер удалось довести до правильного решения после доработки.",
@@ -453,7 +483,7 @@ function setSummarySheet(
   ];
 
   explanations.forEach((text, index) => {
-    const rowNumber = 23 + index;
+    const rowNumber = 26 + index;
     worksheet.mergeCells(rowNumber, 1, rowNumber, 15);
     const cell = worksheet.getCell(rowNumber, 1);
     cell.value = text;
@@ -478,6 +508,8 @@ function setHomeworkSheet(worksheet: ExcelJS.Worksheet, assignments: AssignmentS
     { width: 44 }
   ];
 
+  worksheet.autoFilter = "A2:H2";
+  worksheet.pageSetup = { orientation: "landscape", fitToPage: true, fitToWidth: 1, fitToHeight: 0 };
   setTitleRow(worksheet, 1, "Домашние задания", 8);
   const headerRow = worksheet.getRow(2);
   headerRow.values = [
@@ -505,7 +537,7 @@ function setHomeworkSheet(worksheet: ExcelJS.Worksheet, assignments: AssignmentS
       assignment.state,
       assignment.note
     ];
-    setDataRow(row);
+    setDataRow(row, index % 2 === 1);
     worksheet.getCell(rowNumber, 7).alignment = { horizontal: "center", vertical: "middle" };
     worksheet.getCell(rowNumber, 8).alignment = { wrapText: true, vertical: "middle" };
     setAssignmentStateStyle(worksheet.getCell(rowNumber, 7), assignment.stateKind);
@@ -527,6 +559,8 @@ function setDetailsSheet(
     { width: 18 }
   ];
 
+  worksheet.autoFilter = "A2:G2";
+  worksheet.pageSetup = { orientation: "landscape", fitToPage: true, fitToWidth: 1, fitToHeight: 0 };
   setTitleRow(worksheet, 1, "Номера по домашним заданиям", 7);
   const headerRow = worksheet.getRow(2);
   headerRow.values = ["Тема", "ДЗ", "Номер", "Результат", "Дедлайн", "Комментарий ученика", "Обновлено"];
@@ -544,7 +578,7 @@ function setDetailsSheet(
       rowData.note || "—",
       rowData.updated
     ];
-    setDataRow(row);
+    setDataRow(row, index % 2 === 1);
     worksheet.getCell(rowNumber, 6).alignment = { wrapText: true, vertical: "middle" };
     setStatusCellStyle(worksheet.getCell(rowNumber, 4), rowData.statusKey);
   });
@@ -770,6 +804,8 @@ export async function GET(
     workbook.modified = exportDate;
     workbook.company = "TutorFlow";
 
+    const streak = await computeStudentStreak(studentId).catch(() => null);
+
     const summarySheet = workbook.addWorksheet("Сводка");
     setSummarySheet(summarySheet, {
       studentName: data.student.name,
@@ -784,7 +820,9 @@ export async function GET(
       issuedAssignments: issuedAssignments.length,
       doneAssignments: doneAssignments.length,
       inProgressAssignments: inProgressAssignments.length,
-      attentionAssignments: attentionAssignments.length
+      attentionAssignments: attentionAssignments.length,
+      currentStreak: streak?.currentStreak ?? 0,
+      solvedThisWeek: streak?.solvedThisWeek ?? 0
     });
 
     const homeworkSheet = workbook.addWorksheet("Домашние задания");
@@ -801,6 +839,9 @@ export async function GET(
 
     const buffer = await workbook.xlsx.writeBuffer();
     const datePart = exportDate.toISOString().slice(0, 10);
+    const asciiName = data.student.name.replace(/[^a-zA-Z0-9_-]+/g, "").slice(0, 30);
+    const asciiFileName = `progress-${asciiName ? `${asciiName}-` : ""}${datePart}.xlsx`;
+    const utfFileName = encodeURIComponent(`Прогресс — ${data.student.name} — ${datePart}.xlsx`);
 
     logInfoEvent(
       "student.export.succeeded",
@@ -819,7 +860,7 @@ export async function GET(
       headers: {
         "Content-Type":
           "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-        "Content-Disposition": `attachment; filename="progress-${datePart}.xlsx"; filename*=UTF-8''progress-${datePart}.xlsx`,
+        "Content-Disposition": `attachment; filename="${asciiFileName}"; filename*=UTF-8''${utfFileName}`,
         "Cache-Control": "no-store"
       }
     });
