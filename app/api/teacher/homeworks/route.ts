@@ -38,7 +38,6 @@ function revalidateHomeworkRoutes(studentId: string, topicId: string) {
   revalidatePath("/teacher/students");
   revalidatePath(`/teacher/students/${studentId}`);
   revalidatePath(`/teacher/students/${studentId}/assign`);
-  revalidatePath(`/teacher/students/${studentId}/homeworks`);
 }
 
 export async function POST(request: Request) {

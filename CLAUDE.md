@@ -106,8 +106,8 @@ Postgres service.
 - `HomeworkAssignment` + `HomeworkAssignmentNumber` — a homework set issued to one student for one
   topic (`title?`, `deadlineAt`, linked numbers). Issuing/cancelling also mirrors `deadlineAt` onto
   `StudentTopicNumberStatus`, so student views, deadline calendars and the PDF report keep working.
-  Teacher UI: `/teacher/students/[studentId]` has sub-tabs — progress (read-only), `/assign`
-  (create assignments), `/homeworks` (review/cancel).
+  Teacher UI: `/teacher/students/[studentId]` shows homework review/cancel (default tab) with an
+  `/assign` sub-tab for issuing homework; there is no per-topic progress view for the teacher.
 
 `prisma/migrations/` reflects the feature history: init → shared topics/files → answer files →
 LaTeX answers → student notes → student deadlines → LaTeX conditions.

@@ -1,9 +1,8 @@
 import { UserRole } from "@prisma/client";
-import { notFound } from "next/navigation";
 import { SectionCard } from "@/components/section-card";
-import { TeacherStudentProgressBoard } from "@/components/teacher-student-progress-board";
+import { TeacherHomeworkReviewList } from "@/components/teacher-homework-review-list";
 import { requireUser } from "@/lib/auth";
-import { getTeacherStudentDetail } from "@/lib/platform-data";
+import { getTeacherStudentHomeworks } from "@/lib/platform-data";
 import { toIsoDateTimeString } from "@/lib/utils";
 
 type TeacherStudentPageProps = {
@@ -15,50 +14,38 @@ type TeacherStudentPageProps = {
 export default async function TeacherStudentPage({ params }: TeacherStudentPageProps) {
   await requireUser(UserRole.TEACHER);
   const { studentId } = await params;
-  let data: Awaited<ReturnType<typeof getTeacherStudentDetail>>;
-
-  try {
-    data = await getTeacherStudentDetail(studentId);
-  } catch (error) {
-    if (error instanceof Error && error.message.startsWith("Student not found:")) {
-      notFound();
-    }
-
-    throw error;
-  }
+  const { assignmentsEnabled, assignments } = await getTeacherStudentHomeworks(studentId);
 
   return (
-    <SectionCard title="Прогресс по темам">
-      {!data.notesEnabled ? (
+    <SectionCard title="Проверка домашних заданий">
+      {!assignmentsEnabled ? (
         <div className="ui-notice-warning rounded-[12px] px-4 py-3 text-sm">
-          Заметки ученика появятся здесь после обновления базы данных до актуальной версии.
+          Раздел ДЗ появится после обновления базы данных до актуальной версии.
         </div>
-      ) : null}
-      {data.topics.length === 0 ? (
+      ) : assignments.length === 0 ? (
         <div className="ui-panel-soft rounded-[28px] border-dashed px-5 py-10 text-center">
-          <p className="font-display text-2xl font-semibold text-[var(--theme-text-strong)]">Темы пока не добавлены</p>
+          <p className="font-display text-2xl font-semibold text-[var(--theme-text-strong)]">ДЗ пока не выдано</p>
+          <p className="ui-copy-muted mt-2 text-sm">Выдайте первое ДЗ во вкладке «Выдать ДЗ».</p>
         </div>
       ) : (
-        <TeacherStudentProgressBoard
-          initialTopics={data.topics.map((topic) => ({
-            id: topic.id,
-            title: topic.title,
-            description: topic.description,
-            totalNumbers: topic.totalNumbers,
-            solvedCount: topic.solvedCount,
-            solvedPercent: topic.solvedPercent,
-            markedCount: topic.markedCount,
-            redCount: topic.redCount,
-            numbers: topic.numbers.map((number) => ({
-              id: number.id,
+        <TeacherHomeworkReviewList
+          assignments={assignments.map((assignment) => ({
+            id: assignment.id,
+            label: assignment.label,
+            topicId: assignment.topicId,
+            topicTitle: assignment.topicTitle,
+            deadlineAt: toIsoDateTimeString(assignment.deadlineAt),
+            createdAt: toIsoDateTimeString(assignment.createdAt) ?? "",
+            totalNumbers: assignment.totalNumbers,
+            markedCount: assignment.markedCount,
+            redCount: assignment.redCount,
+            solvedCount: assignment.solvedCount,
+            solvedPercent: assignment.solvedPercent,
+            numbers: assignment.numbers.map((number) => ({
+              homeworkNumberId: number.homeworkNumberId,
               number: number.number,
-              studentStatus: number.studentStatus
-                ? {
-                    status: number.studentStatus.status,
-                    note: number.studentStatus.note,
-                    deadlineAt: toIsoDateTimeString(number.studentStatus.deadlineAt ?? null)
-                  }
-                : null
+              status: number.status,
+              note: number.note
             }))
           }))}
         />
