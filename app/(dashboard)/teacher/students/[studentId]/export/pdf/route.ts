@@ -67,18 +67,10 @@ export async function GET(
       string,
       { topicTitle: string; deadlineAt: Date; total: number; solved: number; red: number; marked: number }
     >();
-    let totalNumbers = 0;
-    let totalSolved = 0;
-
     for (const topic of data.topics) {
       for (const numberEntry of topic.homeworkNumbers) {
-        totalNumbers += 1;
         const statusEntry = numberEntry.statuses[0] ?? null;
         const statusKey = statusEntry?.status ?? null;
-
-        if (statusKey === "GREEN" || statusKey === "YELLOW") {
-          totalSolved += 1;
-        }
 
         const deadlineAt =
           data.deadlinesEnabled && (statusEntry as { deadlineAt?: Date | null })?.deadlineAt
@@ -162,6 +154,10 @@ export async function GET(
       computeStudentStreak(studentId).catch(() => null)
     ]);
 
+    const homeworkGroupList = Array.from(assignmentGroups.values());
+    const homeworkTotal = homeworkGroupList.reduce((sum, group) => sum + group.total, 0);
+    const homeworkSolved = homeworkGroupList.reduce((sum, group) => sum + group.solved, 0);
+
     const greenCount = weeklyRawRows.filter((row) => row.statusKey === "GREEN").length;
     const yellowCount = weeklyRawRows.filter((row) => row.statusKey === "YELLOW").length;
     const redCount = weeklyRawRows.filter((row) => row.statusKey === "RED").length;
@@ -176,8 +172,8 @@ export async function GET(
       yellowCount,
       redCount,
       streakDays: streak?.currentStreak ?? 0,
-      totalSolved,
-      totalNumbers,
+      totalSolved: homeworkSolved,
+      totalNumbers: homeworkTotal,
       days: timeline.map((entry) => ({
         label: weekday.format(new Date(`${entry.date}T12:00:00`)),
         closedCount: entry.closedCount,

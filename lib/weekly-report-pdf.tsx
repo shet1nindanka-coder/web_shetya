@@ -247,15 +247,19 @@ function WeeklyReportDocument({ input }: { input: WeeklyPdfInput }) {
           <KpiCard label="Огонёк" value={`${input.streakDays} дн.`} bg={colors.orangeSoft} labelColor={colors.orange} valueColor={colors.orange} />
         </View>
 
-        <View style={styles.progressHeader}>
-          <Text style={{ fontSize: 8.5, color: colors.muted }}>Общий прогресс по номерам</Text>
-          <Text style={{ fontSize: 8.5, fontWeight: 700 }}>
-            {input.totalSolved} из {input.totalNumbers} · {totalPercent}%
-          </Text>
-        </View>
-        <View style={styles.progressTrack}>
-          <View style={{ height: "100%", width: `${totalPercent}%`, borderRadius: 3, backgroundColor: colors.teal }} />
-        </View>
+        {input.totalNumbers > 0 ? (
+          <>
+            <View style={styles.progressHeader}>
+              <Text style={{ fontSize: 8.5, color: colors.muted }}>Прогресс по выданным ДЗ</Text>
+              <Text style={{ fontSize: 8.5, fontWeight: 700 }}>
+                {input.totalSolved} из {input.totalNumbers} · {totalPercent}%
+              </Text>
+            </View>
+            <View style={styles.progressTrack}>
+              <View style={{ height: "100%", width: `${totalPercent}%`, borderRadius: 3, backgroundColor: colors.teal }} />
+            </View>
+          </>
+        ) : null}
 
         <Text style={styles.sectionTitle}>Активность по дням</Text>
         <View style={styles.daysRow}>
