@@ -5,6 +5,7 @@ import { useState, useCallback, useEffect } from "react";
 import { usePathname } from "next/navigation";
 import { UserRole } from "@prisma/client";
 import { logoutAction } from "@/actions/auth";
+import { StudentNotificationsBell } from "@/components/student-notifications-bell";
 import { useStudentStreak } from "@/components/student-streak-provider";
 import { useStreakMotion } from "@/components/use-streak-motion";
 
@@ -120,6 +121,7 @@ export function DashboardNav({ user, studentStreak }: DashboardNavProps) {
 
         {/* Профиль */}
         <div className="hidden shrink-0 items-center gap-3.5 md:flex">
+          {isStudent ? <StudentNotificationsBell /> : null}
           <div className="shbz-avatar">{initialsOf(user.name)}</div>
           <div className="leading-[1.3]">
             <div className="text-sm font-bold" style={{ color: "var(--shbz-text-strong)" }}>
@@ -143,10 +145,12 @@ export function DashboardNav({ user, studentStreak }: DashboardNavProps) {
         </div>
 
         {/* Мобильное меню */}
+        <div className="flex items-center gap-2 md:hidden">
+          {isStudent ? <StudentNotificationsBell /> : null}
         <button
           type="button"
           onClick={() => setMobileOpen(!mobileOpen)}
-          className="flex h-10 w-10 items-center justify-center rounded-full border-[1.5px] md:hidden"
+          className="flex h-10 w-10 items-center justify-center rounded-full border-[1.5px]"
           style={{ borderColor: "var(--shbz-outline-border)", color: "var(--shbz-text-strong)" }}
           aria-label="Меню"
           aria-expanded={mobileOpen}
@@ -166,6 +170,7 @@ export function DashboardNav({ user, studentStreak }: DashboardNavProps) {
             )}
           </svg>
         </button>
+        </div>
       </div>
 
       {mobileOpen ? (

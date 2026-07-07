@@ -4,6 +4,7 @@ import { NextResponse } from "next/server";
 import { tryGetCurrentUser } from "@/lib/auth";
 import { enforceApiRateLimit } from "@/lib/api-rate-limit";
 import { publishDashboardRealtimeEvent } from "@/lib/dashboard-realtime";
+import { createNotification } from "@/lib/notifications";
 import { revalidateAllPlatformData } from "@/lib/platform-data-cache";
 import { prisma } from "@/lib/prisma";
 
@@ -218,6 +219,35 @@ export async function POST(request: Request) {
     }
 
     throw error;
+  }
+
+  if (deadlineAt) {
+    const [topic, numbers] = await Promise.all([
+      prisma.topic.findUnique({ where: { id: topicId }, select: { title: true } }),
+      prisma.topicHomeworkNumber.findMany({
+        where: { id: { in: homeworkNumberIds } },
+        select: { number: true },
+        orderBy: { number: "asc" }
+      })
+    ]);
+    const numbersLabel = numbers.map((entry) => entry.number).join(", ");
+    const deadlineLabel = new Intl.DateTimeFormat("ru-RU", {
+      day: "numeric",
+      month: "long",
+      hour: "2-digit",
+      minute: "2-digit"
+    }).format(deadlineAt);
+
+    await createNotification({
+      userId: studentId,
+      type: "homework-assigned",
+      title:
+        homeworkNumberIds.length > 1
+          ? `Учитель выдал ДЗ по теме «${topic?.title ?? "Тема"}»`
+          : `Назначен дедлайн по теме «${topic?.title ?? "Тема"}»`,
+      body: `${homeworkNumberIds.length > 1 ? "Номера" : "Номер"} ${numbersLabel} · дедлайн ${deadlineLabel}`,
+      href: `/student/topics/${topicId}`
+    });
   }
 
   revalidateDeadlineRoutes(studentId, topicId);

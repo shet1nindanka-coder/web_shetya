@@ -3,6 +3,7 @@
 import { UserRole } from "@prisma/client";
 import { startTransition, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
+import { notifyStudentNotificationsChanged } from "@/lib/student-notifications-realtime";
 import { STUDENT_STREAK_REALTIME_EVENT } from "@/lib/student-streak-realtime";
 
 type DashboardRealtimeListenerProps = {
@@ -81,6 +82,14 @@ export function DashboardRealtimeListener({
     source.onmessage = (message) => {
       try {
         const event = JSON.parse(message.data) as DashboardRealtimeEvent;
+
+        if (
+          role === UserRole.STUDENT &&
+          event.kind === "student-deadlines-changed" &&
+          event.studentId === userId
+        ) {
+          notifyStudentNotificationsChanged();
+        }
 
         if (
           role === UserRole.STUDENT &&

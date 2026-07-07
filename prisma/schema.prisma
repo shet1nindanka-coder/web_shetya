@@ -66,6 +66,7 @@ model User {
   sessions       Session[]
   uploadedFiles  StoredFile[]              @relation("UploadedFiles")
   numberStatuses StudentTopicNumberStatus[]
+  notifications  Notification[]
   studentProfile       StudentProfile?
   groupsLed            StudentGroup[]      @relation("GroupTeacher")
   lessonsTaught        Lesson[]            @relation("LessonTeacher")
@@ -98,6 +99,21 @@ model StoredFile {
   theoryForTopics        Topic[]               @relation("TheoryFile")
   homeworkForTopics      Topic[]               @relation("HomeworkFile")
   answerForNumberEntries TopicHomeworkNumber[] @relation("NumberAnswerFile")
+}
+
+model Notification {
+  id        String    @id @default(cuid())
+  userId    String
+  type      String
+  title     String
+  body      String?
+  href      String?
+  readAt    DateTime?
+  createdAt DateTime  @default(now())
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, createdAt])
+  @@index([userId, readAt])
 }
 
 model Topic {
