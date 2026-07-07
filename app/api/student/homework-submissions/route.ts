@@ -119,7 +119,9 @@ export async function POST(request: Request) {
     const storedUpload = await saveUploadedFile(file);
     const photo = await prisma.homeworkSubmissionPhoto.create({
       data: {
-        assignmentId: assignment.id,
+        assignment: {
+          connect: { id: assignment.id }
+        },
         file: {
           create: {
             originalName: storedUpload.originalName,
