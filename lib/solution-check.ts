@@ -131,8 +131,8 @@ async function storedFileToDataUrl(storageKey: string, mimeType: string) {
   try {
     const compressed = await sharp(buffer)
       .rotate()
-      .resize({ width: 1568, height: 1568, fit: "inside", withoutEnlargement: true })
-      .jpeg({ quality: 78 })
+      .resize({ width: 2000, height: 2000, fit: "inside", withoutEnlargement: true })
+      .jpeg({ quality: 82 })
       .toBuffer();
 
     logInfoEvent("solution.check.photo_compressed", {
@@ -175,7 +175,10 @@ async function callModel(
       body: JSON.stringify({
         model: config.model,
         ...(isReasoningModel(config.model)
-          ? { max_completion_tokens: 8000 }
+          ? {
+              max_completion_tokens: 16000,
+              reasoning_effort: process.env.AI_CHECK_REASONING_EFFORT?.trim() || "high"
+            }
           : { temperature: 0, max_tokens: 8000 }),
         response_format: { type: "json_object" },
         messages: [
@@ -184,7 +187,7 @@ async function callModel(
             role: "user",
             content: [
               { type: "text", text: extraInstruction ? `${userText}\n\n${extraInstruction}` : userText },
-              ...imageUrls.map((url) => ({ type: "image_url", image_url: { url } }))
+              ...imageUrls.map((url) => ({ type: "image_url", image_url: { url, detail: "high" } }))
             ]
           }
         ]
