@@ -108,7 +108,7 @@ export function StudentHomeworkPhotos({ assignmentId, photos }: StudentHomeworkP
           type="button"
           disabled={isUploading}
           onClick={() => fileInputRef.current?.click()}
-          className="shbz-btn-primary px-5 py-2.5 text-[14px] disabled:cursor-not-allowed disabled:opacity-60"
+          className="shbz-btn-primary ml-auto px-5 py-2.5 text-[14px] disabled:cursor-not-allowed disabled:opacity-60"
         >
           {isUploading ? "Загружаем..." : "Прикрепить фото"}
         </button>

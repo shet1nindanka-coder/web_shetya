@@ -1555,3 +1555,13 @@ const getDeveloperStatisticsCached = unstable_cache(getDeveloperStatisticsUncach
 export async function getDeveloperStatistics(): Promise<Awaited<ReturnType<typeof getDeveloperStatisticsUncached>>> {
   return getDeveloperStatisticsCached();
 }
+
+export async function findTopicIdByNumber(targetNumber: number) {
+  const homeworkNumber = await prisma.topicHomeworkNumber.findFirst({
+    where: { number: targetNumber },
+    orderBy: [{ topic: { displayOrder: "asc" } }, { topic: { createdAt: "asc" } }],
+    select: { topicId: true }
+  });
+
+  return homeworkNumber?.topicId ?? null;
+}

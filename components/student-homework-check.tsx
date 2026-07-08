@@ -116,7 +116,7 @@ export function StudentHomeworkCheck({ assignmentId, hasPhotos, initialCheck }: 
           disabled={!hasPhotos || isStarting || isRunning}
           onClick={() => void startCheck()}
           title={hasPhotos ? undefined : "Сначала прикрепите фото решения"}
-          className="shbz-btn-primary px-5 py-2.5 text-[14px] disabled:cursor-not-allowed disabled:opacity-60"
+          className="shbz-btn-primary ml-auto px-5 py-2.5 text-[14px] disabled:cursor-not-allowed disabled:opacity-60"
         >
           {isRunning ? "Проверяется..." : isStarting ? "Запускаем..." : "Проверить решение"}
         </button>
