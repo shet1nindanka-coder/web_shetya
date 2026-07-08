@@ -64,7 +64,15 @@ export function cx(...values: Array<string | false | null | undefined>) {
 }
 
 export function roleHome(role: UserRole) {
-  return role === UserRole.TEACHER ? "/teacher" : "/student";
+  if (role === UserRole.TEACHER) {
+    return "/teacher";
+  }
+
+  if (role === UserRole.DEVELOPER) {
+    return "/teacher/topics";
+  }
+
+  return "/student";
 }
 
 export function normalizeSingleLineText(value: string) {

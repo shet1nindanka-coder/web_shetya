@@ -133,14 +133,16 @@ export async function tryGetCurrentUser() {
   }
 }
 
-export async function requireUser(role?: UserRole) {
+export async function requireUser(role?: UserRole | UserRole[]) {
   const user = await getCurrentUser();
 
   if (!user) {
     redirect("/login");
   }
 
-  if (role && user.role !== role) {
+  const allowedRoles = Array.isArray(role) ? role : role ? [role] : null;
+
+  if (allowedRoles && !allowedRoles.includes(user.role)) {
     redirect(roleHome(user.role));
   }
 

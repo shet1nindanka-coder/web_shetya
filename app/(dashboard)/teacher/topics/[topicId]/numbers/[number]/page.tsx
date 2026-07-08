@@ -14,7 +14,7 @@ type TeacherNumberPageProps = {
 };
 
 export default async function TeacherNumberPage({ params }: TeacherNumberPageProps) {
-  await requireUser(UserRole.TEACHER);
+  await requireUser(UserRole.DEVELOPER);
   const { topicId, number: numberParam } = await params;
   const targetNumber = Number(numberParam);
 

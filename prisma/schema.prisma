@@ -10,6 +10,7 @@ datasource db {
 enum UserRole {
   TEACHER
   STUDENT
+  DEVELOPER
 }
 
 enum HomeworkNumberStatus {

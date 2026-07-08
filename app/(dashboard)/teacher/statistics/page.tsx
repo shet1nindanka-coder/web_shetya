@@ -52,7 +52,7 @@ const statisticsViews = [
 ] as const;
 
 export default async function TeacherStatisticsPage({ searchParams }: TeacherStatisticsPageProps) {
-  await requireUser(UserRole.TEACHER);
+  await requireUser([UserRole.TEACHER, UserRole.DEVELOPER]);
 
   const resolvedSearchParams = (await searchParams) ?? {};
   const requestedView = typeof resolvedSearchParams.view === "string" ? resolvedSearchParams.view : undefined;

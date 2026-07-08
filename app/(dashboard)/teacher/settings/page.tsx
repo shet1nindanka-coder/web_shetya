@@ -7,7 +7,7 @@ type TeacherSettingsPageProps = {
 };
 
 export default async function TeacherSettingsPage({ searchParams }: TeacherSettingsPageProps) {
-  const user = await requireUser(UserRole.TEACHER);
+  const user = await requireUser([UserRole.TEACHER, UserRole.DEVELOPER]);
   const resolvedSearchParams = (await searchParams) ?? {};
   const notice = resolveAccountNotice(resolvedSearchParams);
 

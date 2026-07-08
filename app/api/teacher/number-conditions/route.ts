@@ -26,7 +26,7 @@ export async function POST(request: Request) {
   const requestContext = getRequestLogContext(request);
   const user = await tryGetCurrentUser();
 
-  if (!user || user.role !== UserRole.TEACHER) {
+  if (!user || user.role !== UserRole.DEVELOPER) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -100,7 +100,7 @@ export async function DELETE(request: Request) {
   const requestContext = getRequestLogContext(request);
   const user = await tryGetCurrentUser();
 
-  if (!user || user.role !== UserRole.TEACHER) {
+  if (!user || user.role !== UserRole.DEVELOPER) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 

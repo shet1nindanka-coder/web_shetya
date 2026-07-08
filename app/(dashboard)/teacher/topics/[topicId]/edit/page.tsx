@@ -51,7 +51,7 @@ const topicEditNotices = {
 } as const;
 
 export default async function TeacherTopicPage({ params, searchParams }: TeacherTopicPageProps) {
-  await requireUser(UserRole.TEACHER);
+  await requireUser(UserRole.DEVELOPER);
   const { topicId } = await params;
   const resolvedSearchParams = (await searchParams) ?? {};
   const saved = typeof resolvedSearchParams.saved === "string" ? resolvedSearchParams.saved : undefined;

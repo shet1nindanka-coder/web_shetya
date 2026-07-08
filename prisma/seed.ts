@@ -92,6 +92,7 @@ async function main() {
   await ensureStorageRoot();
 
   const teacherPassword = await hashPassword("teacher123");
+  const developerPassword = await hashPassword("dev123");
   const studentPassword = await hashPassword("student123");
 
   const teacher = await prisma.user.create({
@@ -100,6 +101,15 @@ async function main() {
       email: "teacher@example.com",
       passwordHash: teacherPassword,
       role: UserRole.TEACHER
+    }
+  });
+
+  await prisma.user.create({
+    data: {
+      name: "Даниил (разработчик)",
+      email: "dev@example.com",
+      passwordHash: developerPassword,
+      role: UserRole.DEVELOPER
     }
   });
 
@@ -330,6 +340,7 @@ async function main() {
 
   console.log("Seed completed.");
   console.log("Teacher:", teacher.email, "teacher123");
+  console.log("Developer:", "dev@example.com", "dev123");
   console.log("Students:", ilya.email, "student123", "|", maria.email, "student123");
 }
 

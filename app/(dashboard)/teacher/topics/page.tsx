@@ -56,7 +56,8 @@ function pluralizeNumbers(count: number) {
 }
 
 export default async function TeacherTopicsPage({ searchParams }: TeacherTopicsPageProps) {
-  await requireUser(UserRole.TEACHER);
+  const user = await requireUser([UserRole.TEACHER, UserRole.DEVELOPER]);
+  const isDeveloper = user.role === UserRole.DEVELOPER;
   const data = await getTeacherTopicsOverview();
   const uploadMode = getStorageBackend() === "blob" ? "blob" : "local";
   const blobAccess = getBlobAccessMode();
@@ -94,14 +95,16 @@ export default async function TeacherTopicsPage({ searchParams }: TeacherTopicsP
         </div>
       ) : null}
 
-      <section id="create-topic" className="scroll-mt-24">
-        <h2 className="shbz-section-title">Создать новую тему</h2>
-        <div className="shbz-card shbz-section-pad">
-          <TopicCreateForm uploadMode={uploadMode} blobAccess={blobAccess} />
-        </div>
-      </section>
+      {isDeveloper ? (
+        <section id="create-topic" className="scroll-mt-24">
+          <h2 className="shbz-section-title">Создать новую тему</h2>
+          <div className="shbz-card shbz-section-pad">
+            <TopicCreateForm uploadMode={uploadMode} blobAccess={blobAccess} />
+          </div>
+        </section>
+      ) : null}
 
-      <section className="mt-11">
+      <section className={isDeveloper ? "mt-11" : undefined}>
         <h2 className="shbz-section-title" style={{ marginBottom: 22 }}>
           Все темы
         </h2>
@@ -125,7 +128,9 @@ export default async function TeacherTopicsPage({ searchParams }: TeacherTopicsP
                     <Link href={`/teacher/topics/${topic.id}`} className="shbz-btn-primary px-[18px] py-2.5 text-[13px]">
                       Открыть
                     </Link>
-                    <DeleteTopicDialog topicId={topic.id} topicTitle={topic.title} triggerClassName="shbz-btn-danger" />
+                    {isDeveloper ? (
+                      <DeleteTopicDialog topicId={topic.id} topicTitle={topic.title} triggerClassName="shbz-btn-danger" />
+                    ) : null}
                   </>
                 }
               />

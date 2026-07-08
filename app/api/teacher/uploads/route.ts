@@ -101,7 +101,7 @@ export async function POST(request: Request) {
       if (body.type === "blob.generate-client-token") {
         const user = await tryGetCurrentUser();
 
-        if (!user || user.role !== UserRole.TEACHER) {
+        if (!user || user.role !== UserRole.DEVELOPER) {
           return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }
 
@@ -138,7 +138,7 @@ export async function POST(request: Request) {
     if (body?.action === "register-blob") {
       const user = await tryGetCurrentUser();
 
-      if (!user || user.role !== UserRole.TEACHER) {
+      if (!user || user.role !== UserRole.DEVELOPER) {
         return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
       }
 
@@ -222,7 +222,7 @@ export async function POST(request: Request) {
 
   const user = await tryGetCurrentUser();
 
-  if (!user || user.role !== UserRole.TEACHER) {
+  if (!user || user.role !== UserRole.DEVELOPER) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 

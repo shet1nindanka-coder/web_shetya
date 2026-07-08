@@ -89,7 +89,7 @@ async function cleanupStoredFileIds(fileIds: Iterable<string>, context: Record<s
 }
 
 export async function createTopicAction(formData: FormData) {
-  const user = await requireUser(UserRole.TEACHER);
+  const user = await requireUser(UserRole.DEVELOPER);
   const title = normalizeSingleLineText(String(formData.get("title") ?? ""));
   const description = normalizeMultilineText(String(formData.get("description") ?? ""));
   const numbers = parseNumbersInput(String(formData.get("numbers") ?? ""));
@@ -243,7 +243,7 @@ export async function createTopicAction(formData: FormData) {
 }
 
 export async function updateTopicAction(formData: FormData) {
-  const user = await requireUser(UserRole.TEACHER);
+  const user = await requireUser(UserRole.DEVELOPER);
 
   const topicId = String(formData.get("topicId") ?? "");
   const title = normalizeSingleLineText(String(formData.get("title") ?? ""));
@@ -451,7 +451,7 @@ export async function updateTopicAction(formData: FormData) {
 }
 
 export async function deleteTopicFileAction(formData: FormData) {
-  const user = await requireUser(UserRole.TEACHER);
+  const user = await requireUser(UserRole.DEVELOPER);
 
   const topicId = String(formData.get("topicId") ?? "").trim();
   const fileKind = getTopicFileKind(formData.get("fileKind"));
@@ -518,7 +518,7 @@ export async function deleteTopicFileAction(formData: FormData) {
 }
 
 export async function deleteTopicAction(formData: FormData) {
-  const user = await requireUser(UserRole.TEACHER);
+  const user = await requireUser(UserRole.DEVELOPER);
 
   const topicId = String(formData.get("topicId") ?? "");
 

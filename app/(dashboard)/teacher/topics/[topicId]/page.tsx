@@ -15,7 +15,8 @@ type TeacherTopicPageProps = {
 };
 
 export default async function TeacherTopicPage({ params }: TeacherTopicPageProps) {
-  await requireUser(UserRole.TEACHER);
+  const user = await requireUser([UserRole.TEACHER, UserRole.DEVELOPER]);
+  const isDeveloper = user.role === UserRole.DEVELOPER;
   const { topicId } = await params;
   const data = await getTeacherTopicDetail(topicId);
 
@@ -28,16 +29,18 @@ export default async function TeacherTopicPage({ params }: TeacherTopicPageProps
         title={data.topic.title}
         description={data.topic.description}
         actions={
-          <DeleteTopicDialog
-            topicId={data.topic.id}
-            topicTitle={data.topic.title}
-            triggerLabel="Удалить тему"
-            triggerClassName="ui-pressable ui-button-danger rounded-[10px] px-3.5 py-2 text-sm font-semibold transition sm:rounded-[12px]"
-          />
+          isDeveloper ? (
+            <DeleteTopicDialog
+              topicId={data.topic.id}
+              topicTitle={data.topic.title}
+              triggerLabel="Удалить тему"
+              triggerClassName="ui-pressable ui-button-danger rounded-[10px] px-3.5 py-2 text-sm font-semibold transition sm:rounded-[12px]"
+            />
+          ) : undefined
         }
       />
 
-      <TeacherTopicTabs topicId={data.topic.id} />
+      {isDeveloper ? <TeacherTopicTabs topicId={data.topic.id} /> : null}
 
       <SectionCard title="Материалы" description="Файлы теории и заданий — так их видит ученик.">
         <div className="grid gap-4 xl:grid-cols-2">

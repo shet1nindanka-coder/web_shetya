@@ -90,14 +90,15 @@ export function resolveAccountNotice(searchParams: ResolvedSearchParams) {
 
 export function AccountSettingsView({ user, notice }: AccountSettingsViewProps) {
   const isTeacher = user.role === UserRole.TEACHER;
-  const roleLabel = isTeacher ? "Преподаватель" : "Ученик";
+  const isDeveloper = user.role === UserRole.DEVELOPER;
+  const roleLabel = isDeveloper ? "Разработчик" : isTeacher ? "Преподаватель" : "Ученик";
 
   return (
     <div>
       <ShbzPageHeader
         kicker="Профиль и интерфейс"
         title="Настройки"
-        aside={isTeacher ? <ShbzNumberSearch endpoint="/api/teacher/topics/find-number" /> : undefined}
+        aside={isTeacher || isDeveloper ? <ShbzNumberSearch endpoint="/api/teacher/topics/find-number" /> : undefined}
       />
 
       {notice ? (

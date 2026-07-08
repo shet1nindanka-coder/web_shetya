@@ -32,6 +32,16 @@ const studentItems = [
   }
 ];
 
+const developerItems = [
+  { href: "/teacher/topics", label: "темы", match: (p: string) => p.startsWith("/teacher/topics") },
+  { href: "/teacher/statistics", label: "статистика", match: (p: string) => p.startsWith("/teacher/statistics") },
+  {
+    href: "/teacher/settings",
+    label: "настройки",
+    match: (p: string) => p.startsWith("/teacher/settings") || p.startsWith("/teacher/account")
+  }
+];
+
 const teacherItems = [
   { href: "/teacher", label: "обзор", match: (p: string) => p === "/teacher" },
   { href: "/teacher/topics", label: "темы", match: (p: string) => p.startsWith("/teacher/topics") },
@@ -74,10 +84,10 @@ export function DashboardNav({ user, studentStreak }: DashboardNavProps) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const pathname = usePathname();
   const isStudent = user.role === UserRole.STUDENT;
-  const roleLabel = isStudent ? "Ученик" : "Преподаватель";
+  const roleLabel = isStudent ? "Ученик" : user.role === UserRole.DEVELOPER ? "Разработчик" : "Преподаватель";
   const liveStreak = useStudentStreak();
   const streakValue = liveStreak?.streak ?? studentStreak;
-  const items = isStudent ? studentItems : teacherItems;
+  const items = isStudent ? studentItems : user.role === UserRole.DEVELOPER ? developerItems : teacherItems;
 
   const closeMobile = useCallback(() => setMobileOpen(false), []);
 

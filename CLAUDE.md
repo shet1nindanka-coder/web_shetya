@@ -93,7 +93,11 @@ Postgres service.
 
 ## Data model (`prisma/schema.prisma`)
 
-- `User` — `role: TEACHER | STUDENT`, `email` (used as login), `passwordHash`.
+- `User` — `role: TEACHER | STUDENT | DEVELOPER`, `email` (used as login), `passwordHash`.
+  DEVELOPER manages content (topic CRUD, numbers, files, LaTeX conditions/answers, reorder,
+  uploads) and sees statistics; TEACHER has read-only topics plus students/homework/statistics.
+  Developer shares the `/teacher/*` route group; `requireUser` accepts a role array. Create a
+  developer via seed (`dev@example.com` / `dev123`) or `npx tsx scripts/create-developer.ts`.
 - `Session` — server sessions for cookie auth (`tokenHash`, `expiresAt`).
 - `StoredFile` — file metadata (`originalName`, `storageKey`, `mimeType`, `size`); reused across
   theory/homework/answer references, cleaned up when no longer referenced.
