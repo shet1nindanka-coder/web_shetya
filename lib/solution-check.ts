@@ -163,7 +163,46 @@ async function storedFileToDataUrl(storageKey: string, mimeType: string) {
   }
 }
 
+const MODEL_MAX_ATTEMPTS = 3;
+
+function delay(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
 async function callModel(
+  config: NonNullable<ReturnType<typeof getAiCheckConfig>>,
+  userText: string,
+  imageUrls: string[],
+  extraInstruction?: string
+) {
+  let lastError: Error | null = null;
+
+  for (let attempt = 1; attempt <= MODEL_MAX_ATTEMPTS; attempt += 1) {
+    try {
+      return await callModelOnce(config, userText, imageUrls, extraInstruction);
+    } catch (error) {
+      lastError = error instanceof Error ? error : new Error("Не удалось получить ответ модели.");
+
+      const isRetriable = lastError.name === "RetriableModelError" || lastError.name === "AbortError";
+
+      if (!isRetriable || attempt === MODEL_MAX_ATTEMPTS) {
+        throw lastError;
+      }
+
+      logWarnEvent(
+        "solution.check.retry_attempt",
+        { attempt, nextDelayMs: attempt * 4000 },
+        lastError,
+        "Model API failed with a retriable error; retrying."
+      );
+      await delay(attempt * 4000);
+    }
+  }
+
+  throw lastError ?? new Error("Не удалось получить ответ модели.");
+}
+
+async function callModelOnce(
   config: NonNullable<ReturnType<typeof getAiCheckConfig>>,
   userText: string,
   imageUrls: string[],
@@ -224,9 +263,15 @@ async function callModel(
         undefined,
         "Model API returned an error."
       );
-      throw new Error(
+      const apiError = new Error(
         payload?.error?.message || `Модель вернула статус ${response.status}: ${rawBody.slice(0, 200) || "пустой ответ"}`
       );
+
+      if (response.status >= 500 || response.status === 429) {
+        apiError.name = "RetriableModelError";
+      }
+
+      throw apiError;
     }
 
     const content = payload?.choices?.[0]?.message?.content;
