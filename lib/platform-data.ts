@@ -1308,20 +1308,18 @@ async function getTeacherStudentHomeworksUncached(studentId: string) {
   return { assignmentsEnabled: true as const, notesEnabled, assignments: mapped.reverse() };
 }
 
-const getTeacherStudentHomeworksCached = unstable_cache(getTeacherStudentHomeworksUncached, ["teacher-student-homeworks"], {
-  tags: [PLATFORM_DATA_TAGS.studentTopics, PLATFORM_DATA_TAGS.teacherTopics, PLATFORM_DATA_TAGS.teacherStudents]
-});
-
+// Данные ДЗ сознательно читаются без unstable_cache: вердикты ИИ пишет фоновая
+// очередь, которая не может надёжно инвалидировать теги кэша вне request-контекста.
 export async function getTeacherStudentHomeworks(
   studentId: string
 ): Promise<Awaited<ReturnType<typeof getTeacherStudentHomeworksUncached>>> {
-  return getTeacherStudentHomeworksCached(studentId);
+  return getTeacherStudentHomeworksUncached(studentId);
 }
 
 export async function getStudentHomeworks(
   studentId: string
 ): Promise<Awaited<ReturnType<typeof getTeacherStudentHomeworksUncached>>> {
-  return getTeacherStudentHomeworksCached(studentId);
+  return getTeacherStudentHomeworksUncached(studentId);
 }
 
 // ── Developer statistics ─────────────────────────────
