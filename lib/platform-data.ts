@@ -1123,7 +1123,13 @@ function addTimelineDays(date: Date, days: number) {
 }
 
 function getTimelineDateKey(date: Date) {
-  return date.toISOString().slice(0, 10);
+  // Локальная дата процесса (TZ=Europe/Moscow), НЕ toISOString: iso сдвигает
+  // ключ на сутки назад для всех часовых поясов восточнее UTC после полуночи.
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+
+  return `${year}-${month}-${day}`;
 }
 
 
