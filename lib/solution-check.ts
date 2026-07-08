@@ -1,4 +1,5 @@
 import { HomeworkNumberStatus, SolutionCheckStatus, SolutionVerdict } from "@prisma/client";
+import sharp from "sharp";
 import { publishDashboardRealtimeEvent } from "@/lib/dashboard-realtime";
 import { logErrorEvent, logInfoEvent, logWarnEvent } from "@/lib/logger";
 import { createNotification } from "@/lib/notifications";
@@ -105,7 +106,17 @@ async function storedFileToDataUrl(storageKey: string, mimeType: string) {
     buffer = Buffer.concat(chunks);
   }
 
-  return `data:${mimeType};base64,${buffer.toString("base64")}`;
+  try {
+    const compressed = await sharp(buffer)
+      .rotate()
+      .resize({ width: 1568, height: 1568, fit: "inside", withoutEnlargement: true })
+      .jpeg({ quality: 78 })
+      .toBuffer();
+
+    return `data:image/jpeg;base64,${compressed.toString("base64")}`;
+  } catch {
+    return `data:${mimeType};base64,${buffer.toString("base64")}`;
+  }
 }
 
 async function callModel(
