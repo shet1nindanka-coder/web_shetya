@@ -150,7 +150,7 @@ export function StudentHomeworkCheck({ assignmentId, hasPhotos, initialCheck }: 
                     № {result.number}
                   </span>
                   <span
-                    className="rounded-full px-2.5 py-0.5 text-[11.5px] font-bold"
+                    className="rounded-[8px] px-2.5 py-0.5 text-[11.5px] font-bold"
                     style={{ background: meta.background, color: meta.color }}
                   >
                     {meta.label}

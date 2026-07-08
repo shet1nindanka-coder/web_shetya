@@ -247,7 +247,7 @@ export function TeacherHomeworkReviewList({ studentId, assignments }: TeacherHom
                       <div className="flex flex-wrap items-center gap-2.5">
                         <span className="text-sm font-extrabold text-[var(--theme-text-strong)]">№ {result.number}</span>
                         <span
-                          className="rounded-full px-2.5 py-0.5 text-[11.5px] font-bold"
+                          className="rounded-[8px] px-2.5 py-0.5 text-[11.5px] font-bold"
                           style={{
                             background:
                               result.verdict === "CORRECT"
@@ -271,7 +271,7 @@ export function TeacherHomeworkReviewList({ studentId, assignments }: TeacherHom
                         </span>
                         {result.copySuspected ? (
                           <span
-                            className="rounded-full px-2.5 py-0.5 text-[11.5px] font-bold"
+                            className="rounded-[8px] px-2.5 py-0.5 text-[11.5px] font-bold"
                             style={{ background: "var(--shbz-cal-ok-bg)", color: "var(--shbz-streak-text)" }}
                             title={result.copyReason ?? undefined}
                           >

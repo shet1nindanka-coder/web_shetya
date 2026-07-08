@@ -2471,7 +2471,7 @@ html[data-theme="dark"] .ui-status-button:hover {
   border-color: var(--shbz-outline-hover);
   background: var(--shbz-card-bg);
 }
-.ui-status-surface { border-radius: 999px; }
+.ui-status-surface { border-radius: 10px; }
 
 /* Логотип-плашка в старых скелетонах */
 .app-logo-mark,
@@ -2713,9 +2713,10 @@ html[data-theme="dark"] .ui-button-danger:disabled,
 }
 
 /* Поиск номера: внутренний input всегда прозрачный (старое тёмное правило красило его в свой цвет) */
-html[data-theme="dark"] .shbz-search input {
+html[data-theme="dark"] .shbz-search input:not([type="checkbox"]):not([type="radio"]):not([type="file"]) {
   background: transparent !important;
   border-color: transparent !important;
+  box-shadow: none !important;
 }
 
 /* Чип, который показывается только с планшета и шире */

@@ -156,7 +156,7 @@ export function TeacherHomeworkAssignBoard({ studentId, topics }: TeacherHomewor
       <div className="teacher-bulk-deadline-panel rounded-[14px] border px-4 py-4">
         <div className="flex flex-wrap items-center gap-3">
           <span
-            className="rounded-full px-3 py-1 text-[12.5px] font-bold"
+            className="rounded-[10px] px-3 py-1 text-[12.5px] font-bold"
             style={{
               background: selectedCount > 0 ? "var(--theme-accent-soft)" : "var(--shbz-tab-hover)",
               color: selectedCount > 0 ? "var(--shbz-green-text)" : "var(--shbz-kicker)"

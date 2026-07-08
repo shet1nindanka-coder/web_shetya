@@ -16,7 +16,7 @@ export type DeadlineListItem = {
 export function HomeworkDoneBadge() {
   return (
     <span
-      className="rounded-full border px-2.5 py-0.5 text-[11.5px] font-bold"
+      className="rounded-[8px] border px-2.5 py-0.5 text-[11.5px] font-bold"
       style={{
         background: "var(--shbz-green-soft)",
         borderColor: "transparent",
@@ -31,7 +31,7 @@ export function HomeworkDoneBadge() {
 export function HomeworkOverdueBadge() {
   return (
     <span
-      className="rounded-full border px-2.5 py-0.5 text-[11.5px] font-bold"
+      className="rounded-[8px] border px-2.5 py-0.5 text-[11.5px] font-bold"
       style={{
         background: "var(--shbz-danger-bg)",
         borderColor: "transparent",
@@ -53,7 +53,7 @@ export function DeadlineList({ items, emptyMessage = "На эту дату де�
   if (items.length === 0) {
     return (
       <div
-        className="rounded-full px-3.5 py-2 text-[13px] font-medium"
+        className="rounded-[10px] px-3.5 py-2 text-[13px] font-medium"
         style={{ background: "var(--shbz-tab-hover)", color: "var(--shbz-kicker)", display: "inline-block" }}
       >
         {emptyMessage}
