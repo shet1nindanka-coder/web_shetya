@@ -5,6 +5,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Badge } from "@/components/badge";
 import { HomeworkStatusBadge } from "@/components/homework-status-badge";
+import { cx, homeworkStatusMeta } from "@/lib/utils";
 import { ProgressBar } from "@/components/progress-bar";
 
 type ReviewAssignment = {
@@ -45,6 +46,7 @@ type ReviewAssignment = {
 };
 
 type TeacherHomeworkReviewListProps = {
+  studentId: string;
   assignments: ReviewAssignment[];
 };
 
@@ -67,10 +69,40 @@ function formatDateTime(value: string | null) {
   }).format(date);
 }
 
-export function TeacherHomeworkReviewList({ assignments }: TeacherHomeworkReviewListProps) {
+const statusOptions = [HomeworkNumberStatus.GREEN, HomeworkNumberStatus.YELLOW, HomeworkNumberStatus.RED] as const;
+
+export function TeacherHomeworkReviewList({ studentId, assignments }: TeacherHomeworkReviewListProps) {
   const router = useRouter();
   const [cancelingId, setCancelingId] = useState<string | null>(null);
+  const [savingStatusId, setSavingStatusId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+
+  const setNumberStatus = async (homeworkNumberId: string, status: HomeworkNumberStatus | null) => {
+    setSavingStatusId(homeworkNumberId);
+    setError(null);
+
+    try {
+      const response = await fetch("/api/teacher/number-status", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ studentId, homeworkNumberId, status })
+      });
+
+      const result = (await response.json().catch(() => null)) as { error?: string } | null;
+
+      if (!response.ok) {
+        throw new Error(result?.error || "Не удалось сохранить статус.");
+      }
+
+      router.refresh();
+    } catch (statusError) {
+      setError(statusError instanceof Error ? statusError.message : "Не удалось сохранить статус.");
+    } finally {
+      setSavingStatusId(null);
+    }
+  };
 
   const cancelAssignment = async (assignmentId: string) => {
     if (!window.confirm("Отменить это ДЗ? Дедлайны будут сняты с его номеров.")) {
@@ -273,6 +305,28 @@ export function TeacherHomeworkReviewList({ assignments }: TeacherHomeworkReview
                       № {number.number}
                     </p>
                     <HomeworkStatusBadge status={number.status} />
+                  </div>
+                  <div className="mt-3 grid grid-cols-3 gap-1.5">
+                    {statusOptions.map((option) => {
+                      const meta = homeworkStatusMeta[option];
+                      const isActive = number.status === option;
+
+                      return (
+                        <button
+                          key={option}
+                          type="button"
+                          aria-pressed={isActive}
+                          disabled={savingStatusId === number.homeworkNumberId}
+                          onClick={() => void setNumberStatus(number.homeworkNumberId, isActive ? null : option)}
+                          className={cx(
+                            "ui-pressable rounded-[10px] px-2 py-1.5 text-center text-xs font-semibold transition disabled:cursor-not-allowed disabled:opacity-60",
+                            isActive ? meta.buttonClassName : "ui-status-button"
+                          )}
+                        >
+                          {meta.shortLabel}
+                        </button>
+                      );
+                    })}
                   </div>
                   {number.note ? (
                     <div className="ui-card-soft mt-3 rounded-[12px] px-3 py-2">

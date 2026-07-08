@@ -29,6 +29,7 @@ export default async function TeacherStudentPage({ params }: TeacherStudentPageP
         </div>
       ) : (
         <TeacherHomeworkReviewList
+          studentId={studentId}
           assignments={assignments.map((assignment) => ({
             id: assignment.id,
             label: assignment.label,

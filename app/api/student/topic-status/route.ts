@@ -63,12 +63,14 @@ export async function POST(request: Request) {
   const status = body?.status;
   const note = noteProvided ? String(body?.note ?? "").trim().slice(0, 240) : undefined;
 
-  if (
-    !topicId ||
-    !homeworkNumberId ||
-    (!statusProvided && !noteProvided) ||
-    (statusProvided && status !== null && status !== undefined && !allowedStatuses.includes(status))
-  ) {
+  if (statusProvided) {
+    return NextResponse.json(
+      { error: "Статус выставляется автоматической проверкой или учителем." },
+      { status: 403 }
+    );
+  }
+
+  if (!topicId || !homeworkNumberId || !noteProvided) {
     return NextResponse.json({ error: "Некорректные данные для сохранения номера." }, { status: 400 });
   }
 
@@ -86,7 +88,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Номер задания для этой темы не найден." }, { status: 404 });
   }
 
-  let notesEnabled = noteProvided;
+  let notesEnabled: boolean = noteProvided;
   let deadlinesEnabled = true;
   let existingStatus:
     | {

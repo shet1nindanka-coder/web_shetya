@@ -22,8 +22,6 @@ type StudentSingleNumberCardProps = {
   notesEnabled: boolean;
 };
 
-const statusOptions = [HomeworkNumberStatus.GREEN, HomeworkNumberStatus.YELLOW, HomeworkNumberStatus.RED] as const;
-
 export function StudentSingleNumberCard({
   topicId,
   homeworkNumberId,
@@ -36,57 +34,17 @@ export function StudentSingleNumberCard({
   notesEnabled
 }: StudentSingleNumberCardProps) {
   const streakContext = useStudentStreak();
-  const [status, setStatus] = useState(initialStatus);
+  const status = initialStatus;
   const [note, setNote] = useState(initialNote);
   const [savedNote, setSavedNote] = useState(initialNote);
-  const [isSavingStatus, setIsSavingStatus] = useState(false);
   const [isSavingNote, setIsSavingNote] = useState(false);
   const [isNoteOpen, setIsNoteOpen] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
-  const statusControllerRef = useRef<AbortController | null>(null);
   const noteControllerRef = useRef<AbortController | null>(null);
   const noteTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const isSaving = isSavingStatus || isSavingNote;
+  const isSaving = isSavingNote;
   const notePreview = note.trim().length > 120 ? `${note.trim().slice(0, 117)}...` : note.trim() || null;
-
-  const updateStatus = useCallback(async (nextStatus: HomeworkNumberStatus | null) => {
-    if (isSavingStatus) return;
-
-    setSaveError(null);
-    const previousStatus = status;
-    setStatus(nextStatus);
-    setIsSavingStatus(true);
-
-    statusControllerRef.current?.abort();
-    const controller = new AbortController();
-    statusControllerRef.current = controller;
-
-    try {
-      const response = await fetch("/api/student/topic-status", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ topicId, homeworkNumberId, status: nextStatus }),
-        signal: controller.signal
-      });
-
-      if (!response.ok) {
-        const result = (await response.json().catch(() => null)) as { error?: string } | null;
-        throw new Error(result?.error || "Сохранение не удалось.");
-      }
-
-      markStudentTopicsNeedsRefresh();
-      streakContext?.refresh();
-    } catch (error) {
-      if (controller.signal.aborted) return;
-      setStatus(previousStatus);
-      setSaveError(error instanceof Error ? error.message : "Сохранение не удалось.");
-    } finally {
-      if (!controller.signal.aborted) {
-        setIsSavingStatus(false);
-      }
-    }
-  }, [homeworkNumberId, isSavingStatus, status, streakContext, topicId]);
 
   const saveNote = useCallback(async (value?: string) => {
     const draft = (value ?? note).trim();
@@ -171,28 +129,9 @@ export function StudentSingleNumberCard({
             {isSaving ? <span className="ui-copy-muted text-xs font-medium">Сохраняем...</span> : null}
           </div>
 
-          <div className="grid grid-cols-3 gap-1.5 sm:gap-2">
-            {statusOptions.map((opt) => {
-              const isActive = status === opt;
-              const meta = homeworkStatusMeta[opt];
-
-              return (
-                <button
-                  key={opt}
-                  type="button"
-                  aria-pressed={isActive}
-                  onClick={() => updateStatus(isActive ? null : opt)}
-                  className={cx(
-                    "ui-pressable w-full touch-manipulation rounded-[12px] px-2.5 py-2 text-center text-[12px] transition-colors duration-75 sm:min-w-[160px] sm:rounded-[10px] sm:px-4 sm:py-3 sm:text-left sm:text-[13px]",
-                    isActive ? meta.buttonClassName : "ui-status-button"
-                  )}
-                >
-                  <p className="font-semibold">{meta.shortLabel}</p>
-                  <p className="mt-1 hidden leading-5 sm:block">{meta.label}</p>
-                </button>
-              );
-            })}
-          </div>
+          <p className="ui-copy-muted text-xs leading-5 sm:max-w-[220px] sm:text-right">
+            Статус выставляется автоматической проверкой решения или учителем.
+          </p>
         </div>
 
         {conditionLatex ? (
