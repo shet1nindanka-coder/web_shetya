@@ -129,7 +129,7 @@ export function StudentSingleNumberCard({
             {isSaving ? <span className="ui-copy-muted text-xs font-medium">Сохраняем...</span> : null}
           </div>
 
-          <p className="ui-copy-muted text-xs leading-5 sm:max-w-[220px] sm:text-right">
+          <p className="ui-hint ui-copy-muted text-xs leading-5 sm:max-w-[220px] sm:text-right">
             Статус выставляется автоматической проверкой решения или учителем.
           </p>
         </div>

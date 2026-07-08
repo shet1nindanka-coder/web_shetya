@@ -108,7 +108,7 @@ export function StudentHomeworkCheck({ assignmentId, hasPhotos, initialCheck }: 
       {error ? <div className="ui-notice-error mb-4 rounded-[8px] px-4 py-3 text-sm">{error}</div> : null}
 
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <p className="text-sm" style={{ color: "var(--shbz-text-muted)" }}>
+        <p className="ui-hint text-sm" style={{ color: "var(--shbz-text-muted)" }}>
           Автоматическая проверка сверит фото решения с эталонными ответами и отметит номера: верно — зелёным, с ошибкой — красным.
         </p>
         <button
