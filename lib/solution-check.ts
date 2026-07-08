@@ -9,7 +9,11 @@ import { parseCheckResponse, type ParsedCheckResult } from "@/lib/solution-check
 import { readStoredFile } from "@/lib/storage";
 
 const MAX_PHOTOS_PER_CHECK = 10;
-const MODEL_TIMEOUT_MS = 120_000;
+const MODEL_TIMEOUT_MS = 180_000;
+
+function isReasoningModel(model: string) {
+  return /(^|\/)(gpt-5|o\d)/i.test(model);
+}
 
 export function getAiCheckConfig() {
   const apiKey = process.env.AI_CHECK_API_KEY?.trim();
@@ -152,8 +156,9 @@ async function callModel(
       },
       body: JSON.stringify({
         model: config.model,
-        temperature: 0,
-        max_tokens: 8000,
+        ...(isReasoningModel(config.model)
+          ? { max_completion_tokens: 8000 }
+          : { temperature: 0, max_tokens: 8000 }),
         response_format: { type: "json_object" },
         messages: [
           { role: "system", content: SYSTEM_PROMPT },
