@@ -98,7 +98,13 @@ export function AccountSettingsView({ user, notice }: AccountSettingsViewProps) 
       <ShbzPageHeader
         kicker="Профиль и интерфейс"
         title="Настройки"
-        aside={isTeacher || isDeveloper ? <ShbzNumberSearch endpoint="/api/teacher/topics/find-number" /> : undefined}
+        aside={
+          <ShbzNumberSearch
+            endpoint={
+              isTeacher || isDeveloper ? "/api/teacher/topics/find-number" : "/api/student/homeworks/find-number"
+            }
+          />
+        }
       />
 
       {notice ? (

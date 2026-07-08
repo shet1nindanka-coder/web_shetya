@@ -71,8 +71,8 @@ export default async function StudentHomeworkPage({ params }: StudentHomeworkPag
       <section className="space-y-5">
         <h2 className="shbz-section-title">Номера</h2>
         {assignment.numbers.map((number) => (
+          <div key={number.homeworkNumberId} id={`number-${number.number}`} className="scroll-mt-28">
           <StudentSingleNumberCard
-            key={number.homeworkNumberId}
             topicId={assignment.topicId}
             homeworkNumberId={number.homeworkNumberId}
             number={number.number}
@@ -83,6 +83,7 @@ export default async function StudentHomeworkPage({ params }: StudentHomeworkPag
             deadlineAt={deadlineAtIso}
             notesEnabled={notesEnabled}
           />
+          </div>
         ))}
       </section>
     </div>

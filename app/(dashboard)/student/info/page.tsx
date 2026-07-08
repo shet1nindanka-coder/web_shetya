@@ -1,3 +1,4 @@
+import { ShbzNumberSearch } from "@/components/shbz-number-search";
 import { ShbzPageHeader } from "@/components/shbz-page-header";
 
 const scoreTable = [
@@ -17,7 +18,7 @@ const taskScoring = [
 export default function StudentInfoPage() {
   return (
     <div>
-      <ShbzPageHeader kicker="Общая инфа" title="Баллы и разбалловка" />
+      <ShbzPageHeader kicker="Общая инфа" title="Баллы и разбалловка" aside={<ShbzNumberSearch endpoint="/api/student/homeworks/find-number" />} />
 
       <section className="mb-11">
         <h2 className="shbz-section-title">Соответствие баллов</h2>

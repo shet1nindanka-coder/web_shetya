@@ -1,4 +1,5 @@
 import { UserRole } from "@prisma/client";
+import { ShbzNumberSearch } from "@/components/shbz-number-search";
 import { ShbzPageHeader } from "@/components/shbz-page-header";
 import { StudentHomeworkSubmissions } from "@/components/student-homework-submissions";
 import { requireUser } from "@/lib/auth";
@@ -11,7 +12,7 @@ export default async function StudentHomeworksPage() {
 
   return (
     <div className="min-h-[70vh]">
-      <ShbzPageHeader kicker="Домашние задания" title="Мои ДЗ" />
+      <ShbzPageHeader kicker="Домашние задания" title="Мои ДЗ" aside={<ShbzNumberSearch endpoint="/api/student/homeworks/find-number" />} />
 
       {!assignmentsEnabled ? (
         <div className="ui-notice-warning rounded-[12px] px-4 py-3 text-sm">

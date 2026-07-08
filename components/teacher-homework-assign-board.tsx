@@ -5,6 +5,7 @@ import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { HomeworkStatusBadge } from "@/components/homework-status-badge";
 import { ShbzDateTimePicker } from "@/components/shbz-datetime-picker";
+import { ShbzSelect } from "@/components/shbz-select";
 import { cx } from "@/lib/utils";
 
 type AssignBoardTopic = {
@@ -140,21 +141,16 @@ export function TeacherHomeworkAssignBoard({ studentId, topics }: TeacherHomewor
       ) : null}
 
       <div className="space-y-2">
-        <label className="ui-copy-muted block text-sm font-medium" htmlFor="assign-topic-select">
-          Тема
-        </label>
-        <select
-          id="assign-topic-select"
+        <span className="ui-copy-muted block text-sm font-medium">Тема</span>
+        <ShbzSelect
           value={selectedTopic.id}
-          onChange={(event) => changeTopic(event.target.value)}
-          className="ui-input h-12 w-full rounded-[8px] px-3 text-sm"
-        >
-          {topics.map((topic) => (
-            <option key={topic.id} value={topic.id}>
-              {topic.title} · {topic.totalNumbers} номеров
-            </option>
-          ))}
-        </select>
+          onChange={changeTopic}
+          ariaLabel="Тема"
+          options={topics.map((topic) => ({
+            value: topic.id,
+            label: `${topic.title} · ${topic.totalNumbers} номеров`
+          }))}
+        />
       </div>
 
       <div className="teacher-bulk-deadline-panel rounded-[14px] border px-4 py-4">

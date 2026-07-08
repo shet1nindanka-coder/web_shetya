@@ -1,5 +1,6 @@
 import { UserRole } from "@prisma/client";
 import { DeadlinesCalendar } from "@/components/deadlines-calendar";
+import { ShbzNumberSearch } from "@/components/shbz-number-search";
 import { ShbzPageHeader } from "@/components/shbz-page-header";
 import { requireUser } from "@/lib/auth";
 import { getStudentHomeworks } from "@/lib/platform-data";
@@ -12,7 +13,7 @@ export default async function StudentDeadlinesPage() {
 
   return (
     <div className="min-h-[70vh]">
-      <ShbzPageHeader kicker="Дедлайны" title="Календарь домашних заданий" />
+      <ShbzPageHeader kicker="Дедлайны" title="Календарь домашних заданий" aside={<ShbzNumberSearch endpoint="/api/student/homeworks/find-number" />} />
 
       <DeadlinesCalendar deadlines={assignmentDeadlines} />
     </div>
