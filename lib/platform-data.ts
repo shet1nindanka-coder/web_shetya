@@ -1310,19 +1310,34 @@ async function getDeveloperStatisticsUncached() {
     }
   }
 
-  const solvedStatuses = await prisma.studentTopicNumberStatus.findMany({
+  const markedStatuses = await prisma.studentTopicNumberStatus.findMany({
     where: {
       status: {
-        in: [HomeworkNumberStatus.GREEN, HomeworkNumberStatus.YELLOW]
+        not: null
       }
     },
     select: {
       studentId: true,
-      homeworkNumberId: true
+      homeworkNumberId: true,
+      status: true
     }
   });
-  const solvedKeys = new Set(solvedStatuses.map((status) => `${status.studentId}:${status.homeworkNumberId}`));
+  const solvedKeys = new Set<string>();
+  const redKeys = new Set<string>();
+  const markedKeys = new Set<string>();
 
+  for (const status of markedStatuses) {
+    const key = `${status.studentId}:${status.homeworkNumberId}`;
+    markedKeys.add(key);
+
+    if (status.status === HomeworkNumberStatus.RED) {
+      redKeys.add(key);
+    } else {
+      solvedKeys.add(key);
+    }
+  }
+
+  const issuedKeys = new Set<string>();
   const now = Date.now();
   let completedCount = 0;
   let overdueCount = 0;
@@ -1332,9 +1347,17 @@ async function getDeveloperStatisticsUncached() {
 
   for (const assignment of assignments) {
     const totalNumbers = assignment.numbers.length;
-    const solvedNumbers = assignment.numbers.filter((entry) =>
-      solvedKeys.has(`${assignment.studentId}:${entry.homeworkNumberId}`)
-    ).length;
+    let solvedNumbers = 0;
+
+    for (const entry of assignment.numbers) {
+      const key = `${assignment.studentId}:${entry.homeworkNumberId}`;
+      issuedKeys.add(key);
+
+      if (solvedKeys.has(key)) {
+        solvedNumbers += 1;
+      }
+    }
+
     const isCompleted = totalNumbers > 0 && solvedNumbers === totalNumbers;
 
     if (isCompleted) {
@@ -1350,6 +1373,24 @@ async function getDeveloperStatisticsUncached() {
     }
 
     photosTotal += assignment._count.photos;
+  }
+
+  let issuedSolvedCount = 0;
+  let issuedRedCount = 0;
+  let issuedMarkedCount = 0;
+
+  for (const key of issuedKeys) {
+    if (markedKeys.has(key)) {
+      issuedMarkedCount += 1;
+    }
+
+    if (solvedKeys.has(key)) {
+      issuedSolvedCount += 1;
+    }
+
+    if (redKeys.has(key)) {
+      issuedRedCount += 1;
+    }
   }
 
   const topics = await prisma.topic.findMany({
@@ -1417,7 +1458,11 @@ async function getDeveloperStatisticsUncached() {
       overdueCount,
       inProgressCount,
       withPhotosCount,
-      photosTotal
+      photosTotal,
+      issuedNumbersTotal: issuedKeys.size,
+      issuedNumbersSolved: issuedSolvedCount,
+      issuedNumbersRed: issuedRedCount,
+      issuedNumbersUnmarked: issuedKeys.size - issuedMarkedCount
     },
     content: {
       totalTopics: topics.length,

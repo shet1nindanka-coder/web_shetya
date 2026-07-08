@@ -296,6 +296,51 @@ export default async function TeacherStatisticsPage({ searchParams }: TeacherSta
           {developerStats ? (
             <section className="shbz-card shbz-section-pad">
               <h2 className="mb-6 text-xl font-bold" style={{ color: "var(--shbz-text-strong)" }}>
+                Решаемость
+              </h2>
+              <div className="grid gap-6 xl:grid-cols-2">
+                <div className="shbz-panel-soft space-y-5 p-6">
+                  <h3 className="text-[15px] font-bold" style={{ color: "var(--shbz-text-strong)" }}>
+                    От выданных ДЗ
+                  </h3>
+                  <DevProgressRow
+                    label="Решено"
+                    value={`${developerStats.homework.issuedNumbersSolved} / ${developerStats.homework.issuedNumbersTotal}`}
+                    percent={completionPercent(developerStats.homework.issuedNumbersSolved, developerStats.homework.issuedNumbersTotal)}
+                  />
+                  <DevProgressRow
+                    label="Красные"
+                    value={`${developerStats.homework.issuedNumbersRed} / ${developerStats.homework.issuedNumbersTotal}`}
+                    percent={completionPercent(developerStats.homework.issuedNumbersRed, developerStats.homework.issuedNumbersTotal)}
+                  />
+                  <DevProgressRow
+                    label="Без статуса"
+                    value={`${developerStats.homework.issuedNumbersUnmarked} / ${developerStats.homework.issuedNumbersTotal}`}
+                    percent={completionPercent(developerStats.homework.issuedNumbersUnmarked, developerStats.homework.issuedNumbersTotal)}
+                  />
+                </div>
+                <div className="shbz-panel-soft space-y-5 p-6">
+                  <h3 className="text-[15px] font-bold" style={{ color: "var(--shbz-text-strong)" }}>
+                    От всего банка номеров
+                  </h3>
+                  <DevProgressRow label="Решено" value={`${totalSolved} / ${totalStatusSlots}`} percent={solvedPercent} />
+                  <DevProgressRow
+                    label="Красные"
+                    value={`${totalRed} / ${totalStatusSlots}`}
+                    percent={completionPercent(totalRed, totalStatusSlots)}
+                  />
+                  <p className="text-xs leading-5" style={{ color: "var(--shbz-text-muted)" }}>
+                    Банк — все номера всех тем по каждому ученику, включая ещё не выданные в ДЗ. Показывает запас
+                    материала, а решаемость ДЗ — реальную дисциплину выполнения.
+                  </p>
+                </div>
+              </div>
+            </section>
+          ) : null}
+
+          {developerStats ? (
+            <section className="shbz-card shbz-section-pad">
+              <h2 className="mb-6 text-xl font-bold" style={{ color: "var(--shbz-text-strong)" }}>
                 Полнота контента
               </h2>
               <div className="grid gap-6 xl:grid-cols-2">
@@ -359,17 +404,17 @@ export default async function TeacherStatisticsPage({ searchParams }: TeacherSta
           ) : null}
 
           <div className="grid grid-cols-2 gap-3.5 xl:grid-cols-4">
-            <DevMetricCard label="Решено" value={totalSolved} note={`${solvedPercent}% от всех слотов`} noteColor="var(--shbz-green-text)" />
+            <DevMetricCard label="Решено" value={totalSolved} note={`${solvedPercent}% от банка номеров`} noteColor="var(--shbz-green-text)" />
             <DevMetricCard
               label="Нужна помощь"
               value={totalRed}
-              note={`${completionPercent(totalRed, totalStatusSlots)}% от всех слотов`}
+              note={`${completionPercent(totalRed, totalStatusSlots)}% от банка номеров`}
               noteColor="var(--shbz-red-text)"
             />
             <DevMetricCard
               label="Без статуса"
               value={totalUnfilled}
-              note={`${completionPercent(totalUnfilled, totalStatusSlots)}% от всех слотов`}
+              note={`${completionPercent(totalUnfilled, totalStatusSlots)}% от банка номеров`}
               noteColor="var(--shbz-text-muted)"
             />
             <DevMetricCard
