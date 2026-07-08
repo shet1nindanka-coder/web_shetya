@@ -1,5 +1,4 @@
 import { UserRole } from "@prisma/client";
-import { ShbzNumberSearch } from "@/components/shbz-number-search";
 import { ShbzPageHeader } from "@/components/shbz-page-header";
 import { StudentWeeklyActivity } from "@/components/student-weekly-activity";
 import { UpcomingDeadlinesCard } from "@/components/upcoming-deadlines-card";
@@ -18,7 +17,7 @@ export default async function StudentPage() {
 
   return (
     <div>
-      <ShbzPageHeader kicker="Обзор" title="Ваш кабинет" aside={<ShbzNumberSearch />} />
+      <ShbzPageHeader kicker="Обзор" title="Ваш кабинет" />
 
       <div className="space-y-11">
         <UpcomingDeadlinesCard deadlines={assignmentDeadlines} limit={4} />

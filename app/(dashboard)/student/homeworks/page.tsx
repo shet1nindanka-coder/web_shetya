@@ -1,5 +1,4 @@
 import { UserRole } from "@prisma/client";
-import { ShbzNumberSearch } from "@/components/shbz-number-search";
 import { ShbzPageHeader } from "@/components/shbz-page-header";
 import { StudentHomeworkSubmissions } from "@/components/student-homework-submissions";
 import { requireUser } from "@/lib/auth";
@@ -12,11 +11,7 @@ export default async function StudentHomeworksPage() {
 
   return (
     <div className="min-h-[70vh]">
-      <ShbzPageHeader
-        kicker="Домашние задания"
-        title="Мои ДЗ"
-        aside={<ShbzNumberSearch />}
-      />
+      <ShbzPageHeader kicker="Домашние задания" title="Мои ДЗ" />
 
       {!assignmentsEnabled ? (
         <div className="ui-notice-warning rounded-[12px] px-4 py-3 text-sm">
@@ -42,15 +37,11 @@ export default async function StudentHomeworksPage() {
               totalNumbers: assignment.totalNumbers,
               solvedCount: assignment.solvedCount,
               solvedPercent: assignment.solvedPercent,
+              photosCount: assignment.photos.length,
               numbers: assignment.numbers.map((number) => ({
                 homeworkNumberId: number.homeworkNumberId,
                 number: number.number,
                 status: number.status
-              })),
-              photos: assignment.photos.map((photo) => ({
-                id: photo.id,
-                fileId: photo.fileId,
-                originalName: photo.originalName
               }))
             }))}
           />

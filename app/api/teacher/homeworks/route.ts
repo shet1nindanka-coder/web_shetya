@@ -33,9 +33,7 @@ function revalidateHomeworkRoutes(studentId: string, topicId: string) {
   revalidateAllPlatformData();
   revalidatePath("/dashboard");
   revalidatePath("/student");
-  revalidatePath("/student/topics");
   revalidatePath("/student/homeworks");
-  revalidatePath(`/student/topics/${topicId}`);
   revalidatePath("/teacher");
   revalidatePath("/teacher/students");
   revalidatePath(`/teacher/students/${studentId}`);
@@ -184,7 +182,7 @@ export async function POST(request: Request) {
     type: "homework-assigned",
     title: `Учитель выдал ДЗ по теме «${topic?.title ?? "Тема"}»`,
     body: `${homeworkNumberIds.length > 1 ? "Номера" : "Номер"} ${numbersLabel} · дедлайн ${deadlineLabel}`,
-    href: `/student/topics/${topicId}`
+    href: "/student/homeworks"
   });
 
   revalidateHomeworkRoutes(studentId, topicId);

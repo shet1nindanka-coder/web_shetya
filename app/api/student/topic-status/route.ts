@@ -28,7 +28,7 @@ function revalidateTopicRoutes(topicId: string) {
   revalidateAllPlatformData();
   revalidatePath("/dashboard");
   revalidatePath("/student");
-  revalidatePath(`/student/topics/${topicId}`);
+  revalidatePath("/student/homeworks");
   revalidatePath("/teacher");
   revalidatePath(`/teacher/topics/${topicId}`);
   revalidatePath(`/teacher/topics/${topicId}/edit`);

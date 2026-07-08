@@ -73,7 +73,7 @@ export function DeadlineList({ items, emptyMessage = "На эту дату де�
                   {metaLabel}
                 </div>
               </div>
-              <Link href={`/student/topics/${item.topicId}`} className="shbz-btn-primary shrink-0 px-6 py-3 text-[14.5px]">
+              <Link href="/student/homeworks" className="shbz-btn-primary shrink-0 px-6 py-3 text-[14.5px]">
                 Открыть ДЗ
               </Link>
             </div>

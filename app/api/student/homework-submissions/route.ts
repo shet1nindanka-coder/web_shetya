@@ -30,7 +30,6 @@ function revalidateSubmissionRoutes(studentId: string, topicId: string) {
   revalidatePath("/student");
   revalidatePath("/student/deadlines");
   revalidatePath("/student/homeworks");
-  revalidatePath(`/student/topics/${topicId}`);
   revalidatePath("/teacher");
   revalidatePath("/teacher/students");
   revalidatePath(`/teacher/students/${studentId}`);

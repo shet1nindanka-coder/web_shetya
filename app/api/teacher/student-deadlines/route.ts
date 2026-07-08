@@ -32,8 +32,7 @@ function revalidateDeadlineRoutes(studentId: string, topicId: string) {
   revalidateAllPlatformData();
   revalidatePath("/dashboard");
   revalidatePath("/student");
-  revalidatePath("/student/topics");
-  revalidatePath(`/student/topics/${topicId}`);
+  revalidatePath("/student/homeworks");
   revalidatePath("/teacher");
   revalidatePath("/teacher/students");
   revalidatePath(`/teacher/students/${studentId}`);
@@ -246,7 +245,7 @@ export async function POST(request: Request) {
           ? `Учитель выдал ДЗ по теме «${topic?.title ?? "Тема"}»`
           : `Назначен дедлайн по теме «${topic?.title ?? "Тема"}»`,
       body: `${homeworkNumberIds.length > 1 ? "Номера" : "Номер"} ${numbersLabel} · дедлайн ${deadlineLabel}`,
-      href: `/student/topics/${topicId}`
+      href: "/student/homeworks"
     });
   }
 

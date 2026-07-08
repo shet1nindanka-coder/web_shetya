@@ -1158,6 +1158,8 @@ function queryTeacherStudentHomeworks(studentId: string, notesEnabled: boolean) 
             select: {
               id: true,
               number: true,
+              conditionLatex: true,
+              answerLatex: true,
               statuses: {
                 where: { studentId },
                 select: {
@@ -1202,7 +1204,7 @@ async function getTeacherStudentHomeworksUncached(studentId: string) {
         "HomeworkAssignment table is missing; apply the latest migration."
       );
 
-      return { assignmentsEnabled: false as const, assignments: [] };
+      return { assignmentsEnabled: false as const, notesEnabled: true, assignments: [] };
     }
 
     if (!isMissingStudentStatusColumnError(error, "note")) {
@@ -1226,6 +1228,8 @@ async function getTeacherStudentHomeworksUncached(studentId: string) {
         return {
           homeworkNumberId: entry.homeworkNumber.id,
           number: entry.homeworkNumber.number,
+          conditionLatex: entry.homeworkNumber.conditionLatex ?? null,
+          answerLatex: entry.homeworkNumber.answerLatex ?? null,
           status: status?.status ?? null,
           note: notesEnabled ? ((status as { note?: string | null } | null)?.note ?? "") : ""
         };
@@ -1256,7 +1260,7 @@ async function getTeacherStudentHomeworksUncached(studentId: string) {
     };
   });
 
-  return { assignmentsEnabled: true as const, assignments: mapped.reverse() };
+  return { assignmentsEnabled: true as const, notesEnabled, assignments: mapped.reverse() };
 }
 
 const getTeacherStudentHomeworksCached = unstable_cache(getTeacherStudentHomeworksUncached, ["teacher-student-homeworks"], {

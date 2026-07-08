@@ -22,7 +22,7 @@ function revalidateTopicRoutes(topicId?: string) {
   revalidatePath("/teacher/students");
 
   if (topicId) {
-    revalidatePath(`/student/topics/${topicId}`);
+    revalidatePath("/student/homeworks");
     revalidatePath(`/teacher/topics/${topicId}`);
   revalidatePath(`/teacher/topics/${topicId}/edit`);
   }

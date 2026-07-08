@@ -4,12 +4,12 @@ import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 
 type ShbzNumberSearchProps = {
-  endpoint?: string;
+  endpoint: string;
   placeholder?: string;
 };
 
 export function ShbzNumberSearch({
-  endpoint = "/api/student/topics/find-number",
+  endpoint,
   placeholder = "Найти номер"
 }: ShbzNumberSearchProps) {
   const router = useRouter();
