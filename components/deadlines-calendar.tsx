@@ -61,6 +61,7 @@ export function DeadlinesCalendar({ deadlines }: DeadlinesCalendarProps) {
   }, [deadlines]);
 
   const monthDays = useMemo(() => getMonthDays(currentMonth), [currentMonth]);
+  const todayKey = toDayKey(new Date());
 
   useEffect(() => {
     setPreviewDayKey(null);
@@ -132,6 +133,7 @@ export function DeadlinesCalendar({ deadlines }: DeadlinesCalendarProps) {
           const hasDeadlines = isCurrentMonth && dayItems.length > 0;
           const hasIncomplete = hasDeadlines && dayItems.some((item) => item.status !== "DONE");
           const isPreviewOpen = isCurrentMonth && previewDayKey === dayKey;
+          const isToday = isCurrentMonth && dayKey === todayKey;
 
           const cellBg = hasDeadlines
             ? hasIncomplete
@@ -160,12 +162,17 @@ export function DeadlinesCalendar({ deadlines }: DeadlinesCalendarProps) {
                   setPreviewDayKey((current) => (current === dayKey ? null : dayKey));
                 }}
                 aria-expanded={isPreviewOpen}
+                aria-current={isToday ? "date" : undefined}
                 className="flex h-16 w-full flex-col items-center justify-center gap-[5px] rounded-[12px] border transition-shadow duration-150"
                 style={{
                   background: cellBg,
                   borderColor: cellBorder,
                   cursor: hasDeadlines ? "pointer" : "default",
-                  boxShadow: isPreviewOpen ? "0 0 0 3px var(--shbz-cal-ring)" : "none"
+                  boxShadow: isPreviewOpen
+                    ? "0 0 0 3px var(--shbz-cal-ring)"
+                    : isToday
+                      ? "inset 0 0 0 2px var(--shbz-cal-ring)"
+                      : "none"
                 }}
               >
                 <span
@@ -213,6 +220,16 @@ export function DeadlinesCalendar({ deadlines }: DeadlinesCalendarProps) {
           <DiamondMark color="var(--shbz-cal-late-mark)" />
           <span className="text-[13px] font-semibold" style={{ color: "var(--shbz-text-muted)" }}>
             Есть невыполненные номера
+          </span>
+        </div>
+        <div className="inline-flex items-center gap-2">
+          <span
+            aria-hidden
+            className="inline-block h-[14px] w-[14px] rounded-[5px]"
+            style={{ boxShadow: "inset 0 0 0 2px var(--shbz-cal-ring)", background: "var(--shbz-cal-cell-bg)" }}
+          />
+          <span className="text-[13px] font-semibold" style={{ color: "var(--shbz-text-muted)" }}>
+            Сегодня
           </span>
         </div>
       </div>

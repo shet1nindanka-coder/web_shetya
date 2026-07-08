@@ -1,6 +1,7 @@
 import { UserRole } from "@prisma/client";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { HomeworkDoneBadge } from "@/components/deadline-list";
 import { ShbzPageHeader } from "@/components/shbz-page-header";
 import { StudentHomeworkPhotos } from "@/components/student-homework-photos";
 import { StudentSingleNumberCard } from "@/components/student-single-number-card";
@@ -39,9 +40,14 @@ export default async function StudentHomeworkPage({ params }: StudentHomeworkPag
 
       <ShbzPageHeader kicker={assignment.topicTitle} title={assignment.label} />
 
-      <p className="-mt-7 mb-8 text-sm" style={{ color: "var(--shbz-text-muted)" }}>
-        {deadlineLabel ? `Дедлайн до ${deadlineLabel} · ` : ""}
-        Выполнено {assignment.solvedCount} из {assignment.totalNumbers}
+      <p className="-mt-7 mb-8 flex flex-wrap items-center gap-2 text-sm" style={{ color: "var(--shbz-text-muted)" }}>
+        <span>
+          {deadlineLabel ? `Дедлайн до ${deadlineLabel} · ` : ""}
+          Выполнено {assignment.solvedCount} из {assignment.totalNumbers}
+        </span>
+        {assignment.totalNumbers > 0 && assignment.solvedCount === assignment.totalNumbers ? (
+          <HomeworkDoneBadge />
+        ) : null}
       </p>
 
       <section className="mb-8">

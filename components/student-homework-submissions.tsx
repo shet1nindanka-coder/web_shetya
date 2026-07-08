@@ -1,5 +1,6 @@
 import { HomeworkNumberStatus } from "@prisma/client";
 import Link from "next/link";
+import { HomeworkDoneBadge } from "@/components/deadline-list";
 import { cx, formatDate, homeworkStatusMeta } from "@/lib/utils";
 
 type SubmissionAssignment = {
@@ -30,8 +31,13 @@ export function StudentHomeworkSubmissions({ assignments }: StudentHomeworkSubmi
         <article key={assignment.id} className="shbz-card px-[26px] py-6" style={{ borderRadius: 18 }}>
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div className="min-w-0 flex-1">
-              <div className="text-[17px] font-extrabold tracking-[-0.3px]" style={{ color: "var(--shbz-text-strong)" }}>
-                {assignment.label} · {assignment.topicTitle}
+              <div className="flex flex-wrap items-center gap-2">
+                <span className="text-[17px] font-extrabold tracking-[-0.3px]" style={{ color: "var(--shbz-text-strong)" }}>
+                  {assignment.label} · {assignment.topicTitle}
+                </span>
+                {assignment.totalNumbers > 0 && assignment.solvedCount === assignment.totalNumbers ? (
+                  <HomeworkDoneBadge />
+                ) : null}
               </div>
               <div className="mt-1.5 text-sm" style={{ color: "var(--shbz-text-muted)" }}>
                 {assignment.deadlineAt ? `ДЗ до ${formatDate(assignment.deadlineAt)} · ` : ""}
