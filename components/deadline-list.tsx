@@ -18,8 +18,8 @@ export function HomeworkDoneBadge() {
     <span
       className="rounded-full border px-2.5 py-0.5 text-[11.5px] font-bold"
       style={{
-        background: "var(--shbz-cal-ok-bg)",
-        borderColor: "var(--shbz-cal-ok-border)",
+        background: "var(--shbz-green-soft)",
+        borderColor: "transparent",
         color: "var(--shbz-green-text)"
       }}
     >
