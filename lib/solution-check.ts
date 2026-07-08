@@ -138,8 +138,13 @@ async function storedFileToDataUrl(storageKey: string, mimeType: string) {
     logInfoEvent("solution.check.photo_compressed", {
       storageKey,
       originalBytes: buffer.byteLength,
-      compressedBytes: compressed.byteLength
+      compressedBytes: compressed.byteLength,
+      usedCompressed: compressed.byteLength < buffer.byteLength
     });
+
+    if (compressed.byteLength >= buffer.byteLength) {
+      return `data:${mimeType};base64,${buffer.toString("base64")}`;
+    }
 
     return `data:image/jpeg;base64,${compressed.toString("base64")}`;
   } catch (error) {
