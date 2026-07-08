@@ -8,7 +8,7 @@ type UpcomingDeadlinesCardProps = {
 
 export function UpcomingDeadlinesCard({ deadlines, title = "Ближайшие ДЗ", limit = 5 }: UpcomingDeadlinesCardProps) {
   const upcoming = deadlines
-    .slice()
+    .filter((item) => !(item.status === "DONE" && new Date(item.deadlineAt).getTime() < Date.now()))
     .sort((left, right) => new Date(left.deadlineAt).getTime() - new Date(right.deadlineAt).getTime())
     .slice(0, limit);
 

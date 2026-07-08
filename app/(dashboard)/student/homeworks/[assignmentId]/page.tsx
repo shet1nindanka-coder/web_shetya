@@ -1,7 +1,7 @@
 import { UserRole } from "@prisma/client";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { HomeworkDoneBadge } from "@/components/deadline-list";
+import { HomeworkDoneBadge, HomeworkOverdueBadge, isHomeworkOverdue } from "@/components/deadline-list";
 import { ShbzPageHeader } from "@/components/shbz-page-header";
 import { StudentHomeworkPhotos } from "@/components/student-homework-photos";
 import { StudentSingleNumberCard } from "@/components/student-single-number-card";
@@ -47,6 +47,12 @@ export default async function StudentHomeworkPage({ params }: StudentHomeworkPag
         </span>
         {assignment.totalNumbers > 0 && assignment.solvedCount === assignment.totalNumbers ? (
           <HomeworkDoneBadge />
+        ) : null}
+        {isHomeworkOverdue(
+          deadlineAtIso,
+          assignment.totalNumbers > 0 && assignment.solvedCount === assignment.totalNumbers
+        ) ? (
+          <HomeworkOverdueBadge />
         ) : null}
       </p>
 

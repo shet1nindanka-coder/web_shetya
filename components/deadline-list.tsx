@@ -28,6 +28,31 @@ export function HomeworkDoneBadge() {
   );
 }
 
+export function HomeworkOverdueBadge() {
+  return (
+    <span
+      className="rounded-full border px-2.5 py-0.5 text-[11.5px] font-bold"
+      style={{
+        background: "var(--shbz-danger-bg)",
+        borderColor: "transparent",
+        color: "var(--shbz-danger-text)"
+      }}
+    >
+      Просрочено
+    </span>
+  );
+}
+
+export function isHomeworkOverdue(deadlineAt: string | null, isCompleted: boolean) {
+  if (!deadlineAt || isCompleted) {
+    return false;
+  }
+
+  const deadline = new Date(deadlineAt);
+
+  return !Number.isNaN(deadline.getTime()) && deadline.getTime() < Date.now();
+}
+
 type DeadlineListProps = {
   items: DeadlineListItem[];
   emptyMessage?: string;
@@ -70,6 +95,7 @@ export function DeadlineList({ items, emptyMessage = "На эту дату де�
                   {item.label}
                 </span>
                 {item.status === "DONE" ? <HomeworkDoneBadge /> : null}
+                {isHomeworkOverdue(item.deadlineAt, item.status === "DONE") ? <HomeworkOverdueBadge /> : null}
               </div>
               <div className="mt-1.5 text-[13px] leading-[1.45]" style={{ color: "var(--shbz-text-muted)" }}>
                 {metaLabel}
@@ -98,6 +124,7 @@ export function DeadlineList({ items, emptyMessage = "На эту дату де�
                     {item.label}
                   </span>
                   {item.status === "DONE" ? <HomeworkDoneBadge /> : null}
+                  {isHomeworkOverdue(item.deadlineAt, item.status === "DONE") ? <HomeworkOverdueBadge /> : null}
                 </div>
                 <div className="mt-1.5 text-sm" style={{ color: "var(--shbz-text-muted)" }}>
                   {metaLabel}
