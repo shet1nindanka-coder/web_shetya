@@ -32,6 +32,8 @@ type ReviewAssignment = {
       verdict: "CORRECT" | "INCORRECT" | "UNCERTAIN";
       recognizedAnswer: string | null;
       comment: string | null;
+      copySuspected: boolean;
+      copyReason: string | null;
     }>;
   } | null;
   numbers: Array<{
@@ -236,12 +238,26 @@ export function TeacherHomeworkReviewList({ assignments }: TeacherHomeworkReview
                               ? "Ошибка"
                               : "Нужна проверка учителем"}
                         </span>
+                        {result.copySuspected ? (
+                          <span
+                            className="rounded-full px-2.5 py-0.5 text-[11.5px] font-bold"
+                            style={{ background: "var(--shbz-cal-ok-bg)", color: "var(--shbz-streak-text)" }}
+                            title={result.copyReason ?? undefined}
+                          >
+                            Похоже на списанное
+                          </span>
+                        ) : null}
                         {result.recognizedAnswer ? (
                           <span className="ui-copy-muted text-xs">Распознано: {result.recognizedAnswer}</span>
                         ) : null}
                       </div>
                       {result.comment ? (
                         <p className="ui-copy-muted mt-1 text-sm leading-6">{result.comment}</p>
+                      ) : null}
+                      {result.copySuspected && result.copyReason ? (
+                        <p className="mt-1 text-xs leading-5" style={{ color: "var(--shbz-streak-text)" }}>
+                          Подозрение: {result.copyReason}
+                        </p>
                       ) : null}
                     </div>
                   ))}

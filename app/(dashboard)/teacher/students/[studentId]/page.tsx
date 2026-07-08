@@ -54,7 +54,9 @@ export default async function TeacherStudentPage({ params }: TeacherStudentPageP
                     number: result.number,
                     verdict: result.verdict,
                     recognizedAnswer: result.recognizedAnswer,
-                    comment: result.comment
+                    comment: result.comment,
+                    copySuspected: result.copySuspected,
+                    copyReason: result.copyReason
                   }))
                 }
               : null,

@@ -437,6 +437,8 @@ model HomeworkCheckResult {
   recognizedAnswer String?
   comment          String?
   confidence       Float?
+  copySuspected    Boolean             @default(false)
+  copyReason       String?
   check            HomeworkCheck       @relation(fields: [checkId], references: [id], onDelete: Cascade)
   homeworkNumber   TopicHomeworkNumber @relation(fields: [homeworkNumberId], references: [id], onDelete: Cascade)
 

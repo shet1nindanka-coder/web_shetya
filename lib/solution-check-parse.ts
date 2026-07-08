@@ -6,6 +6,8 @@ export type ParsedCheckResult = {
   recognizedAnswer: string | null;
   comment: string | null;
   confidence: number | null;
+  copySuspected: boolean;
+  copyReason: string | null;
 };
 
 const verdictAliases: Record<string, CheckVerdict> = {
@@ -64,12 +66,17 @@ export function parseCheckResponse(content: string, validNumbers: number[]): Par
     const comment =
       typeof raw.comment === "string" && raw.comment.trim() ? raw.comment.trim().slice(0, 1000) : null;
 
+    const copyReason =
+      typeof raw.copy_reason === "string" && raw.copy_reason.trim() ? raw.copy_reason.trim().slice(0, 500) : null;
+
     parsed.push({
       number,
       verdict,
       recognizedAnswer,
       comment,
-      confidence: Number.isFinite(confidenceRaw) ? Math.min(1, Math.max(0, confidenceRaw)) : null
+      confidence: Number.isFinite(confidenceRaw) ? Math.min(1, Math.max(0, confidenceRaw)) : null,
+      copySuspected: raw.copy_suspected === true,
+      copyReason
     });
   }
 

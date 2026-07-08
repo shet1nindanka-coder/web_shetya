@@ -1200,7 +1200,9 @@ function queryTeacherStudentHomeworks(studentId: string, notesEnabled: boolean) 
               homeworkNumberId: true,
               verdict: true,
               recognizedAnswer: true,
-              comment: true
+              comment: true,
+              copySuspected: true,
+              copyReason: true
             }
           }
         }
@@ -1269,7 +1271,9 @@ async function getTeacherStudentHomeworksUncached(studentId: string) {
               number: numberById.get(result.homeworkNumberId) ?? 0,
               verdict: result.verdict,
               recognizedAnswer: result.recognizedAnswer,
-              comment: result.comment
+              comment: result.comment,
+              copySuspected: result.copySuspected,
+              copyReason: result.copyReason
             }))
             .filter((result) => result.number > 0)
             .sort((left, right) => left.number - right.number)
