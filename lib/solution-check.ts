@@ -292,6 +292,19 @@ async function callModelOnce(
 
 async function applyVerdicts(assignment: CheckAssignment, results: ParsedCheckResult[]) {
   const numberByValue = new Map(assignment.numbers.map((number) => [number.number, number]));
+  const existingStatuses = await prisma.studentTopicNumberStatus.findMany({
+    where: {
+      studentId: assignment.studentId,
+      homeworkNumberId: {
+        in: assignment.numbers.map((number) => number.homeworkNumberId)
+      }
+    },
+    select: {
+      homeworkNumberId: true,
+      status: true
+    }
+  });
+  const statusByNumberId = new Map(existingStatuses.map((status) => [status.homeworkNumberId, status.status]));
   const operations = [];
 
   for (const result of results) {
@@ -301,8 +314,15 @@ async function applyVerdicts(assignment: CheckAssignment, results: ParsedCheckRe
       continue;
     }
 
+    const previousStatus = statusByNumberId.get(target.homeworkNumberId) ?? null;
+    const wasWrongBefore =
+      previousStatus === HomeworkNumberStatus.RED || previousStatus === HomeworkNumberStatus.YELLOW;
     const nextStatus =
-      result.verdict === "CORRECT" ? HomeworkNumberStatus.GREEN : HomeworkNumberStatus.RED;
+      result.verdict === "CORRECT"
+        ? wasWrongBefore
+          ? HomeworkNumberStatus.YELLOW
+          : HomeworkNumberStatus.GREEN
+        : HomeworkNumberStatus.RED;
 
     operations.push(
       prisma.studentTopicNumberStatus.upsert({
