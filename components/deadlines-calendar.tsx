@@ -1,11 +1,10 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { DeadlineList } from "@/components/deadline-list";
-import { type StudentDeadlineAssignment } from "@/lib/student-deadline-groups";
+import { DeadlineList, type DeadlineListItem } from "@/components/deadline-list";
 
 type DeadlinesCalendarProps = {
-  deadlines: StudentDeadlineAssignment[];
+  deadlines: DeadlineListItem[];
 };
 
 const weekDayLabels = ["ПН", "ВТ", "СР", "ЧТ", "ПТ", "СБ", "ВС"];
@@ -51,7 +50,7 @@ export function DeadlinesCalendar({ deadlines }: DeadlinesCalendarProps) {
   const calendarRef = useRef<HTMLDivElement | null>(null);
 
   const deadlinesByDay = useMemo(() => {
-    const grouped = new Map<string, StudentDeadlineAssignment[]>();
+    const grouped = new Map<string, DeadlineListItem[]>();
     for (const deadline of deadlines) {
       const key = toDayKey(new Date(deadline.deadlineAt));
       const list = grouped.get(key) ?? [];

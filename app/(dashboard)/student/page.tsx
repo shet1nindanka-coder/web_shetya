@@ -3,17 +3,17 @@ import { ShbzPageHeader } from "@/components/shbz-page-header";
 import { StudentWeeklyActivity } from "@/components/student-weekly-activity";
 import { UpcomingDeadlinesCard } from "@/components/upcoming-deadlines-card";
 import { requireUser } from "@/lib/auth";
-import { getStudentDeadlines } from "@/lib/platform-data";
-import { groupStudentDeadlinesAsAssignments } from "@/lib/student-deadline-groups";
+import { getStudentHomeworks } from "@/lib/platform-data";
+import { mapStudentHomeworksToDeadlineItems } from "@/lib/student-deadline-groups";
 import { getStudentStreakSnapshot } from "@/lib/student-streak";
 
 export default async function StudentPage() {
   const user = await requireUser(UserRole.STUDENT);
-  const [deadlines, streak] = await Promise.all([
-    getStudentDeadlines(user.id),
+  const [homeworks, streak] = await Promise.all([
+    getStudentHomeworks(user.id),
     getStudentStreakSnapshot(user.id)
   ]);
-  const assignmentDeadlines = groupStudentDeadlinesAsAssignments(deadlines);
+  const assignmentDeadlines = mapStudentHomeworksToDeadlineItems(homeworks.assignments);
 
   return (
     <div>

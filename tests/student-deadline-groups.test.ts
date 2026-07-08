@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import { HomeworkNumberStatus } from "@prisma/client";
-import { groupStudentDeadlinesAsAssignments } from "../lib/student-deadline-groups";
+import { groupStudentDeadlinesAsAssignments, mapStudentHomeworksToDeadlineItems } from "../lib/student-deadline-groups";
 
 test("groupStudentDeadlinesAsAssignments groups by topic and exact deadline", () => {
   const assignments = groupStudentDeadlinesAsAssignments([
@@ -96,4 +96,27 @@ test("groupStudentDeadlinesAsAssignments skips invalid deadlines", () => {
   ]);
 
   assert.deepEqual(assignments, []);
+});
+
+test("mapStudentHomeworksToDeadlineItems maps real assignments to sorted deadline items", () => {
+  const items = mapStudentHomeworksToDeadlineItems([
+    { id: "a2", label: "ДЗ 2", topicTitle: "Тема", deadlineAt: "2026-04-12T15:00:00.000Z", totalNumbers: 4, solvedCount: 4 },
+    { id: "a1", label: "ДЗ 1", topicTitle: "Тема", deadlineAt: "2026-04-10T15:00:00.000Z", totalNumbers: 2, solvedCount: 1 },
+    { id: "a3", label: "ДЗ 3", topicTitle: "Тема", deadlineAt: null, totalNumbers: 3, solvedCount: 0 }
+  ]);
+
+  assert.equal(items.length, 2);
+  assert.equal(items[0]?.id, "a1");
+  assert.equal(items[0]?.label, "ДЗ 1 · Тема");
+  assert.equal(items[0]?.href, "/student/homeworks/a1");
+  assert.equal(items[0]?.status, "IN_PROGRESS");
+  assert.equal(items[1]?.status, "DONE");
+});
+
+test("mapStudentHomeworksToDeadlineItems skips invalid deadlines", () => {
+  const items = mapStudentHomeworksToDeadlineItems([
+    { id: "a1", label: "ДЗ 1", topicTitle: "Тема", deadlineAt: "not-a-date", totalNumbers: 2, solvedCount: 0 }
+  ]);
+
+  assert.equal(items.length, 0);
 });

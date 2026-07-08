@@ -1,11 +1,20 @@
 "use client";
 
 import Link from "next/link";
-import { type StudentDeadlineAssignment } from "@/lib/student-deadline-groups";
 import { completionPercent, formatDate } from "@/lib/utils";
 
+export type DeadlineListItem = {
+  id: string;
+  label: string;
+  href: string;
+  deadlineAt: string;
+  totalNumbers: number;
+  solvedNumbers: number;
+  status: "DONE" | "IN_PROGRESS" | "NOT_STARTED";
+};
+
 type DeadlineListProps = {
-  items: StudentDeadlineAssignment[];
+  items: DeadlineListItem[];
   emptyMessage?: string;
   compact?: boolean;
 };
@@ -42,7 +51,7 @@ export function DeadlineList({ items, emptyMessage = "На эту дату де�
               style={{ borderColor: "var(--shbz-soft-border)", background: "var(--shbz-card-bg)" }}
             >
               <div className="text-base font-extrabold" style={{ color: "var(--shbz-text-strong)" }}>
-                {item.topicTitle}
+                {item.label}
               </div>
               <div className="mt-1.5 text-[13px] leading-[1.45]" style={{ color: "var(--shbz-text-muted)" }}>
                 {metaLabel}
@@ -67,13 +76,13 @@ export function DeadlineList({ items, emptyMessage = "На эту дату де�
             <div className="mb-[18px] flex items-start justify-between gap-4">
               <div className="min-w-0 flex-1">
                 <div className="text-[19px] font-extrabold tracking-[-0.3px]" style={{ color: "var(--shbz-text-strong)" }}>
-                  {item.topicTitle}
+                  {item.label}
                 </div>
                 <div className="mt-1.5 text-sm" style={{ color: "var(--shbz-text-muted)" }}>
                   {metaLabel}
                 </div>
               </div>
-              <Link href="/student/homeworks" className="shbz-btn-primary shrink-0 px-6 py-3 text-[14.5px]">
+              <Link href={item.href} className="shbz-btn-primary shrink-0 px-6 py-3 text-[14.5px]">
                 Открыть ДЗ
               </Link>
             </div>

@@ -2,13 +2,13 @@ import { UserRole } from "@prisma/client";
 import { DeadlinesCalendar } from "@/components/deadlines-calendar";
 import { ShbzPageHeader } from "@/components/shbz-page-header";
 import { requireUser } from "@/lib/auth";
-import { getStudentDeadlines } from "@/lib/platform-data";
-import { groupStudentDeadlinesAsAssignments } from "@/lib/student-deadline-groups";
+import { getStudentHomeworks } from "@/lib/platform-data";
+import { mapStudentHomeworksToDeadlineItems } from "@/lib/student-deadline-groups";
 
 export default async function StudentDeadlinesPage() {
   const user = await requireUser(UserRole.STUDENT);
-  const deadlines = await getStudentDeadlines(user.id);
-  const assignmentDeadlines = groupStudentDeadlinesAsAssignments(deadlines);
+  const homeworks = await getStudentHomeworks(user.id);
+  const assignmentDeadlines = mapStudentHomeworksToDeadlineItems(homeworks.assignments);
 
   return (
     <div className="min-h-[70vh]">

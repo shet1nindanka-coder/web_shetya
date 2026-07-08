@@ -82,3 +82,43 @@ export function groupStudentDeadlinesAsAssignments(
     })
     .sort((left, right) => new Date(left.deadlineAt).getTime() - new Date(right.deadlineAt).getTime());
 }
+
+export type StudentHomeworkDeadlineInput = {
+  id: string;
+  label: string;
+  topicTitle: string;
+  deadlineAt: Date | string | null;
+  totalNumbers: number;
+  solvedCount: number;
+};
+
+export function mapStudentHomeworksToDeadlineItems(assignments: StudentHomeworkDeadlineInput[]) {
+  return assignments
+    .flatMap((assignment) => {
+      const deadlineAt = toIsoDateTimeString(assignment.deadlineAt);
+
+      if (!deadlineAt) {
+        return [];
+      }
+
+      const status: StudentDeadlineAssignmentStatus =
+        assignment.totalNumbers > 0 && assignment.solvedCount >= assignment.totalNumbers
+          ? "DONE"
+          : assignment.solvedCount > 0
+            ? "IN_PROGRESS"
+            : "NOT_STARTED";
+
+      return [
+        {
+          id: assignment.id,
+          label: `${assignment.label} · ${assignment.topicTitle}`,
+          href: `/student/homeworks/${assignment.id}`,
+          deadlineAt,
+          totalNumbers: assignment.totalNumbers,
+          solvedNumbers: assignment.solvedCount,
+          status
+        }
+      ];
+    })
+    .sort((left, right) => new Date(left.deadlineAt).getTime() - new Date(right.deadlineAt).getTime());
+}
