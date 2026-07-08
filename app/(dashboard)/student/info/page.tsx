@@ -1,7 +1,4 @@
-import { UserRole } from "@prisma/client";
 import { ShbzPageHeader } from "@/components/shbz-page-header";
-import { requireUser } from "@/lib/auth";
-import { getStudentTopicsOverview } from "@/lib/platform-data";
 
 const scoreTable = [
   [1, 6], [2, 11], [3, 17], [4, 22], [5, 27], [6, 34], [7, 40], [8, 46],
@@ -17,65 +14,10 @@ const taskScoring = [
   { badge: "4", text: "№ 18 и 19 оцениваются в 4 первичных балла каждая" }
 ];
 
-export default async function StudentInfoPage() {
-  const user = await requireUser(UserRole.STUDENT);
-  const { topics } = await getStudentTopicsOverview(user.id);
-
+export default function StudentInfoPage() {
   return (
     <div>
-      <ShbzPageHeader kicker="Общая инфа" title="Материалы и баллы" />
-
-      <section className="mb-11">
-        <h2 className="shbz-section-title">Материалы тем</h2>
-        <div className="shbz-card shbz-section-pad">
-          {topics.length === 0 ? (
-            <p className="text-sm" style={{ color: "var(--shbz-text-muted)" }}>
-              Темы пока не добавлены.
-            </p>
-          ) : (
-            <ul className="space-y-3">
-              {topics.map((topic) => (
-                <li
-                  key={topic.id}
-                  className="flex flex-wrap items-center justify-between gap-3 rounded-[14px] border px-4 py-3.5"
-                  style={{ background: "var(--shbz-soft-bg)", borderColor: "var(--shbz-soft-border)" }}
-                >
-                  <span className="text-sm font-bold" style={{ color: "var(--shbz-text-strong)" }}>
-                    {topic.title}
-                  </span>
-                  <span className="flex items-center gap-2">
-                    {topic.theoryFile ? (
-                      <a
-                        href={`/files/${topic.theoryFile.id}`}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="shbz-btn-outline px-4 py-2 text-[13px]"
-                      >
-                        Теория
-                      </a>
-                    ) : null}
-                    {topic.homeworkFile ? (
-                      <a
-                        href={`/files/${topic.homeworkFile.id}`}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="shbz-btn-outline px-4 py-2 text-[13px]"
-                      >
-                        Задания
-                      </a>
-                    ) : null}
-                    {!topic.theoryFile && !topic.homeworkFile ? (
-                      <span className="text-[13px]" style={{ color: "var(--shbz-text-muted)" }}>
-                        Файлы не прикреплены
-                      </span>
-                    ) : null}
-                  </span>
-                </li>
-              ))}
-            </ul>
-          )}
-        </div>
-      </section>
+      <ShbzPageHeader kicker="Общая инфа" title="Баллы и разбалловка" />
 
       <section className="mb-11">
         <h2 className="shbz-section-title">Соответствие баллов</h2>
