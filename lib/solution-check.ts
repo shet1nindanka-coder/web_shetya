@@ -113,8 +113,21 @@ async function storedFileToDataUrl(storageKey: string, mimeType: string) {
       .jpeg({ quality: 78 })
       .toBuffer();
 
+    logInfoEvent("solution.check.photo_compressed", {
+      storageKey,
+      originalBytes: buffer.byteLength,
+      compressedBytes: compressed.byteLength
+    });
+
     return `data:image/jpeg;base64,${compressed.toString("base64")}`;
-  } catch {
+  } catch (error) {
+    logWarnEvent(
+      "solution.check.photo_compress_failed",
+      { storageKey, originalBytes: buffer.byteLength },
+      error instanceof Error ? error : undefined,
+      "Sharp failed to compress a solution photo; sending the original."
+    );
+
     return `data:${mimeType};base64,${buffer.toString("base64")}`;
   }
 }
