@@ -129,7 +129,7 @@ async function callModel(
       body: JSON.stringify({
         model: config.model,
         temperature: 0,
-        max_tokens: 4000,
+        max_tokens: 8000,
         response_format: { type: "json_object" },
         messages: [
           { role: "system", content: SYSTEM_PROMPT },
@@ -145,16 +145,29 @@ async function callModel(
       signal: controller.signal
     });
 
-    const payload = (await response.json().catch(() => null)) as
-      | {
-          choices?: Array<{ message?: { content?: string } }>;
-          usage?: { prompt_tokens?: number; completion_tokens?: number };
-          error?: { message?: string };
-        }
-      | null;
+    const rawBody = await response.text();
+    let payload: {
+      choices?: Array<{ message?: { content?: string } }>;
+      usage?: { prompt_tokens?: number; completion_tokens?: number };
+      error?: { message?: string };
+    } | null = null;
+
+    try {
+      payload = JSON.parse(rawBody);
+    } catch {
+      payload = null;
+    }
 
     if (!response.ok) {
-      throw new Error(payload?.error?.message || `Модель вернула статус ${response.status}.`);
+      logWarnEvent(
+        "solution.check.api_error",
+        { status: response.status, body: rawBody.slice(0, 600) },
+        undefined,
+        "Model API returned an error."
+      );
+      throw new Error(
+        payload?.error?.message || `Модель вернула статус ${response.status}: ${rawBody.slice(0, 200) || "пустой ответ"}`
+      );
     }
 
     const content = payload?.choices?.[0]?.message?.content;
