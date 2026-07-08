@@ -24,6 +24,16 @@ type ReviewAssignment = {
     fileId: string;
     originalName: string;
   }>;
+  aiCheck: {
+    status: string;
+    checkedAt: string | null;
+    results: Array<{
+      number: number;
+      verdict: "CORRECT" | "INCORRECT" | "UNCERTAIN";
+      recognizedAnswer: string | null;
+      comment: string | null;
+    }>;
+  } | null;
   numbers: Array<{
     homeworkNumberId: string;
     number: number;
@@ -187,6 +197,57 @@ export function TeacherHomeworkReviewList({ assignments }: TeacherHomeworkReview
             ) : (
               <p className="ui-copy-muted mt-4 text-sm">Ученик пока не прикрепил фото решения.</p>
             )}
+
+            {assignment.aiCheck && assignment.aiCheck.results.length > 0 ? (
+              <div className="mt-4">
+                <p className="ui-copy-muted text-sm font-medium">
+                  Проверка ИИ
+                  {assignment.aiCheck.checkedAt ? ` · ${formatDateTime(assignment.aiCheck.checkedAt) ?? ""}` : ""}
+                </p>
+                <div className="mt-2 space-y-2">
+                  {assignment.aiCheck.results.map((result) => (
+                    <div
+                      key={result.number}
+                      className="rounded-[12px] border px-4 py-2.5"
+                      style={{ borderColor: "var(--shbz-soft-border)", background: "var(--shbz-card-bg)" }}
+                    >
+                      <div className="flex flex-wrap items-center gap-2.5">
+                        <span className="text-sm font-extrabold text-[var(--theme-text-strong)]">№ {result.number}</span>
+                        <span
+                          className="rounded-full px-2.5 py-0.5 text-[11.5px] font-bold"
+                          style={{
+                            background:
+                              result.verdict === "CORRECT"
+                                ? "var(--shbz-green-soft)"
+                                : result.verdict === "INCORRECT"
+                                  ? "var(--shbz-danger-bg)"
+                                  : "var(--shbz-tab-hover)",
+                            color:
+                              result.verdict === "CORRECT"
+                                ? "var(--shbz-green-text)"
+                                : result.verdict === "INCORRECT"
+                                  ? "var(--shbz-danger-text)"
+                                  : "var(--shbz-kicker)"
+                          }}
+                        >
+                          {result.verdict === "CORRECT"
+                            ? "Верно"
+                            : result.verdict === "INCORRECT"
+                              ? "Ошибка"
+                              : "Нужна проверка учителем"}
+                        </span>
+                        {result.recognizedAnswer ? (
+                          <span className="ui-copy-muted text-xs">Распознано: {result.recognizedAnswer}</span>
+                        ) : null}
+                      </div>
+                      {result.comment ? (
+                        <p className="ui-copy-muted mt-1 text-sm leading-6">{result.comment}</p>
+                      ) : null}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : null}
 
             <div className="teacher-number-grid mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
               {assignment.numbers.map((number) => (

@@ -1133,7 +1133,9 @@ function isMissingHomeworkAssignmentTableError(error: unknown) {
   return (
     error instanceof Prisma.PrismaClientKnownRequestError &&
     error.code === "P2021" &&
-    (error.message.includes("HomeworkAssignment") || error.message.includes("HomeworkSubmissionPhoto"))
+    (error.message.includes("HomeworkAssignment") ||
+      error.message.includes("HomeworkSubmissionPhoto") ||
+      error.message.includes("HomeworkCheck"))
   );
 }
 
@@ -1181,6 +1183,24 @@ function queryTeacherStudentHomeworks(studentId: string, notesEnabled: boolean) 
               id: true,
               originalName: true,
               mimeType: true
+            }
+          }
+        }
+      },
+      checks: {
+        orderBy: { createdAt: "desc" },
+        take: 1,
+        select: {
+          id: true,
+          status: true,
+          error: true,
+          checkedAt: true,
+          results: {
+            select: {
+              homeworkNumberId: true,
+              verdict: true,
+              recognizedAnswer: true,
+              comment: true
             }
           }
         }
@@ -1236,6 +1256,26 @@ async function getTeacherStudentHomeworksUncached(studentId: string) {
       })
       .sort((left, right) => left.number - right.number);
 
+    const numberById = new Map(numbers.map((entry) => [entry.homeworkNumberId, entry.number]));
+    const latestCheckRaw = assignment.checks[0] ?? null;
+    const latestCheck = latestCheckRaw
+      ? {
+          id: latestCheckRaw.id,
+          status: latestCheckRaw.status,
+          error: latestCheckRaw.error,
+          checkedAt: latestCheckRaw.checkedAt,
+          results: latestCheckRaw.results
+            .map((result) => ({
+              number: numberById.get(result.homeworkNumberId) ?? 0,
+              verdict: result.verdict,
+              recognizedAnswer: result.recognizedAnswer,
+              comment: result.comment
+            }))
+            .filter((result) => result.number > 0)
+            .sort((left, right) => left.number - right.number)
+        }
+      : null;
+
     const summary = buildProgress(numbers.map((entry) => entry.status), numbers.length);
     const solvedCount = summary.greenCount + summary.yellowCount;
 
@@ -1247,6 +1287,7 @@ async function getTeacherStudentHomeworksUncached(studentId: string) {
       deadlineAt: assignment.deadlineAt,
       createdAt: assignment.createdAt,
       numbers,
+      latestCheck,
       photos: assignment.photos.map((photo) => ({
         id: photo.id,
         fileId: photo.file.id,

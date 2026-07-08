@@ -161,6 +161,7 @@ model TopicHomeworkNumber {
   assignmentItems LessonAssignmentItem[]
   testQuestions   TestQuestion[]
   assignmentEntries HomeworkAssignmentNumber[]
+  checkResults HomeworkCheckResult[]
 
   @@unique([topicId, number])
   @@index([answerFileId])
@@ -372,6 +373,7 @@ model HomeworkAssignment {
   topic      Topic                      @relation("TopicHomeworkAssignments", fields: [topicId], references: [id], onDelete: Cascade)
   numbers    HomeworkAssignmentNumber[]
   photos     HomeworkSubmissionPhoto[]
+  checks     HomeworkCheck[]
 
   @@index([studentId, createdAt])
   @@index([topicId])
@@ -398,4 +400,46 @@ model HomeworkSubmissionPhoto {
 
   @@index([assignmentId])
   @@index([fileId])
+}
+
+enum SolutionCheckStatus {
+  PENDING
+  CHECKING
+  DONE
+  FAILED
+}
+
+enum SolutionVerdict {
+  CORRECT
+  INCORRECT
+  UNCERTAIN
+}
+
+model HomeworkCheck {
+  id           String                @id @default(cuid())
+  assignmentId String
+  status       SolutionCheckStatus   @default(PENDING)
+  modelUsed    String?
+  error        String?
+  createdAt    DateTime              @default(now())
+  checkedAt    DateTime?
+  assignment   HomeworkAssignment    @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
+  results      HomeworkCheckResult[]
+
+  @@index([assignmentId, createdAt])
+}
+
+model HomeworkCheckResult {
+  id               String              @id @default(cuid())
+  checkId          String
+  homeworkNumberId String
+  verdict          SolutionVerdict
+  recognizedAnswer String?
+  comment          String?
+  confidence       Float?
+  check            HomeworkCheck       @relation(fields: [checkId], references: [id], onDelete: Cascade)
+  homeworkNumber   TopicHomeworkNumber @relation(fields: [homeworkNumberId], references: [id], onDelete: Cascade)
+
+  @@index([checkId])
+  @@index([homeworkNumberId])
 }

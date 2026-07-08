@@ -3,6 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { HomeworkDoneBadge, HomeworkOverdueBadge } from "@/components/deadline-list";
 import { ShbzPageHeader } from "@/components/shbz-page-header";
+import { StudentHomeworkCheck } from "@/components/student-homework-check";
 import { StudentHomeworkPhotos } from "@/components/student-homework-photos";
 import { StudentSingleNumberCard } from "@/components/student-single-number-card";
 import { requireUser } from "@/lib/auth";
@@ -65,6 +66,30 @@ export default async function StudentHomeworkPage({ params }: StudentHomeworkPag
             fileId: photo.fileId,
             originalName: photo.originalName
           }))}
+        />
+      </section>
+
+      <section className="mb-8">
+        <h2 className="shbz-section-title">Проверка ИИ</h2>
+        <StudentHomeworkCheck
+          assignmentId={assignment.id}
+          hasPhotos={assignment.photos.length > 0}
+          initialCheck={
+            assignment.latestCheck
+              ? {
+                  id: assignment.latestCheck.id,
+                  status: assignment.latestCheck.status,
+                  error: assignment.latestCheck.error,
+                  checkedAt: toIsoDateTimeString(assignment.latestCheck.checkedAt),
+                  results: assignment.latestCheck.results.map((result) => ({
+                    number: result.number,
+                    verdict: result.verdict,
+                    recognizedAnswer: result.recognizedAnswer,
+                    comment: result.comment
+                  }))
+                }
+              : null
+          }
         />
       </section>
 

@@ -1,0 +1,176 @@
+"use client";
+
+import { useCallback, useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
+
+type CheckResult = {
+  number: number;
+  verdict: "CORRECT" | "INCORRECT" | "UNCERTAIN";
+  recognizedAnswer: string | null;
+  comment: string | null;
+};
+
+type CheckSnapshot = {
+  id: string;
+  status: "PENDING" | "CHECKING" | "DONE" | "FAILED";
+  error: string | null;
+  checkedAt: string | null;
+  results: CheckResult[];
+};
+
+type StudentHomeworkCheckProps = {
+  assignmentId: string;
+  hasPhotos: boolean;
+  initialCheck: CheckSnapshot | null;
+};
+
+const verdictMeta: Record<CheckResult["verdict"], { label: string; color: string; background: string }> = {
+  CORRECT: { label: "Верно", color: "var(--shbz-green-text)", background: "var(--shbz-green-soft)" },
+  INCORRECT: { label: "Перерешай", color: "var(--shbz-danger-text)", background: "var(--shbz-danger-bg)" },
+  UNCERTAIN: { label: "Не распознано — проверит учитель", color: "var(--shbz-kicker)", background: "var(--shbz-tab-hover)" }
+};
+
+export function StudentHomeworkCheck({ assignmentId, hasPhotos, initialCheck }: StudentHomeworkCheckProps) {
+  const router = useRouter();
+  const [check, setCheck] = useState<CheckSnapshot | null>(initialCheck);
+  const [isStarting, setIsStarting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const pollTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const isRunning = check?.status === "PENDING" || check?.status === "CHECKING";
+
+  const poll = useCallback(async () => {
+    try {
+      const response = await fetch(
+        `/api/student/homework-checks?assignmentId=${encodeURIComponent(assignmentId)}&consume=1`,
+        { cache: "no-store" }
+      );
+      const result = (await response.json().catch(() => null)) as { check?: CheckSnapshot | null } | null;
+
+      if (response.ok && result) {
+        const nextCheck = result.check ?? null;
+        setCheck(nextCheck);
+
+        if (nextCheck && (nextCheck.status === "DONE" || nextCheck.status === "FAILED")) {
+          router.refresh();
+          return;
+        }
+      }
+    } catch {
+      // Сеть моргнула — попробуем в следующем тике.
+    }
+
+    pollTimerRef.current = setTimeout(() => void poll(), 4000);
+  }, [assignmentId, router]);
+
+  useEffect(() => {
+    if (isRunning && !pollTimerRef.current) {
+      pollTimerRef.current = setTimeout(() => void poll(), 4000);
+    }
+
+    return () => {
+      if (pollTimerRef.current) {
+        clearTimeout(pollTimerRef.current);
+        pollTimerRef.current = null;
+      }
+    };
+  }, [isRunning, poll]);
+
+  const startCheck = async () => {
+    setIsStarting(true);
+    setError(null);
+
+    try {
+      const response = await fetch("/api/student/homework-checks", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({ assignmentId })
+      });
+
+      const result = (await response.json().catch(() => null)) as { error?: string; checkId?: string } | null;
+
+      if (!response.ok) {
+        throw new Error(result?.error || "Не удалось запустить проверку.");
+      }
+
+      setCheck({ id: result?.checkId ?? "", status: "PENDING", error: null, checkedAt: null, results: [] });
+    } catch (startError) {
+      setError(startError instanceof Error ? startError.message : "Не удалось запустить проверку.");
+    } finally {
+      setIsStarting(false);
+    }
+  };
+
+  return (
+    <div className="shbz-card shbz-section-pad">
+      {error ? <div className="ui-notice-error mb-4 rounded-[8px] px-4 py-3 text-sm">{error}</div> : null}
+
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <p className="text-sm" style={{ color: "var(--shbz-text-muted)" }}>
+          ИИ сверит фото решения с эталонными ответами и отметит номера: верно — зелёным, с ошибкой — красным.
+        </p>
+        <button
+          type="button"
+          disabled={!hasPhotos || isStarting || isRunning}
+          onClick={() => void startCheck()}
+          title={hasPhotos ? undefined : "Сначала прикрепите фото решения"}
+          className="shbz-btn-primary px-5 py-2.5 text-[14px] disabled:cursor-not-allowed disabled:opacity-60"
+        >
+          {isRunning ? "Проверяется..." : isStarting ? "Запускаем..." : "Проверить решение ИИ"}
+        </button>
+      </div>
+
+      {isRunning ? (
+        <p className="mt-4 text-sm font-semibold" style={{ color: "var(--shbz-kicker)" }}>
+          ИИ проверяет решение — обычно это занимает до минуты. Страница обновится сама.
+        </p>
+      ) : null}
+
+      {check?.status === "FAILED" ? (
+        <p className="mt-4 text-sm" style={{ color: "var(--shbz-danger-text)" }}>
+          Проверка не удалась: {check.error ?? "неизвестная ошибка"}. Попробуйте ещё раз.
+        </p>
+      ) : null}
+
+      {check?.status === "DONE" && check.results.length > 0 ? (
+        <div className="mt-4 space-y-2.5">
+          {check.results.map((result) => {
+            const meta = verdictMeta[result.verdict];
+
+            return (
+              <div
+                key={result.number}
+                className="rounded-[12px] border px-4 py-3"
+                style={{ borderColor: "var(--shbz-soft-border)", background: "var(--shbz-card-bg)" }}
+              >
+                <div className="flex flex-wrap items-center gap-2.5">
+                  <span className="text-sm font-extrabold" style={{ color: "var(--shbz-text-strong)" }}>
+                    № {result.number}
+                  </span>
+                  <span
+                    className="rounded-full px-2.5 py-0.5 text-[11.5px] font-bold"
+                    style={{ background: meta.background, color: meta.color }}
+                  >
+                    {meta.label}
+                  </span>
+                  {result.recognizedAnswer ? (
+                    <span className="text-xs" style={{ color: "var(--shbz-text-muted)" }}>
+                      Распознанный ответ: {result.recognizedAnswer}
+                    </span>
+                  ) : null}
+                </div>
+                {result.comment ? (
+                  <p className="mt-1.5 text-sm leading-6" style={{ color: "var(--shbz-text-muted)" }}>
+                    {result.comment}
+                  </p>
+                ) : null}
+              </div>
+            );
+          })}
+        </div>
+      ) : null}
+    </div>
+  );
+}

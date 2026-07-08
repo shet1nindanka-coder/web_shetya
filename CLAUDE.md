@@ -116,6 +116,12 @@ Postgres service.
   `HomeworkAssignment` to `StoredFile`). Students upload via `/api/student/homework-submissions`
   (PNG/JPG, max 10 per assignment) on `/student/homeworks`; the teacher sees the gallery in the
   review tab. Files are served through `/files/[fileId]` with an ownership check for students.
+- `HomeworkCheck` + `HomeworkCheckResult` — AI auto-check of a homework: the student triggers
+  `POST /api/student/homework-checks`, an in-process queue (`lib/solution-check-queue.ts`) sends the
+  photos + `conditionLatex`/`answerLatex` to a vision model via OpenRouter (`lib/solution-check.ts`,
+  env `AI_CHECK_API_KEY` / `AI_CHECK_MODEL` / `AI_CHECK_BASE_URL`), verdicts auto-set number statuses
+  (CORRECT→GREEN, INCORRECT→RED, UNCERTAIN→untouched, flagged for the teacher). The client polls
+  `GET /api/student/homework-checks?consume=1`, which also revalidates caches after completion.
 
 `prisma/migrations/` reflects the feature history: init → shared topics/files → answer files →
 LaTeX answers → student notes → student deadlines → LaTeX conditions.
