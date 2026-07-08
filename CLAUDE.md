@@ -146,3 +146,5 @@ LaTeX answers → student notes → student deadlines → LaTeX conditions.
 - Run `prisma generate` after any schema change (already wired into `build` and `postinstall`).
 - Don't bypass the storage layer or serve uploads from `public/` — always go through `/files/[fileId]`.
 - The repo root folder name is Cyrillic (`Сайт`); prefer the `@/` alias over relative path juggling.
+- The app assumes Moscow time: keep `TZ="Europe/Moscow"` in the environment (`.env`). Without it the
+  server computes «today» in UTC and streaks/overdue markers desync after midnight MSK.

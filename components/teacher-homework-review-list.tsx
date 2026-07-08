@@ -4,6 +4,7 @@ import { HomeworkNumberStatus } from "@prisma/client";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Badge } from "@/components/badge";
+import { ConfirmDialog } from "@/components/confirm-dialog";
 import { HomeworkStatusBadge } from "@/components/homework-status-badge";
 import { cx, homeworkStatusMeta } from "@/lib/utils";
 import { ProgressBar } from "@/components/progress-bar";
@@ -74,6 +75,7 @@ const statusOptions = [HomeworkNumberStatus.GREEN, HomeworkNumberStatus.YELLOW, 
 export function TeacherHomeworkReviewList({ studentId, assignments }: TeacherHomeworkReviewListProps) {
   const router = useRouter();
   const [cancelingId, setCancelingId] = useState<string | null>(null);
+  const [confirmCancelId, setConfirmCancelId] = useState<string | null>(null);
   const [savingStatusId, setSavingStatusId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -105,10 +107,6 @@ export function TeacherHomeworkReviewList({ studentId, assignments }: TeacherHom
   };
 
   const cancelAssignment = async (assignmentId: string) => {
-    if (!window.confirm("Отменить это ДЗ? Дедлайны будут сняты с его номеров.")) {
-      return;
-    }
-
     setCancelingId(assignmentId);
     setError(null);
 
@@ -132,6 +130,7 @@ export function TeacherHomeworkReviewList({ studentId, assignments }: TeacherHom
       setError(cancelError instanceof Error ? cancelError.message : "Не удалось отменить ДЗ.");
     } finally {
       setCancelingId(null);
+      setConfirmCancelId(null);
     }
   };
 
@@ -178,7 +177,7 @@ export function TeacherHomeworkReviewList({ studentId, assignments }: TeacherHom
                 <button
                   type="button"
                   disabled={cancelingId === assignment.id}
-                  onClick={() => void cancelAssignment(assignment.id)}
+                  onClick={() => setConfirmCancelId(assignment.id)}
                   className="ui-pressable ui-button-secondary rounded-[12px] px-4 py-2.5 text-sm font-semibold transition disabled:cursor-not-allowed"
                 >
                   {cancelingId === assignment.id ? "Отменяем..." : "Отменить ДЗ"}
@@ -339,6 +338,21 @@ export function TeacherHomeworkReviewList({ studentId, assignments }: TeacherHom
           </article>
         );
       })}
+
+      <ConfirmDialog
+        open={confirmCancelId !== null}
+        title="Отменить ДЗ?"
+        description="ДЗ будет удалено, дедлайны будут сняты с его номеров. Это действие нельзя отменить."
+        confirmLabel="Да, отменить"
+        pendingLabel="Отменяем..."
+        isPending={cancelingId !== null}
+        onConfirm={() => {
+          if (confirmCancelId) {
+            void cancelAssignment(confirmCancelId);
+          }
+        }}
+        onCancel={() => setConfirmCancelId(null)}
+      />
     </div>
   );
 }

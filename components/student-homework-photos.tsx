@@ -2,6 +2,7 @@
 
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { ConfirmDialog } from "@/components/confirm-dialog";
 
 type StudentHomeworkPhotosProps = {
   assignmentId: string;
@@ -17,6 +18,7 @@ export function StudentHomeworkPhotos({ assignmentId, photos }: StudentHomeworkP
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [deletingPhotoId, setDeletingPhotoId] = useState<string | null>(null);
+  const [confirmPhotoId, setConfirmPhotoId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const uploadPhotos = async (files: FileList | null) => {
@@ -59,10 +61,6 @@ export function StudentHomeworkPhotos({ assignmentId, photos }: StudentHomeworkP
   };
 
   const deletePhoto = async (photoId: string) => {
-    if (!window.confirm("Удалить это фото?")) {
-      return;
-    }
-
     setDeletingPhotoId(photoId);
     setError(null);
 
@@ -86,6 +84,7 @@ export function StudentHomeworkPhotos({ assignmentId, photos }: StudentHomeworkP
       setError(deleteError instanceof Error ? deleteError.message : "Не удалось удалить фото.");
     } finally {
       setDeletingPhotoId(null);
+      setConfirmPhotoId(null);
     }
   };
 
@@ -131,7 +130,7 @@ export function StudentHomeworkPhotos({ assignmentId, photos }: StudentHomeworkP
               <button
                 type="button"
                 disabled={deletingPhotoId === photo.id}
-                onClick={() => void deletePhoto(photo.id)}
+                onClick={() => setConfirmPhotoId(photo.id)}
                 aria-label="Удалить фото"
                 className="absolute -right-2 -top-2 inline-flex h-6 w-6 items-center justify-center rounded-full border bg-[var(--theme-surface-strong)] text-xs font-bold text-[var(--theme-text-muted)] shadow transition hover:text-[var(--theme-danger-text)] disabled:cursor-not-allowed disabled:opacity-60"
                 style={{ borderColor: "var(--shbz-soft-border)" }}
@@ -142,6 +141,19 @@ export function StudentHomeworkPhotos({ assignmentId, photos }: StudentHomeworkP
           ))}
         </div>
       ) : null}
+
+      <ConfirmDialog
+        open={confirmPhotoId !== null}
+        title="Удалить фото?"
+        description="Фото решения будет удалено. Это действие нельзя отменить."
+        isPending={deletingPhotoId !== null}
+        onConfirm={() => {
+          if (confirmPhotoId) {
+            void deletePhoto(confirmPhotoId);
+          }
+        }}
+        onCancel={() => setConfirmPhotoId(null)}
+      />
     </div>
   );
 }
