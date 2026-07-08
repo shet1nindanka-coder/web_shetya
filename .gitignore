@@ -19,3 +19,7 @@ pnpm-debug.log*
 .idea
 .vscode
 tsconfig.tsbuildinfo
+
+.claude/
+.claude-flow/
+.codex-skill-staging/
