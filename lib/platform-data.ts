@@ -1323,6 +1323,8 @@ async function getDeveloperStatisticsUncached() {
     }
   });
   const solvedKeys = new Set<string>();
+  const greenKeys = new Set<string>();
+  const yellowKeys = new Set<string>();
   const redKeys = new Set<string>();
   const markedKeys = new Set<string>();
 
@@ -1332,7 +1334,11 @@ async function getDeveloperStatisticsUncached() {
 
     if (status.status === HomeworkNumberStatus.RED) {
       redKeys.add(key);
+    } else if (status.status === HomeworkNumberStatus.GREEN) {
+      greenKeys.add(key);
+      solvedKeys.add(key);
     } else {
+      yellowKeys.add(key);
       solvedKeys.add(key);
     }
   }
@@ -1376,6 +1382,8 @@ async function getDeveloperStatisticsUncached() {
   }
 
   let issuedSolvedCount = 0;
+  let issuedGreenCount = 0;
+  let issuedYellowCount = 0;
   let issuedRedCount = 0;
   let issuedMarkedCount = 0;
 
@@ -1386,6 +1394,14 @@ async function getDeveloperStatisticsUncached() {
 
     if (solvedKeys.has(key)) {
       issuedSolvedCount += 1;
+    }
+
+    if (greenKeys.has(key)) {
+      issuedGreenCount += 1;
+    }
+
+    if (yellowKeys.has(key)) {
+      issuedYellowCount += 1;
     }
 
     if (redKeys.has(key)) {
@@ -1461,6 +1477,8 @@ async function getDeveloperStatisticsUncached() {
       photosTotal,
       issuedNumbersTotal: issuedKeys.size,
       issuedNumbersSolved: issuedSolvedCount,
+      issuedNumbersGreen: issuedGreenCount,
+      issuedNumbersYellow: issuedYellowCount,
       issuedNumbersRed: issuedRedCount,
       issuedNumbersUnmarked: issuedKeys.size - issuedMarkedCount
     },

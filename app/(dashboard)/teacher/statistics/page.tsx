@@ -148,12 +148,21 @@ export default async function TeacherStatisticsPage({ searchParams }: TeacherSta
     .sort((left, right) => right.redCount - left.redCount || right.redPercent - left.redPercent)
     .slice(0, 5);
 
-  const distributionSegments: DistributionSegment[] = [
+  const activeTopicsPercent = completionPercent(activeTopics.length, data.stats.totalTopics);
+  const activeStudentsPercent = completionPercent(activeStudents.length, data.stats.totalStudents);
+  const solvedPercent = completionPercent(totalSolved, totalStatusSlots);
+  const progressTimelineEntries = await getProgressTimeline(selectedTimelineStudent?.id, 112);
+  const developerStats = await getDeveloperStatistics();
+  const homework = developerStats.homework;
+  const issuedTotal = homework.issuedNumbersTotal;
+  const issuedSolvedPercent = completionPercent(homework.issuedNumbersSolved, issuedTotal);
+
+  const issuedDistributionSegments: DistributionSegment[] = [
     {
       key: "green",
       label: "Зеленые",
       note: "Уверенно решены",
-      value: totalGreen,
+      value: homework.issuedNumbersGreen,
       color: "#36C77E",
       badgeClassName: ""
     },
@@ -161,7 +170,7 @@ export default async function TeacherStatisticsPage({ searchParams }: TeacherSta
       key: "yellow",
       label: "Желтые",
       note: "Исправлены после самопроверки",
-      value: totalYellow,
+      value: homework.issuedNumbersYellow,
       color: "#F2A93B",
       badgeClassName: ""
     },
@@ -169,7 +178,7 @@ export default async function TeacherStatisticsPage({ searchParams }: TeacherSta
       key: "red",
       label: "Красные",
       note: "Требуют помощи преподавателя",
-      value: totalRed,
+      value: homework.issuedNumbersRed,
       color: "#E5484D",
       badgeClassName: ""
     },
@@ -177,17 +186,12 @@ export default async function TeacherStatisticsPage({ searchParams }: TeacherSta
       key: "empty",
       label: "Без статуса",
       note: "Номер еще не отмечен",
-      value: totalUnfilled,
+      value: homework.issuedNumbersUnmarked,
       color: "#C7CAD0",
       badgeClassName: ""
     }
   ];
 
-  const activeTopicsPercent = completionPercent(activeTopics.length, data.stats.totalTopics);
-  const activeStudentsPercent = completionPercent(activeStudents.length, data.stats.totalStudents);
-  const solvedPercent = completionPercent(totalSolved, totalStatusSlots);
-  const progressTimelineEntries = await getProgressTimeline(selectedTimelineStudent?.id, 112);
-  const developerStats = view === "developer" ? await getDeveloperStatistics() : null;
   const drilldownTopics = data.topics.map((topic) => ({
     id: topic.id,
     title: topic.title,
@@ -231,6 +235,33 @@ export default async function TeacherStatisticsPage({ searchParams }: TeacherSta
 
       {view === "teacher" ? (
         <div className="flex flex-col gap-6">
+          <div className="grid grid-cols-2 gap-3.5 xl:grid-cols-4">
+            <DevMetricCard
+              label="Решено из выданного"
+              value={`${homework.issuedNumbersSolved} / ${issuedTotal}`}
+              note={`${issuedSolvedPercent}% выданных номеров`}
+              noteColor="var(--shbz-green-text)"
+            />
+            <DevMetricCard
+              label="ДЗ выполнено"
+              value={homework.completedCount}
+              note={`из ${homework.total} выданных ДЗ`}
+              noteColor="var(--shbz-green-text)"
+            />
+            <DevMetricCard
+              label="ДЗ просрочено"
+              value={homework.overdueCount}
+              note={`${completionPercent(homework.overdueCount, homework.total)}% выданных ДЗ`}
+              noteColor="var(--shbz-red-text)"
+            />
+            <DevMetricCard
+              label="Нужна помощь"
+              value={homework.issuedNumbersRed}
+              note={`${completionPercent(homework.issuedNumbersRed, issuedTotal)}% выданных номеров`}
+              noteColor="var(--shbz-red-text)"
+            />
+          </div>
+
           <section className="shbz-card shbz-section-pad">
             <div className="mb-[22px] flex flex-wrap items-start justify-between gap-6">
               <h2 className="text-xl font-bold" style={{ color: "var(--shbz-text-strong)" }}>
@@ -252,239 +283,48 @@ export default async function TeacherStatisticsPage({ searchParams }: TeacherSta
 
           <section className="shbz-card shbz-section-pad">
             <h2 className="mb-6 text-xl font-bold" style={{ color: "var(--shbz-text-strong)" }}>
-              Срез по теме и ученику
-            </h2>
-            <TeacherStatisticsDrilldown topics={drilldownTopics} students={drilldownStudents} />
-          </section>
-        </div>
-      ) : (
-        <div className="flex flex-col gap-6">
-          {developerStats ? (
-            <section className="shbz-card shbz-section-pad">
-              <h2 className="mb-6 text-xl font-bold" style={{ color: "var(--shbz-text-strong)" }}>
-                Домашние задания
-              </h2>
-              <div className="grid grid-cols-2 gap-3.5 xl:grid-cols-4">
-                <DevMetricCard
-                  label="Выдано ДЗ"
-                  value={developerStats.homework.total}
-                  note={`фото решений: ${developerStats.homework.photosTotal}`}
-                  noteColor="var(--shbz-text-muted)"
-                />
-                <DevMetricCard
-                  label="Выполнено"
-                  value={developerStats.homework.completedCount}
-                  note={`${completionPercent(developerStats.homework.completedCount, developerStats.homework.total)}% от выданных`}
-                  noteColor="var(--shbz-green-text)"
-                />
-                <DevMetricCard
-                  label="Просрочено"
-                  value={developerStats.homework.overdueCount}
-                  note={`${completionPercent(developerStats.homework.overdueCount, developerStats.homework.total)}% от выданных`}
-                  noteColor="var(--shbz-red-text)"
-                />
-                <DevMetricCard
-                  label="В работе"
-                  value={developerStats.homework.inProgressCount}
-                  note={`с фото: ${developerStats.homework.withPhotosCount} ДЗ`}
-                  noteColor="var(--shbz-accent-solid)"
-                />
-              </div>
-            </section>
-          ) : null}
-
-          {developerStats ? (
-            <section className="shbz-card shbz-section-pad">
-              <h2 className="mb-6 text-xl font-bold" style={{ color: "var(--shbz-text-strong)" }}>
-                Решаемость
-              </h2>
-              <div className="grid gap-6 xl:grid-cols-2">
-                <div className="shbz-panel-soft space-y-5 p-6">
-                  <h3 className="text-[15px] font-bold" style={{ color: "var(--shbz-text-strong)" }}>
-                    От выданных ДЗ
-                  </h3>
-                  <DevProgressRow
-                    label="Решено"
-                    value={`${developerStats.homework.issuedNumbersSolved} / ${developerStats.homework.issuedNumbersTotal}`}
-                    percent={completionPercent(developerStats.homework.issuedNumbersSolved, developerStats.homework.issuedNumbersTotal)}
-                  />
-                  <DevProgressRow
-                    label="Красные"
-                    value={`${developerStats.homework.issuedNumbersRed} / ${developerStats.homework.issuedNumbersTotal}`}
-                    percent={completionPercent(developerStats.homework.issuedNumbersRed, developerStats.homework.issuedNumbersTotal)}
-                  />
-                  <DevProgressRow
-                    label="Без статуса"
-                    value={`${developerStats.homework.issuedNumbersUnmarked} / ${developerStats.homework.issuedNumbersTotal}`}
-                    percent={completionPercent(developerStats.homework.issuedNumbersUnmarked, developerStats.homework.issuedNumbersTotal)}
-                  />
-                </div>
-                <div className="shbz-panel-soft space-y-5 p-6">
-                  <h3 className="text-[15px] font-bold" style={{ color: "var(--shbz-text-strong)" }}>
-                    От всего банка номеров
-                  </h3>
-                  <DevProgressRow label="Решено" value={`${totalSolved} / ${totalStatusSlots}`} percent={solvedPercent} />
-                  <DevProgressRow
-                    label="Красные"
-                    value={`${totalRed} / ${totalStatusSlots}`}
-                    percent={completionPercent(totalRed, totalStatusSlots)}
-                  />
-                  <p className="text-xs leading-5" style={{ color: "var(--shbz-text-muted)" }}>
-                    Банк — все номера всех тем по каждому ученику, включая ещё не выданные в ДЗ. Показывает запас
-                    материала, а решаемость ДЗ — реальную дисциплину выполнения.
-                  </p>
-                </div>
-              </div>
-            </section>
-          ) : null}
-
-          {developerStats ? (
-            <section className="shbz-card shbz-section-pad">
-              <h2 className="mb-6 text-xl font-bold" style={{ color: "var(--shbz-text-strong)" }}>
-                Полнота контента
-              </h2>
-              <div className="grid gap-6 xl:grid-cols-2">
-                <div className="shbz-panel-soft space-y-5 p-6">
-                  <DevProgressRow
-                    label="Номера с условиями"
-                    value={`${developerStats.content.numbersWithCondition} / ${developerStats.content.totalNumbers}`}
-                    percent={completionPercent(developerStats.content.numbersWithCondition, developerStats.content.totalNumbers)}
-                  />
-                  <DevProgressRow
-                    label="Номера с ответами"
-                    value={`${developerStats.content.numbersWithAnswer} / ${developerStats.content.totalNumbers}`}
-                    percent={completionPercent(developerStats.content.numbersWithAnswer, developerStats.content.totalNumbers)}
-                  />
-                  <DevProgressRow
-                    label="Темы с файлом теории"
-                    value={`${developerStats.content.topicsWithTheory} / ${developerStats.content.totalTopics}`}
-                    percent={completionPercent(developerStats.content.topicsWithTheory, developerStats.content.totalTopics)}
-                  />
-                  <DevProgressRow
-                    label="Темы с файлом заданий"
-                    value={`${developerStats.content.topicsWithHomeworkFile} / ${developerStats.content.totalTopics}`}
-                    percent={completionPercent(developerStats.content.topicsWithHomeworkFile, developerStats.content.totalTopics)}
-                  />
-                </div>
-                <div className="shbz-panel-soft p-6">
-                  <h3 className="text-[17px] font-bold" style={{ color: "var(--shbz-text-strong)" }}>
-                    Пробелы в контенте
-                  </h3>
-                  {developerStats.content.gaps.length === 0 ? (
-                    <div className="mt-5 py-6 text-center text-sm" style={{ color: "var(--shbz-text-muted)" }}>
-                      Все темы укомплектованы: файлы, условия и ответы на месте.
-                    </div>
-                  ) : (
-                    <div className="mt-5 space-y-3">
-                      {developerStats.content.gaps.slice(0, 6).map((gap) => (
-                        <Link
-                          key={gap.topicId}
-                          href={`/teacher/topics/${gap.topicId}/edit`}
-                          className="block rounded-2xl border px-4 py-3.5 transition hover:opacity-80"
-                          style={{ background: "var(--shbz-card-bg)", borderColor: "var(--shbz-soft-border)" }}
-                        >
-                          <p className="text-sm font-bold" style={{ color: "var(--shbz-text-strong)" }}>
-                            {gap.title}
-                          </p>
-                          <p className="mt-1 text-xs leading-5" style={{ color: "var(--shbz-text-muted)" }}>
-                            {gap.missing.join(" · ")}
-                          </p>
-                        </Link>
-                      ))}
-                      {developerStats.content.gaps.length > 6 ? (
-                        <p className="text-xs" style={{ color: "var(--shbz-text-muted)" }}>
-                          И ещё {developerStats.content.gaps.length - 6} тем с пробелами.
-                        </p>
-                      ) : null}
-                    </div>
-                  )}
-                </div>
-              </div>
-            </section>
-          ) : null}
-
-          <div className="grid grid-cols-2 gap-3.5 xl:grid-cols-4">
-            <DevMetricCard label="Решено" value={totalSolved} note={`${solvedPercent}% от банка номеров`} noteColor="var(--shbz-green-text)" />
-            <DevMetricCard
-              label="Нужна помощь"
-              value={totalRed}
-              note={`${completionPercent(totalRed, totalStatusSlots)}% от банка номеров`}
-              noteColor="var(--shbz-red-text)"
-            />
-            <DevMetricCard
-              label="Без статуса"
-              value={totalUnfilled}
-              note={`${completionPercent(totalUnfilled, totalStatusSlots)}% от банка номеров`}
-              noteColor="var(--shbz-text-muted)"
-            />
-            <DevMetricCard
-              label="Активные ученики"
-              value={`${activeStudents.length} / ${data.stats.totalStudents}`}
-              note={`${activeStudentsPercent}% охвата`}
-              noteColor="var(--shbz-accent-solid)"
-            />
-          </div>
-
-          <section className="shbz-card shbz-section-pad">
-            <h2 className="mb-6 text-xl font-bold" style={{ color: "var(--shbz-text-strong)" }}>
-              Как распределяется прогресс
+              Как решаются выданные ДЗ
             </h2>
             <div className="grid gap-6 xl:grid-cols-[0.9fr_1.1fr]">
               <div className="shbz-panel-soft p-6">
-                <div className="flex flex-col items-center gap-6 lg:flex-row">
-                  <DonutChart
-                    segments={distributionSegments}
-                    total={totalStatusSlots}
-                    centerValue={`${solvedPercent}%`}
-                    centerLabel="решено"
-                  />
-                  <div className="w-full space-y-3">
-                    {distributionSegments.map((segment) => (
-                      <div
-                        key={segment.key}
-                        className="rounded-2xl border px-4 py-3"
-                        style={{ background: "var(--shbz-card-bg)", borderColor: "var(--shbz-soft-border)" }}
-                      >
-                        <div className="flex items-center justify-between gap-3">
-                          <div className="flex items-center gap-3">
-                            <span className="h-3 w-3 rounded-full" style={{ backgroundColor: segment.color }} />
-                            <div>
-                              <p className="text-sm font-bold" style={{ color: "var(--shbz-text-strong)" }}>
-                                {segment.label}
-                              </p>
-                              <p className="text-xs leading-5" style={{ color: "var(--shbz-text-muted)" }}>
-                                {segment.note}
-                              </p>
-                            </div>
-                          </div>
-                          <div className="text-right">
-                            <p className="text-sm font-extrabold" style={{ color: "var(--shbz-text-strong)" }}>
-                              {segment.value}
+                <DonutChart
+                  segments={issuedDistributionSegments}
+                  total={issuedTotal}
+                  centerValue={`${issuedSolvedPercent}%`}
+                  centerLabel="решено"
+                />
+              </div>
+              <div className="shbz-panel-soft p-6">
+                <div className="space-y-3">
+                  {issuedDistributionSegments.map((segment) => (
+                    <div
+                      key={segment.key}
+                      className="rounded-2xl border px-4 py-3"
+                      style={{ background: "var(--shbz-card-bg)", borderColor: "var(--shbz-soft-border)" }}
+                    >
+                      <div className="flex items-center justify-between gap-3">
+                        <div className="flex items-center gap-3">
+                          <span className="h-3 w-3 rounded-full" style={{ backgroundColor: segment.color }} />
+                          <div>
+                            <p className="text-sm font-bold" style={{ color: "var(--shbz-text-strong)" }}>
+                              {segment.label}
                             </p>
-                            <p className="text-xs" style={{ color: "var(--shbz-text-muted)" }}>
-                              {completionPercent(segment.value, totalStatusSlots)}%
+                            <p className="text-xs leading-5" style={{ color: "var(--shbz-text-muted)" }}>
+                              {segment.note}
                             </p>
                           </div>
                         </div>
+                        <div className="text-right">
+                          <p className="text-sm font-extrabold" style={{ color: "var(--shbz-text-strong)" }}>
+                            {segment.value}
+                          </p>
+                          <p className="text-xs" style={{ color: "var(--shbz-text-muted)" }}>
+                            {completionPercent(segment.value, issuedTotal)}%
+                          </p>
+                        </div>
                       </div>
-                    ))}
-                  </div>
-                </div>
-              </div>
-
-              <div className="shbz-panel-soft p-6">
-                <div className="space-y-5">
-                  <DevProgressRow label="Решено уверенно" value={`${totalSolved} / ${totalStatusSlots}`} percent={solvedPercent} />
-                  <DevProgressRow
-                    label="Темы с активностью"
-                    value={`${activeTopics.length} / ${data.stats.totalTopics}`}
-                    percent={activeTopicsPercent}
-                  />
-                  <DevProgressRow
-                    label="Ученики в работе"
-                    value={`${activeStudents.length} / ${data.stats.totalStudents}`}
-                    percent={activeStudentsPercent}
-                  />
+                    </div>
+                  ))}
 
                   <div
                     className="rounded-2xl border px-[22px] py-5"
@@ -494,15 +334,48 @@ export default async function TeacherStatisticsPage({ searchParams }: TeacherSta
                       Ключевой вывод
                     </div>
                     <p className="mt-2 text-base font-bold leading-normal" style={{ color: "var(--shbz-text-strong)" }}>
-                      {totalUnfilled > totalSolved
-                        ? "Неотмеченных номеров пока больше, чем реально решенных. Здесь главный резерв роста."
-                        : totalRed > 0
-                          ? "Основной фокус сейчас не на охвате, а на разборе красных номеров и снятии трудностей."
-                          : "Охват уже хороший: можно смещать внимание на качество и скорость прохождения тем."}
+                      {homework.issuedNumbersUnmarked > homework.issuedNumbersSolved
+                        ? "В выданных ДЗ неотмеченных номеров больше, чем решённых. Стоит напомнить ученикам отмечать прогресс."
+                        : homework.issuedNumbersRed > 0
+                          ? "Основной фокус — разбор красных номеров в выданных ДЗ."
+                          : "Выданные ДЗ решаются уверенно: можно наращивать объём и сложность."}
                     </p>
                   </div>
                 </div>
               </div>
+            </div>
+          </section>
+
+          <section className="shbz-card shbz-section-pad">
+            <h2 className="mb-6 text-xl font-bold" style={{ color: "var(--shbz-text-strong)" }}>
+              Что происходит по ученикам
+            </h2>
+            <div className="grid gap-5 xl:grid-cols-2">
+              <RankingCard
+                title="Самые вовлеченные"
+                emptyMessage="Пока у учеников нет отмеченных номеров."
+                items={engagedStudents.map((student) => ({
+                  key: student.id,
+                  title: student.name,
+                  subtitle: `${student.solvedCount} решено · ${student.markedCount} отмечено`,
+                  valueLabel: `${student.solvedPercent}%`,
+                  progress: student.solvedPercent,
+                  tone: "brand" as const
+                }))}
+              />
+
+              <RankingCard
+                title="Нужен разбор"
+                emptyMessage="Сейчас нет учеников с красными статусами."
+                items={supportStudents.map((student) => ({
+                  key: student.id,
+                  title: student.name,
+                  subtitle: `${student.redCount} красных · ${student.solvedCount} решено`,
+                  valueLabel: `${student.redPercent}%`,
+                  progress: student.redPercent,
+                  tone: "rose" as const
+                }))}
+              />
             </div>
           </section>
 
@@ -541,34 +414,148 @@ export default async function TeacherStatisticsPage({ searchParams }: TeacherSta
 
           <section className="shbz-card shbz-section-pad">
             <h2 className="mb-6 text-xl font-bold" style={{ color: "var(--shbz-text-strong)" }}>
-              Что происходит по ученикам
+              Срез по теме и ученику
             </h2>
-            <div className="grid gap-5 xl:grid-cols-2">
-              <RankingCard
-                title="Самые вовлеченные"
-                emptyMessage="Пока у учеников нет отмеченных номеров."
-                items={engagedStudents.map((student) => ({
-                  key: student.id,
-                  title: student.name,
-                  subtitle: `${student.solvedCount} решено · ${student.markedCount} отмечено`,
-                  valueLabel: `${student.solvedPercent}%`,
-                  progress: student.solvedPercent,
-                  tone: "brand" as const
-                }))}
-              />
+            <TeacherStatisticsDrilldown topics={drilldownTopics} students={drilldownStudents} />
+          </section>
+        </div>
+      ) : (
+        <div className="flex flex-col gap-6">
+          <div className="grid grid-cols-2 gap-3.5 xl:grid-cols-4">
+            <DevMetricCard
+              label="Темы"
+              value={data.stats.totalTopics}
+              note={`${activeTopics.length} с активностью (${activeTopicsPercent}%)`}
+              noteColor="var(--shbz-accent-solid)"
+            />
+            <DevMetricCard
+              label="Номера в банке"
+              value={data.stats.totalNumbers}
+              note={`${solvedPercent}% банка решено`}
+              noteColor="var(--shbz-green-text)"
+            />
+            <DevMetricCard
+              label="Выдано ДЗ"
+              value={homework.total}
+              note={`фото решений: ${homework.photosTotal}`}
+              noteColor="var(--shbz-text-muted)"
+            />
+            <DevMetricCard
+              label="Ученики"
+              value={`${activeStudents.length} / ${data.stats.totalStudents}`}
+              note={`${activeStudentsPercent}% активны`}
+              noteColor="var(--shbz-accent-solid)"
+            />
+          </div>
 
-              <RankingCard
-                title="Нужен разбор"
-                emptyMessage="Сейчас нет учеников с красными статусами."
-                items={supportStudents.map((student) => ({
-                  key: student.id,
-                  title: student.name,
-                  subtitle: `${student.redCount} красных · ${student.solvedCount} решено`,
-                  valueLabel: `${student.redPercent}%`,
-                  progress: student.redPercent,
-                  tone: "rose" as const
-                }))}
-              />
+          <section className="shbz-card shbz-section-pad">
+            <h2 className="mb-6 text-xl font-bold" style={{ color: "var(--shbz-text-strong)" }}>
+              Использование банка номеров
+            </h2>
+            <div className="grid gap-6 xl:grid-cols-2">
+              <div className="shbz-panel-soft space-y-5 p-6">
+                <DevProgressRow label="Решено от банка" value={`${totalSolved} / ${totalStatusSlots}`} percent={solvedPercent} />
+                <DevProgressRow
+                  label="Красные в банке"
+                  value={`${totalRed} / ${totalStatusSlots}`}
+                  percent={completionPercent(totalRed, totalStatusSlots)}
+                />
+                <DevProgressRow
+                  label="Темы с активностью"
+                  value={`${activeTopics.length} / ${data.stats.totalTopics}`}
+                  percent={activeTopicsPercent}
+                />
+                <DevProgressRow
+                  label="Ученики в работе"
+                  value={`${activeStudents.length} / ${data.stats.totalStudents}`}
+                  percent={activeStudentsPercent}
+                />
+              </div>
+
+              <div className="shbz-panel-soft space-y-5 p-6">
+                <div
+                  className="rounded-2xl border px-[22px] py-5"
+                  style={{ background: "var(--shbz-card-bg)", borderColor: "var(--shbz-soft-border)" }}
+                >
+                  <div className="text-[11px] font-bold uppercase tracking-[1.2px]" style={{ color: "var(--shbz-kicker)" }}>
+                    Ключевой вывод
+                  </div>
+                  <p className="mt-2 text-base font-bold leading-normal" style={{ color: "var(--shbz-text-strong)" }}>
+                    {totalUnfilled > totalSolved
+                      ? "Неотмеченных номеров в банке больше, чем решенных. Здесь главный резерв роста."
+                      : totalRed > 0
+                        ? "Охват банка хороший: фокус смещается на разбор красных номеров."
+                        : "Банк используется отлично: можно добавлять новые темы и номера."}
+                  </p>
+                </div>
+                <p className="text-xs leading-5" style={{ color: "var(--shbz-text-muted)" }}>
+                  Банк — все номера всех тем по каждому ученику, включая ещё не выданные в ДЗ. Показывает запас
+                  материала; реальную дисциплину выполнения смотри во вкладке «Прогресс учеников».
+                </p>
+              </div>
+            </div>
+          </section>
+
+          <section className="shbz-card shbz-section-pad">
+            <h2 className="mb-6 text-xl font-bold" style={{ color: "var(--shbz-text-strong)" }}>
+              Полнота контента
+            </h2>
+            <div className="grid gap-6 xl:grid-cols-2">
+              <div className="shbz-panel-soft space-y-5 p-6">
+                <DevProgressRow
+                  label="Номера с условиями"
+                  value={`${developerStats.content.numbersWithCondition} / ${developerStats.content.totalNumbers}`}
+                  percent={completionPercent(developerStats.content.numbersWithCondition, developerStats.content.totalNumbers)}
+                />
+                <DevProgressRow
+                  label="Номера с ответами"
+                  value={`${developerStats.content.numbersWithAnswer} / ${developerStats.content.totalNumbers}`}
+                  percent={completionPercent(developerStats.content.numbersWithAnswer, developerStats.content.totalNumbers)}
+                />
+                <DevProgressRow
+                  label="Темы с файлом теории"
+                  value={`${developerStats.content.topicsWithTheory} / ${developerStats.content.totalTopics}`}
+                  percent={completionPercent(developerStats.content.topicsWithTheory, developerStats.content.totalTopics)}
+                />
+                <DevProgressRow
+                  label="Темы с файлом заданий"
+                  value={`${developerStats.content.topicsWithHomeworkFile} / ${developerStats.content.totalTopics}`}
+                  percent={completionPercent(developerStats.content.topicsWithHomeworkFile, developerStats.content.totalTopics)}
+                />
+              </div>
+              <div className="shbz-panel-soft p-6">
+                <h3 className="text-[17px] font-bold" style={{ color: "var(--shbz-text-strong)" }}>
+                  Пробелы в контенте
+                </h3>
+                {developerStats.content.gaps.length === 0 ? (
+                  <div className="mt-5 py-6 text-center text-sm" style={{ color: "var(--shbz-text-muted)" }}>
+                    Все темы укомплектованы: файлы, условия и ответы на месте.
+                  </div>
+                ) : (
+                  <div className="mt-5 space-y-3">
+                    {developerStats.content.gaps.slice(0, 6).map((gap) => (
+                      <Link
+                        key={gap.topicId}
+                        href={`/teacher/topics/${gap.topicId}/edit`}
+                        className="block rounded-2xl border px-4 py-3.5 transition hover:opacity-80"
+                        style={{ background: "var(--shbz-card-bg)", borderColor: "var(--shbz-soft-border)" }}
+                      >
+                        <p className="text-sm font-bold" style={{ color: "var(--shbz-text-strong)" }}>
+                          {gap.title}
+                        </p>
+                        <p className="mt-1 text-xs leading-5" style={{ color: "var(--shbz-text-muted)" }}>
+                          {gap.missing.join(" · ")}
+                        </p>
+                      </Link>
+                    ))}
+                    {developerStats.content.gaps.length > 6 ? (
+                      <p className="text-xs" style={{ color: "var(--shbz-text-muted)" }}>
+                        И ещё {developerStats.content.gaps.length - 6} тем с пробелами.
+                      </p>
+                    ) : null}
+                  </div>
+                )}
+              </div>
             </div>
           </section>
         </div>
