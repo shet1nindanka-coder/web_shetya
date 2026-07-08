@@ -1,7 +1,7 @@
 import { HomeworkNumberStatus } from "@prisma/client";
 import Link from "next/link";
-import { HomeworkDoneBadge, HomeworkOverdueBadge, isHomeworkOverdue } from "@/components/deadline-list";
-import { cx, formatDate, homeworkStatusMeta } from "@/lib/utils";
+import { HomeworkDoneBadge, HomeworkOverdueBadge } from "@/components/deadline-list";
+import { cx, formatDate, homeworkStatusMeta, isHomeworkOverdue } from "@/lib/utils";
 
 type SubmissionAssignment = {
   id: string;

@@ -1,13 +1,13 @@
 import { UserRole } from "@prisma/client";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { HomeworkDoneBadge, HomeworkOverdueBadge, isHomeworkOverdue } from "@/components/deadline-list";
+import { HomeworkDoneBadge, HomeworkOverdueBadge } from "@/components/deadline-list";
 import { ShbzPageHeader } from "@/components/shbz-page-header";
 import { StudentHomeworkPhotos } from "@/components/student-homework-photos";
 import { StudentSingleNumberCard } from "@/components/student-single-number-card";
 import { requireUser } from "@/lib/auth";
 import { getStudentHomeworks } from "@/lib/platform-data";
-import { formatDateTime, toIsoDateTimeString } from "@/lib/utils";
+import { formatDateTime, isHomeworkOverdue, toIsoDateTimeString } from "@/lib/utils";
 
 type StudentHomeworkPageProps = {
   params: Promise<{

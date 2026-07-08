@@ -19,7 +19,8 @@ import {
   parseNumbersInput,
   roleHome,
   sanitizeFileName,
-  toIsoDateTimeString
+  toIsoDateTimeString,
+  isHomeworkOverdue
 } from "../lib/utils";
 
 test("cx joins only truthy class name fragments", () => {
@@ -130,4 +131,14 @@ test("getStatusCounts counts only non-null statuses", () => {
       RED: 1
     }
   );
+});
+
+test("isHomeworkOverdue detects passed deadlines for incomplete homework only", () => {
+  const now = new Date("2026-07-08T12:00:00.000Z").getTime();
+
+  assert.equal(isHomeworkOverdue("2026-07-01T00:00:00.000Z", false, now), true);
+  assert.equal(isHomeworkOverdue("2026-07-01T00:00:00.000Z", true, now), false);
+  assert.equal(isHomeworkOverdue("2026-08-01T00:00:00.000Z", false, now), false);
+  assert.equal(isHomeworkOverdue(null, false, now), false);
+  assert.equal(isHomeworkOverdue("not-a-date", false, now), false);
 });

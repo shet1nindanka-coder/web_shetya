@@ -242,3 +242,13 @@ export function getStatusCounts(statuses: Array<HomeworkNumberStatus | null | un
 
   return counts;
 }
+
+export function isHomeworkOverdue(deadlineAt: string | null, isCompleted: boolean, now: number = Date.now()) {
+  if (!deadlineAt || isCompleted) {
+    return false;
+  }
+
+  const deadline = new Date(deadlineAt);
+
+  return !Number.isNaN(deadline.getTime()) && deadline.getTime() < now;
+}

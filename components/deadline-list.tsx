@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { completionPercent, formatDate } from "@/lib/utils";
+import { completionPercent, formatDate, isHomeworkOverdue } from "@/lib/utils";
 
 export type DeadlineListItem = {
   id: string;
@@ -41,16 +41,6 @@ export function HomeworkOverdueBadge() {
       Просрочено
     </span>
   );
-}
-
-export function isHomeworkOverdue(deadlineAt: string | null, isCompleted: boolean) {
-  if (!deadlineAt || isCompleted) {
-    return false;
-  }
-
-  const deadline = new Date(deadlineAt);
-
-  return !Number.isNaN(deadline.getTime()) && deadline.getTime() < Date.now();
 }
 
 type DeadlineListProps = {
