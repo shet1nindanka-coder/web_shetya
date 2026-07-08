@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { createPortal } from "react-dom";
 import { useFormStatus } from "react-dom";
 import { deleteTopicAction } from "@/actions/topic";
 
@@ -63,7 +64,7 @@ export function DeleteTopicDialog({
         {triggerLabel}
       </button>
 
-      {isOpen ? (
+      {isOpen ? createPortal(
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-[rgba(15,23,42,0.45)] px-4 py-6 backdrop-blur-sm"
           onClick={() => setIsOpen(false)}
@@ -96,7 +97,8 @@ export function DeleteTopicDialog({
               </form>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       ) : null}
     </>
   );
