@@ -46,7 +46,6 @@ const teacherItems = [
   { href: "/teacher", label: "обзор", match: (p: string) => p === "/teacher" },
   { href: "/teacher/topics", label: "темы", match: (p: string) => p.startsWith("/teacher/topics") },
   { href: "/teacher/students", label: "ученики", match: (p: string) => p.startsWith("/teacher/students") },
-  { href: "/teacher/statistics", label: "статистика", match: (p: string) => p.startsWith("/teacher/statistics") },
   {
     href: "/teacher/settings",
     label: "настройки",

@@ -28,15 +28,6 @@ export default async function TeacherPage() {
         { label: "Ученики", value: data.stats.totalStudents },
         { label: "Файлы", value: data.stats.totalFiles }
       ]
-    },
-    {
-      kicker: "Статистика",
-      title: "Разбор и аналитика",
-      href: "/teacher/statistics",
-      stats: [
-        { label: "Темы", value: data.stats.totalTopics },
-        { label: "Ученики", value: data.stats.totalStudents }
-      ]
     }
   ];
 
