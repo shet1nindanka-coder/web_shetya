@@ -1278,3 +1278,163 @@ export async function getStudentHomeworks(
 ): Promise<Awaited<ReturnType<typeof getTeacherStudentHomeworksUncached>>> {
   return getTeacherStudentHomeworksCached(studentId);
 }
+
+// ── Developer statistics ─────────────────────────────
+
+async function getDeveloperStatisticsUncached() {
+  let assignments: Array<{
+    id: string;
+    studentId: string;
+    deadlineAt: Date | null;
+    numbers: Array<{ homeworkNumberId: string }>;
+    _count: { photos: number };
+  }> = [];
+
+  try {
+    assignments = await prisma.homeworkAssignment.findMany({
+      select: {
+        id: true,
+        studentId: true,
+        deadlineAt: true,
+        numbers: {
+          select: { homeworkNumberId: true }
+        },
+        _count: {
+          select: { photos: true }
+        }
+      }
+    });
+  } catch (error) {
+    if (!isMissingHomeworkAssignmentTableError(error)) {
+      throw error;
+    }
+  }
+
+  const solvedStatuses = await prisma.studentTopicNumberStatus.findMany({
+    where: {
+      status: {
+        in: [HomeworkNumberStatus.GREEN, HomeworkNumberStatus.YELLOW]
+      }
+    },
+    select: {
+      studentId: true,
+      homeworkNumberId: true
+    }
+  });
+  const solvedKeys = new Set(solvedStatuses.map((status) => `${status.studentId}:${status.homeworkNumberId}`));
+
+  const now = Date.now();
+  let completedCount = 0;
+  let overdueCount = 0;
+  let inProgressCount = 0;
+  let withPhotosCount = 0;
+  let photosTotal = 0;
+
+  for (const assignment of assignments) {
+    const totalNumbers = assignment.numbers.length;
+    const solvedNumbers = assignment.numbers.filter((entry) =>
+      solvedKeys.has(`${assignment.studentId}:${entry.homeworkNumberId}`)
+    ).length;
+    const isCompleted = totalNumbers > 0 && solvedNumbers === totalNumbers;
+
+    if (isCompleted) {
+      completedCount += 1;
+    } else if (assignment.deadlineAt && assignment.deadlineAt.getTime() < now) {
+      overdueCount += 1;
+    } else {
+      inProgressCount += 1;
+    }
+
+    if (assignment._count.photos > 0) {
+      withPhotosCount += 1;
+    }
+
+    photosTotal += assignment._count.photos;
+  }
+
+  const topics = await prisma.topic.findMany({
+    select: {
+      id: true,
+      title: true,
+      theoryFileId: true,
+      homeworkFileId: true,
+      homeworkNumbers: {
+        select: {
+          conditionLatex: true,
+          answerLatex: true
+        }
+      }
+    },
+    orderBy: [{ displayOrder: "asc" }, { createdAt: "asc" }]
+  });
+
+  let totalNumbers = 0;
+  let numbersWithCondition = 0;
+  let numbersWithAnswer = 0;
+  let topicsWithTheory = 0;
+  let topicsWithHomeworkFile = 0;
+
+  const contentGaps: Array<{ topicId: string; title: string; missing: string[] }> = [];
+
+  for (const topic of topics) {
+    const missing: string[] = [];
+    const missingConditions = topic.homeworkNumbers.filter((number) => !number.conditionLatex?.trim()).length;
+    const missingAnswers = topic.homeworkNumbers.filter((number) => !number.answerLatex?.trim()).length;
+
+    totalNumbers += topic.homeworkNumbers.length;
+    numbersWithCondition += topic.homeworkNumbers.length - missingConditions;
+    numbersWithAnswer += topic.homeworkNumbers.length - missingAnswers;
+
+    if (topic.theoryFileId) {
+      topicsWithTheory += 1;
+    } else {
+      missing.push("нет файла теории");
+    }
+
+    if (topic.homeworkFileId) {
+      topicsWithHomeworkFile += 1;
+    } else {
+      missing.push("нет файла заданий");
+    }
+
+    if (missingConditions > 0) {
+      missing.push(`без условия: ${missingConditions}`);
+    }
+
+    if (missingAnswers > 0) {
+      missing.push(`без ответа: ${missingAnswers}`);
+    }
+
+    if (missing.length > 0) {
+      contentGaps.push({ topicId: topic.id, title: topic.title, missing });
+    }
+  }
+
+  return {
+    homework: {
+      total: assignments.length,
+      completedCount,
+      overdueCount,
+      inProgressCount,
+      withPhotosCount,
+      photosTotal
+    },
+    content: {
+      totalTopics: topics.length,
+      totalNumbers,
+      numbersWithCondition,
+      numbersWithAnswer,
+      topicsWithTheory,
+      topicsWithHomeworkFile,
+      gaps: contentGaps
+    }
+  };
+}
+
+const getDeveloperStatisticsCached = unstable_cache(getDeveloperStatisticsUncached, ["developer-statistics"], {
+  tags: [PLATFORM_DATA_TAGS.studentTopics, PLATFORM_DATA_TAGS.teacherTopics, PLATFORM_DATA_TAGS.teacherStudents]
+});
+
+export async function getDeveloperStatistics(): Promise<Awaited<ReturnType<typeof getDeveloperStatisticsUncached>>> {
+  return getDeveloperStatisticsCached();
+}

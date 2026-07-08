@@ -6,7 +6,7 @@ import { ShbzNumberSearch } from "@/components/shbz-number-search";
 import { ShbzPageHeader } from "@/components/shbz-page-header";
 import { TeacherStatisticsDrilldown } from "@/components/teacher-statistics-drilldown";
 import { requireUser } from "@/lib/auth";
-import { getProgressTimeline, getTeacherTopicsOverview } from "@/lib/platform-data";
+import { getDeveloperStatistics, getProgressTimeline, getTeacherTopicsOverview } from "@/lib/platform-data";
 import { completionPercent, toIsoDateTimeString } from "@/lib/utils";
 
 type TeacherTopicsOverview = Awaited<ReturnType<typeof getTeacherTopicsOverview>>;
@@ -47,8 +47,8 @@ type TeacherStatisticsPageProps = {
 };
 
 const statisticsViews = [
-  { key: "teacher", label: "Для учителя", href: "/teacher/statistics" },
-  { key: "developer", label: "Для разработчиков", href: "/teacher/statistics?view=developer" }
+  { key: "teacher", label: "Прогресс учеников", href: "/teacher/statistics" },
+  { key: "developer", label: "Метрики платформы", href: "/teacher/statistics?view=developer" }
 ] as const;
 
 export default async function TeacherStatisticsPage({ searchParams }: TeacherStatisticsPageProps) {
@@ -187,6 +187,7 @@ export default async function TeacherStatisticsPage({ searchParams }: TeacherSta
   const activeStudentsPercent = completionPercent(activeStudents.length, data.stats.totalStudents);
   const solvedPercent = completionPercent(totalSolved, totalStatusSlots);
   const progressTimelineEntries = await getProgressTimeline(selectedTimelineStudent?.id, 112);
+  const developerStats = view === "developer" ? await getDeveloperStatistics() : null;
   const drilldownTopics = data.topics.map((topic) => ({
     id: topic.id,
     title: topic.title,
@@ -258,6 +259,105 @@ export default async function TeacherStatisticsPage({ searchParams }: TeacherSta
         </div>
       ) : (
         <div className="flex flex-col gap-6">
+          {developerStats ? (
+            <section className="shbz-card shbz-section-pad">
+              <h2 className="mb-6 text-xl font-bold" style={{ color: "var(--shbz-text-strong)" }}>
+                Домашние задания
+              </h2>
+              <div className="grid grid-cols-2 gap-3.5 xl:grid-cols-4">
+                <DevMetricCard
+                  label="Выдано ДЗ"
+                  value={developerStats.homework.total}
+                  note={`фото решений: ${developerStats.homework.photosTotal}`}
+                  noteColor="var(--shbz-text-muted)"
+                />
+                <DevMetricCard
+                  label="Выполнено"
+                  value={developerStats.homework.completedCount}
+                  note={`${completionPercent(developerStats.homework.completedCount, developerStats.homework.total)}% от выданных`}
+                  noteColor="var(--shbz-green-text)"
+                />
+                <DevMetricCard
+                  label="Просрочено"
+                  value={developerStats.homework.overdueCount}
+                  note={`${completionPercent(developerStats.homework.overdueCount, developerStats.homework.total)}% от выданных`}
+                  noteColor="var(--shbz-red-text)"
+                />
+                <DevMetricCard
+                  label="В работе"
+                  value={developerStats.homework.inProgressCount}
+                  note={`с фото: ${developerStats.homework.withPhotosCount} ДЗ`}
+                  noteColor="var(--shbz-accent-solid)"
+                />
+              </div>
+            </section>
+          ) : null}
+
+          {developerStats ? (
+            <section className="shbz-card shbz-section-pad">
+              <h2 className="mb-6 text-xl font-bold" style={{ color: "var(--shbz-text-strong)" }}>
+                Полнота контента
+              </h2>
+              <div className="grid gap-6 xl:grid-cols-2">
+                <div className="shbz-panel-soft space-y-5 p-6">
+                  <DevProgressRow
+                    label="Номера с условиями"
+                    value={`${developerStats.content.numbersWithCondition} / ${developerStats.content.totalNumbers}`}
+                    percent={completionPercent(developerStats.content.numbersWithCondition, developerStats.content.totalNumbers)}
+                  />
+                  <DevProgressRow
+                    label="Номера с ответами"
+                    value={`${developerStats.content.numbersWithAnswer} / ${developerStats.content.totalNumbers}`}
+                    percent={completionPercent(developerStats.content.numbersWithAnswer, developerStats.content.totalNumbers)}
+                  />
+                  <DevProgressRow
+                    label="Темы с файлом теории"
+                    value={`${developerStats.content.topicsWithTheory} / ${developerStats.content.totalTopics}`}
+                    percent={completionPercent(developerStats.content.topicsWithTheory, developerStats.content.totalTopics)}
+                  />
+                  <DevProgressRow
+                    label="Темы с файлом заданий"
+                    value={`${developerStats.content.topicsWithHomeworkFile} / ${developerStats.content.totalTopics}`}
+                    percent={completionPercent(developerStats.content.topicsWithHomeworkFile, developerStats.content.totalTopics)}
+                  />
+                </div>
+                <div className="shbz-panel-soft p-6">
+                  <h3 className="text-[17px] font-bold" style={{ color: "var(--shbz-text-strong)" }}>
+                    Пробелы в контенте
+                  </h3>
+                  {developerStats.content.gaps.length === 0 ? (
+                    <div className="mt-5 py-6 text-center text-sm" style={{ color: "var(--shbz-text-muted)" }}>
+                      Все темы укомплектованы: файлы, условия и ответы на месте.
+                    </div>
+                  ) : (
+                    <div className="mt-5 space-y-3">
+                      {developerStats.content.gaps.slice(0, 6).map((gap) => (
+                        <Link
+                          key={gap.topicId}
+                          href={`/teacher/topics/${gap.topicId}/edit`}
+                          className="block rounded-2xl border px-4 py-3.5 transition hover:opacity-80"
+                          style={{ background: "var(--shbz-card-bg)", borderColor: "var(--shbz-soft-border)" }}
+                        >
+                          <p className="text-sm font-bold" style={{ color: "var(--shbz-text-strong)" }}>
+                            {gap.title}
+                          </p>
+                          <p className="mt-1 text-xs leading-5" style={{ color: "var(--shbz-text-muted)" }}>
+                            {gap.missing.join(" · ")}
+                          </p>
+                        </Link>
+                      ))}
+                      {developerStats.content.gaps.length > 6 ? (
+                        <p className="text-xs" style={{ color: "var(--shbz-text-muted)" }}>
+                          И ещё {developerStats.content.gaps.length - 6} тем с пробелами.
+                        </p>
+                      ) : null}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </section>
+          ) : null}
+
           <div className="grid grid-cols-2 gap-3.5 xl:grid-cols-4">
             <DevMetricCard label="Решено" value={totalSolved} note={`${solvedPercent}% от всех слотов`} noteColor="var(--shbz-green-text)" />
             <DevMetricCard
