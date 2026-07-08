@@ -34,7 +34,7 @@ export async function POST(request: Request) {
 
   if (!getAiCheckConfig()) {
     return NextResponse.json(
-      { error: "Автопроверка пока не подключена. Попросите разработчика настроить ключ ИИ." },
+      { error: "Автоматическая проверка пока не подключена. Попросите разработчика настроить её." },
       { status: 503 }
     );
   }

@@ -70,7 +70,7 @@ export default async function StudentHomeworkPage({ params }: StudentHomeworkPag
       </section>
 
       <section className="mb-8">
-        <h2 className="shbz-section-title">Проверка ИИ</h2>
+        <h2 className="shbz-section-title">Автоматическая проверка</h2>
         <StudentHomeworkCheck
           assignmentId={assignment.id}
           hasPhotos={assignment.photos.length > 0}

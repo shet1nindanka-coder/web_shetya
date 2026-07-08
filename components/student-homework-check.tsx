@@ -109,7 +109,7 @@ export function StudentHomeworkCheck({ assignmentId, hasPhotos, initialCheck }: 
 
       <div className="flex flex-wrap items-center justify-between gap-3">
         <p className="text-sm" style={{ color: "var(--shbz-text-muted)" }}>
-          ИИ сверит фото решения с эталонными ответами и отметит номера: верно — зелёным, с ошибкой — красным.
+          Автоматическая проверка сверит фото решения с эталонными ответами и отметит номера: верно — зелёным, с ошибкой — красным.
         </p>
         <button
           type="button"
@@ -118,13 +118,13 @@ export function StudentHomeworkCheck({ assignmentId, hasPhotos, initialCheck }: 
           title={hasPhotos ? undefined : "Сначала прикрепите фото решения"}
           className="shbz-btn-primary px-5 py-2.5 text-[14px] disabled:cursor-not-allowed disabled:opacity-60"
         >
-          {isRunning ? "Проверяется..." : isStarting ? "Запускаем..." : "Проверить решение ИИ"}
+          {isRunning ? "Проверяется..." : isStarting ? "Запускаем..." : "Проверить решение"}
         </button>
       </div>
 
       {isRunning ? (
         <p className="mt-4 text-sm font-semibold" style={{ color: "var(--shbz-kicker)" }}>
-          ИИ проверяет решение — обычно это занимает до минуты. Страница обновится сама.
+          Решение проверяется — обычно это занимает до минуты. Страница обновится сама.
         </p>
       ) : null}
 

@@ -518,7 +518,7 @@ export async function runHomeworkCheck(checkId: string) {
     await createNotification({
       userId: assignment.studentId,
       type: "homework-checked",
-      title: "ИИ проверил ваше решение",
+      title: "Решение проверено автоматически",
       body: `Верно: ${correctCount} · перерешать: ${incorrectCount}${uncertainCount > 0 ? ` · не распознано: ${uncertainCount}` : ""}`,
       href: `/student/homeworks/${assignment.id}`
     });

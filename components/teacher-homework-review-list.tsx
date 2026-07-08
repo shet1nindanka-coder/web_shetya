@@ -235,7 +235,7 @@ export function TeacherHomeworkReviewList({ studentId, assignments }: TeacherHom
             {assignment.aiCheck && assignment.aiCheck.results.length > 0 ? (
               <div className="mt-4">
                 <p className="ui-copy-muted text-sm font-medium">
-                  Проверка ИИ
+                  Автоматическая проверка
                   {assignment.aiCheck.checkedAt ? ` · ${formatDateTime(assignment.aiCheck.checkedAt) ?? ""}` : ""}
                 </p>
                 <div className="mt-2 space-y-2">
