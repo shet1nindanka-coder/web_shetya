@@ -3,6 +3,9 @@
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ConfirmDialog } from "@/components/confirm-dialog";
+import { cx } from "@/lib/utils";
+
+const MAX_PHOTOS = 10;
 
 type StudentHomeworkPhotosProps = {
   assignmentId: string;
@@ -20,6 +23,9 @@ export function StudentHomeworkPhotos({ assignmentId, photos }: StudentHomeworkP
   const [deletingPhotoId, setDeletingPhotoId] = useState<string | null>(null);
   const [confirmPhotoId, setConfirmPhotoId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
+
+  const atLimit = photos.length >= MAX_PHOTOS;
 
   const uploadPhotos = async (files: FileList | null) => {
     if (!files || !files.length) {
@@ -92,53 +98,94 @@ export function StudentHomeworkPhotos({ assignmentId, photos }: StudentHomeworkP
     <div className="shbz-card shbz-section-pad">
       {error ? <div className="ui-notice-error mb-4 rounded-[8px] px-4 py-3 text-sm">{error}</div> : null}
 
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <p className="ui-hint text-sm" style={{ color: "var(--shbz-text-muted)" }}>
-          Прикрепите фото решённого ДЗ — учитель увидит их при проверке. До 10 фото (PNG или JPG).
-        </p>
+      <label
+        onDragOver={(event) => {
+          event.preventDefault();
+          if (!isUploading && !atLimit) {
+            setIsDragging(true);
+          }
+        }}
+        onDragLeave={() => setIsDragging(false)}
+        onDrop={(event) => {
+          event.preventDefault();
+          setIsDragging(false);
+          if (!isUploading && !atLimit) {
+            void uploadPhotos(event.dataTransfer.files);
+          }
+        }}
+        className={cx(
+          "flex flex-col items-center gap-2 rounded-[16px] border-[1.5px] border-dashed px-6 py-7 text-center transition",
+          atLimit ? "cursor-not-allowed" : "cursor-pointer"
+        )}
+        style={{
+          borderColor: isDragging ? "var(--shbz-green-text)" : "var(--shbz-input-border)",
+          background: isDragging ? "var(--shbz-green-soft)" : "#fbfcfd"
+        }}
+      >
         <input
           ref={fileInputRef}
           type="file"
           accept="image/png,image/jpeg"
           multiple
+          disabled={isUploading || atLimit}
           className="hidden"
           onChange={(event) => void uploadPhotos(event.target.files)}
         />
-        <button
-          type="button"
-          disabled={isUploading}
-          onClick={() => fileInputRef.current?.click()}
-          className="shbz-btn-primary ml-auto px-5 py-2.5 text-[14px] disabled:cursor-not-allowed disabled:opacity-60"
+        <span
+          className="inline-flex h-11 w-11 items-center justify-center rounded-[12px]"
+          style={{ background: "var(--shbz-green-soft)", color: "var(--shbz-green-text)" }}
+          aria-hidden="true"
         >
-          {isUploading ? "Загружаем..." : "Прикрепить фото"}
-        </button>
-      </div>
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <path d="M12 16V4m0 0L7 9m5-5l5 5" strokeLinecap="round" strokeLinejoin="round" />
+            <path d="M4 17v2a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-2" strokeLinecap="round" />
+          </svg>
+        </span>
+        <span className="text-[14.5px] font-bold" style={{ color: "var(--shbz-text-strong)" }}>
+          {isUploading
+            ? "Загружаем..."
+            : atLimit
+              ? "Достигнут лимит — 10 фото"
+              : "Перетащите фото сюда или нажмите"}
+        </span>
+        <span className="text-[12.5px]" style={{ color: "var(--shbz-kicker)" }}>
+          До 10 фото · PNG или JPG
+        </span>
+      </label>
 
       {photos.length > 0 ? (
-        <div className="mt-4 flex flex-wrap gap-3">
-          {photos.map((photo) => (
-            <div key={photo.id} className="relative">
-              <a href={`/files/${photo.fileId}`} target="_blank" rel="noreferrer" title={photo.originalName}>
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
-                  src={`/files/${photo.fileId}`}
-                  alt={photo.originalName}
-                  className="h-24 w-24 rounded-[12px] border object-cover"
+        <div className="mt-5">
+          <div className="mb-2.5 flex items-center justify-between">
+            <span className="ui-kicker">Прикреплённые фото</span>
+            <span className="text-[12.5px] font-bold" style={{ color: "var(--shbz-kicker)" }}>
+              {photos.length} / {MAX_PHOTOS}
+            </span>
+          </div>
+          <div className="flex flex-wrap gap-3">
+            {photos.map((photo) => (
+              <div key={photo.id} className="relative">
+                <a href={`/files/${photo.fileId}`} target="_blank" rel="noreferrer" title={photo.originalName}>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={`/files/${photo.fileId}`}
+                    alt={photo.originalName}
+                    className="h-24 w-24 rounded-[12px] border object-cover"
+                    style={{ borderColor: "var(--shbz-soft-border)" }}
+                  />
+                </a>
+                <button
+                  type="button"
+                  disabled={deletingPhotoId === photo.id}
+                  onClick={() => setConfirmPhotoId(photo.id)}
+                  aria-label="Удалить фото"
+                  className="absolute -right-2 -top-2 inline-flex h-6 w-6 items-center justify-center rounded-full border bg-[var(--theme-surface-strong)] text-xs font-bold text-[var(--theme-text-muted)] shadow transition hover:text-[var(--theme-danger-text)] disabled:cursor-not-allowed disabled:opacity-60"
                   style={{ borderColor: "var(--shbz-soft-border)" }}
-                />
-              </a>
-              <button
-                type="button"
-                disabled={deletingPhotoId === photo.id}
-                onClick={() => setConfirmPhotoId(photo.id)}
-                aria-label="Удалить фото"
-                className="absolute -right-2 -top-2 inline-flex h-6 w-6 items-center justify-center rounded-full border bg-[var(--theme-surface-strong)] text-xs font-bold text-[var(--theme-text-muted)] shadow transition hover:text-[var(--theme-danger-text)] disabled:cursor-not-allowed disabled:opacity-60"
-                style={{ borderColor: "var(--shbz-soft-border)" }}
-              >
-                ×
-              </button>
-            </div>
-          ))}
+                >
+                  ×
+                </button>
+              </div>
+            ))}
+          </div>
         </div>
       ) : null}
 

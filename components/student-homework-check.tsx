@@ -24,10 +24,13 @@ type StudentHomeworkCheckProps = {
   initialCheck: CheckSnapshot | null;
 };
 
-const verdictMeta: Record<CheckResult["verdict"], { label: string; color: string; background: string }> = {
-  CORRECT: { label: "Верно", color: "var(--shbz-green-text)", background: "var(--shbz-green-soft)" },
-  INCORRECT: { label: "Перерешай", color: "var(--shbz-danger-text)", background: "var(--shbz-danger-bg)" },
-  UNCERTAIN: { label: "Не распознано — проверит учитель", color: "var(--shbz-kicker)", background: "var(--shbz-tab-hover)" }
+const verdictMeta: Record<
+  CheckResult["verdict"],
+  { label: string; color: string; background: string; stripe: string }
+> = {
+  CORRECT: { label: "Верно", color: "var(--shbz-green-text)", background: "var(--shbz-green-soft)", stripe: "#36e0a4" },
+  INCORRECT: { label: "Перерешай", color: "var(--shbz-danger-text)", background: "var(--shbz-danger-bg)", stripe: "var(--shbz-danger-text)" },
+  UNCERTAIN: { label: "Не распознано — проверит учитель", color: "var(--shbz-kicker)", background: "var(--shbz-tab-hover)", stripe: "var(--shbz-kicker)" }
 };
 
 export function StudentHomeworkCheck({ assignmentId, hasPhotos, initialCheck }: StudentHomeworkCheckProps) {
@@ -38,6 +41,11 @@ export function StudentHomeworkCheck({ assignmentId, hasPhotos, initialCheck }: 
   const pollTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const isRunning = check?.status === "PENDING" || check?.status === "CHECKING";
+
+  const doneResults = check?.status === "DONE" ? check.results : [];
+  const correctCount = doneResults.filter((result) => result.verdict === "CORRECT").length;
+  const incorrectCount = doneResults.filter((result) => result.verdict === "INCORRECT").length;
+  const uncertainCount = doneResults.filter((result) => result.verdict === "UNCERTAIN").length;
 
   const poll = useCallback(async () => {
     try {
@@ -135,40 +143,73 @@ export function StudentHomeworkCheck({ assignmentId, hasPhotos, initialCheck }: 
       ) : null}
 
       {check?.status === "DONE" && check.results.length > 0 ? (
-        <div className="mt-4 space-y-2.5">
-          {check.results.map((result) => {
-            const meta = verdictMeta[result.verdict];
-
-            return (
-              <div
-                key={result.number}
-                className="rounded-[12px] border px-4 py-3"
-                style={{ borderColor: "var(--shbz-soft-border)", background: "var(--shbz-card-bg)" }}
+        <div className="mt-4">
+          <div className="mb-3 flex flex-wrap gap-2">
+            {correctCount > 0 ? (
+              <span
+                className="rounded-[9px] px-2.5 py-1 text-[12.5px] font-bold"
+                style={{ background: "var(--shbz-green-soft)", color: "var(--shbz-green-text)" }}
               >
-                <div className="flex flex-wrap items-center gap-2.5">
-                  <span className="text-sm font-extrabold" style={{ color: "var(--shbz-text-strong)" }}>
-                    № {result.number}
-                  </span>
-                  <span
-                    className="rounded-[8px] px-2.5 py-0.5 text-[11.5px] font-bold"
-                    style={{ background: meta.background, color: meta.color }}
-                  >
-                    {meta.label}
-                  </span>
-                  {result.recognizedAnswer ? (
-                    <span className="text-xs" style={{ color: "var(--shbz-text-muted)" }}>
-                      Распознанный ответ: {result.recognizedAnswer}
+                Верно {correctCount}
+              </span>
+            ) : null}
+            {incorrectCount > 0 ? (
+              <span
+                className="rounded-[9px] px-2.5 py-1 text-[12.5px] font-bold"
+                style={{ background: "var(--shbz-danger-bg)", color: "var(--shbz-danger-text)" }}
+              >
+                Перерешать {incorrectCount}
+              </span>
+            ) : null}
+            {uncertainCount > 0 ? (
+              <span
+                className="rounded-[9px] px-2.5 py-1 text-[12.5px] font-bold"
+                style={{ background: "var(--shbz-tab-hover)", color: "var(--shbz-text-muted)" }}
+              >
+                На проверке учителя {uncertainCount}
+              </span>
+            ) : null}
+          </div>
+
+          <div className="space-y-2.5">
+            {check.results.map((result) => {
+              const meta = verdictMeta[result.verdict];
+
+              return (
+                <div
+                  key={result.number}
+                  className="rounded-[12px] border border-l-[3px] px-4 py-3"
+                  style={{
+                    borderColor: "var(--shbz-soft-border)",
+                    borderLeftColor: meta.stripe,
+                    background: "var(--shbz-card-bg)"
+                  }}
+                >
+                  <div className="flex flex-wrap items-center gap-2.5">
+                    <span className="text-sm font-extrabold" style={{ color: "var(--shbz-text-strong)" }}>
+                      № {result.number}
                     </span>
+                    <span
+                      className="rounded-[8px] px-2.5 py-0.5 text-[11.5px] font-bold"
+                      style={{ background: meta.background, color: meta.color }}
+                    >
+                      {meta.label}
+                    </span>
+                    {result.recognizedAnswer ? (
+                      <span className="text-xs" style={{ color: "var(--shbz-text-muted)" }}>
+                        Распознанный ответ: {result.recognizedAnswer}
+                      </span>
+                    ) : null}
+                  </div>
+                  {result.comment ? (
+                    <p className="mt-1.5 text-sm leading-6" style={{ color: "var(--shbz-text-muted)" }}>
+                      {result.comment}
+                    </p>
                   ) : null}
                 </div>
-                {result.comment ? (
-                  <p className="mt-1.5 text-sm leading-6" style={{ color: "var(--shbz-text-muted)" }}>
-                    {result.comment}
-                  </p>
-                ) : null}
-              </div>
-            );
-          })}
+              );
+            })}
+          </div>
         </div>
       ) : null}
     </div>
