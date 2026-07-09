@@ -1,3 +1,4 @@
+import path from "node:path";
 import { Document, Font, Page, StyleSheet, Text, View, renderToBuffer } from "@react-pdf/renderer";
 import { logWarnEvent } from "@/lib/logger";
 
@@ -71,56 +72,42 @@ export type WeeklyPdfInput = {
   rows: WeeklyPdfRow[];
 };
 
-let fontsPromise: Promise<boolean> | null = null;
+// Шрифт вшит в репозиторий (assets/fonts/onest) и грузится с диска — без запроса к
+// Google Fonts в рантайме. Раньше registerFonts() тянул fonts.googleapis.com на
+// каждом холодном старте, и при недоступности сети отчёт падал 500: обещанного
+// фолбэка на Helvetica по факту не было (и кириллицы в ней тоже нет).
+const FONT_DIR = path.join(process.cwd(), "assets", "fonts", "onest");
 
-async function registerFonts() {
+let fontsRegistered: boolean | null = null;
+
+function registerFonts() {
   try {
-    const response = await fetch(
-      "https://fonts.googleapis.com/css2?family=Onest:wght@400;700&display=swap",
-      { headers: { "User-Agent": "curl/8.0" } }
-    );
-
-    if (!response.ok) {
-      throw new Error(`Font CSS request failed: ${response.status}`);
-    }
-
-    const css = await response.text();
-    const blocks = css.split("@font-face").slice(1);
-    const fonts: Array<{ src: string; fontWeight: number }> = [];
-
-    for (const block of blocks) {
-      const urlMatch = block.match(/url\((https:[^)]+\.ttf)\)/);
-      const weightMatch = block.match(/font-weight:\s*(\d+)/);
-
-      if (urlMatch && weightMatch) {
-        fonts.push({ src: urlMatch[1]!, fontWeight: Number(weightMatch[1]) });
-      }
-    }
-
-    if (fonts.length === 0) {
-      throw new Error("No TTF urls found in font CSS");
-    }
-
-    Font.register({ family: "Onest", fonts });
+    Font.register({
+      family: "Onest",
+      fonts: [
+        { src: path.join(FONT_DIR, "Onest-Regular.ttf"), fontWeight: 400 },
+        { src: path.join(FONT_DIR, "Onest-Bold.ttf"), fontWeight: 700 }
+      ]
+    });
     Font.registerHyphenationCallback((word) => [word]);
     return true;
   } catch (error) {
     logWarnEvent(
       "student.export.pdf_fonts_failed",
       {},
-      error,
-      "Failed to register Onest for PDF export, falling back to Helvetica."
+      error instanceof Error ? error : undefined,
+      "Failed to register bundled Onest fonts for PDF export."
     );
     return false;
   }
 }
 
 function ensureFonts() {
-  if (!fontsPromise) {
-    fontsPromise = registerFonts();
+  if (fontsRegistered === null) {
+    fontsRegistered = registerFonts();
   }
 
-  return fontsPromise;
+  return fontsRegistered;
 }
 
 const stateChipColors: Record<WeeklyPdfAssignment["stateKind"], { bg: string; text: string }> = {
@@ -370,10 +357,8 @@ function WeeklyReportDocument({ input }: { input: WeeklyPdfInput }) {
 }
 
 export async function renderWeeklyReportPdf(input: WeeklyPdfInput): Promise<Buffer> {
-  const fontsRegistered = await ensureFonts();
-
-  if (!fontsRegistered) {
-    fontsPromise = null;
+  if (!ensureFonts()) {
+    fontsRegistered = null;
     throw new Error("PDF fonts unavailable");
   }
 
