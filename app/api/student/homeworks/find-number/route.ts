@@ -10,7 +10,7 @@ export async function GET(request: Request) {
   const user = await tryGetCurrentUser();
 
   if (!user || user.role !== UserRole.STUDENT) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json({ error: "Сессия истекла. Войдите заново." }, { status: 401 });
   }
 
   const rateLimitResponse = enforceApiRateLimit(request, "api:student-find-number", user.id, 120, 60_000);
@@ -21,7 +21,9 @@ export async function GET(request: Request) {
 
   const requestedNumber = Number(new URL(request.url).searchParams.get("number"));
 
-  if (!Number.isInteger(requestedNumber) || requestedNumber <= 0) {
+  // Верхняя граница = int4 в PostgreSQL: без неё большое число (напр. 9999999999)
+  // проходит проверку, но роняет запрос Prisma с ошибкой диапазона (500).
+  if (!Number.isInteger(requestedNumber) || requestedNumber <= 0 || requestedNumber > 2_147_483_647) {
     return NextResponse.json({ error: "Введите корректный номер." }, { status: 400 });
   }
 

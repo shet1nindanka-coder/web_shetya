@@ -12,6 +12,7 @@ import { hashPassword } from "@/lib/password";
 import { validatePasswordStrength } from "@/lib/password-policy";
 import { prisma } from "@/lib/prisma";
 import { assertRateLimit, getClientIpFromHeaders, RateLimitExceededError } from "@/lib/rate-limit";
+import { removeStoredFile } from "@/lib/storage";
 import { normalizeLoginInput, normalizeSingleLineText } from "@/lib/utils";
 
 function redirectTeacherWithStudentStatus(params: URLSearchParams) {
@@ -160,6 +161,30 @@ export async function deleteStudentAction(formData: FormData) {
   }
 
   try {
+    // StoredFile.uploadedBy = Restrict: пока у ученика есть загруженные файлы
+    // (фото решений), prisma.user.delete падает с P2003 и учитель не может удалить
+    // ученика. Сначала удаляем его StoredFile (каскад снимает ссылки
+    // HomeworkSubmissionPhoto), затем чистим блобы из хранилища.
+    const ownedFiles = await prisma.storedFile.findMany({
+      where: { uploadedById: studentId },
+      select: { id: true, storageKey: true }
+    });
+
+    if (ownedFiles.length > 0) {
+      await prisma.storedFile.deleteMany({ where: { uploadedById: studentId } });
+
+      for (const file of ownedFiles) {
+        void removeStoredFile(file.storageKey).catch((cleanupError) => {
+          logErrorEvent(
+            "student.delete.file_cleanup_failed",
+            { teacherId: teacher.id, studentId, storageKey: file.storageKey },
+            cleanupError,
+            "Failed to remove student's uploaded file from storage."
+          );
+        });
+      }
+    }
+
     await prisma.user.delete({
       where: {
         id: studentId

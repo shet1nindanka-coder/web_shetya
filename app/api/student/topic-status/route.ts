@@ -38,7 +38,7 @@ export async function POST(request: Request) {
   const user = await tryGetCurrentUser();
 
   if (!user || user.role !== UserRole.STUDENT) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json({ error: "Сессия истекла. Войдите заново." }, { status: 401 });
   }
 
   const rateLimitResponse = enforceApiRateLimit(request, "api:student-status", user.id, 90, 60_000);
@@ -194,19 +194,27 @@ export async function POST(request: Request) {
     });
   }
 
-  const nextDeadline = deadlinesEnabled ? existingStatus?.deadlineAt ?? null : null;
-
-  if (!nextStatus && !nextNote && !nextDeadline) {
-    if (existingStatus) {
-      await prisma.studentTopicNumberStatus.delete({
-        where: {
-          studentId_homeworkNumberId: {
-            studentId: user.id,
-            homeworkNumberId
-          }
-        }
-      });
-    }
+  // Заметку правит только ученик. Статус и дедлайн трогать нельзя — их ставят
+  // автопроверка и учитель. Поэтому пишем ИСКЛЮЧИТЕЛЬНО поле note: иначе запись
+  // заметки затёрла бы статус/дедлайн, выставленный параллельно (по устаревшему
+  // снимку existingStatus), нарушая главный инвариант проекта.
+  if (nextNote === null) {
+    // Очистка заметки: снимаем note и удаляем строку, только если она стала
+    // полностью пустой. Условия deleteMany проверяются атомарно в БД, поэтому
+    // одновременно выставленный статус/дедлайн защитит строку от удаления.
+    await prisma.studentTopicNumberStatus.updateMany({
+      where: { studentId: user.id, homeworkNumberId },
+      data: { note: null }
+    });
+    await prisma.studentTopicNumberStatus.deleteMany({
+      where: {
+        studentId: user.id,
+        homeworkNumberId,
+        status: null,
+        note: null,
+        ...(deadlinesEnabled ? { deadlineAt: null } : {})
+      }
+    });
   } else {
     await prisma.studentTopicNumberStatus.upsert({
       where: {
@@ -215,25 +223,12 @@ export async function POST(request: Request) {
           homeworkNumberId
         }
       },
-      update: {
-        ...(notesEnabled
-          ? deadlinesEnabled
-            ? { status: nextStatus, note: nextNote, deadlineAt: nextDeadline }
-            : { status: nextStatus, note: nextNote }
-          : deadlinesEnabled
-            ? { status: nextStatus, deadlineAt: nextDeadline }
-            : { status: nextStatus })
-      },
+      update: { note: nextNote },
       create: {
         studentId: user.id,
         homeworkNumberId,
-        ...(notesEnabled
-          ? deadlinesEnabled
-            ? { status: nextStatus, note: nextNote, deadlineAt: nextDeadline }
-            : { status: nextStatus, note: nextNote }
-          : deadlinesEnabled
-            ? { status: nextStatus, deadlineAt: nextDeadline }
-            : { status: nextStatus })
+        status: null,
+        note: nextNote
       }
     });
   }

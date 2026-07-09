@@ -1,6 +1,6 @@
 "use server";
 
-import { HomeworkNumberStatus, UserRole } from "@prisma/client";
+import { UserRole } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireUser } from "@/lib/auth";
@@ -12,12 +12,6 @@ import { deleteStoredFileRecordIfUnused } from "@/lib/stored-files";
 import { removeStoredFile, saveUploadedFile } from "@/lib/storage";
 import { createTopicHomeworkNumbersInBatches } from "@/lib/topic-homework-numbers";
 import { normalizeMultilineText, normalizeSingleLineText, parseNumbersInput } from "@/lib/utils";
-
-const numberStatuses: HomeworkNumberStatus[] = [
-  HomeworkNumberStatus.GREEN,
-  HomeworkNumberStatus.YELLOW,
-  HomeworkNumberStatus.RED
-];
 
 function revalidateTopicRoutes(topicId?: string) {
   revalidateAllPlatformData();
@@ -571,7 +565,7 @@ export async function deleteTopicAction(formData: FormData) {
     redirectTeacherTopicsWithStatus(new URLSearchParams({ error: "delete" }));
   }
 
-  await Promise.all(Array.from(fileIdsToCleanup).map((fileId) => deleteStoredFileRecordIfUnused(fileId)));
+  await cleanupStoredFileIds(fileIdsToCleanup, { teacherId: user.id, topicId, stage: "delete-topic-cleanup" });
 
   logInfoEvent(
     "topic.delete.succeeded",
@@ -584,34 +578,4 @@ export async function deleteTopicAction(formData: FormData) {
   );
   revalidateTopicRoutes();
   redirectTeacherTopicsWithStatus(new URLSearchParams({ deleted: "1" }));
-}
-
-export async function setStudentNumberStatusAction(formData: FormData) {
-  const user = await requireUser(UserRole.STUDENT);
-  const topicId = String(formData.get("topicId") ?? "");
-  const homeworkNumberId = String(formData.get("homeworkNumberId") ?? "");
-  const status = String(formData.get("status") ?? "") as HomeworkNumberStatus;
-
-  if (!topicId || !homeworkNumberId || !numberStatuses.includes(status)) {
-    return;
-  }
-
-  await prisma.studentTopicNumberStatus.upsert({
-    where: {
-      studentId_homeworkNumberId: {
-        studentId: user.id,
-        homeworkNumberId
-      }
-    },
-    update: {
-      status
-    },
-    create: {
-      studentId: user.id,
-      homeworkNumberId,
-      status
-    }
-  });
-
-  revalidateTopicRoutes(topicId);
 }

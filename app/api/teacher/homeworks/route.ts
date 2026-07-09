@@ -29,6 +29,15 @@ function isMissingStudentDeadlineColumnError(error: unknown) {
   );
 }
 
+function isMissingStudentNoteColumnError(error: unknown) {
+  return (
+    error instanceof Prisma.PrismaClientKnownRequestError &&
+    error.code === "P2022" &&
+    error.message.includes("StudentTopicNumberStatus") &&
+    error.message.includes("note")
+  );
+}
+
 function revalidateHomeworkRoutes(studentId: string, topicId: string) {
   revalidateAllPlatformData();
   revalidatePath("/dashboard");
@@ -268,34 +277,51 @@ export async function DELETE(request: Request) {
 
   const numberIds = assignment.numbers.map((entry) => entry.homeworkNumberId);
 
-  await prisma.$transaction([
-    prisma.homeworkAssignment.delete({ where: { id: assignment.id } }),
-    ...(assignment.deadlineAt && numberIds.length
-      ? [
-          prisma.studentTopicNumberStatus.updateMany({
-            where: {
-              studentId: assignment.studentId,
-              homeworkNumberId: { in: numberIds },
-              deadlineAt: assignment.deadlineAt
-            },
-            data: { deadlineAt: null }
-          })
-        ]
-      : []),
-    ...(numberIds.length
-      ? [
-          prisma.studentTopicNumberStatus.deleteMany({
-            where: {
-              studentId: assignment.studentId,
-              homeworkNumberId: { in: numberIds },
-              status: null,
-              note: null,
-              deadlineAt: null
-            }
-          })
-        ]
-      : [])
-  ]);
+  try {
+    await prisma.$transaction([
+      prisma.homeworkAssignment.delete({ where: { id: assignment.id } }),
+      ...(assignment.deadlineAt && numberIds.length
+        ? [
+            prisma.studentTopicNumberStatus.updateMany({
+              where: {
+                studentId: assignment.studentId,
+                homeworkNumberId: { in: numberIds },
+                deadlineAt: assignment.deadlineAt
+              },
+              data: { deadlineAt: null }
+            })
+          ]
+        : []),
+      ...(numberIds.length
+        ? [
+            prisma.studentTopicNumberStatus.deleteMany({
+              where: {
+                studentId: assignment.studentId,
+                homeworkNumberId: { in: numberIds },
+                status: null,
+                note: null,
+                deadlineAt: null
+              }
+            })
+          ]
+        : [])
+    ]);
+  } catch (error) {
+    if (isMissingHomeworkAssignmentTableError(error)) {
+      return NextResponse.json(
+        { error: "Таблица ДЗ ещё не создана в PostgreSQL. Сначала примените миграцию." },
+        { status: 503 }
+      );
+    }
+
+    // На неотмигрированной БД колонок note/deadlineAt может не быть — зеркало
+    // статусов не почистить, но само ДЗ удаляем, чтобы отмена не падала 500.
+    if (isMissingStudentDeadlineColumnError(error) || isMissingStudentNoteColumnError(error)) {
+      await prisma.homeworkAssignment.delete({ where: { id: assignment.id } }).catch(() => undefined);
+    } else {
+      throw error;
+    }
+  }
 
   for (const photo of assignment.photos) {
     await deleteStoredFileRecordIfUnused(photo.fileId);

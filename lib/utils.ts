@@ -158,9 +158,17 @@ export function parseNumbersInput(input: string) {
     return [];
   }
 
+  // Ограничение размера защищает от опечаток вроде «1-100000000», которые иначе
+  // синхронно развернут гигантский Set и попытаются вставить миллионы строк,
+  // заблокировав единственный инстанс.
+  const MAX_NUMBERS = 2000;
   const numbers = new Set<number>();
 
   for (const match of matches) {
+    if (numbers.size >= MAX_NUMBERS) {
+      break;
+    }
+
     if (match.includes("-")) {
       const [rawStart, rawEnd] = match.split("-").map((value) => Number(value.trim()));
 
@@ -171,7 +179,12 @@ export function parseNumbersInput(input: string) {
       const start = Math.min(rawStart, rawEnd);
       const end = Math.max(rawStart, rawEnd);
 
-      for (let current = start; current <= end; current += 1) {
+      // Гигантский диапазон — почти наверняка опечатка: пропускаем его целиком.
+      if (end - start >= MAX_NUMBERS) {
+        continue;
+      }
+
+      for (let current = start; current <= end && numbers.size < MAX_NUMBERS; current += 1) {
         numbers.add(current);
       }
 

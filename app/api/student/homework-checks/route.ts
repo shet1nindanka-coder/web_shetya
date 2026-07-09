@@ -6,7 +6,7 @@ import { tryGetCurrentUser } from "@/lib/auth";
 import { logInfoEvent } from "@/lib/logger";
 import { revalidateAllPlatformData } from "@/lib/platform-data-cache";
 import { prisma } from "@/lib/prisma";
-import { getAiCheckConfig } from "@/lib/solution-check";
+import { failStaleHomeworkChecks, getAiCheckConfig } from "@/lib/solution-check";
 import { enqueueHomeworkCheck } from "@/lib/solution-check-queue";
 
 export const runtime = "nodejs";
@@ -23,7 +23,7 @@ export async function POST(request: Request) {
   const user = await tryGetCurrentUser();
 
   if (!user || user.role !== UserRole.STUDENT) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json({ error: "Сессия истекла. Войдите заново." }, { status: 401 });
   }
 
   const rateLimitResponse = enforceApiRateLimit(request, "api:homework-checks", user.id, 10, 60 * 60_000);
@@ -45,6 +45,10 @@ export async function POST(request: Request) {
   if (!assignmentId) {
     return NextResponse.json({ error: "Некорректные данные для проверки." }, { status: 400 });
   }
+
+  // Освобождаем «зависшие» проверки (например, прерванные рестартом сервера),
+  // иначе счётчик активных навсегда заблокирует повторный запуск (409).
+  await failStaleHomeworkChecks(assignmentId);
 
   let assignment: { id: string; photosCount: number; numbersCount: number; activeChecks: number } | null;
 
@@ -120,7 +124,7 @@ export async function GET(request: Request) {
   const user = await tryGetCurrentUser();
 
   if (!user || user.role !== UserRole.STUDENT) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json({ error: "Сессия истекла. Войдите заново." }, { status: 401 });
   }
 
   const url = new URL(request.url);
@@ -129,6 +133,10 @@ export async function GET(request: Request) {
   if (!assignmentId) {
     return NextResponse.json({ error: "Некорректные данные." }, { status: 400 });
   }
+
+  // Помечаем зависшую проверку как проваленную, чтобы поллинг ученика увидел
+  // терминальный статус, а не бесконечное «идёт проверка».
+  await failStaleHomeworkChecks(assignmentId);
 
   let check:
     | {

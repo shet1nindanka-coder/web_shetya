@@ -541,7 +541,9 @@ async function getTeacherTopicsOverviewUncached() {
     const allStatuses = topic.homeworkNumbers.flatMap((number) => number.statuses.map((status) => status.status));
     const counts = getStatusCounts(allStatuses);
     const studentIds = new Set(
-      topic.homeworkNumbers.flatMap((number) => number.statuses.map((status) => status.studentId))
+      topic.homeworkNumbers.flatMap((number) =>
+        number.statuses.filter((status) => status.status !== null).map((status) => status.studentId)
+      )
     );
     const totalSlots = topic.homeworkNumbers.length * students.length;
     const markedCount = counts.GREEN + counts.YELLOW + counts.RED;

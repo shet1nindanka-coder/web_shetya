@@ -7,7 +7,7 @@ import { publishDashboardRealtimeEvent } from "@/lib/dashboard-realtime";
 import { logInfoEvent } from "@/lib/logger";
 import { revalidateAllPlatformData } from "@/lib/platform-data-cache";
 import { prisma } from "@/lib/prisma";
-import { saveUploadedFile } from "@/lib/storage";
+import { removeStoredFile, saveUploadedFile } from "@/lib/storage";
 import { deleteOwnedStoredFileIfUnused } from "@/lib/stored-files";
 import { getFileExtension, getMimeTypeFromExtension } from "@/lib/utils";
 
@@ -39,7 +39,7 @@ export async function POST(request: Request) {
   const user = await tryGetCurrentUser();
 
   if (!user || user.role !== UserRole.STUDENT) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json({ error: "Сессия истекла. Войдите заново." }, { status: 401 });
   }
 
   const rateLimitResponse = enforceApiRateLimit(request, "api:homework-submissions", user.id, 60, 60_000);
@@ -117,28 +117,36 @@ export async function POST(request: Request) {
 
   for (const file of files) {
     const storedUpload = await saveUploadedFile(file);
-    const photo = await prisma.homeworkSubmissionPhoto.create({
-      data: {
-        assignment: {
-          connect: { id: assignment.id }
-        },
-        file: {
-          create: {
-            originalName: storedUpload.originalName,
-            storageKey: storedUpload.storageKey,
-            mimeType: storedUpload.mimeType,
-            size: storedUpload.size,
-            uploadedById: user.id
-          }
-        }
-      },
-      select: {
-        id: true,
-        fileId: true
-      }
-    });
 
-    createdPhotos.push(photo);
+    try {
+      const photo = await prisma.homeworkSubmissionPhoto.create({
+        data: {
+          assignment: {
+            connect: { id: assignment.id }
+          },
+          file: {
+            create: {
+              originalName: storedUpload.originalName,
+              storageKey: storedUpload.storageKey,
+              mimeType: storedUpload.mimeType,
+              size: storedUpload.size,
+              uploadedById: user.id
+            }
+          }
+        },
+        select: {
+          id: true,
+          fileId: true
+        }
+      });
+
+      createdPhotos.push(photo);
+    } catch (error) {
+      // Блоб уже записан в хранилище, а запись не создалась — удаляем блоб,
+      // иначе он осиротеет (штатная очистка идёт только через удаление записи).
+      void removeStoredFile(storedUpload.storageKey).catch(() => undefined);
+      throw error;
+    }
   }
 
   revalidateSubmissionRoutes(user.id, assignment.topicId);
@@ -160,7 +168,7 @@ export async function DELETE(request: Request) {
   const user = await tryGetCurrentUser();
 
   if (!user || user.role !== UserRole.STUDENT) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json({ error: "Сессия истекла. Войдите заново." }, { status: 401 });
   }
 
   const rateLimitResponse = enforceApiRateLimit(request, "api:homework-submissions", user.id, 60, 60_000);

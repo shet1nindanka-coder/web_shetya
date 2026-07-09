@@ -10,6 +10,11 @@ import { readStoredFile } from "@/lib/storage";
 
 const MAX_PHOTOS_PER_CHECK = 10;
 const MODEL_TIMEOUT_MS = 180_000;
+// Проверки живут в in-memory очереди одного инстанса. Если процесс перезапустили
+// во время проверки (redeploy/pm2 restart), строка зависает в PENDING/CHECKING,
+// а сама очередь теряется. Считаем такие проверки мёртвыми после этого порога,
+// чтобы они не блокировали повторный запуск (POST иначе вечно отвечает 409).
+const STALE_CHECK_MS = 15 * 60_000;
 
 function isReasoningModel(model: string) {
   return /(^|\/)(gpt-5|o\d)/i.test(model);
@@ -344,6 +349,33 @@ async function applyVerdicts(assignment: CheckAssignment, results: ParsedCheckRe
 
   if (operations.length > 0) {
     await prisma.$transaction(operations);
+  }
+}
+
+export async function failStaleHomeworkChecks(assignmentId?: string) {
+  const threshold = new Date(Date.now() - STALE_CHECK_MS);
+
+  try {
+    await prisma.homeworkCheck.updateMany({
+      where: {
+        ...(assignmentId ? { assignmentId } : {}),
+        status: { in: [SolutionCheckStatus.PENDING, SolutionCheckStatus.CHECKING] },
+        createdAt: { lt: threshold }
+      },
+      data: {
+        status: SolutionCheckStatus.FAILED,
+        error: "Проверка прервалась (перезапуск сервера). Запустите её заново.",
+        checkedAt: new Date()
+      }
+    });
+  } catch (error) {
+    // До применения миграции таблицы может не быть — не мешаем основному потоку.
+    logWarnEvent(
+      "solution.check.stale_sweep_failed",
+      { assignmentId: assignmentId ?? null },
+      error instanceof Error ? error : undefined,
+      "Failed to sweep stale homework checks."
+    );
   }
 }
 

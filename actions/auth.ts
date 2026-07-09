@@ -42,6 +42,17 @@ export async function loginAction(formData: FormData) {
       },
       "Слишком много попыток входа для этого логина."
     );
+    // Лимит по одному логину, не зависящий от IP: X-Forwarded-For клиент может
+    // подделать и обнулить IP-лимиты, а этот ограничивает перебор пароля аккаунта.
+    assertRateLimit(
+      {
+        scope: "login:login",
+        identifier: login,
+        limit: 20,
+        windowMs: 15 * 60 * 1000
+      },
+      "Слишком много попыток входа для этого логина."
+    );
   } catch (error) {
     if (error instanceof RateLimitExceededError) {
       logWarnEvent(
@@ -87,6 +98,7 @@ export async function loginAction(formData: FormData) {
   }
 
   resetRateLimit("login:ip-login", `${clientIp}:${login}`);
+  resetRateLimit("login:login", login);
   logInfoEvent(
     "auth.login.succeeded",
     getHeadersLogContext(requestHeaders, {
