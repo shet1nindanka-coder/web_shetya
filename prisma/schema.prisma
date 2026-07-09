@@ -176,6 +176,10 @@ model StudentTopicNumberStatus {
   status           HomeworkNumberStatus?
   note             String?
   deadlineAt       DateTime?
+  // Отдельная метка «когда статус реально менялся». updatedAt бампается любым
+  // апдейтом строки (в т.ч. зеркалированием дедлайна при выдаче ДЗ), поэтому
+  // таймлайн активности и стрик должны опираться на statusChangedAt, а не updatedAt.
+  statusChangedAt  DateTime?
   createdAt        DateTime             @default(now())
   updatedAt        DateTime             @updatedAt
   student          User                 @relation(fields: [studentId], references: [id], onDelete: Cascade)

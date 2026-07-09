@@ -879,15 +879,22 @@ async function getProgressTimelineUncached(studentId: string | null, days: numbe
   try {
     const statuses = await prisma.studentTopicNumberStatus.findMany({
       where: {
-        updatedAt: { gte: timelineStart },
         status: {
           in: [HomeworkNumberStatus.GREEN, HomeworkNumberStatus.YELLOW, HomeworkNumberStatus.RED]
         },
-        ...(studentId ? { studentId } : {})
+        ...(studentId ? { studentId } : {}),
+        // Опираемся на statusChangedAt (когда статус реально менялся), а не на
+        // updatedAt, который бампается зеркалированием дедлайна. Для строк без
+        // statusChangedAt (до бэкфилла) откатываемся на updatedAt.
+        OR: [
+          { statusChangedAt: { gte: timelineStart } },
+          { statusChangedAt: null, updatedAt: { gte: timelineStart } }
+        ]
       },
       select: {
         status: true,
-        updatedAt: true
+        updatedAt: true,
+        statusChangedAt: true
       },
       orderBy: { updatedAt: "asc" }
     });
@@ -906,7 +913,7 @@ async function getProgressTimelineUncached(studentId: string | null, days: numbe
     }
 
     for (const status of statuses) {
-      const key = getTimelineDateKey(status.updatedAt);
+      const key = getTimelineDateKey(status.statusChangedAt ?? status.updatedAt);
       const current = grouped.get(key);
 
       if (!current) {

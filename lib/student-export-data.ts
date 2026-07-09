@@ -7,7 +7,7 @@ export const statusLabels: Record<string, string> = {
   RED: "Нужен разбор с преподавателем"
 };
 
-function isMissingColumn(error: unknown, column: "note" | "deadlineAt") {
+function isMissingColumn(error: unknown, column: "note" | "deadlineAt" | "statusChangedAt") {
   return (
     error instanceof Prisma.PrismaClientKnownRequestError &&
     error.code === "P2022" &&
@@ -28,6 +28,7 @@ export async function loadExportData(studentId: string) {
 
   let notesEnabled = true;
   let deadlinesEnabled = true;
+  let statusChangedEnabled = true;
 
   const query = () =>
     prisma.topic.findMany({
@@ -44,6 +45,7 @@ export async function loadExportData(studentId: string) {
                 status: true,
                 ...(notesEnabled ? { note: true } : {}),
                 ...(deadlinesEnabled ? { deadlineAt: true } : {}),
+                ...(statusChangedEnabled ? { statusChangedAt: true } : {}),
                 updatedAt: true
               }
             }
@@ -59,13 +61,15 @@ export async function loadExportData(studentId: string) {
   } catch (error) {
     const noteMissing = isMissingColumn(error, "note");
     const deadlineMissing = isMissingColumn(error, "deadlineAt");
+    const statusChangedMissing = isMissingColumn(error, "statusChangedAt");
 
-    if (!noteMissing && !deadlineMissing) {
+    if (!noteMissing && !deadlineMissing && !statusChangedMissing) {
       throw error;
     }
 
     notesEnabled = !noteMissing;
     deadlinesEnabled = !deadlineMissing;
+    statusChangedEnabled = !statusChangedMissing;
     topics = await query();
   }
 

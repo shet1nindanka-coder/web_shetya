@@ -115,6 +115,46 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Ученик или номер задания не найден." }, { status: 404 });
   }
 
+  // Запрещаем выдавать один и тот же номер этому ученику в двух активных ДЗ:
+  // дедлайн зеркалируется в одно поле StudentTopicNumberStatus на пару (ученик, номер),
+  // поэтому пересечение номеров рассинхронизирует дедлайны. Проще не допускать дубль.
+  let conflictingNumbers: number[] = [];
+
+  try {
+    const alreadyAssigned = await prisma.homeworkAssignmentNumber.findMany({
+      where: {
+        homeworkNumberId: { in: homeworkNumberIds },
+        assignment: { studentId }
+      },
+      select: { homeworkNumber: { select: { number: true } } }
+    });
+    conflictingNumbers = Array.from(
+      new Set(alreadyAssigned.map((entry) => entry.homeworkNumber.number))
+    ).sort((left, right) => left - right);
+  } catch (error) {
+    if (isMissingHomeworkAssignmentTableError(error)) {
+      return NextResponse.json(
+        { error: "Таблица ДЗ ещё не создана в PostgreSQL. Сначала примените миграцию." },
+        { status: 503 }
+      );
+    }
+
+    throw error;
+  }
+
+  if (conflictingNumbers.length > 0) {
+    const plural = conflictingNumbers.length > 1;
+
+    return NextResponse.json(
+      {
+        error: `${plural ? "Номера" : "Номер"} ${conflictingNumbers.join(", ")} уже ${
+          plural ? "выданы" : "выдан"
+        } этому ученику в другом ДЗ. Уберите ${plural ? "их" : "его"} или сначала отмените то ДЗ.`
+      },
+      { status: 409 }
+    );
+  }
+
   let assignmentId: string;
 
   try {

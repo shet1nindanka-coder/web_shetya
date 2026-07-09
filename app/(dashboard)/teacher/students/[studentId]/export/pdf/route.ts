@@ -71,6 +71,12 @@ export async function GET(
       for (const numberEntry of topic.homeworkNumbers) {
         const statusEntry = numberEntry.statuses[0] ?? null;
         const statusKey = statusEntry?.status ?? null;
+        // Дата «решения» — когда статус реально менялся (не updatedAt, который
+        // бампается зеркалированием дедлайна). Фолбэк на updatedAt для старых строк.
+        const solvedAt =
+          (statusEntry as { statusChangedAt?: Date | null } | null)?.statusChangedAt ??
+          statusEntry?.updatedAt ??
+          null;
 
         const deadlineAt =
           data.deadlinesEnabled && (statusEntry as { deadlineAt?: Date | null })?.deadlineAt
@@ -102,9 +108,9 @@ export async function GET(
           assignmentGroups.set(key, group);
         }
 
-        if (statusKey && statusEntry?.updatedAt && statusEntry.updatedAt >= since) {
+        if (statusKey && solvedAt && solvedAt >= since) {
           weeklyRawRows.push({
-            whenLabel: shortDeadline.format(statusEntry.updatedAt),
+            whenLabel: shortDeadline.format(solvedAt),
             topicTitle: topic.title,
             number: numberEntry.number,
             statusKey,
@@ -115,7 +121,7 @@ export async function GET(
                   ? "После самопроверки"
                   : (statusLabels[statusKey] ?? "Нужен разбор"),
             note: data.notesEnabled ? ((statusEntry as { note?: string | null })?.note ?? "") : "",
-            updatedAt: statusEntry.updatedAt
+            updatedAt: solvedAt
           });
         }
       }

@@ -1,4 +1,4 @@
-import { HomeworkNumberStatus, UserRole } from "@prisma/client";
+import { HomeworkNumberStatus, Prisma, UserRole } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { NextResponse } from "next/server";
 import { enforceApiRateLimit } from "@/lib/api-rate-limit";
@@ -15,6 +15,14 @@ const allowedStatuses = [
   HomeworkNumberStatus.YELLOW,
   HomeworkNumberStatus.RED
 ] as const;
+
+function isMissingStatusChangedColumn(error: unknown) {
+  return (
+    error instanceof Prisma.PrismaClientKnownRequestError &&
+    error.code === "P2022" &&
+    error.message.includes("statusChangedAt")
+  );
+}
 
 export async function POST(request: Request) {
   const user = await tryGetCurrentUser();
@@ -66,20 +74,33 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Ученик или номер не найден." }, { status: 404 });
   }
 
-  await prisma.studentTopicNumberStatus.upsert({
-    where: {
-      studentId_homeworkNumberId: {
+  const writeStatus = (withChangedAt: boolean) =>
+    prisma.studentTopicNumberStatus.upsert({
+      where: {
+        studentId_homeworkNumberId: {
+          studentId,
+          homeworkNumberId
+        }
+      },
+      update: { status, ...(withChangedAt ? { statusChangedAt: new Date() } : {}) },
+      create: {
         studentId,
-        homeworkNumberId
+        homeworkNumberId,
+        status,
+        ...(withChangedAt ? { statusChangedAt: new Date() } : {})
       }
-    },
-    update: { status },
-    create: {
-      studentId,
-      homeworkNumberId,
-      status
+    });
+
+  try {
+    await writeStatus(true);
+  } catch (error) {
+    // До применения миграции колонки statusChangedAt может не быть — пишем без неё.
+    if (isMissingStatusChangedColumn(error)) {
+      await writeStatus(false);
+    } else {
+      throw error;
     }
-  });
+  }
 
   revalidateAllPlatformData();
   revalidatePath("/teacher/students");

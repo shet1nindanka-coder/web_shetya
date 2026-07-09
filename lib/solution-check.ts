@@ -1,4 +1,4 @@
-import { HomeworkNumberStatus, SolutionCheckStatus, SolutionVerdict } from "@prisma/client";
+import { HomeworkNumberStatus, Prisma, SolutionCheckStatus, SolutionVerdict } from "@prisma/client";
 import sharp from "sharp";
 import { publishDashboardRealtimeEvent } from "@/lib/dashboard-realtime";
 import { logErrorEvent, logInfoEvent, logWarnEvent } from "@/lib/logger";
@@ -33,6 +33,20 @@ export function getAiCheckConfig() {
     model,
     baseUrl: process.env.AI_CHECK_BASE_URL?.trim() || "https://openrouter.ai/api/v1"
   };
+}
+
+function isMissingStatusChangedColumn(error: unknown) {
+  return (
+    error instanceof Prisma.PrismaClientKnownRequestError &&
+    error.code === "P2022" &&
+    error.message.includes("statusChangedAt")
+  );
+}
+
+function getMinConfidence() {
+  const raw = Number(process.env.AI_CHECK_MIN_CONFIDENCE);
+
+  return Number.isFinite(raw) && raw >= 0 && raw <= 1 ? raw : 0.6;
 }
 
 const SYSTEM_PROMPT = [
@@ -310,45 +324,65 @@ async function applyVerdicts(assignment: CheckAssignment, results: ParsedCheckRe
     }
   });
   const statusByNumberId = new Map(existingStatuses.map((status) => [status.homeworkNumberId, status.status]));
-  const operations = [];
+  const changedAt = new Date();
 
-  for (const result of results) {
-    const target = numberByValue.get(result.number);
+  const buildOperations = (withChangedAt: boolean) => {
+    const operations = [];
 
-    if (!target || result.verdict === "UNCERTAIN") {
-      continue;
+    for (const result of results) {
+      const target = numberByValue.get(result.number);
+
+      if (!target || result.verdict === "UNCERTAIN") {
+        continue;
+      }
+
+      const previousStatus = statusByNumberId.get(target.homeworkNumberId) ?? null;
+      const wasWrongBefore =
+        previousStatus === HomeworkNumberStatus.RED || previousStatus === HomeworkNumberStatus.YELLOW;
+      const nextStatus =
+        result.verdict === "CORRECT"
+          ? wasWrongBefore
+            ? HomeworkNumberStatus.YELLOW
+            : HomeworkNumberStatus.GREEN
+          : HomeworkNumberStatus.RED;
+
+      operations.push(
+        prisma.studentTopicNumberStatus.upsert({
+          where: {
+            studentId_homeworkNumberId: {
+              studentId: assignment.studentId,
+              homeworkNumberId: target.homeworkNumberId
+            }
+          },
+          update: { status: nextStatus, ...(withChangedAt ? { statusChangedAt: changedAt } : {}) },
+          create: {
+            studentId: assignment.studentId,
+            homeworkNumberId: target.homeworkNumberId,
+            status: nextStatus,
+            ...(withChangedAt ? { statusChangedAt: changedAt } : {})
+          }
+        })
+      );
     }
 
-    const previousStatus = statusByNumberId.get(target.homeworkNumberId) ?? null;
-    const wasWrongBefore =
-      previousStatus === HomeworkNumberStatus.RED || previousStatus === HomeworkNumberStatus.YELLOW;
-    const nextStatus =
-      result.verdict === "CORRECT"
-        ? wasWrongBefore
-          ? HomeworkNumberStatus.YELLOW
-          : HomeworkNumberStatus.GREEN
-        : HomeworkNumberStatus.RED;
+    return operations;
+  };
 
-    operations.push(
-      prisma.studentTopicNumberStatus.upsert({
-        where: {
-          studentId_homeworkNumberId: {
-            studentId: assignment.studentId,
-            homeworkNumberId: target.homeworkNumberId
-          }
-        },
-        update: { status: nextStatus },
-        create: {
-          studentId: assignment.studentId,
-          homeworkNumberId: target.homeworkNumberId,
-          status: nextStatus
-        }
-      })
-    );
+  const operations = buildOperations(true);
+
+  if (operations.length === 0) {
+    return;
   }
 
-  if (operations.length > 0) {
+  try {
     await prisma.$transaction(operations);
+  } catch (error) {
+    // До применения миграции колонки statusChangedAt может не быть — пишем без неё.
+    if (isMissingStatusChangedColumn(error)) {
+      await prisma.$transaction(buildOperations(false));
+    } else {
+      throw error;
+    }
   }
 }
 
@@ -512,6 +546,16 @@ export async function runHomeworkCheck(checkId: string) {
       );
       results = parseCheckResponse(modelResponse.content, validNumbers);
     }
+
+    // Порог уверенности: вердикт, в котором модель не уверена, не должен молча
+    // ставить статус (ученик его не поправит) — трактуем как «не распознано» и
+    // отдаём учителю на ручную проверку.
+    const minConfidence = getMinConfidence();
+    results = results.map((result) =>
+      result.verdict !== "UNCERTAIN" && result.confidence !== null && result.confidence < minConfidence
+        ? { ...result, verdict: "UNCERTAIN" as const }
+        : result
+    );
 
     if (results.length === 0) {
       await failCheck("Модель не вернула ни одного вердикта.");
