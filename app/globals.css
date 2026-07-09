@@ -2409,7 +2409,7 @@ html[data-theme="dark"] .ui-tab[data-active="true"]:hover {
 .ui-badge-soft,
 html[data-theme="dark"] .ui-badge-soft {
   border: none;
-  border-radius: 999px;
+  border-radius: 8px;
   background: var(--shbz-tab-hover);
   color: var(--shbz-kicker);
   font-weight: 600;
@@ -2463,7 +2463,7 @@ html[data-theme="dark"] .ui-progress-fill {
 /* Статусы (светофор) */
 .ui-status-button,
 html[data-theme="dark"] .ui-status-button {
-  border-radius: 999px;
+  border-radius: 8px;
   background: var(--shbz-card-bg);
   border-color: var(--shbz-outline-border);
   color: var(--shbz-tab-text);
