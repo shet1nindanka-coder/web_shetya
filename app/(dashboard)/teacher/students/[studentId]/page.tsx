@@ -47,20 +47,20 @@ export default async function TeacherStudentPage({ params }: TeacherStudentPageP
               fileId: photo.fileId,
               originalName: photo.originalName
             })),
-            aiCheck: assignment.latestCheck
-              ? {
-                  status: assignment.latestCheck.status,
-                  checkedAt: toIsoDateTimeString(assignment.latestCheck.checkedAt),
-                  results: assignment.latestCheck.results.map((result) => ({
-                    number: result.number,
-                    verdict: result.verdict,
-                    recognizedAnswer: result.recognizedAnswer,
-                    comment: result.comment,
-                    copySuspected: result.copySuspected,
-                    copyReason: result.copyReason
-                  }))
-                }
-              : null,
+            checks: assignment.checks.map((check) => ({
+              id: check.id,
+              status: check.status,
+              createdAt: toIsoDateTimeString(check.createdAt) ?? "",
+              checkedAt: toIsoDateTimeString(check.checkedAt),
+              results: check.results.map((result) => ({
+                number: result.number,
+                verdict: result.verdict,
+                recognizedAnswer: result.recognizedAnswer,
+                comment: result.comment,
+                copySuspected: result.copySuspected,
+                copyReason: result.copyReason
+              }))
+            })),
             numbers: assignment.numbers.map((number) => ({
               homeworkNumberId: number.homeworkNumberId,
               number: number.number,

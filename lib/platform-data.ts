@@ -1204,11 +1204,12 @@ function queryTeacherStudentHomeworks(studentId: string, notesEnabled: boolean) 
       },
       checks: {
         orderBy: { createdAt: "desc" },
-        take: 1,
+        take: 15,
         select: {
           id: true,
           status: true,
           error: true,
+          createdAt: true,
           checkedAt: true,
           results: {
             select: {
@@ -1274,26 +1275,25 @@ async function getTeacherStudentHomeworksUncached(studentId: string) {
       .sort((left, right) => left.number - right.number);
 
     const numberById = new Map(numbers.map((entry) => [entry.homeworkNumberId, entry.number]));
-    const latestCheckRaw = assignment.checks[0] ?? null;
-    const latestCheck = latestCheckRaw
-      ? {
-          id: latestCheckRaw.id,
-          status: latestCheckRaw.status,
-          error: latestCheckRaw.error,
-          checkedAt: latestCheckRaw.checkedAt,
-          results: latestCheckRaw.results
-            .map((result) => ({
-              number: numberById.get(result.homeworkNumberId) ?? 0,
-              verdict: result.verdict,
-              recognizedAnswer: result.recognizedAnswer,
-              comment: result.comment,
-              copySuspected: result.copySuspected,
-              copyReason: result.copyReason
-            }))
-            .filter((result) => result.number > 0)
-            .sort((left, right) => left.number - right.number)
-        }
-      : null;
+    const checks = assignment.checks.map((check) => ({
+      id: check.id,
+      status: check.status,
+      error: check.error,
+      createdAt: check.createdAt,
+      checkedAt: check.checkedAt,
+      results: check.results
+        .map((result) => ({
+          number: numberById.get(result.homeworkNumberId) ?? 0,
+          verdict: result.verdict,
+          recognizedAnswer: result.recognizedAnswer,
+          comment: result.comment,
+          copySuspected: result.copySuspected,
+          copyReason: result.copyReason
+        }))
+        .filter((result) => result.number > 0)
+        .sort((left, right) => left.number - right.number)
+    }));
+    const latestCheck = checks[0] ?? null;
 
     const summary = buildProgress(numbers.map((entry) => entry.status), numbers.length);
     const solvedCount = summary.greenCount + summary.yellowCount;
@@ -1307,6 +1307,7 @@ async function getTeacherStudentHomeworksUncached(studentId: string) {
       createdAt: assignment.createdAt,
       numbers,
       latestCheck,
+      checks,
       photos: assignment.photos.map((photo) => ({
         id: photo.id,
         fileId: photo.file.id,
