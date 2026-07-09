@@ -58,7 +58,6 @@ export default async function StudentHomeworkPage({ params }: StudentHomeworkPag
       </p>
 
       <section className="mb-8">
-        <h2 className="shbz-section-title">Фото решений</h2>
         <StudentHomeworkPhotos
           assignmentId={assignment.id}
           photos={assignment.photos.map((photo) => ({
@@ -70,7 +69,6 @@ export default async function StudentHomeworkPage({ params }: StudentHomeworkPag
       </section>
 
       <section className="mb-8">
-        <h2 className="shbz-section-title">Автоматическая проверка</h2>
         <StudentHomeworkCheck
           assignmentId={assignment.id}
           hasPhotos={assignment.photos.length > 0}

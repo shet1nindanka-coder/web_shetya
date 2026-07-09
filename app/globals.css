@@ -1637,6 +1637,7 @@ html[data-theme="dark"] .student-virtual-scroll::-webkit-scrollbar-thumb {
   --shbz-input-border-focus: #0a0a0a;
   --shbz-input-ring: rgba(54, 224, 164, 0.15);
   --shbz-placeholder: #abaeb3;
+  --shbz-dropzone-bg: #fbfcfd;
   --shbz-accent-grad: linear-gradient(90deg, #5ac8ea 0%, #36e0a4 100%);
   --shbz-accent-grad-diag: linear-gradient(135deg, #5ac8ea, #36e0a4);
   --shbz-accent-shadow: rgba(54, 224, 164, 0.3);
@@ -1661,6 +1662,7 @@ html[data-theme="dark"] {
   --shbz-input-border-focus: #f5f6f7;
   --shbz-input-ring: rgba(54, 224, 164, 0.18);
   --shbz-placeholder: #6a6e75;
+  --shbz-dropzone-bg: #0f1012;
   --shbz-danger-bg: rgba(229, 72, 77, 0.12);
   --shbz-danger-border: rgba(229, 72, 77, 0.35);
   --shbz-danger-text: #ff8f94;

@@ -33,6 +33,24 @@ const verdictMeta: Record<
   UNCERTAIN: { label: "Не распознано — проверит учитель", color: "var(--shbz-kicker)", background: "var(--shbz-tab-hover)", stripe: "var(--shbz-kicker)" }
 };
 
+function shortenRecognizedAnswer(answer: string): string {
+  const trimmed = answer.trim();
+  const parts = trimmed
+    .split(";")
+    .map((part) => part.trim())
+    .filter(Boolean);
+
+  if (parts.length >= 5 && trimmed.length > 80) {
+    return `${parts[0]}; ${parts[1]}; …; ${parts[parts.length - 1]}`;
+  }
+
+  if (trimmed.length > 140) {
+    return `${trimmed.slice(0, 137).trimEnd()}…`;
+  }
+
+  return trimmed;
+}
+
 export function StudentHomeworkCheck({ assignmentId, hasPhotos, initialCheck }: StudentHomeworkCheckProps) {
   const router = useRouter();
   const [check, setCheck] = useState<CheckSnapshot | null>(initialCheck);
@@ -113,22 +131,27 @@ export function StudentHomeworkCheck({ assignmentId, hasPhotos, initialCheck }: 
 
   return (
     <div className="shbz-card shbz-section-pad">
-      {error ? <div className="ui-notice-error mb-4 rounded-[8px] px-4 py-3 text-sm">{error}</div> : null}
-
-      <div className="flex flex-wrap items-center justify-between gap-3">
-        <p className="ui-hint text-sm" style={{ color: "var(--shbz-text-muted)" }}>
-          Автоматическая проверка сверит фото решения с эталонными ответами и отметит номера: верно — зелёным, с ошибкой — красным.
-        </p>
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div className="min-w-0">
+          <h2 className="text-[20px] font-extrabold tracking-[-0.3px]" style={{ color: "var(--shbz-text-strong)" }}>
+            Автоматическая проверка
+          </h2>
+          <p className="ui-hint mt-1 text-sm" style={{ color: "var(--shbz-text-muted)" }}>
+            Сверит фото с эталонными ответами
+          </p>
+        </div>
         <button
           type="button"
           disabled={!hasPhotos || isStarting || isRunning}
           onClick={() => void startCheck()}
           title={hasPhotos ? undefined : "Сначала прикрепите фото решения"}
-          className="shbz-btn-primary ml-auto px-5 py-2.5 text-[14px] disabled:cursor-not-allowed disabled:opacity-60"
+          className="shbz-btn-primary px-5 py-2.5 text-[14px] disabled:cursor-not-allowed disabled:opacity-60"
         >
           {isRunning ? "Проверяется..." : isStarting ? "Запускаем..." : "Проверить решение"}
         </button>
       </div>
+
+      {error ? <div className="ui-notice-error mt-4 rounded-[8px] px-4 py-3 text-sm">{error}</div> : null}
 
       {isRunning ? (
         <p className="mt-4 text-sm font-semibold" style={{ color: "var(--shbz-kicker)" }}>
@@ -143,13 +166,14 @@ export function StudentHomeworkCheck({ assignmentId, hasPhotos, initialCheck }: 
       ) : null}
 
       {check?.status === "DONE" && check.results.length > 0 ? (
-        <div className="mt-4">
+        <div className="mt-5">
           <div className="mb-3 flex flex-wrap gap-2">
             {correctCount > 0 ? (
               <span
                 className="rounded-[9px] px-2.5 py-1 text-[12.5px] font-bold"
                 style={{ background: "var(--shbz-green-soft)", color: "var(--shbz-green-text)" }}
               >
+                <span aria-hidden="true">✓ </span>
                 Верно {correctCount}
               </span>
             ) : null}
@@ -158,6 +182,7 @@ export function StudentHomeworkCheck({ assignmentId, hasPhotos, initialCheck }: 
                 className="rounded-[9px] px-2.5 py-1 text-[12.5px] font-bold"
                 style={{ background: "var(--shbz-danger-bg)", color: "var(--shbz-danger-text)" }}
               >
+                <span aria-hidden="true">✗ </span>
                 Перерешать {incorrectCount}
               </span>
             ) : null}
@@ -166,6 +191,7 @@ export function StudentHomeworkCheck({ assignmentId, hasPhotos, initialCheck }: 
                 className="rounded-[9px] px-2.5 py-1 text-[12.5px] font-bold"
                 style={{ background: "var(--shbz-tab-hover)", color: "var(--shbz-text-muted)" }}
               >
+                <span aria-hidden="true">⏳ </span>
                 На проверке учителя {uncertainCount}
               </span>
             ) : null}
@@ -174,6 +200,7 @@ export function StudentHomeworkCheck({ assignmentId, hasPhotos, initialCheck }: 
           <div className="space-y-2.5">
             {check.results.map((result) => {
               const meta = verdictMeta[result.verdict];
+              const showAnswer = result.verdict !== "UNCERTAIN" && Boolean(result.recognizedAnswer);
 
               return (
                 <div
@@ -195,9 +222,13 @@ export function StudentHomeworkCheck({ assignmentId, hasPhotos, initialCheck }: 
                     >
                       {meta.label}
                     </span>
-                    {result.recognizedAnswer ? (
-                      <span className="text-xs" style={{ color: "var(--shbz-text-muted)" }}>
-                        Распознанный ответ: {result.recognizedAnswer}
+                    {showAnswer ? (
+                      <span
+                        className="min-w-0 text-xs"
+                        style={{ color: "var(--shbz-text-muted)" }}
+                        title={result.recognizedAnswer ?? undefined}
+                      >
+                        Ответ: {shortenRecognizedAnswer(result.recognizedAnswer ?? "")}
                       </span>
                     ) : null}
                   </div>

@@ -96,6 +96,23 @@ export function StudentHomeworkPhotos({ assignmentId, photos }: StudentHomeworkP
 
   return (
     <div className="shbz-card shbz-section-pad">
+      <div className="mb-5 flex flex-wrap items-start justify-between gap-3">
+        <div className="min-w-0">
+          <h2 className="text-[20px] font-extrabold tracking-[-0.3px]" style={{ color: "var(--shbz-text-strong)" }}>
+            Фото решений
+          </h2>
+          <p className="ui-hint mt-1 text-sm" style={{ color: "var(--shbz-text-muted)" }}>
+            Учитель увидит их при проверке
+          </p>
+        </div>
+        <span
+          className="rounded-[10px] px-3 py-1.5 text-[13px] font-bold"
+          style={{ background: "var(--shbz-tab-hover)", color: "var(--shbz-kicker)" }}
+        >
+          {photos.length} / {MAX_PHOTOS}
+        </span>
+      </div>
+
       {error ? <div className="ui-notice-error mb-4 rounded-[8px] px-4 py-3 text-sm">{error}</div> : null}
 
       <label
@@ -119,7 +136,7 @@ export function StudentHomeworkPhotos({ assignmentId, photos }: StudentHomeworkP
         )}
         style={{
           borderColor: isDragging ? "var(--shbz-green-text)" : "var(--shbz-input-border)",
-          background: isDragging ? "var(--shbz-green-soft)" : "#fbfcfd"
+          background: isDragging ? "var(--shbz-green-soft)" : "var(--shbz-dropzone-bg)"
         }}
       >
         <input
@@ -154,38 +171,30 @@ export function StudentHomeworkPhotos({ assignmentId, photos }: StudentHomeworkP
       </label>
 
       {photos.length > 0 ? (
-        <div className="mt-5">
-          <div className="mb-2.5 flex items-center justify-between">
-            <span className="ui-kicker">Прикреплённые фото</span>
-            <span className="text-[12.5px] font-bold" style={{ color: "var(--shbz-kicker)" }}>
-              {photos.length} / {MAX_PHOTOS}
-            </span>
-          </div>
-          <div className="flex flex-wrap gap-3">
-            {photos.map((photo) => (
-              <div key={photo.id} className="relative">
-                <a href={`/files/${photo.fileId}`} target="_blank" rel="noreferrer" title={photo.originalName}>
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={`/files/${photo.fileId}`}
-                    alt={photo.originalName}
-                    className="h-24 w-24 rounded-[12px] border object-cover"
-                    style={{ borderColor: "var(--shbz-soft-border)" }}
-                  />
-                </a>
-                <button
-                  type="button"
-                  disabled={deletingPhotoId === photo.id}
-                  onClick={() => setConfirmPhotoId(photo.id)}
-                  aria-label="Удалить фото"
-                  className="absolute -right-2 -top-2 inline-flex h-6 w-6 items-center justify-center rounded-full border bg-[var(--theme-surface-strong)] text-xs font-bold text-[var(--theme-text-muted)] shadow transition hover:text-[var(--theme-danger-text)] disabled:cursor-not-allowed disabled:opacity-60"
+        <div className="mt-5 flex flex-wrap gap-3">
+          {photos.map((photo) => (
+            <div key={photo.id} className="relative">
+              <a href={`/files/${photo.fileId}`} target="_blank" rel="noreferrer" title={photo.originalName}>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src={`/files/${photo.fileId}`}
+                  alt={photo.originalName}
+                  className="h-24 w-24 rounded-[12px] border object-cover"
                   style={{ borderColor: "var(--shbz-soft-border)" }}
-                >
-                  ×
-                </button>
-              </div>
-            ))}
-          </div>
+                />
+              </a>
+              <button
+                type="button"
+                disabled={deletingPhotoId === photo.id}
+                onClick={() => setConfirmPhotoId(photo.id)}
+                aria-label="Удалить фото"
+                className="absolute -right-2 -top-2 inline-flex h-6 w-6 items-center justify-center rounded-full border bg-[var(--theme-surface-strong)] text-xs font-bold text-[var(--theme-text-muted)] shadow transition hover:text-[var(--theme-danger-text)] disabled:cursor-not-allowed disabled:opacity-60"
+                style={{ borderColor: "var(--shbz-soft-border)" }}
+              >
+                ×
+              </button>
+            </div>
+          ))}
         </div>
       ) : null}
 
