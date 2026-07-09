@@ -1695,7 +1695,7 @@ html[data-theme="dark"] {
 
 .shbz-btn-primary {
   border: none;
-  border-radius: 999px;
+  border-radius: 14px;
   background: var(--shbz-accent-grad);
   color: #ffffff;
   font-family: inherit;
