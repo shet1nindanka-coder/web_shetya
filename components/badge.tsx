@@ -10,7 +10,7 @@ export function Badge({ children, className }: BadgeProps) {
   return (
     <span
       className={cx(
-        "inline-flex items-center rounded-[12px] border px-2.5 py-1 text-[12px] font-medium transition-colors",
+        "inline-flex items-center rounded-[8px] border px-2.5 py-1 text-[12px] font-medium transition-colors",
         className
       )}
     >

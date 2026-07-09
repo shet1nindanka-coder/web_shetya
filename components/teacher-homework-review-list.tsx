@@ -318,7 +318,7 @@ export function TeacherHomeworkReviewList({ studentId, assignments }: TeacherHom
                           disabled={savingStatusId === number.homeworkNumberId}
                           onClick={() => void setNumberStatus(number.homeworkNumberId, isActive ? null : option)}
                           className={cx(
-                            "ui-pressable rounded-[10px] px-2 py-1.5 text-center text-xs font-semibold transition disabled:cursor-not-allowed disabled:opacity-60",
+                            "ui-pressable rounded-[8px] px-2 py-1.5 text-center text-xs font-semibold transition disabled:cursor-not-allowed disabled:opacity-60",
                             isActive ? meta.buttonClassName : "ui-status-button"
                           )}
                         >

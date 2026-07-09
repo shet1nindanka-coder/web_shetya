@@ -2471,7 +2471,7 @@ html[data-theme="dark"] .ui-status-button:hover {
   border-color: var(--shbz-outline-hover);
   background: var(--shbz-card-bg);
 }
-.ui-status-surface { border-radius: 10px; }
+.ui-status-surface { border-radius: 8px; }
 
 /* Логотип-плашка в старых скелетонах */
 .app-logo-mark,
