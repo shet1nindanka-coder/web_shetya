@@ -1,5 +1,6 @@
 import { SolutionCheckStatus, SolutionVerdict } from "@prisma/client";
 import sharp from "sharp";
+import { publishDashboardRealtimeEvent } from "@/lib/dashboard-realtime";
 import { logErrorEvent, logInfoEvent, logWarnEvent } from "@/lib/logger";
 import { createNotification } from "@/lib/notifications";
 import { revalidateAllPlatformData } from "@/lib/platform-data-cache";
@@ -10,6 +11,7 @@ import {
   parseCheckResponse,
   type ParsedCheckResult
 } from "@/lib/solution-check-parse";
+import { getStatusForAiVerdict } from "@/lib/solution-check-status";
 import { readStoredFile } from "@/lib/storage";
 import { deleteOwnedStoredFileIfUnused } from "@/lib/stored-files";
 
@@ -95,6 +97,8 @@ const SYSTEM_PROMPT = [
 type CheckAssignment = {
   id: string;
   studentId: string;
+  topicId: string;
+  checkStartedAt: Date;
   topicTitle: string;
   numbers: Array<{
     homeworkNumberId: string;
@@ -421,6 +425,90 @@ async function pruneCompletedHomeworkChecksSafely(studentId: string) {
   }
 }
 
+async function applyVerdictsToProgress(assignment: CheckAssignment, results: ParsedCheckResult[]) {
+  const existingStatuses = await prisma.studentTopicNumberStatus.findMany({
+    where: {
+      studentId: assignment.studentId,
+      homeworkNumberId: { in: assignment.numbers.map((number) => number.homeworkNumberId) }
+    },
+    select: {
+      homeworkNumberId: true,
+      status: true,
+      statusChangedAt: true
+    }
+  });
+  const existingByNumberId = new Map(
+    existingStatuses.map((status) => [status.homeworkNumberId, status])
+  );
+  const numberByValue = new Map(assignment.numbers.map((number) => [number.number, number]));
+  const changedAt = new Date();
+  const creates = [];
+  const updates = [];
+
+  for (const result of results) {
+    const target = numberByValue.get(result.number);
+
+    if (!target) {
+      continue;
+    }
+
+    const existing = existingByNumberId.get(target.homeworkNumberId);
+    const nextStatus = getStatusForAiVerdict(result.verdict, existing?.status ?? null);
+
+    if (!nextStatus) {
+      continue;
+    }
+
+    if (existing?.status === nextStatus) {
+      continue;
+    }
+
+    if (!existing) {
+      creates.push({
+        studentId: assignment.studentId,
+        homeworkNumberId: target.homeworkNumberId,
+        status: nextStatus,
+        statusChangedAt: changedAt
+      });
+      continue;
+    }
+
+    // Ручное изменение, сделанное после запуска проверки, всегда имеет приоритет
+    // над более старым ответом ИИ. Условия также закрывают гонку между чтением и update.
+    updates.push(
+      prisma.studentTopicNumberStatus.updateMany({
+        where: {
+          studentId: assignment.studentId,
+          homeworkNumberId: target.homeworkNumberId,
+          status: existing.status,
+          OR: [
+            { statusChangedAt: null },
+            { statusChangedAt: { lte: assignment.checkStartedAt } }
+          ]
+        },
+        data: {
+          status: nextStatus,
+          statusChangedAt: changedAt
+        }
+      })
+    );
+  }
+
+  const operations = [
+    ...updates,
+    ...(creates.length > 0
+      ? [prisma.studentTopicNumberStatus.createMany({ data: creates, skipDuplicates: true })]
+      : [])
+  ];
+
+  if (operations.length === 0) {
+    return 0;
+  }
+
+  const applied = await prisma.$transaction(operations);
+  return applied.reduce((total, result) => total + result.count, 0);
+}
+
 export async function runHomeworkCheck(checkId: string) {
   const config = getAiCheckConfig();
 
@@ -430,6 +518,7 @@ export async function runHomeworkCheck(checkId: string) {
       id: true,
       status: true,
       activeSlot: true,
+      createdAt: true,
       photos: {
         orderBy: { order: "asc" },
         select: {
@@ -445,6 +534,7 @@ export async function runHomeworkCheck(checkId: string) {
         select: {
           id: true,
           studentId: true,
+          topicId: true,
           topic: { select: { title: true } },
           numbers: {
             select: {
@@ -475,6 +565,8 @@ export async function runHomeworkCheck(checkId: string) {
   const assignment: CheckAssignment = {
     id: check.assignment.id,
     studentId: check.assignment.studentId,
+    topicId: check.assignment.topicId,
+    checkStartedAt: check.createdAt,
     topicTitle: check.assignment.topic.title,
     numbers: check.assignment.numbers
       .map((entry) => ({
@@ -579,9 +671,26 @@ export async function runHomeworkCheck(checkId: string) {
 
     const numberByValue = new Map(assignment.numbers.map((number) => [number.number, number]));
 
-    await prisma.$transaction([
-      prisma.homeworkCheckResult.deleteMany({ where: { checkId } }),
-      prisma.homeworkCheckResult.createMany({
+    const finalized = await prisma.$transaction(async (transaction) => {
+      const transition = await transaction.homeworkCheck.updateMany({
+        where: {
+          id: checkId,
+          status: SolutionCheckStatus.CHECKING,
+          activeSlot: 1
+        },
+        data: {
+          status: SolutionCheckStatus.DONE,
+          activeSlot: null,
+          checkedAt: new Date()
+        }
+      });
+
+      if (transition.count !== 1) {
+        return false;
+      }
+
+      await transaction.homeworkCheckResult.deleteMany({ where: { checkId } });
+      await transaction.homeworkCheckResult.createMany({
         data: results.map((result) => ({
           checkId,
           homeworkNumberId: numberByValue.get(result.number)!.homeworkNumberId,
@@ -592,13 +701,16 @@ export async function runHomeworkCheck(checkId: string) {
           copySuspected: result.copySuspected,
           copyReason: result.copyReason
         }))
-      })
-    ]);
+      });
 
-    await prisma.homeworkCheck.update({
-      where: { id: checkId },
-      data: { status: SolutionCheckStatus.DONE, activeSlot: null, checkedAt: new Date() }
+      return true;
     });
+
+    if (!finalized) {
+      return;
+    }
+
+    const appliedStatusCount = await applyVerdictsToProgress(assignment, results);
     await pruneCompletedHomeworkChecksSafely(assignment.studentId);
 
     const correctCount = results.filter((result) => result.verdict === "CORRECT").length;
@@ -609,9 +721,17 @@ export async function runHomeworkCheck(checkId: string) {
       userId: assignment.studentId,
       type: "homework-checked",
       title: "Результат автопроверки готов",
-      body: `Рекомендации ИИ: верно — ${correctCount}, перерешать — ${incorrectCount}${uncertainCount > 0 ? `, нужна ручная проверка — ${uncertainCount}` : ""}. Статусы прогресса не изменены.`,
+      body: `Автопроверка: верно — ${correctCount}, перерешать — ${incorrectCount}${uncertainCount > 0 ? `, нужна ручная проверка — ${uncertainCount}` : ""}. ${appliedStatusCount > 0 ? `Обновлено статусов: ${appliedStatusCount}.` : "Статусы не изменены."}`,
       href: `/student/homeworks/${assignment.id}`
     });
+
+    if (appliedStatusCount > 0) {
+      publishDashboardRealtimeEvent({
+        kind: "student-progress-changed",
+        studentId: assignment.studentId,
+        topicId: assignment.topicId
+      });
+    }
 
     try {
       revalidateAllPlatformData();
@@ -625,6 +745,7 @@ export async function runHomeworkCheck(checkId: string) {
       correctCount,
       incorrectCount,
       uncertainCount,
+      appliedStatusCount,
       inputTokens: modelResponse.inputTokens,
       outputTokens: modelResponse.outputTokens
     });
