@@ -1841,7 +1841,7 @@ html[data-theme="dark"] {
   gap: 4px;
   padding: 6px;
   border: 1.5px solid var(--shbz-tab-border);
-  border-radius: 999px;
+  border-radius: 16px;
   background: var(--shbz-card-bg);
 }
 

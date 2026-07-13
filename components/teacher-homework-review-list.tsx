@@ -441,7 +441,7 @@ export function TeacherHomeworkReviewList({ studentId, assignments }: TeacherHom
             </div>
 
             {assignment.checks.length > 0 ? (
-              <details className="group mt-5 rounded-[16px] border" style={{ borderColor: "var(--shbz-soft-border)" }} open>
+              <details className="group mt-5 rounded-[16px] border" style={{ borderColor: "var(--shbz-soft-border)" }}>
                 <summary className="flex cursor-pointer list-none flex-wrap items-center gap-2 px-4 py-3.5 [&::-webkit-details-marker]:hidden">
                   <span className="text-[15px] font-bold text-[var(--theme-text-strong)]">История проверок</span>
                   <span className="ui-copy-muted text-sm">· {pluralizeRuns(assignment.checks.length)}</span>
