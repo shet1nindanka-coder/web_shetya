@@ -25,9 +25,6 @@ export default async function StudentHomeworksPage() {
         </div>
       ) : (
         <>
-          <p className="mb-4 text-sm" style={{ color: "var(--shbz-text-muted)" }}>
-            Прикрепите фото решённого ДЗ — учитель увидит их при проверке.
-          </p>
           <StudentHomeworkSubmissions
             assignments={assignments.map((assignment) => ({
               id: assignment.id,

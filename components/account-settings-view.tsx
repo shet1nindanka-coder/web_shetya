@@ -203,7 +203,7 @@ export function AccountSettingsView({ user, notice }: AccountSettingsViewProps) 
                 <input
                   type="password"
                   name="newPassword"
-                  placeholder="Минимум 8 символов, буквы и цифры"
+                  placeholder="От 8 символов, буквы и цифры"
                   minLength={8}
                   className="shbz-input"
                   required

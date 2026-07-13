@@ -65,7 +65,7 @@ export function StudentCreateForm() {
             name="password"
             value={password}
             onChange={(event) => setPassword(event.target.value)}
-            placeholder="Минимум 8 символов, буквы и цифры"
+            placeholder="От 8 символов, буквы и цифры"
             className="shbz-input"
             style={
               passwordError
