@@ -395,13 +395,16 @@ async function applyVerdicts(assignment: CheckAssignment, results: ParsedCheckRe
   }
 }
 
-export async function failStaleHomeworkChecks(assignmentId?: string) {
+export async function failStaleHomeworkChecks(assignmentId: string, studentId: string) {
   const threshold = new Date(Date.now() - STALE_CHECK_MS);
 
   try {
     await prisma.homeworkCheck.updateMany({
       where: {
-        ...(assignmentId ? { assignmentId } : {}),
+        assignmentId,
+        assignment: {
+          studentId
+        },
         status: { in: [SolutionCheckStatus.PENDING, SolutionCheckStatus.CHECKING] },
         createdAt: { lt: threshold }
       },
@@ -415,7 +418,7 @@ export async function failStaleHomeworkChecks(assignmentId?: string) {
     // До применения миграции таблицы может не быть — не мешаем основному потоку.
     logWarnEvent(
       "solution.check.stale_sweep_failed",
-      { assignmentId: assignmentId ?? null },
+      { assignmentId, studentId },
       error instanceof Error ? error : undefined,
       "Failed to sweep stale homework checks."
     );

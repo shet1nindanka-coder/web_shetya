@@ -48,7 +48,7 @@ export async function POST(request: Request) {
 
   // Освобождаем «зависшие» проверки (например, прерванные рестартом сервера),
   // иначе счётчик активных навсегда заблокирует повторный запуск (409).
-  await failStaleHomeworkChecks(assignmentId);
+  await failStaleHomeworkChecks(assignmentId, user.id);
 
   let assignment: { id: string; photosCount: number; numbersCount: number; activeChecks: number } | null;
 
@@ -136,7 +136,7 @@ export async function GET(request: Request) {
 
   // Помечаем зависшую проверку как проваленную, чтобы поллинг ученика увидел
   // терминальный статус, а не бесконечное «идёт проверка».
-  await failStaleHomeworkChecks(assignmentId);
+  await failStaleHomeworkChecks(assignmentId, user.id);
 
   let check:
     | {
