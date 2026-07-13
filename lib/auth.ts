@@ -1,4 +1,4 @@
-import { UserRole } from "@prisma/client";
+import { Prisma, UserRole } from "@prisma/client";
 import { cookies } from "next/headers";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
@@ -9,6 +9,18 @@ import { roleHome } from "@/lib/utils";
 
 const SESSION_COOKIE = "tutor_session";
 const SESSION_TTL_DAYS = Number(process.env.SESSION_TTL_DAYS ?? 30);
+
+const authenticatedUserSelect = {
+  id: true,
+  name: true,
+  email: true,
+  role: true,
+  createdAt: true
+} satisfies Prisma.UserSelect;
+
+export type AuthenticatedUser = Prisma.UserGetPayload<{
+  select: typeof authenticatedUserSelect;
+}>;
 
 async function shouldUseSecureSessionCookie() {
   const forwardedProto = (await headers()).get("x-forwarded-proto");
@@ -34,14 +46,19 @@ export async function signIn(login: string, password: string) {
   const normalizedLogin = login.trim().toLowerCase();
 
   const user = await prisma.user.findUnique({
-    where: { email: normalizedLogin }
+    where: { email: normalizedLogin },
+    select: {
+      ...authenticatedUserSelect,
+      passwordHash: true
+    }
   });
 
   if (!user) {
     return null;
   }
 
-  const isValid = await verifyPassword(password, user.passwordHash);
+  const { passwordHash, ...authenticatedUser } = user;
+  const isValid = await verifyPassword(password, passwordHash);
 
   if (!isValid) {
     return null;
@@ -70,7 +87,7 @@ export async function signIn(login: string, password: string) {
   const cookieStore = await cookies();
   cookieStore.set(SESSION_COOKIE, token, await getSessionCookieOptions(expiresAt));
 
-  return user;
+  return authenticatedUser;
 }
 
 export async function signOut() {
@@ -88,6 +105,40 @@ export async function signOut() {
   cookieStore.set(SESSION_COOKIE, "", await getSessionCookieOptions(new Date(0)));
 }
 
+export async function updatePasswordAndRotateSession(userId: string, passwordHash: string) {
+  const token = createSessionToken();
+  const tokenHash = hashSessionToken(token);
+  const expiresAt = new Date(Date.now() + SESSION_TTL_DAYS * 24 * 60 * 60 * 1000);
+
+  await prisma.$transaction(async (transaction) => {
+    await transaction.user.update({
+      where: {
+        id: userId
+      },
+      data: {
+        passwordHash
+      }
+    });
+
+    await transaction.session.deleteMany({
+      where: {
+        userId
+      }
+    });
+
+    await transaction.session.create({
+      data: {
+        tokenHash,
+        userId,
+        expiresAt
+      }
+    });
+  });
+
+  const cookieStore = await cookies();
+  cookieStore.set(SESSION_COOKIE, token, await getSessionCookieOptions(expiresAt));
+}
+
 export async function getCurrentUser() {
   const cookieStore = await cookies();
   const sessionToken = cookieStore.get(SESSION_COOKIE)?.value;
@@ -100,8 +151,12 @@ export async function getCurrentUser() {
     where: {
       tokenHash: hashSessionToken(sessionToken)
     },
-    include: {
-      user: true
+    select: {
+      id: true,
+      expiresAt: true,
+      user: {
+        select: authenticatedUserSelect
+      }
     }
   });
 

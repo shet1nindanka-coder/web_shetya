@@ -3,11 +3,10 @@
 import { UserRole } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { requireUser } from "@/lib/auth";
+import { requireUser, updatePasswordAndRotateSession } from "@/lib/auth";
 import { logErrorEvent, logInfoEvent } from "@/lib/logger";
 import { revalidateAllPlatformData } from "@/lib/platform-data-cache";
-import { cookies } from "next/headers";
-import { hashPassword, hashSessionToken, verifyPassword } from "@/lib/password";
+import { hashPassword, verifyPassword } from "@/lib/password";
 import { validatePasswordStrength } from "@/lib/password-policy";
 import { prisma } from "@/lib/prisma";
 import { normalizeSingleLineText, roleHome } from "@/lib/utils";
@@ -110,25 +109,7 @@ export async function updatePasswordAction(formData: FormData) {
 
   try {
     const passwordHash = await hashPassword(newPassword);
-
-    await prisma.user.update({
-      where: {
-        id: user.id
-      },
-      data: {
-        passwordHash
-      }
-    });
-
-    const cookieStore = await cookies();
-    const currentToken = cookieStore.get("tutor_session")?.value;
-
-    await prisma.session.deleteMany({
-      where: {
-        userId: user.id,
-        ...(currentToken ? { NOT: { tokenHash: hashSessionToken(currentToken) } } : {})
-      }
-    });
+    await updatePasswordAndRotateSession(user.id, passwordHash);
   } catch (error) {
     logErrorEvent(
       "profile.password_update.failed",
