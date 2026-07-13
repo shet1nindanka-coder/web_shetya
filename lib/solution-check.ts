@@ -1,11 +1,14 @@
-import { HomeworkNumberStatus, Prisma, SolutionCheckStatus, SolutionVerdict } from "@prisma/client";
+import { SolutionCheckStatus, SolutionVerdict } from "@prisma/client";
 import sharp from "sharp";
-import { publishDashboardRealtimeEvent } from "@/lib/dashboard-realtime";
 import { logErrorEvent, logInfoEvent, logWarnEvent } from "@/lib/logger";
 import { createNotification } from "@/lib/notifications";
 import { revalidateAllPlatformData } from "@/lib/platform-data-cache";
 import { prisma } from "@/lib/prisma";
-import { parseCheckResponse, type ParsedCheckResult } from "@/lib/solution-check-parse";
+import {
+  normalizeCheckResultsByConfidence,
+  parseCheckResponse,
+  type ParsedCheckResult
+} from "@/lib/solution-check-parse";
 import { readStoredFile } from "@/lib/storage";
 
 const MAX_PHOTOS_PER_CHECK = 10;
@@ -33,14 +36,6 @@ export function getAiCheckConfig() {
     model,
     baseUrl: process.env.AI_CHECK_BASE_URL?.trim() || "https://openrouter.ai/api/v1"
   };
-}
-
-function isMissingStatusChangedColumn(error: unknown) {
-  return (
-    error instanceof Prisma.PrismaClientKnownRequestError &&
-    error.code === "P2022" &&
-    error.message.includes("statusChangedAt")
-  );
 }
 
 function getMinConfidence() {
@@ -98,7 +93,6 @@ const SYSTEM_PROMPT = [
 type CheckAssignment = {
   id: string;
   studentId: string;
-  topicId: string;
   topicTitle: string;
   numbers: Array<{
     homeworkNumberId: string;
@@ -318,83 +312,6 @@ async function callModelOnce(
   }
 }
 
-async function applyVerdicts(assignment: CheckAssignment, results: ParsedCheckResult[]) {
-  const numberByValue = new Map(assignment.numbers.map((number) => [number.number, number]));
-  const existingStatuses = await prisma.studentTopicNumberStatus.findMany({
-    where: {
-      studentId: assignment.studentId,
-      homeworkNumberId: {
-        in: assignment.numbers.map((number) => number.homeworkNumberId)
-      }
-    },
-    select: {
-      homeworkNumberId: true,
-      status: true
-    }
-  });
-  const statusByNumberId = new Map(existingStatuses.map((status) => [status.homeworkNumberId, status.status]));
-  const changedAt = new Date();
-
-  const buildOperations = (withChangedAt: boolean) => {
-    const operations = [];
-
-    for (const result of results) {
-      const target = numberByValue.get(result.number);
-
-      if (!target || result.verdict === "UNCERTAIN") {
-        continue;
-      }
-
-      const previousStatus = statusByNumberId.get(target.homeworkNumberId) ?? null;
-      const wasWrongBefore =
-        previousStatus === HomeworkNumberStatus.RED || previousStatus === HomeworkNumberStatus.YELLOW;
-      const nextStatus =
-        result.verdict === "CORRECT"
-          ? wasWrongBefore
-            ? HomeworkNumberStatus.YELLOW
-            : HomeworkNumberStatus.GREEN
-          : HomeworkNumberStatus.RED;
-
-      operations.push(
-        prisma.studentTopicNumberStatus.upsert({
-          where: {
-            studentId_homeworkNumberId: {
-              studentId: assignment.studentId,
-              homeworkNumberId: target.homeworkNumberId
-            }
-          },
-          update: { status: nextStatus, ...(withChangedAt ? { statusChangedAt: changedAt } : {}) },
-          create: {
-            studentId: assignment.studentId,
-            homeworkNumberId: target.homeworkNumberId,
-            status: nextStatus,
-            ...(withChangedAt ? { statusChangedAt: changedAt } : {})
-          }
-        })
-      );
-    }
-
-    return operations;
-  };
-
-  const operations = buildOperations(true);
-
-  if (operations.length === 0) {
-    return;
-  }
-
-  try {
-    await prisma.$transaction(operations);
-  } catch (error) {
-    // До применения миграции колонки statusChangedAt может не быть — пишем без неё.
-    if (isMissingStatusChangedColumn(error)) {
-      await prisma.$transaction(buildOperations(false));
-    } else {
-      throw error;
-    }
-  }
-}
-
 export async function failStaleHomeworkChecks(assignmentId: string, studentId: string) {
   const threshold = new Date(Date.now() - STALE_CHECK_MS);
 
@@ -437,7 +354,6 @@ export async function runHomeworkCheck(checkId: string) {
         select: {
           id: true,
           studentId: true,
-          topicId: true,
           topic: { select: { title: true } },
           numbers: {
             select: {
@@ -474,7 +390,6 @@ export async function runHomeworkCheck(checkId: string) {
   const assignment: CheckAssignment = {
     id: check.assignment.id,
     studentId: check.assignment.studentId,
-    topicId: check.assignment.topicId,
     topicTitle: check.assignment.topic.title,
     numbers: check.assignment.numbers
       .map((entry) => ({
@@ -559,15 +474,8 @@ export async function runHomeworkCheck(checkId: string) {
       results = parseCheckResponse(modelResponse.content, validNumbers);
     }
 
-    // Порог уверенности: вердикт, в котором модель не уверена, не должен молча
-    // ставить статус (ученик его не поправит) — трактуем как «не распознано» и
-    // отдаём учителю на ручную проверку.
-    const minConfidence = getMinConfidence();
-    results = results.map((result) =>
-      result.verdict !== "UNCERTAIN" && result.confidence !== null && result.confidence < minConfidence
-        ? { ...result, verdict: "UNCERTAIN" as const }
-        : result
-    );
+    // Низкая или отсутствующая уверенность всегда закрывается в UNCERTAIN.
+    results = normalizeCheckResultsByConfidence(results, getMinConfidence());
 
     if (results.length === 0) {
       await failCheck("Модель не вернула ни одного вердикта.");
@@ -592,8 +500,6 @@ export async function runHomeworkCheck(checkId: string) {
       })
     ]);
 
-    await applyVerdicts(assignment, results);
-
     await prisma.homeworkCheck.update({
       where: { id: checkId },
       data: { status: SolutionCheckStatus.DONE, checkedAt: new Date() }
@@ -606,15 +512,9 @@ export async function runHomeworkCheck(checkId: string) {
     await createNotification({
       userId: assignment.studentId,
       type: "homework-checked",
-      title: "Решение проверено автоматически",
-      body: `Верно: ${correctCount} · перерешать: ${incorrectCount}${uncertainCount > 0 ? ` · не распознано: ${uncertainCount}` : ""}`,
+      title: "Результат автопроверки готов",
+      body: `Рекомендации ИИ: верно — ${correctCount}, перерешать — ${incorrectCount}${uncertainCount > 0 ? `, нужна ручная проверка — ${uncertainCount}` : ""}. Статусы прогресса не изменены.`,
       href: `/student/homeworks/${assignment.id}`
-    });
-
-    publishDashboardRealtimeEvent({
-      kind: "student-progress-changed",
-      studentId: assignment.studentId,
-      topicId: assignment.topicId
     });
 
     try {

@@ -1,6 +1,10 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { extractJsonObject, parseCheckResponse } from "../lib/solution-check-parse";
+import {
+  extractJsonObject,
+  normalizeCheckResultsByConfidence,
+  parseCheckResponse
+} from "../lib/solution-check-parse";
 
 test("extractJsonObject strips code fences and surrounding text", () => {
   const parsed = extractJsonObject('```json\n{"results":[]}\n```') as { results: unknown[] };
@@ -37,4 +41,28 @@ test("parseCheckResponse maps verdicts and keeps only valid numbers", () => {
 test("parseCheckResponse throws on missing results array", () => {
   assert.throws(() => parseCheckResponse('{"verdict":"CORRECT"}', [1]));
   assert.throws(() => parseCheckResponse("нет json", [1]));
+});
+
+test("normalizeCheckResultsByConfidence fails closed when confidence is missing or too low", () => {
+  const results = parseCheckResponse(
+    JSON.stringify({
+      results: [
+        { number: 1, verdict: "CORRECT" },
+        { number: 2, verdict: "INCORRECT", confidence: null },
+        { number: 3, verdict: "CORRECT", confidence: 0.59 },
+        { number: 4, verdict: "INCORRECT", confidence: 0.6 },
+        { number: 5, verdict: "UNCERTAIN" }
+      ]
+    }),
+    [1, 2, 3, 4, 5]
+  );
+
+  const normalized = normalizeCheckResultsByConfidence(results, 0.6);
+
+  assert.deepEqual(
+    normalized.map((result) => result.verdict),
+    ["UNCERTAIN", "UNCERTAIN", "UNCERTAIN", "INCORRECT", "UNCERTAIN"]
+  );
+  assert.equal(normalized[0]?.confidence, null);
+  assert.equal(normalized[1]?.confidence, null);
 });

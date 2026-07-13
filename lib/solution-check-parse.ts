@@ -10,6 +10,27 @@ export type ParsedCheckResult = {
   copyReason: string | null;
 };
 
+export function normalizeCheckResultsByConfidence(
+  results: ParsedCheckResult[],
+  minConfidence: number
+): ParsedCheckResult[] {
+  return results.map((result) => {
+    if (result.verdict === "UNCERTAIN") {
+      return result;
+    }
+
+    if (
+      result.confidence === null ||
+      !Number.isFinite(result.confidence) ||
+      result.confidence < minConfidence
+    ) {
+      return { ...result, verdict: "UNCERTAIN" };
+    }
+
+    return result;
+  });
+}
+
 const verdictAliases: Record<string, CheckVerdict> = {
   CORRECT: "CORRECT",
   INCORRECT: "INCORRECT",
@@ -58,7 +79,7 @@ export function parseCheckResponse(content: string, validNumbers: number[]): Par
 
     seenNumbers.add(number);
 
-    const confidenceRaw = Number(raw.confidence);
+    const confidenceRaw = typeof raw.confidence === "number" ? raw.confidence : Number.NaN;
     const recognizedAnswer =
       typeof raw.recognized_answer === "string" && raw.recognized_answer.trim()
         ? raw.recognized_answer.trim().slice(0, 500)
