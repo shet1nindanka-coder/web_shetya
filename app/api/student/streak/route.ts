@@ -13,7 +13,7 @@ export async function GET() {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const rateLimitResponse = enforceApiRateLimit(null, "api:streak", user.id, 120, 60_000);
+  const rateLimitResponse = await enforceApiRateLimit("api:streak", user.id, 120, 60_000);
 
   if (rateLimitResponse) {
     return rateLimitResponse;

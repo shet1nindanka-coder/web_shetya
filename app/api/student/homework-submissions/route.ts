@@ -9,13 +9,55 @@ import { revalidateAllPlatformData } from "@/lib/platform-data-cache";
 import { prisma } from "@/lib/prisma";
 import { removeStoredFile, saveUploadedFile } from "@/lib/storage";
 import { deleteOwnedStoredFileIfUnused } from "@/lib/stored-files";
-import { getFileExtension, getMimeTypeFromExtension } from "@/lib/utils";
+import {
+  MAX_UPLOAD_SIZE_BYTES,
+  UploadValidationError,
+  validateUploadMetadata
+} from "@/lib/upload-validation";
 
 export const runtime = "nodejs";
 
 const MAX_PHOTOS_PER_ASSIGNMENT = 10;
-const MAX_PHOTO_SIZE = 15 * 1024 * 1024;
-const allowedPhotoMimeTypes = new Set(["image/png", "image/jpeg"]);
+const MAX_MULTIPART_OVERHEAD_BYTES = 512 * 1024;
+const MAX_STUDENT_UPLOAD_BODY_SIZE = MAX_UPLOAD_SIZE_BYTES + MAX_MULTIPART_OVERHEAD_BYTES;
+const allowedPhotoExtensions = new Set([".png", ".jpg", ".jpeg"]);
+
+class AssignmentNotFoundError extends Error {}
+class PhotoLimitExceededError extends Error {}
+
+function getMultipartLengthError(request: Request) {
+  const contentType = request.headers.get("content-type") ?? "";
+
+  if (!contentType.toLowerCase().startsWith("multipart/form-data;")) {
+    return NextResponse.json({ error: "Ожидается multipart-загрузка фотографий." }, { status: 415 });
+  }
+
+  const rawContentLength = request.headers.get("content-length");
+
+  if (!rawContentLength) {
+    return NextResponse.json({ error: "Для загрузки фотографий обязателен Content-Length." }, { status: 411 });
+  }
+
+  if (!/^\d+$/.test(rawContentLength)) {
+    return NextResponse.json({ error: "Некорректный Content-Length." }, { status: 400 });
+  }
+
+  const contentLength = Number(rawContentLength);
+
+  if (!Number.isSafeInteger(contentLength) || contentLength <= 0) {
+    return NextResponse.json({ error: "Некорректный Content-Length." }, { status: 400 });
+  }
+
+  if (contentLength > MAX_STUDENT_UPLOAD_BODY_SIZE) {
+    return NextResponse.json({ error: "Суммарный размер загрузки не должен превышать 15 МБ." }, { status: 413 });
+  }
+
+  return null;
+}
+
+async function cleanupStoredUploads(uploads: Array<Awaited<ReturnType<typeof saveUploadedFile>>>) {
+  await Promise.allSettled(uploads.map((upload) => removeStoredFile(upload.storageKey)));
+}
 
 function isMissingSubmissionTableError(error: unknown) {
   return (
@@ -42,10 +84,16 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Сессия истекла. Войдите заново." }, { status: 401 });
   }
 
-  const rateLimitResponse = enforceApiRateLimit(request, "api:homework-submissions", user.id, 60, 60_000);
+  const rateLimitResponse = await enforceApiRateLimit("api:homework-submissions", user.id, 60, 60_000);
 
   if (rateLimitResponse) {
     return rateLimitResponse;
+  }
+
+  const multipartLengthError = getMultipartLengthError(request);
+
+  if (multipartLengthError) {
+    return multipartLengthError;
   }
 
   const formData = await request.formData().catch(() => null);
@@ -55,22 +103,36 @@ export async function POST(request: Request) {
   }
 
   const assignmentId = String(formData.get("assignmentId") ?? "").trim();
-  const files = formData.getAll("files").filter((entry): entry is File => entry instanceof File && entry.size > 0);
+  const fileEntries = formData.getAll("files");
 
-  if (!assignmentId || !files.length) {
+  if (
+    !assignmentId ||
+    !fileEntries.length ||
+    fileEntries.some((entry) => !(entry instanceof File) || entry.size <= 0)
+  ) {
     return NextResponse.json({ error: "Некорректные данные для загрузки фото." }, { status: 400 });
   }
 
-  for (const file of files) {
-    const mimeType = file.type || getMimeTypeFromExtension(getFileExtension(file.name));
+  const files = fileEntries as File[];
+  const aggregateFileSize = files.reduce((total, file) => total + file.size, 0);
 
-    if (!allowedPhotoMimeTypes.has(mimeType)) {
-      return NextResponse.json({ error: "Можно загружать только фото в формате PNG или JPG." }, { status: 400 });
-    }
+  if (!Number.isSafeInteger(aggregateFileSize) || aggregateFileSize > MAX_UPLOAD_SIZE_BYTES) {
+    return NextResponse.json({ error: "Суммарный размер фотографий не должен превышать 15 МБ." }, { status: 413 });
+  }
 
-    if (file.size > MAX_PHOTO_SIZE) {
-      return NextResponse.json({ error: "Файл слишком большой. Максимальный размер — 15 МБ." }, { status: 400 });
+  try {
+    for (const file of files) {
+      const { extension } = validateUploadMetadata(file.name, file.type, file.size);
+
+      if (!allowedPhotoExtensions.has(extension)) {
+        throw new UploadValidationError("Можно загружать только фото в формате PNG или JPG.");
+      }
     }
+  } catch (error) {
+    return NextResponse.json(
+      { error: error instanceof UploadValidationError ? error.message : "Файл не прошёл проверку." },
+      { status: 400 }
+    );
   }
 
   let assignment: { id: string; topicId: string; photosCount: number } | null;
@@ -113,40 +175,112 @@ export async function POST(request: Request) {
     );
   }
 
-  const createdPhotos: Array<{ id: string; fileId: string }> = [];
+  const storedUploads: Array<Awaited<ReturnType<typeof saveUploadedFile>>> = [];
 
-  for (const file of files) {
-    const storedUpload = await saveUploadedFile(file);
+  try {
+    for (const file of files) {
+      storedUploads.push(await saveUploadedFile(file));
+    }
+  } catch (error) {
+    await cleanupStoredUploads(storedUploads);
 
-    try {
-      const photo = await prisma.homeworkSubmissionPhoto.create({
-        data: {
-          assignment: {
-            connect: { id: assignment.id }
+    if (error instanceof UploadValidationError) {
+      return NextResponse.json({ error: error.message }, { status: 400 });
+    }
+
+    throw error;
+  }
+
+  let createdPhotos: Array<{ id: string; fileId: string }>;
+
+  try {
+    createdPhotos = await prisma.$transaction(
+      async (transaction) => {
+        const currentAssignment = await transaction.homeworkAssignment.findFirst({
+          where: {
+            id: assignment.id,
+            studentId: user.id
           },
-          file: {
-            create: {
+          select: {
+            id: true,
+            _count: {
+              select: { photos: true }
+            }
+          }
+        });
+
+        if (!currentAssignment) {
+          throw new AssignmentNotFoundError();
+        }
+
+        if (currentAssignment._count.photos + storedUploads.length > MAX_PHOTOS_PER_ASSIGNMENT) {
+          throw new PhotoLimitExceededError();
+        }
+
+        const photos: Array<{ id: string; fileId: string }> = [];
+
+        for (const storedUpload of storedUploads) {
+          const storedFile = await transaction.storedFile.create({
+            data: {
               originalName: storedUpload.originalName,
               storageKey: storedUpload.storageKey,
               mimeType: storedUpload.mimeType,
               size: storedUpload.size,
               uploadedById: user.id
+            },
+            select: { id: true }
+          });
+          const photo = await transaction.homeworkSubmissionPhoto.create({
+            data: {
+              assignmentId: currentAssignment.id,
+              fileId: storedFile.id
+            },
+            select: {
+              id: true,
+              fileId: true
             }
-          }
-        },
-        select: {
-          id: true,
-          fileId: true
-        }
-      });
+          });
 
-      createdPhotos.push(photo);
-    } catch (error) {
-      // Блоб уже записан в хранилище, а запись не создалась — удаляем блоб,
-      // иначе он осиротеет (штатная очистка идёт только через удаление записи).
-      void removeStoredFile(storedUpload.storageKey).catch(() => undefined);
-      throw error;
+          photos.push(photo);
+        }
+
+        return photos;
+      },
+      {
+        isolationLevel: Prisma.TransactionIsolationLevel.Serializable
+      }
+    );
+  } catch (error) {
+    // Транзакция либо создала все записи, либо ни одной. При любом конфликте
+    // удаляем уже записанные storage-объекты, чтобы они не стали сиротами.
+    await cleanupStoredUploads(storedUploads);
+
+    if (error instanceof AssignmentNotFoundError) {
+      return NextResponse.json({ error: "ДЗ не найдено." }, { status: 404 });
     }
+
+    if (error instanceof PhotoLimitExceededError) {
+      return NextResponse.json(
+        { error: `К одному ДЗ можно прикрепить не больше ${MAX_PHOTOS_PER_ASSIGNMENT} фото.` },
+        { status: 400 }
+      );
+    }
+
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2034") {
+      return NextResponse.json(
+        { error: "Другой запрос одновременно изменил фотографии. Повторите загрузку." },
+        { status: 409 }
+      );
+    }
+
+    if (isMissingSubmissionTableError(error)) {
+      return NextResponse.json(
+        { error: "Таблица фото ещё не создана в PostgreSQL. Сначала примените миграцию." },
+        { status: 503 }
+      );
+    }
+
+    throw error;
   }
 
   revalidateSubmissionRoutes(user.id, assignment.topicId);
@@ -171,7 +305,7 @@ export async function DELETE(request: Request) {
     return NextResponse.json({ error: "Сессия истекла. Войдите заново." }, { status: 401 });
   }
 
-  const rateLimitResponse = enforceApiRateLimit(request, "api:homework-submissions", user.id, 60, 60_000);
+  const rateLimitResponse = await enforceApiRateLimit("api:homework-submissions", user.id, 60, 60_000);
 
   if (rateLimitResponse) {
     return rateLimitResponse;

@@ -2,10 +2,54 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { UserRole } from "@prisma/client";
 import {
+  acquireDashboardRealtimeConnection,
+  DASHBOARD_REALTIME_MAX_CONNECTIONS_PER_USER,
   publishDashboardRealtimeEvent,
   shouldReceiveDashboardRealtimeEvent,
   subscribeDashboardRealtimeEvent
 } from "../lib/dashboard-realtime";
+
+test("realtime connection limiter caps concurrent connections per user and releases slots", () => {
+  const userId = `connection-test-${Date.now()}`;
+  const releases = Array.from(
+    { length: DASHBOARD_REALTIME_MAX_CONNECTIONS_PER_USER },
+    () => acquireDashboardRealtimeConnection(userId)
+  );
+
+  assert.equal(releases.every((release) => typeof release === "function"), true);
+  assert.equal(acquireDashboardRealtimeConnection(userId), null);
+
+  releases[0]?.();
+  const replacementRelease = acquireDashboardRealtimeConnection(userId);
+  assert.equal(typeof replacementRelease, "function");
+
+  replacementRelease?.();
+  releases.slice(1).forEach((release) => release?.());
+});
+
+test("realtime connection release is idempotent and isolated by user", () => {
+  const firstUser = `connection-first-${Date.now()}`;
+  const secondUser = `connection-second-${Date.now()}`;
+  const firstReleases = Array.from(
+    { length: DASHBOARD_REALTIME_MAX_CONNECTIONS_PER_USER },
+    () => acquireDashboardRealtimeConnection(firstUser)
+  );
+  const secondRelease = acquireDashboardRealtimeConnection(secondUser);
+
+  assert.equal(firstReleases.every((release) => typeof release === "function"), true);
+  assert.equal(acquireDashboardRealtimeConnection(firstUser), null);
+  assert.equal(typeof secondRelease, "function");
+
+  firstReleases[0]?.();
+  firstReleases[0]?.();
+
+  const reacquired = acquireDashboardRealtimeConnection(firstUser);
+  assert.equal(typeof reacquired, "function");
+
+  reacquired?.();
+  firstReleases.slice(1).forEach((release) => release?.());
+  secondRelease?.();
+});
 
 test("publishDashboardRealtimeEvent notifies subscribers with occurredAt timestamp", async () => {
   const events: Array<{ kind: string; occurredAt: string }> = [];

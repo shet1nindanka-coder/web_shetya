@@ -11,7 +11,8 @@ test("teacher can access any stored file snapshot", () => {
       counts: {
         theoryForTopics: 0,
         homeworkForTopics: 0,
-        answerForNumberEntries: 3
+        answerForNumberEntries: 3,
+        checkPhotoEntries: 0
       }
     }
   );
@@ -28,7 +29,8 @@ test("student can access files attached to topic theory or homework", () => {
       counts: {
         theoryForTopics: 1,
         homeworkForTopics: 0,
-        answerForNumberEntries: 0
+        answerForNumberEntries: 0,
+        checkPhotoEntries: 0
       }
     }),
     true
@@ -40,7 +42,8 @@ test("student can access files attached to topic theory or homework", () => {
       counts: {
         theoryForTopics: 0,
         homeworkForTopics: 2,
-        answerForNumberEntries: 0
+        answerForNumberEntries: 0,
+        checkPhotoEntries: 0
       }
     }),
     true
@@ -56,7 +59,8 @@ test("student cannot access answer-only or unattached files", () => {
       counts: {
         theoryForTopics: 0,
         homeworkForTopics: 0,
-        answerForNumberEntries: 1
+        answerForNumberEntries: 1,
+        checkPhotoEntries: 0
       }
     }),
     false
@@ -68,7 +72,8 @@ test("student cannot access answer-only or unattached files", () => {
       counts: {
         theoryForTopics: 0,
         homeworkForTopics: 0,
-        answerForNumberEntries: 0
+        answerForNumberEntries: 0,
+        checkPhotoEntries: 1
       }
     }),
     false
@@ -81,7 +86,8 @@ test("summarizeStoredFileAccess exposes grep-friendly reference counters", () =>
     counts: {
       theoryForTopics: 2,
       homeworkForTopics: 1,
-      answerForNumberEntries: 4
+      answerForNumberEntries: 4,
+      checkPhotoEntries: 3
     }
   });
 
@@ -89,6 +95,7 @@ test("summarizeStoredFileAccess exposes grep-friendly reference counters", () =>
     uploadedById: "teacher-1",
     theoryTopicCount: 2,
     homeworkTopicCount: 1,
-    answerEntryCount: 4
+    answerEntryCount: 4,
+    checkPhotoEntryCount: 3
   });
 });

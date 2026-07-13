@@ -16,7 +16,7 @@ function isMissingHomeworkAssignmentTableError(error: unknown) {
   return (
     error instanceof Prisma.PrismaClientKnownRequestError &&
     error.code === "P2021" &&
-    error.message.includes("HomeworkAssignment")
+    (error.message.includes("HomeworkAssignment") || error.message.includes("HomeworkCheckPhoto"))
   );
 }
 
@@ -56,7 +56,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const rateLimitResponse = enforceApiRateLimit(request, "api:teacher-homeworks", user.id, 120, 60_000);
+  const rateLimitResponse = await enforceApiRateLimit("api:teacher-homeworks", user.id, 120, 60_000);
 
   if (rateLimitResponse) {
     return rateLimitResponse;
@@ -262,7 +262,7 @@ export async function DELETE(request: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const rateLimitResponse = enforceApiRateLimit(request, "api:teacher-homeworks", user.id, 120, 60_000);
+  const rateLimitResponse = await enforceApiRateLimit("api:teacher-homeworks", user.id, 120, 60_000);
 
   if (rateLimitResponse) {
     return rateLimitResponse;
@@ -282,6 +282,7 @@ export async function DELETE(request: Request) {
     deadlineAt: Date | null;
     numbers: Array<{ homeworkNumberId: string }>;
     photos: Array<{ fileId: string }>;
+    checks: Array<{ photos: Array<{ fileId: string }> }>;
   } | null;
 
   try {
@@ -297,6 +298,13 @@ export async function DELETE(request: Request) {
         },
         photos: {
           select: { fileId: true }
+        },
+        checks: {
+          select: {
+            photos: {
+              select: { fileId: true }
+            }
+          }
         }
       }
     });
@@ -363,8 +371,13 @@ export async function DELETE(request: Request) {
     }
   }
 
-  for (const photo of assignment.photos) {
-    await deleteStoredFileRecordIfUnused(photo.fileId);
+  const referencedFileIds = new Set([
+    ...assignment.photos.map((photo) => photo.fileId),
+    ...assignment.checks.flatMap((check) => check.photos.map((photo) => photo.fileId))
+  ]);
+
+  for (const fileId of referencedFileIds) {
+    await deleteStoredFileRecordIfUnused(fileId);
   }
 
   revalidateHomeworkRoutes(assignment.studentId, assignment.topicId);

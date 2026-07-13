@@ -10,14 +10,13 @@ import {
 import { del, get, list, put } from "@vercel/blob";
 import { getSafeUploadFileName } from "@/lib/upload-file-name";
 import {
-  allowedUploadExtensions,
-  allowedUploadMimeTypes,
-  getFileExtension,
-  getMimeTypeFromExtension,
-  sanitizeFileName
-} from "@/lib/utils";
+  MAX_UPLOAD_SIZE_BYTES,
+  UploadValidationError,
+  validateUploadMetadata,
+  validateUploadedBytes
+} from "@/lib/upload-validation";
+import { getFileExtension, getMimeTypeFromExtension } from "@/lib/utils";
 
-const MAX_UPLOAD_SIZE = 15 * 1024 * 1024;
 const LOCAL_STORAGE_PREFIX = "local:";
 const BLOB_STORAGE_PREFIX = "blob:";
 const S3_STORAGE_PREFIX = "s3:";
@@ -279,26 +278,6 @@ export async function getPublicBlobUrl(storageKey: string, download = false) {
   return url.toString();
 }
 
-function validateUploadedFile(file: File) {
-  const extension = getFileExtension(file.name);
-  const fallbackMimeType = getMimeTypeFromExtension(extension);
-  const mimeType = file.type || fallbackMimeType;
-
-  if (!allowedUploadExtensions.includes(extension)) {
-    throw new Error("Поддерживаются только PDF, DOCX, PNG и JPG.");
-  }
-
-  if (!allowedUploadMimeTypes.has(mimeType)) {
-    throw new Error("Неподдерживаемый тип файла.");
-  }
-
-  if (file.size > MAX_UPLOAD_SIZE) {
-    throw new Error("Файл слишком большой. Максимальный размер — 15 МБ.");
-  }
-
-  return { extension, mimeType };
-}
-
 async function saveToLocalStorage(body: Buffer | File, fileName: string, mimeType: string, size: number): Promise<StoredUpload> {
   await ensureStorageRoot();
 
@@ -360,28 +339,31 @@ async function saveToS3Storage(body: Buffer | File, fileName: string, mimeType: 
 }
 
 export async function saveUploadedFile(file: File) {
-  const { mimeType } = validateUploadedFile(file);
+  validateUploadMetadata(file.name, file.type, file.size);
+  const buffer = Buffer.from(await file.arrayBuffer());
+  const { originalName, mimeType } = validateUploadedBytes(buffer, file.name, file.type, file.size);
 
   switch (getStorageBackend()) {
     case "blob":
-      return saveToBlobStorage(file, file.name, mimeType, file.size);
+      return saveToBlobStorage(buffer, originalName, mimeType, buffer.byteLength);
     case "s3":
-      return saveToS3Storage(file, file.name, mimeType, file.size);
+      return saveToS3Storage(buffer, originalName, mimeType, buffer.byteLength);
     default:
-      return saveToLocalStorage(file, file.name, mimeType, file.size);
+      return saveToLocalStorage(buffer, originalName, mimeType, buffer.byteLength);
   }
 }
 
 export async function saveBufferToStorage(buffer: Buffer, fileName: string, mimeType?: string) {
   const resolvedMimeType = mimeType || getMimeTypeFromExtension(getFileExtension(fileName));
+  const validated = validateUploadedBytes(buffer, fileName, resolvedMimeType);
 
   switch (getStorageBackend()) {
     case "blob":
-      return saveToBlobStorage(buffer, fileName, resolvedMimeType, buffer.byteLength);
+      return saveToBlobStorage(buffer, validated.originalName, validated.mimeType, buffer.byteLength);
     case "s3":
-      return saveToS3Storage(buffer, fileName, resolvedMimeType, buffer.byteLength);
+      return saveToS3Storage(buffer, validated.originalName, validated.mimeType, buffer.byteLength);
     default:
-      return saveToLocalStorage(buffer, fileName, resolvedMimeType, buffer.byteLength);
+      return saveToLocalStorage(buffer, validated.originalName, validated.mimeType, buffer.byteLength);
   }
 }
 
@@ -510,4 +492,63 @@ export async function readStoredFile(storageKey: string): Promise<StoredFilePayl
   } catch {
     return null;
   }
+}
+
+export async function readStoredFileBuffer(storageKey: string, maxSize = MAX_UPLOAD_SIZE_BYTES) {
+  const storedFile = await readStoredFile(storageKey);
+
+  if (!storedFile) {
+    return null;
+  }
+
+  if (!Number.isSafeInteger(storedFile.size) || storedFile.size < 0 || storedFile.size > maxSize) {
+    if (storedFile.body instanceof ReadableStream) {
+      await storedFile.body.cancel().catch(() => undefined);
+    }
+
+    throw new UploadValidationError("Фактический размер файла превышает допустимый.");
+  }
+
+  let buffer: Buffer;
+
+  if (storedFile.body instanceof ReadableStream) {
+    const reader = storedFile.body.getReader();
+    const chunks: Buffer[] = [];
+    let totalSize = 0;
+
+    try {
+      while (true) {
+        const { done, value } = await reader.read();
+
+        if (done) {
+          break;
+        }
+
+        totalSize += value.byteLength;
+
+        if (totalSize > maxSize) {
+          await reader.cancel().catch(() => undefined);
+          throw new UploadValidationError("Фактический размер файла превышает допустимый.");
+        }
+
+        chunks.push(Buffer.from(value));
+      }
+    } finally {
+      reader.releaseLock();
+    }
+
+    buffer = Buffer.concat(chunks, totalSize);
+  } else {
+    buffer = Buffer.from(storedFile.body);
+  }
+
+  if (buffer.byteLength === 0 || buffer.byteLength > maxSize) {
+    throw new UploadValidationError("Файл пуст или превышает допустимый размер.");
+  }
+
+  if (storedFile.size > 0 && buffer.byteLength !== storedFile.size) {
+    throw new UploadValidationError("Фактический размер файла не совпадает с метаданными хранилища.");
+  }
+
+  return buffer;
 }

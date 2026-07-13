@@ -54,6 +54,10 @@ const accountNotices = {
     tone: "error",
     message: "Текущий пароль указан неверно."
   },
+  passwordRateLimited: {
+    tone: "error",
+    message: "Слишком много попыток сменить пароль. Подождите 15 минут и попробуйте снова."
+  },
   passwordSave: {
     tone: "error",
     message: "Не удалось обновить пароль. Повторите попытку."
@@ -82,9 +86,11 @@ export function resolveAccountNotice(searchParams: ResolvedSearchParams) {
                 ? "passwordMismatch"
                 : passwordError === "current"
                   ? "passwordCurrent"
-                  : passwordError === "save"
-                    ? "passwordSave"
-                    : null;
+                  : passwordError === "rateLimited"
+                    ? "passwordRateLimited"
+                    : passwordError === "save"
+                      ? "passwordSave"
+                      : null;
 
   return noticeKey ? accountNotices[noticeKey] : null;
 }

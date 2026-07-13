@@ -30,7 +30,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const rateLimitResponse = enforceApiRateLimit(request, "api:number-answers", user.id, 60, 60_000);
+  const rateLimitResponse = await enforceApiRateLimit("api:number-answers", user.id, 60, 60_000);
 
   if (rateLimitResponse) {
     return rateLimitResponse;
@@ -109,7 +109,7 @@ export async function DELETE(request: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const rateLimitResponse = enforceApiRateLimit(request, "api:number-answers", user.id, 60, 60_000);
+  const rateLimitResponse = await enforceApiRateLimit("api:number-answers", user.id, 60, 60_000);
 
   if (rateLimitResponse) {
     return rateLimitResponse;

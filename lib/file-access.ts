@@ -9,6 +9,7 @@ type FileAccessCounts = {
   theoryForTopics: number;
   homeworkForTopics: number;
   answerForNumberEntries: number;
+  checkPhotoEntries: number;
 };
 
 export type StoredFileAccessSnapshot = {
@@ -29,6 +30,7 @@ export function summarizeStoredFileAccess(file: StoredFileAccessSnapshot) {
     uploadedById: file.uploadedById,
     theoryTopicCount: file.counts.theoryForTopics,
     homeworkTopicCount: file.counts.homeworkForTopics,
-    answerEntryCount: file.counts.answerForNumberEntries
+    answerEntryCount: file.counts.answerForNumberEntries,
+    checkPhotoEntryCount: file.counts.checkPhotoEntries
   };
 }

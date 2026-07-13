@@ -33,10 +33,44 @@ type DashboardRealtimeEventInput = DashboardRealtimeEvent extends infer Event
 
 declare global {
   var __dashboardRealtimeListeners__: Set<DashboardRealtimeListener> | undefined;
+  var __dashboardRealtimeConnectionCounts__: Map<string, number> | undefined;
 }
 
 const listeners = global.__dashboardRealtimeListeners__ ?? new Set<DashboardRealtimeListener>();
 global.__dashboardRealtimeListeners__ = listeners;
+
+const connectionCounts =
+  global.__dashboardRealtimeConnectionCounts__ ?? new Map<string, number>();
+global.__dashboardRealtimeConnectionCounts__ = connectionCounts;
+
+export const DASHBOARD_REALTIME_MAX_CONNECTIONS_PER_USER = 2;
+
+export function acquireDashboardRealtimeConnection(userId: string) {
+  const currentCount = connectionCounts.get(userId) ?? 0;
+
+  if (currentCount >= DASHBOARD_REALTIME_MAX_CONNECTIONS_PER_USER) {
+    return null;
+  }
+
+  connectionCounts.set(userId, currentCount + 1);
+  let released = false;
+
+  return () => {
+    if (released) {
+      return;
+    }
+
+    released = true;
+    const nextCount = (connectionCounts.get(userId) ?? 1) - 1;
+
+    if (nextCount <= 0) {
+      connectionCounts.delete(userId);
+      return;
+    }
+
+    connectionCounts.set(userId, nextCount);
+  };
+}
 
 export function publishDashboardRealtimeEvent(event: DashboardRealtimeEventInput) {
   const payload = {

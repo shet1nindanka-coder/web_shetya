@@ -57,25 +57,25 @@ enum AssignmentReason {
 }
 
 model User {
-  id             String                    @id @default(cuid())
-  name           String
-  email          String                    @unique
-  passwordHash   String
-  role           UserRole
-  createdAt      DateTime                  @default(now())
-  updatedAt      DateTime                  @updatedAt
-  sessions       Session[]
-  uploadedFiles  StoredFile[]              @relation("UploadedFiles")
-  numberStatuses StudentTopicNumberStatus[]
-  notifications  Notification[]
+  id                   String                     @id @default(cuid())
+  name                 String
+  email                String                     @unique
+  passwordHash         String
+  role                 UserRole
+  createdAt            DateTime                   @default(now())
+  updatedAt            DateTime                   @updatedAt
+  sessions             Session[]
+  uploadedFiles        StoredFile[]               @relation("UploadedFiles")
+  numberStatuses       StudentTopicNumberStatus[]
+  notifications        Notification[]
   studentProfile       StudentProfile?
-  groupsLed            StudentGroup[]      @relation("GroupTeacher")
-  lessonsTaught        Lesson[]            @relation("LessonTeacher")
+  groupsLed            StudentGroup[]             @relation("GroupTeacher")
+  lessonsTaught        Lesson[]                   @relation("LessonTeacher")
   lessonParticipations LessonParticipant[]
-  testsCreated         Test[]              @relation("TestCreator")
+  testsCreated         Test[]                     @relation("TestCreator")
   testAttempts         TestAttempt[]
   topicMasteries       TopicMastery[]
-  homeworkAssignments  HomeworkAssignment[] @relation("StudentHomeworkAssignments")
+  homeworkAssignments  HomeworkAssignment[]       @relation("StudentHomeworkAssignments")
 }
 
 model Session {
@@ -90,18 +90,19 @@ model Session {
 }
 
 model StoredFile {
-  id                     String                @id @default(cuid())
+  id                     String                    @id @default(cuid())
   originalName           String
-  storageKey             String                @unique
+  storageKey             String                    @unique
   mimeType               String
   size                   Int
-  uploadedAt             DateTime              @default(now())
+  uploadedAt             DateTime                  @default(now())
   uploadedById           String
-  uploadedBy             User                  @relation("UploadedFiles", fields: [uploadedById], references: [id], onDelete: Restrict)
-  theoryForTopics        Topic[]               @relation("TheoryFile")
-  homeworkForTopics      Topic[]               @relation("HomeworkFile")
-  answerForNumberEntries TopicHomeworkNumber[] @relation("NumberAnswerFile")
+  uploadedBy             User                      @relation("UploadedFiles", fields: [uploadedById], references: [id], onDelete: Restrict)
+  theoryForTopics        Topic[]                   @relation("TheoryFile")
+  homeworkForTopics      Topic[]                   @relation("HomeworkFile")
+  answerForNumberEntries TopicHomeworkNumber[]     @relation("NumberAnswerFile")
   submissionPhotoEntries HomeworkSubmissionPhoto[] @relation("SubmissionPhotoFile")
+  checkPhotoEntries      HomeworkCheckPhoto[]      @relation("HomeworkCheckPhotoFile")
 }
 
 model Notification {
@@ -120,48 +121,48 @@ model Notification {
 }
 
 model Topic {
-  id             String              @id @default(cuid())
-  title          String
-  description    String
-  displayOrder   Int                 @default(0)
-  theoryFileId   String?
-  homeworkFileId String?
-  createdAt      DateTime            @default(now())
-  updatedAt      DateTime            @updatedAt
-  theoryFile     StoredFile?         @relation("TheoryFile", fields: [theoryFileId], references: [id], onDelete: SetNull)
-  homeworkFile   StoredFile?         @relation("HomeworkFile", fields: [homeworkFileId], references: [id], onDelete: SetNull)
-  homeworkNumbers TopicHomeworkNumber[]
-  subject        Subject             @default(MATH)
-  grade          Int?
-  prerequisites  Topic[]             @relation("TopicPrereqs")
-  requiredFor    Topic[]             @relation("TopicPrereqs")
-  masteries      TopicMastery[]
-  tests          Test[]              @relation("TestTopic")
-  lessons        Lesson[]            @relation("LessonTopic")
-  homeworkAssignments HomeworkAssignment[] @relation("TopicHomeworkAssignments")
+  id                  String                @id @default(cuid())
+  title               String
+  description         String
+  displayOrder        Int                   @default(0)
+  theoryFileId        String?
+  homeworkFileId      String?
+  createdAt           DateTime              @default(now())
+  updatedAt           DateTime              @updatedAt
+  theoryFile          StoredFile?           @relation("TheoryFile", fields: [theoryFileId], references: [id], onDelete: SetNull)
+  homeworkFile        StoredFile?           @relation("HomeworkFile", fields: [homeworkFileId], references: [id], onDelete: SetNull)
+  homeworkNumbers     TopicHomeworkNumber[]
+  subject             Subject               @default(MATH)
+  grade               Int?
+  prerequisites       Topic[]               @relation("TopicPrereqs")
+  requiredFor         Topic[]               @relation("TopicPrereqs")
+  masteries           TopicMastery[]
+  tests               Test[]                @relation("TestTopic")
+  lessons             Lesson[]              @relation("LessonTopic")
+  homeworkAssignments HomeworkAssignment[]  @relation("TopicHomeworkAssignments")
 
   @@index([displayOrder])
   @@index([subject, grade])
 }
 
 model TopicHomeworkNumber {
-  id           String                    @id @default(cuid())
-  topicId      String
-  number       Int
-  displayOrder Int                       @default(0)
-  answerFileId String?
-  conditionLatex String?
-  answerLatex  String?
+  id                 String                     @id @default(cuid())
+  topicId            String
+  number             Int
+  displayOrder       Int                        @default(0)
+  answerFileId       String?
+  conditionLatex     String?
+  answerLatex        String?
   difficulty         Int?
   estimatedMinutes   Int?
-  usableInDiagnostic Boolean               @default(false)
-  topic        Topic                     @relation(fields: [topicId], references: [id], onDelete: Cascade)
-  answerFile   StoredFile?               @relation("NumberAnswerFile", fields: [answerFileId], references: [id], onDelete: SetNull)
-  statuses     StudentTopicNumberStatus[]
-  assignmentItems LessonAssignmentItem[]
-  testQuestions   TestQuestion[]
-  assignmentEntries HomeworkAssignmentNumber[]
-  checkResults HomeworkCheckResult[]
+  usableInDiagnostic Boolean                    @default(false)
+  topic              Topic                      @relation(fields: [topicId], references: [id], onDelete: Cascade)
+  answerFile         StoredFile?                @relation("NumberAnswerFile", fields: [answerFileId], references: [id], onDelete: SetNull)
+  statuses           StudentTopicNumberStatus[]
+  assignmentItems    LessonAssignmentItem[]
+  testQuestions      TestQuestion[]
+  assignmentEntries  HomeworkAssignmentNumber[]
+  checkResults       HomeworkCheckResult[]
 
   @@unique([topicId, number])
   @@index([answerFileId])
@@ -170,7 +171,7 @@ model TopicHomeworkNumber {
 }
 
 model StudentTopicNumberStatus {
-  id               String               @id @default(cuid())
+  id               String                @id @default(cuid())
   studentId        String
   homeworkNumberId String
   status           HomeworkNumberStatus?
@@ -180,10 +181,10 @@ model StudentTopicNumberStatus {
   // апдейтом строки (в т.ч. зеркалированием дедлайна при выдаче ДЗ), поэтому
   // таймлайн активности и стрик должны опираться на statusChangedAt, а не updatedAt.
   statusChangedAt  DateTime?
-  createdAt        DateTime             @default(now())
-  updatedAt        DateTime             @updatedAt
-  student          User                 @relation(fields: [studentId], references: [id], onDelete: Cascade)
-  homeworkNumber   TopicHomeworkNumber  @relation(fields: [homeworkNumberId], references: [id], onDelete: Cascade)
+  createdAt        DateTime              @default(now())
+  updatedAt        DateTime              @updatedAt
+  student          User                  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  homeworkNumber   TopicHomeworkNumber   @relation(fields: [homeworkNumberId], references: [id], onDelete: Cascade)
 
   @@unique([studentId, homeworkNumberId])
   @@index([studentId, deadlineAt])
@@ -423,14 +424,30 @@ model HomeworkCheck {
   id           String                @id @default(cuid())
   assignmentId String
   status       SolutionCheckStatus   @default(PENDING)
+  activeSlot   Int?                  @default(1)
   modelUsed    String?
   error        String?
   createdAt    DateTime              @default(now())
   checkedAt    DateTime?
   assignment   HomeworkAssignment    @relation(fields: [assignmentId], references: [id], onDelete: Cascade)
   results      HomeworkCheckResult[]
+  photos       HomeworkCheckPhoto[]
 
+  @@unique([assignmentId, activeSlot])
   @@index([assignmentId, createdAt])
+}
+
+model HomeworkCheckPhoto {
+  id      String        @id @default(cuid())
+  checkId String
+  fileId  String
+  order   Int
+  check   HomeworkCheck @relation(fields: [checkId], references: [id], onDelete: Cascade)
+  file    StoredFile    @relation("HomeworkCheckPhotoFile", fields: [fileId], references: [id], onDelete: Restrict)
+
+  @@unique([checkId, fileId])
+  @@unique([checkId, order])
+  @@index([fileId])
 }
 
 model HomeworkCheckResult {
@@ -448,4 +465,13 @@ model HomeworkCheckResult {
 
   @@index([checkId])
   @@index([homeworkNumberId])
+}
+
+model RateLimitBucket {
+  key         String   @id
+  windowStart DateTime
+  hits        Int
+  updatedAt   DateTime @updatedAt
+
+  @@index([updatedAt])
 }

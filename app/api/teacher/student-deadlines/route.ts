@@ -45,7 +45,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
-  const rateLimitResponse = enforceApiRateLimit(request, "api:student-deadlines", user.id, 240, 60_000);
+  const rateLimitResponse = await enforceApiRateLimit("api:student-deadlines", user.id, 240, 60_000);
 
   if (rateLimitResponse) {
     return rateLimitResponse;

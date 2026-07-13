@@ -52,7 +52,7 @@ function maybeSweepRateLimitStore(now: number) {
   global.__tutorFlowRateLimitLastSweep__ = now;
 }
 
-function buildRateLimitKey(scope: string, identifier: string) {
+export function buildRateLimitKey(scope: string, identifier: string) {
   return createHash("sha256")
     .update(`${scope}:${identifier}`)
     .digest("hex");

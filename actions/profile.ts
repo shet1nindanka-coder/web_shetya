@@ -4,14 +4,15 @@ import { UserRole } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireUser, updatePasswordAndRotateSession } from "@/lib/auth";
-import { logErrorEvent, logInfoEvent } from "@/lib/logger";
+import { logErrorEvent, logInfoEvent, logWarnEvent } from "@/lib/logger";
 import { revalidateAllPlatformData } from "@/lib/platform-data-cache";
 import { hashPassword, verifyPassword } from "@/lib/password";
 import { MAX_PASSWORD_LENGTH, validatePasswordStrength } from "@/lib/password-policy";
+import { consumePersistentRateLimit } from "@/lib/persistent-rate-limit";
 import { prisma } from "@/lib/prisma";
 import { MAX_USER_NAME_LENGTH, normalizeSingleLineText, roleHome } from "@/lib/utils";
 
-function redirectAccountWithStatus(role: UserRole, params: URLSearchParams) {
+function redirectAccountWithStatus(role: UserRole, params: URLSearchParams): never {
   const basePath = `${roleHome(role)}/settings`;
   const query = params.toString();
   redirect(query ? `${basePath}?${query}` : basePath);
@@ -95,6 +96,39 @@ export async function updatePasswordAction(formData: FormData) {
 
   if (validatePasswordStrength(newPassword) !== null) {
     redirectAccountWithStatus(user.role, new URLSearchParams({ passwordError: "invalid" }));
+  }
+
+  let passwordRateLimit: Awaited<ReturnType<typeof consumePersistentRateLimit>>;
+
+  try {
+    passwordRateLimit = await consumePersistentRateLimit({
+      scope: "profile:password-update",
+      identifier: user.id,
+      limit: 5,
+      windowMs: 15 * 60_000
+    });
+  } catch (error) {
+    logErrorEvent(
+      "profile.password_update.rate_limit_failed",
+      { userId: user.id, role: user.role },
+      error,
+      "Persistent password update rate limit failed."
+    );
+    redirectAccountWithStatus(user.role, new URLSearchParams({ passwordError: "save" }));
+  }
+
+  if (!passwordRateLimit.allowed) {
+    logWarnEvent(
+      "profile.password_update.rate_limited",
+      {
+        userId: user.id,
+        role: user.role,
+        retryAfterMs: passwordRateLimit.retryAfterMs
+      },
+      undefined,
+      "Password update was rate limited."
+    );
+    redirectAccountWithStatus(user.role, new URLSearchParams({ passwordError: "rateLimited" }));
   }
 
   const currentUser = await prisma.user.findUnique({

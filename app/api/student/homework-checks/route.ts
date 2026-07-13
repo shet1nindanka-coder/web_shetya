@@ -15,8 +15,18 @@ function isMissingCheckTableError(error: unknown) {
   return (
     error instanceof Prisma.PrismaClientKnownRequestError &&
     error.code === "P2021" &&
-    (error.message.includes("HomeworkCheck") || error.message.includes("HomeworkAssignment"))
+    (error.message.includes("HomeworkCheck") ||
+      error.message.includes("HomeworkCheckPhoto") ||
+      error.message.includes("HomeworkAssignment"))
   );
+}
+
+function isUniqueActiveCheckError(error: unknown) {
+  return error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002";
+}
+
+function isSnapshotConflictError(error: unknown) {
+  return error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2003";
 }
 
 export async function POST(request: Request) {
@@ -26,7 +36,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Сессия истекла. Войдите заново." }, { status: 401 });
   }
 
-  const rateLimitResponse = enforceApiRateLimit(request, "api:homework-checks", user.id, 10, 60 * 60_000);
+  const rateLimitResponse = await enforceApiRateLimit("api:homework-checks", user.id, 10, 60 * 60_000);
 
   if (rateLimitResponse) {
     return rateLimitResponse;
@@ -50,38 +60,63 @@ export async function POST(request: Request) {
   // иначе счётчик активных навсегда заблокирует повторный запуск (409).
   await failStaleHomeworkChecks(assignmentId, user.id);
 
-  let assignment: { id: string; photosCount: number; numbersCount: number; activeChecks: number } | null;
+  let startResult:
+    | { kind: "created"; checkId: string; assignmentId: string }
+    | { kind: "missing" }
+    | { kind: "no-photos" }
+    | { kind: "no-numbers" };
 
   try {
-    const found = await prisma.homeworkAssignment.findFirst({
-      where: {
-        id: assignmentId,
-        studentId: user.id
-      },
-      select: {
-        id: true,
-        _count: {
-          select: {
-            photos: true,
-            numbers: true,
-            checks: {
-              where: {
-                status: { in: [SolutionCheckStatus.PENDING, SolutionCheckStatus.CHECKING] }
-              }
-            }
+    startResult = await prisma.$transaction(async (transaction) => {
+      const assignment = await transaction.homeworkAssignment.findFirst({
+        where: {
+          id: assignmentId,
+          studentId: user.id
+        },
+        select: {
+          id: true,
+          photos: {
+            orderBy: [{ createdAt: "asc" }, { id: "asc" }],
+            select: { fileId: true }
+          },
+          _count: {
+            select: { numbers: true }
           }
         }
-      }
-    });
+      });
 
-    assignment = found
-      ? {
-          id: found.id,
-          photosCount: found._count.photos,
-          numbersCount: found._count.numbers,
-          activeChecks: found._count.checks
-        }
-      : null;
+      if (!assignment) {
+        return { kind: "missing" as const };
+      }
+
+      if (assignment.photos.length === 0) {
+        return { kind: "no-photos" as const };
+      }
+
+      if (assignment._count.numbers === 0) {
+        return { kind: "no-numbers" as const };
+      }
+
+      const check = await transaction.homeworkCheck.create({
+        data: {
+          assignmentId: assignment.id,
+          activeSlot: 1,
+          photos: {
+            create: assignment.photos.map((photo, order) => ({
+              fileId: photo.fileId,
+              order
+            }))
+          }
+        },
+        select: { id: true }
+      });
+
+      return {
+        kind: "created" as const,
+        checkId: check.id,
+        assignmentId: assignment.id
+      };
+    });
   } catch (error) {
     if (isMissingCheckTableError(error)) {
       return NextResponse.json(
@@ -90,34 +125,40 @@ export async function POST(request: Request) {
       );
     }
 
+    if (isUniqueActiveCheckError(error)) {
+      return NextResponse.json({ error: "Проверка уже идёт — дождитесь результата." }, { status: 409 });
+    }
+
+    if (isSnapshotConflictError(error)) {
+      return NextResponse.json(
+        { error: "Набор фото изменился. Повторите запуск проверки." },
+        { status: 409 }
+      );
+    }
+
     throw error;
   }
 
-  if (!assignment) {
+  if (startResult.kind === "missing") {
     return NextResponse.json({ error: "ДЗ не найдено." }, { status: 404 });
   }
 
-  if (assignment.photosCount === 0) {
+  if (startResult.kind === "no-photos") {
     return NextResponse.json({ error: "Сначала прикрепите фото решения." }, { status: 400 });
   }
 
-  if (assignment.numbersCount === 0) {
+  if (startResult.kind === "no-numbers") {
     return NextResponse.json({ error: "В этом ДЗ нет номеров для проверки." }, { status: 400 });
   }
 
-  if (assignment.activeChecks > 0) {
-    return NextResponse.json({ error: "Проверка уже идёт — дождитесь результата." }, { status: 409 });
-  }
-
-  const check = await prisma.homeworkCheck.create({
-    data: { assignmentId: assignment.id },
-    select: { id: true }
+  enqueueHomeworkCheck(startResult.checkId);
+  logInfoEvent("solution.check.enqueued", {
+    checkId: startResult.checkId,
+    assignmentId: startResult.assignmentId,
+    studentId: user.id
   });
 
-  enqueueHomeworkCheck(check.id);
-  logInfoEvent("solution.check.enqueued", { checkId: check.id, assignmentId: assignment.id, studentId: user.id });
-
-  return NextResponse.json({ ok: true, checkId: check.id });
+  return NextResponse.json({ ok: true, checkId: startResult.checkId });
 }
 
 export async function GET(request: Request) {
@@ -125,6 +166,17 @@ export async function GET(request: Request) {
 
   if (!user || user.role !== UserRole.STUDENT) {
     return NextResponse.json({ error: "Сессия истекла. Войдите заново." }, { status: 401 });
+  }
+
+  const rateLimitResponse = await enforceApiRateLimit(
+    "api:homework-check-status",
+    user.id,
+    120,
+    60_000
+  );
+
+  if (rateLimitResponse) {
+    return rateLimitResponse;
   }
 
   const url = new URL(request.url);

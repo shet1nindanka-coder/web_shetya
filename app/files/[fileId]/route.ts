@@ -1,4 +1,5 @@
 import { UserRole } from "@prisma/client";
+import { enforceApiRateLimit } from "@/lib/api-rate-limit";
 import { tryGetCurrentUser } from "@/lib/auth";
 import { canAccessStoredFile, summarizeStoredFileAccess } from "@/lib/file-access";
 import { getRequestLogContext, logWarnEvent } from "@/lib/logger";
@@ -18,6 +19,12 @@ export async function GET(request: Request, { params }: FileRouteProps) {
     return new Response("Unauthorized", { status: 401 });
   }
 
+  const rateLimitResponse = await enforceApiRateLimit("api:file-read", user.id, 120, 60_000);
+
+  if (rateLimitResponse) {
+    return rateLimitResponse;
+  }
+
   const { fileId } = await params;
   const requestContext = getRequestLogContext(request, { userId: user.id, fileId });
   const file = await prisma.storedFile.findUnique({
@@ -33,7 +40,8 @@ export async function GET(request: Request, { params }: FileRouteProps) {
         select: {
           theoryForTopics: true,
           homeworkForTopics: true,
-          answerForNumberEntries: true
+          answerForNumberEntries: true,
+          checkPhotoEntries: true
         }
       }
     }
@@ -58,27 +66,43 @@ export async function GET(request: Request, { params }: FileRouteProps) {
     counts: {
       theoryForTopics: file._count.theoryForTopics,
       homeworkForTopics: file._count.homeworkForTopics,
-      answerForNumberEntries: file._count.answerForNumberEntries
+      answerForNumberEntries: file._count.answerForNumberEntries,
+      checkPhotoEntries: file._count.checkPhotoEntries
     }
   };
 
-  let ownsSubmissionPhoto = false;
+  let ownsStudentPhoto = false;
 
   if (user.role === UserRole.STUDENT) {
-    ownsSubmissionPhoto = await prisma.homeworkSubmissionPhoto
+    ownsStudentPhoto = await prisma.storedFile
       .count({
         where: {
-          fileId: file.id,
-          assignment: {
-            studentId: user.id
-          }
+          id: file.id,
+          OR: [
+            {
+              submissionPhotoEntries: {
+                some: {
+                  assignment: { studentId: user.id }
+                }
+              }
+            },
+            {
+              checkPhotoEntries: {
+                some: {
+                  check: {
+                    assignment: { studentId: user.id }
+                  }
+                }
+              }
+            }
+          ]
         }
       })
       .then((count) => count > 0)
       .catch(() => false);
   }
 
-  if (!canAccessStoredFile(user, accessSnapshot) && !ownsSubmissionPhoto) {
+  if (!canAccessStoredFile(user, accessSnapshot) && !ownsStudentPhoto) {
     logWarnEvent(
       "file.read.denied",
       {

@@ -13,7 +13,7 @@ export async function GET(request: Request) {
     return NextResponse.json({ error: "Сессия истекла. Войдите заново." }, { status: 401 });
   }
 
-  const rateLimitResponse = enforceApiRateLimit(request, "api:student-find-number", user.id, 120, 60_000);
+  const rateLimitResponse = await enforceApiRateLimit("api:student-find-number", user.id, 120, 60_000);
 
   if (rateLimitResponse) {
     return rateLimitResponse;

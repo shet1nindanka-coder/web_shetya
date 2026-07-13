@@ -10,6 +10,7 @@ import { getHeadersLogContext, logErrorEvent, logInfoEvent, logWarnEvent } from 
 import { revalidateTeacherStudentsData, revalidateTeacherTopicsData } from "@/lib/platform-data-cache";
 import { hashPassword } from "@/lib/password";
 import { MAX_PASSWORD_LENGTH, validatePasswordStrength } from "@/lib/password-policy";
+import { consumePersistentRateLimit } from "@/lib/persistent-rate-limit";
 import { prisma } from "@/lib/prisma";
 import { assertRateLimit, getClientIpFromHeaders, RateLimitExceededError } from "@/lib/rate-limit";
 import { removeStoredFile } from "@/lib/storage";
@@ -20,7 +21,7 @@ import {
   normalizeSingleLineText
 } from "@/lib/utils";
 
-function redirectTeacherWithStudentStatus(params: URLSearchParams) {
+function redirectTeacherWithStudentStatus(params: URLSearchParams): never {
   const query = params.toString();
   redirect(query ? `/teacher/students?${query}` : "/teacher/students");
 }
@@ -70,6 +71,40 @@ export async function createStudentAction(formData: FormData) {
     }
 
     throw error;
+  }
+
+  let persistentRateLimit: Awaited<ReturnType<typeof consumePersistentRateLimit>>;
+
+  try {
+    persistentRateLimit = await consumePersistentRateLimit({
+      scope: "create-student",
+      identifier: teacher.id,
+      limit: 20,
+      windowMs: 10 * 60_000
+    });
+  } catch (error) {
+    logErrorEvent(
+      "student.create.rate_limit_failed",
+      getHeadersLogContext(requestHeaders, {
+        teacherId: teacher.id
+      }),
+      error,
+      "Persistent student creation rate limit failed."
+    );
+    redirectTeacherWithStudentStatus(new URLSearchParams({ studentError: "save" }));
+  }
+
+  if (!persistentRateLimit.allowed) {
+    logWarnEvent(
+      "student.create.rate_limited",
+      getHeadersLogContext(requestHeaders, {
+        teacherId: teacher.id,
+        retryAfterMs: persistentRateLimit.retryAfterMs
+      }),
+      undefined,
+      "Student creation was rate limited by the persistent teacher limit."
+    );
+    redirectTeacherWithStudentStatus(new URLSearchParams({ studentError: "rateLimited" }));
   }
 
   const existingStudent = await prisma.user.findUnique({
@@ -173,35 +208,36 @@ export async function deleteStudentAction(formData: FormData) {
   }
 
   try {
-    // StoredFile.uploadedBy = Restrict: пока у ученика есть загруженные файлы
-    // (фото решений), prisma.user.delete падает с P2003 и учитель не может удалить
-    // ученика. Сначала удаляем его StoredFile (каскад снимает ссылки
-    // HomeworkSubmissionPhoto), затем чистим блобы из хранилища.
-    const ownedFiles = await prisma.storedFile.findMany({
-      where: { uploadedById: studentId },
-      select: { id: true, storageKey: true }
+    // Immutable HomeworkCheckPhoto запрещает удалять StoredFile, пока
+    // существует история проверки. Поэтому сначала каскадно удаляем ДЗ
+    // вместе с checks/check photos, затем файлы и самого ученика в одной транзакции.
+    const ownedFiles = await prisma.$transaction(async (transaction) => {
+      const files = await transaction.storedFile.findMany({
+        where: { uploadedById: studentId },
+        select: { storageKey: true }
+      });
+
+      await transaction.homeworkAssignment.deleteMany({ where: { studentId } });
+      await transaction.storedFile.deleteMany({ where: { uploadedById: studentId } });
+      await transaction.user.delete({
+        where: {
+          id: studentId
+        }
+      });
+
+      return files;
     });
 
-    if (ownedFiles.length > 0) {
-      await prisma.storedFile.deleteMany({ where: { uploadedById: studentId } });
-
-      for (const file of ownedFiles) {
-        void removeStoredFile(file.storageKey).catch((cleanupError) => {
-          logErrorEvent(
-            "student.delete.file_cleanup_failed",
-            { teacherId: teacher.id, studentId, storageKey: file.storageKey },
-            cleanupError,
-            "Failed to remove student's uploaded file from storage."
-          );
-        });
-      }
+    for (const file of ownedFiles) {
+      void removeStoredFile(file.storageKey).catch((cleanupError) => {
+        logErrorEvent(
+          "student.delete.file_cleanup_failed",
+          { teacherId: teacher.id, studentId, storageKey: file.storageKey },
+          cleanupError,
+          "Failed to remove student's uploaded file from storage."
+        );
+      });
     }
-
-    await prisma.user.delete({
-      where: {
-        id: studentId
-      }
-    });
   } catch (error) {
     logErrorEvent(
       "student.delete.failed",

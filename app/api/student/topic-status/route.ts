@@ -41,7 +41,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Сессия истекла. Войдите заново." }, { status: 401 });
   }
 
-  const rateLimitResponse = enforceApiRateLimit(request, "api:student-status", user.id, 90, 60_000);
+  const rateLimitResponse = await enforceApiRateLimit("api:student-status", user.id, 90, 60_000);
 
   if (rateLimitResponse) {
     return rateLimitResponse;

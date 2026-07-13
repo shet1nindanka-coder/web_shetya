@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 import { tryGetCurrentUser } from "@/lib/auth";
 import { enforceApiRateLimit } from "@/lib/api-rate-limit";
 import {
-  publishDashboardRealtimeEvent,
+  acquireDashboardRealtimeConnection,
   shouldReceiveDashboardRealtimeEvent,
   subscribeDashboardRealtimeEvent
 } from "@/lib/dashboard-realtime";
@@ -26,39 +26,91 @@ export async function GET(request: Request) {
     return new NextResponse("Unauthorized", { status: 401 });
   }
 
-  const rateLimitResponse = enforceApiRateLimit(request, "api:realtime-connect", user.id, 30, 60_000);
+  const rateLimitResponse = await enforceApiRateLimit("api:realtime-connect", user.id, 30, 60_000);
 
   if (rateLimitResponse) {
     return rateLimitResponse;
   }
 
+  const releaseConnection = acquireDashboardRealtimeConnection(user.id);
+
+  if (!releaseConnection) {
+    return NextResponse.json(
+      { error: "Слишком много одновременных realtime-соединений." },
+      {
+        status: 429,
+        headers: { "Retry-After": "5" }
+      }
+    );
+  }
+
+  let cleanup = releaseConnection;
+
   const stream = new ReadableStream<Uint8Array>({
     start(controller) {
-      controller.enqueue(formatSseData({ kind: "connected", occurredAt: new Date().toISOString() }));
+      let cleanedUp = false;
+      let heartbeat: ReturnType<typeof setInterval> | undefined;
+      let unsubscribe = () => {};
 
-      const unsubscribe = subscribeDashboardRealtimeEvent((event) => {
+      const abortHandler = () => cleanup();
+
+      cleanup = () => {
+        if (cleanedUp) {
+          return;
+        }
+
+        cleanedUp = true;
+        request.signal.removeEventListener("abort", abortHandler);
+
+        if (heartbeat) {
+          clearInterval(heartbeat);
+        }
+
+        unsubscribe();
+        releaseConnection();
+
+        try {
+          controller.close();
+        } catch {
+          // stream may already be closed or cancelled
+        }
+      };
+
+      const enqueue = (chunk: Uint8Array) => {
+        try {
+          controller.enqueue(chunk);
+          return true;
+        } catch {
+          cleanup();
+          return false;
+        }
+      };
+
+      if (!enqueue(formatSseData({ kind: "connected", occurredAt: new Date().toISOString() }))) {
+        return;
+      }
+
+      unsubscribe = subscribeDashboardRealtimeEvent((event) => {
         if (!shouldReceiveDashboardRealtimeEvent(user, event)) {
           return;
         }
 
-        controller.enqueue(formatSseData(event));
+        enqueue(formatSseData(event));
       });
 
-      const heartbeat = setInterval(() => {
-        controller.enqueue(formatSseComment("ping"));
+      heartbeat = setInterval(() => {
+        enqueue(formatSseComment("ping"));
       }, 25_000);
 
-      const cleanup = () => {
-        clearInterval(heartbeat);
-        unsubscribe();
-        try {
-          controller.close();
-        } catch {
-          // stream may already be closed
-        }
-      };
+      if (request.signal.aborted) {
+        cleanup();
+        return;
+      }
 
-      request.signal.addEventListener("abort", cleanup, { once: true });
+      request.signal.addEventListener("abort", abortHandler, { once: true });
+    },
+    cancel() {
+      cleanup();
     }
   });
 

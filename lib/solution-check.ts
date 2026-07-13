@@ -4,12 +4,14 @@ import { logErrorEvent, logInfoEvent, logWarnEvent } from "@/lib/logger";
 import { createNotification } from "@/lib/notifications";
 import { revalidateAllPlatformData } from "@/lib/platform-data-cache";
 import { prisma } from "@/lib/prisma";
+import { selectCompletedCheckIdsToPrune } from "@/lib/solution-check-history";
 import {
   normalizeCheckResultsByConfidence,
   parseCheckResponse,
   type ParsedCheckResult
 } from "@/lib/solution-check-parse";
 import { readStoredFile } from "@/lib/storage";
+import { deleteOwnedStoredFileIfUnused } from "@/lib/stored-files";
 
 const MAX_PHOTOS_PER_CHECK = 10;
 const MODEL_TIMEOUT_MS = 180_000;
@@ -316,7 +318,7 @@ export async function failStaleHomeworkChecks(assignmentId: string, studentId: s
   const threshold = new Date(Date.now() - STALE_CHECK_MS);
 
   try {
-    await prisma.homeworkCheck.updateMany({
+    const failedChecks = await prisma.homeworkCheck.updateMany({
       where: {
         assignmentId,
         assignment: {
@@ -327,10 +329,14 @@ export async function failStaleHomeworkChecks(assignmentId: string, studentId: s
       },
       data: {
         status: SolutionCheckStatus.FAILED,
+        activeSlot: null,
         error: "Проверка прервалась (перезапуск сервера). Запустите её заново.",
         checkedAt: new Date()
       }
     });
+    if (failedChecks.count > 0) {
+      await pruneCompletedHomeworkChecksSafely(studentId);
+    }
   } catch (error) {
     // До применения миграции таблицы может не быть — не мешаем основному потоку.
     logWarnEvent(
@@ -338,6 +344,79 @@ export async function failStaleHomeworkChecks(assignmentId: string, studentId: s
       { assignmentId, studentId },
       error instanceof Error ? error : undefined,
       "Failed to sweep stale homework checks."
+    );
+  }
+}
+
+export async function pruneCompletedHomeworkChecks(studentId: string) {
+  const checks = await prisma.homeworkCheck.findMany({
+    where: {
+      assignment: {
+        studentId
+      }
+    },
+    orderBy: [{ createdAt: "desc" }, { id: "desc" }],
+    select: {
+      id: true,
+      status: true
+    }
+  });
+  const checkIds = selectCompletedCheckIdsToPrune(checks);
+
+  if (checkIds.length === 0) {
+    return;
+  }
+
+  const photoReferences = await prisma.homeworkCheckPhoto.findMany({
+    where: {
+      checkId: { in: checkIds }
+    },
+    select: {
+      fileId: true
+    }
+  });
+
+  await prisma.homeworkCheck.deleteMany({
+    where: {
+      id: { in: checkIds },
+      assignment: {
+        studentId
+      },
+      status: { in: [SolutionCheckStatus.DONE, SolutionCheckStatus.FAILED] }
+    }
+  });
+
+  const fileIds = [...new Set(photoReferences.map((photo) => photo.fileId))];
+
+  for (const fileId of fileIds) {
+    try {
+      await deleteOwnedStoredFileIfUnused(fileId, studentId);
+    } catch (error) {
+      logWarnEvent(
+        "solution.check.history_file_cleanup_failed",
+        { studentId, fileId },
+        error instanceof Error ? error : undefined,
+        "Failed to clean up a file after pruning homework check history."
+      );
+    }
+  }
+
+  logInfoEvent("solution.check.history_pruned", {
+    studentId,
+    checksCount: checkIds.length,
+    filesConsidered: fileIds.length
+  });
+}
+
+async function pruneCompletedHomeworkChecksSafely(studentId: string) {
+  try {
+    await pruneCompletedHomeworkChecks(studentId);
+  } catch (error) {
+    logWarnEvent(
+      "solution.check.history_prune_failed",
+      { studentId },
+      error instanceof Error ? error : undefined,
+      "Failed to prune homework check history."
     );
   }
 }
@@ -350,6 +429,18 @@ export async function runHomeworkCheck(checkId: string) {
     select: {
       id: true,
       status: true,
+      activeSlot: true,
+      photos: {
+        orderBy: { order: "asc" },
+        select: {
+          file: {
+            select: {
+              storageKey: true,
+              mimeType: true
+            }
+          }
+        }
+      },
       assignment: {
         select: {
           id: true,
@@ -367,23 +458,17 @@ export async function runHomeworkCheck(checkId: string) {
               }
             }
           },
-          photos: {
-            orderBy: { createdAt: "asc" },
-            select: {
-              file: {
-                select: {
-                  storageKey: true,
-                  mimeType: true
-                }
-              }
-            }
-          }
         }
       }
     }
   });
 
-  if (!check || !check.assignment) {
+  if (
+    !check ||
+    !check.assignment ||
+    check.status !== SolutionCheckStatus.PENDING ||
+    check.activeSlot !== 1
+  ) {
     return;
   }
 
@@ -399,7 +484,7 @@ export async function runHomeworkCheck(checkId: string) {
         answerLatex: entry.homeworkNumber.answerLatex
       }))
       .sort((left, right) => left.number - right.number),
-    photos: check.assignment.photos.map((photo) => ({
+    photos: check.photos.map((photo) => ({
       storageKey: photo.file.storageKey,
       mimeType: photo.file.mimeType
     }))
@@ -410,10 +495,12 @@ export async function runHomeworkCheck(checkId: string) {
       where: { id: checkId },
       data: {
         status: SolutionCheckStatus.FAILED,
+        activeSlot: null,
         error: message.slice(0, 500),
         checkedAt: new Date()
       }
     });
+    await pruneCompletedHomeworkChecksSafely(assignment.studentId);
   };
 
   if (!config) {
@@ -426,10 +513,18 @@ export async function runHomeworkCheck(checkId: string) {
     return;
   }
 
-  await prisma.homeworkCheck.update({
-    where: { id: checkId },
+  const claimed = await prisma.homeworkCheck.updateMany({
+    where: {
+      id: checkId,
+      status: SolutionCheckStatus.PENDING,
+      activeSlot: 1
+    },
     data: { status: SolutionCheckStatus.CHECKING, modelUsed: config.model }
   });
+
+  if (claimed.count !== 1) {
+    return;
+  }
 
   logInfoEvent("solution.check.started", {
     checkId,
@@ -502,8 +597,9 @@ export async function runHomeworkCheck(checkId: string) {
 
     await prisma.homeworkCheck.update({
       where: { id: checkId },
-      data: { status: SolutionCheckStatus.DONE, checkedAt: new Date() }
+      data: { status: SolutionCheckStatus.DONE, activeSlot: null, checkedAt: new Date() }
     });
+    await pruneCompletedHomeworkChecksSafely(assignment.studentId);
 
     const correctCount = results.filter((result) => result.verdict === "CORRECT").length;
     const incorrectCount = results.filter((result) => result.verdict === "INCORRECT").length;
