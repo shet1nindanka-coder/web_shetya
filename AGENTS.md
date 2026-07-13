@@ -37,4 +37,5 @@ pm2 restart shetya --update-env
 
 - If production environment variables changed, explicitly tell the user which values to update before the PM2 restart.
 - Never include `npm run db:seed` in a production deployment unless the user explicitly requests it.
-- After restart, include a concise verification command when useful, such as `pm2 status` or `pm2 logs shetya --lines 100`.
+- After restart, show only `pm2 status` by default. Do not include a streaming `pm2 logs` command in the normal deployment handoff.
+- Include logs only when troubleshooting an observed failure, and keep the output bounded and non-streaming: `pm2 logs shetya --lines 20 --nostream`.
