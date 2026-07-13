@@ -17,11 +17,17 @@ const COMMON_PASSWORDS = new Set([
   "football"
 ]);
 
+export const MAX_PASSWORD_LENGTH = 256;
+
 export function validatePasswordStrength(password: string): string | null {
   const normalized = password.trim();
 
   if (normalized.length < 8) {
     return "Пароль должен быть не короче 8 символов.";
+  }
+
+  if (password.length > MAX_PASSWORD_LENGTH) {
+    return `Пароль не должен быть длиннее ${MAX_PASSWORD_LENGTH} символов.`;
   }
 
   if (!/[a-zа-яё]/i.test(normalized)) {

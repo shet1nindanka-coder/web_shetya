@@ -2,7 +2,8 @@
 
 import { useMemo, useState } from "react";
 import { createStudentAction } from "@/actions/student";
-import { validatePasswordStrength } from "@/lib/password-policy";
+import { MAX_PASSWORD_LENGTH, validatePasswordStrength } from "@/lib/password-policy";
+import { MAX_LOGIN_LENGTH, MAX_USER_NAME_LENGTH } from "@/lib/utils";
 
 export function StudentCreateForm() {
   const [name, setName] = useState("");
@@ -32,6 +33,7 @@ export function StudentCreateForm() {
             className="shbz-input"
             required
             autoComplete="name"
+            maxLength={MAX_USER_NAME_LENGTH}
           />
         </label>
 
@@ -50,6 +52,7 @@ export function StudentCreateForm() {
             autoCapitalize="none"
             autoCorrect="off"
             spellCheck={false}
+            maxLength={MAX_LOGIN_LENGTH}
           />
         </label>
 
@@ -74,6 +77,7 @@ export function StudentCreateForm() {
             spellCheck={false}
             aria-invalid={passwordError !== null}
             aria-describedby={passwordError ? "student-password-feedback" : undefined}
+            maxLength={MAX_PASSWORD_LENGTH}
           />
           {passwordError ? (
             <p

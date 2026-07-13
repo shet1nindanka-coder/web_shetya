@@ -7,9 +7,9 @@ import { requireUser, updatePasswordAndRotateSession } from "@/lib/auth";
 import { logErrorEvent, logInfoEvent } from "@/lib/logger";
 import { revalidateAllPlatformData } from "@/lib/platform-data-cache";
 import { hashPassword, verifyPassword } from "@/lib/password";
-import { validatePasswordStrength } from "@/lib/password-policy";
+import { MAX_PASSWORD_LENGTH, validatePasswordStrength } from "@/lib/password-policy";
 import { prisma } from "@/lib/prisma";
-import { normalizeSingleLineText, roleHome } from "@/lib/utils";
+import { MAX_USER_NAME_LENGTH, normalizeSingleLineText, roleHome } from "@/lib/utils";
 
 function redirectAccountWithStatus(role: UserRole, params: URLSearchParams) {
   const basePath = `${roleHome(role)}/settings`;
@@ -40,7 +40,7 @@ export async function updateProfileInfoAction(formData: FormData) {
   const user = await requireUser();
   const name = normalizeSingleLineText(String(formData.get("name") ?? ""));
 
-  if (!name) {
+  if (!name || name.length > MAX_USER_NAME_LENGTH) {
     redirectAccountWithStatus(user.role, new URLSearchParams({ infoError: "invalid" }));
   }
 
@@ -78,7 +78,14 @@ export async function updatePasswordAction(formData: FormData) {
   const newPassword = String(formData.get("newPassword") ?? "");
   const confirmPassword = String(formData.get("confirmPassword") ?? "");
 
-  if (!currentPassword || newPassword.trim().length < 8 || confirmPassword.trim().length < 8) {
+  if (
+    !currentPassword ||
+    currentPassword.length > MAX_PASSWORD_LENGTH ||
+    newPassword.length > MAX_PASSWORD_LENGTH ||
+    confirmPassword.length > MAX_PASSWORD_LENGTH ||
+    newPassword.trim().length < 8 ||
+    confirmPassword.trim().length < 8
+  ) {
     redirectAccountWithStatus(user.role, new URLSearchParams({ passwordError: "invalid" }));
   }
 

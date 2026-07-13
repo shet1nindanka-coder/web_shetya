@@ -10,13 +10,14 @@ import {
   RateLimitExceededError,
   resetRateLimit
 } from "@/lib/rate-limit";
-import { normalizeLoginInput, roleHome } from "@/lib/utils";
+import { MAX_PASSWORD_LENGTH } from "@/lib/password-policy";
+import { MAX_LOGIN_LENGTH, normalizeLoginInput, roleHome } from "@/lib/utils";
 
 export async function loginAction(formData: FormData) {
   const login = normalizeLoginInput(String(formData.get("login") ?? formData.get("email") ?? ""));
   const password = String(formData.get("password") ?? "");
 
-  if (!login || !password) {
+  if (!login || !password || login.length > MAX_LOGIN_LENGTH || password.length > MAX_PASSWORD_LENGTH) {
     redirect("/login?error=empty");
   }
 

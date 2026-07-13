@@ -9,11 +9,16 @@ import { publishDashboardRealtimeEvent } from "@/lib/dashboard-realtime";
 import { getHeadersLogContext, logErrorEvent, logInfoEvent, logWarnEvent } from "@/lib/logger";
 import { revalidateTeacherStudentsData, revalidateTeacherTopicsData } from "@/lib/platform-data-cache";
 import { hashPassword } from "@/lib/password";
-import { validatePasswordStrength } from "@/lib/password-policy";
+import { MAX_PASSWORD_LENGTH, validatePasswordStrength } from "@/lib/password-policy";
 import { prisma } from "@/lib/prisma";
 import { assertRateLimit, getClientIpFromHeaders, RateLimitExceededError } from "@/lib/rate-limit";
 import { removeStoredFile } from "@/lib/storage";
-import { normalizeLoginInput, normalizeSingleLineText } from "@/lib/utils";
+import {
+  MAX_LOGIN_LENGTH,
+  MAX_USER_NAME_LENGTH,
+  normalizeLoginInput,
+  normalizeSingleLineText
+} from "@/lib/utils";
 
 function redirectTeacherWithStudentStatus(params: URLSearchParams) {
   const query = params.toString();
@@ -27,7 +32,14 @@ export async function createStudentAction(formData: FormData) {
   const login = normalizeLoginInput(String(formData.get("login") ?? ""));
   const password = String(formData.get("password") ?? "");
 
-  if (!name || !login || validatePasswordStrength(password) !== null) {
+  if (
+    !name ||
+    name.length > MAX_USER_NAME_LENGTH ||
+    !login ||
+    login.length > MAX_LOGIN_LENGTH ||
+    password.length > MAX_PASSWORD_LENGTH ||
+    validatePasswordStrength(password) !== null
+  ) {
     redirectTeacherWithStudentStatus(new URLSearchParams({ studentError: "invalid" }));
   }
 

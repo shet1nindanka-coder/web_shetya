@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
 import test from "node:test";
-import { validatePasswordStrength } from "@/lib/password-policy";
+import { MAX_PASSWORD_LENGTH, validatePasswordStrength } from "@/lib/password-policy";
 
 test("rejects short passwords", () => {
   assert.notEqual(validatePasswordStrength("a1b2c3"), null);
@@ -21,4 +21,8 @@ test("rejects common passwords", () => {
 test("accepts strong enough passwords", () => {
   assert.equal(validatePasswordStrength("shbz2026math"), null);
   assert.equal(validatePasswordStrength("Маша2010школа"), null);
+});
+
+test("rejects excessively long passwords before hashing", () => {
+  assert.match(validatePasswordStrength(`Strong1${"a".repeat(MAX_PASSWORD_LENGTH)}`) ?? "", /длиннее/);
 });

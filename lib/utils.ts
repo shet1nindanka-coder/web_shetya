@@ -3,6 +3,8 @@ import { HomeworkNumberStatus, UserRole } from "@prisma/client";
 const singleLineControlChars = /[\u0000-\u001F\u007F]+/g;
 const multilineControlChars = /[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]+/g;
 const repeatedWhitespace = /\s+/g;
+export const MAX_USER_NAME_LENGTH = 120;
+export const MAX_LOGIN_LENGTH = 254;
 const dateFormatter = new Intl.DateTimeFormat("ru-RU", {
   day: "2-digit",
   month: "long",

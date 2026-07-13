@@ -3,7 +3,8 @@ import { updatePasswordAction, updateProfileInfoAction } from "@/actions/profile
 import { InterfaceSettingsPanel } from "@/components/interface-settings-panel";
 import { ShbzNumberSearch } from "@/components/shbz-number-search";
 import { ShbzPageHeader } from "@/components/shbz-page-header";
-import { formatDate } from "@/lib/utils";
+import { MAX_PASSWORD_LENGTH } from "@/lib/password-policy";
+import { formatDate, MAX_USER_NAME_LENGTH } from "@/lib/utils";
 
 type ResolvedSearchParams = Record<string, string | string[] | undefined>;
 
@@ -139,6 +140,7 @@ export function AccountSettingsView({ user, notice }: AccountSettingsViewProps) 
                   className="shbz-input"
                   required
                   autoComplete="name"
+                  maxLength={MAX_USER_NAME_LENGTH}
                 />
               </label>
 
@@ -183,6 +185,7 @@ export function AccountSettingsView({ user, notice }: AccountSettingsViewProps) 
                   className="shbz-input"
                   required
                   autoComplete="current-password"
+                  maxLength={MAX_PASSWORD_LENGTH}
                   spellCheck={false}
                 />
               </label>
@@ -199,6 +202,7 @@ export function AccountSettingsView({ user, notice }: AccountSettingsViewProps) 
                   className="shbz-input"
                   required
                   autoComplete="new-password"
+                  maxLength={MAX_PASSWORD_LENGTH}
                   spellCheck={false}
                 />
               </label>
@@ -215,6 +219,7 @@ export function AccountSettingsView({ user, notice }: AccountSettingsViewProps) 
                   className="shbz-input"
                   required
                   autoComplete="new-password"
+                  maxLength={MAX_PASSWORD_LENGTH}
                   spellCheck={false}
                 />
               </label>
@@ -225,7 +230,7 @@ export function AccountSettingsView({ user, notice }: AccountSettingsViewProps) 
                 Обновить пароль
               </button>
               <p className="ui-hint text-sm" style={{ color: "var(--shbz-text-muted)" }}>
-                Текущая сессия сохранится.
+                Сессии на других устройствах завершатся, текущая будет безопасно обновлена.
               </p>
             </div>
           </form>

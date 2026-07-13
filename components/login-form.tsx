@@ -2,6 +2,8 @@
 
 import { useState } from "react";
 import { loginAction } from "@/actions/auth";
+import { MAX_PASSWORD_LENGTH } from "@/lib/password-policy";
+import { MAX_LOGIN_LENGTH } from "@/lib/utils";
 
 const errorMap: Record<string, string> = {
   empty: "Введите логин и пароль.",
@@ -48,6 +50,7 @@ export function LoginForm({ error }: LoginFormProps) {
               autoCapitalize="none"
               autoCorrect="off"
               spellCheck={false}
+              maxLength={MAX_LOGIN_LENGTH}
             />
           </label>
 
@@ -64,6 +67,7 @@ export function LoginForm({ error }: LoginFormProps) {
                 required
                 autoComplete="current-password"
                 spellCheck={false}
+                maxLength={MAX_PASSWORD_LENGTH}
               />
               <button
                 type="button"
