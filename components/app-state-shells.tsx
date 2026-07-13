@@ -54,7 +54,7 @@ export function DashboardLoadingState({ showSectionTabs = false }: { showSection
             </div>
           </div>
 
-          <div className="ui-state-shell rounded-[10px] px-4 py-3 sm:px-5 sm:py-4">
+          <div className="ui-state-shell rounded-[16px] px-4 py-3 sm:px-5 sm:py-4">
             <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:gap-4">
               <div className="space-y-2">
                 <div className="ui-skeleton h-4 w-32 rounded-full" />
@@ -77,7 +77,7 @@ export function DashboardSectionLoadingState({ showSectionTabs = false }: { show
   return (
     <>
       {showSectionTabs ? (
-        <div className="ui-toolbar-shell mb-8 flex flex-wrap gap-2 rounded-[10px] p-2.5">
+        <div className="ui-toolbar-shell mb-8 flex flex-wrap gap-2 rounded-[16px] p-2.5">
           <div className="ui-skeleton h-11 w-28 rounded-full" />
           <div className="ui-skeleton h-11 w-28 rounded-full" />
           <div className="ui-skeleton h-11 w-32 rounded-full" />
@@ -87,10 +87,10 @@ export function DashboardSectionLoadingState({ showSectionTabs = false }: { show
 
       <div className="space-y-8">
         <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-          <div className="ui-skeleton h-40 rounded-[10px]" />
-          <div className="ui-skeleton h-40 rounded-[10px]" />
-          <div className="ui-skeleton h-40 rounded-[10px]" />
-          <div className="ui-skeleton h-40 rounded-[10px]" />
+          <div className="ui-skeleton h-40 rounded-[16px]" />
+          <div className="ui-skeleton h-40 rounded-[16px]" />
+          <div className="ui-skeleton h-40 rounded-[16px]" />
+          <div className="ui-skeleton h-40 rounded-[16px]" />
         </div>
 
         <div className="ui-skeleton h-[220px] rounded-[12px]" />

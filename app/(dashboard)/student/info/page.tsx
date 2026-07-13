@@ -27,7 +27,7 @@ export default function StudentInfoPage() {
             {scoreTable.map(([primary, test]) => (
               <div
                 key={primary}
-                className="flex items-center justify-center gap-2 rounded-[14px] border px-3.5 py-3"
+                className="flex items-center justify-center gap-2 rounded-[16px] border px-3.5 py-3"
                 style={{ background: "var(--shbz-soft-bg)", borderColor: "var(--shbz-soft-border)" }}
               >
                 <span className="text-sm font-bold" style={{ color: "var(--shbz-kicker)" }}>
@@ -62,11 +62,11 @@ export default function StudentInfoPage() {
             {taskScoring.map((item) => (
               <div
                 key={item.badge}
-                className="flex items-center gap-3.5 rounded-[14px] border px-5 py-[18px]"
+                className="flex items-center gap-3.5 rounded-[16px] border px-5 py-[18px]"
                 style={{ background: "var(--shbz-soft-bg)", borderColor: "var(--shbz-soft-border)" }}
               >
                 <span
-                  className="min-w-[44px] shrink-0 rounded-full px-3 py-[7px] text-center text-[13px] font-extrabold text-white"
+                  className="min-w-[44px] shrink-0 rounded-[8px] px-3 py-[7px] text-center text-[13px] font-extrabold text-white"
                   style={{ background: "var(--shbz-accent-grad)" }}
                 >
                   {item.badge}

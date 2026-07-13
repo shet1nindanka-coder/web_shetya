@@ -166,7 +166,7 @@ export function ShbzSelect({
               ref={menuRef}
               role="listbox"
               data-shbz-portal=""
-              className="fixed overflow-y-auto rounded-[14px] border p-1.5"
+              className="fixed overflow-y-auto rounded-[12px] border p-1.5"
               style={{
                 top: menuPosition.top,
                 bottom: menuPosition.bottom,
@@ -192,7 +192,7 @@ export function ShbzSelect({
                       onChange(option.value);
                       setIsOpen(false);
                     }}
-                    className="flex w-full items-center justify-between gap-2.5 rounded-[10px] px-3 py-2.5 text-left font-semibold transition-colors"
+                    className="flex w-full items-center justify-between gap-2.5 rounded-[12px] px-3 py-2.5 text-left font-semibold transition-colors"
                     style={{
                       fontSize: sizeStyle.fontSize,
                       background: isSelected ? "var(--theme-accent-soft)" : "transparent",

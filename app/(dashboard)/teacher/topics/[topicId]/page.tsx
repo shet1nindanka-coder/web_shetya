@@ -34,7 +34,7 @@ export default async function TeacherTopicPage({ params }: TeacherTopicPageProps
               topicId={data.topic.id}
               topicTitle={data.topic.title}
               triggerLabel="Удалить тему"
-              triggerClassName="ui-pressable ui-button-danger rounded-[10px] px-3.5 py-2 text-sm font-semibold transition sm:rounded-[12px]"
+              triggerClassName="ui-pressable ui-button-danger rounded-[12px] px-3.5 py-2 text-sm font-semibold transition sm:rounded-[12px]"
             />
           ) : undefined
         }

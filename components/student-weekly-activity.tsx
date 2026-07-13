@@ -43,7 +43,7 @@ export function StudentWeeklyActivity({ streak }: StudentWeeklyActivityProps) {
                   Огонёк
                 </div>
                 <div
-                  className="shbz-streak-flame inline-flex items-center gap-1.5 rounded-full px-3 py-1.5"
+                  className="shbz-streak-flame inline-flex items-center gap-1.5 rounded-[8px] px-3 py-1.5"
                   data-animate={motionState ?? undefined}
                   style={{ background: "var(--shbz-streak-pill-bg)" }}
                 >
@@ -99,7 +99,7 @@ export function StudentWeeklyActivity({ streak }: StudentWeeklyActivityProps) {
                 return (
                   <div key={day.date} className="flex flex-1 flex-col items-center gap-3">
                     <div
-                      className="flex h-16 w-full items-end justify-center rounded-[10px] pb-2"
+                      className="flex h-16 w-full items-end justify-center rounded-[12px] pb-2"
                       style={{ background: "var(--shbz-week-cell)" }}
                       title={day.count > 0 ? `Закрыто номеров: ${day.count}` : "Нет закрытых номеров"}
                     >

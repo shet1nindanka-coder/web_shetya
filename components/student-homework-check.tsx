@@ -170,7 +170,7 @@ export function StudentHomeworkCheck({ assignmentId, hasPhotos, initialCheck }: 
           <div className="mb-3 flex flex-wrap gap-2">
             {correctCount > 0 ? (
               <span
-                className="rounded-[9px] px-2.5 py-1 text-[12.5px] font-bold"
+                className="rounded-[8px] px-2.5 py-1 text-[12.5px] font-bold"
                 style={{ background: "var(--shbz-green-soft)", color: "var(--shbz-green-text)" }}
               >
                 <span aria-hidden="true">✓ </span>
@@ -179,7 +179,7 @@ export function StudentHomeworkCheck({ assignmentId, hasPhotos, initialCheck }: 
             ) : null}
             {incorrectCount > 0 ? (
               <span
-                className="rounded-[9px] px-2.5 py-1 text-[12.5px] font-bold"
+                className="rounded-[8px] px-2.5 py-1 text-[12.5px] font-bold"
                 style={{ background: "var(--shbz-danger-bg)", color: "var(--shbz-danger-text)" }}
               >
                 <span aria-hidden="true">✗ </span>
@@ -188,7 +188,7 @@ export function StudentHomeworkCheck({ assignmentId, hasPhotos, initialCheck }: 
             ) : null}
             {uncertainCount > 0 ? (
               <span
-                className="rounded-[9px] px-2.5 py-1 text-[12.5px] font-bold"
+                className="rounded-[8px] px-2.5 py-1 text-[12.5px] font-bold"
                 style={{ background: "var(--shbz-tab-hover)", color: "var(--shbz-text-muted)" }}
               >
                 <span aria-hidden="true">⏳ </span>

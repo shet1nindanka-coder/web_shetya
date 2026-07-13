@@ -474,7 +474,7 @@ export function TopicAnswerManager({ topicId, initialNumber = null, numbers }: T
 
   return (
     <div className="space-y-5">
-      <div className="topic-answer-nav ui-toolbar-shell rounded-[10px] p-4 sm:rounded-[10px] sm:p-5">
+      <div className="topic-answer-nav ui-toolbar-shell rounded-[16px] p-4 sm:rounded-[16px] sm:p-5">
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
           <div>
             <p className="text-sm font-medium text-[var(--theme-text-muted)]">Навигация по условиям и ответам</p>
@@ -557,7 +557,7 @@ export function TopicAnswerManager({ topicId, initialNumber = null, numbers }: T
             <article
               key={item.id}
               className={cx(
-                "topic-answer-card ui-fade-slide ui-panel-soft rounded-[10px] p-4 shadow-[0_10px_24px_rgba(15,23,42,0.05)] sm:p-4.5",
+                "topic-answer-card ui-fade-slide ui-panel-soft rounded-[16px] p-4 shadow-[0_10px_24px_rgba(15,23,42,0.05)] sm:p-4.5",
                 item.number === initialNumber
                   ? "ring-2 ring-[var(--theme-accent-border)] ring-offset-2 ring-offset-transparent"
                   : ""
@@ -744,7 +744,7 @@ export function TopicAnswerManager({ topicId, initialNumber = null, numbers }: T
       </div>
 
       {pageCount > 1 ? (
-        <div className="ui-panel-soft flex flex-wrap items-center justify-between gap-3 rounded-[10px] px-4 py-4">
+        <div className="ui-panel-soft flex flex-wrap items-center justify-between gap-3 rounded-[16px] px-4 py-4">
           <p className="text-sm text-[var(--theme-text-muted)]">
             Страница {currentPage} из {pageCount}
           </p>

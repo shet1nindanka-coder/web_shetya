@@ -88,7 +88,7 @@ export function FileDropInput({
         onDragOver={handleDragOver}
         onDragLeave={handleDragLeave}
         onDrop={handleDrop}
-        className="flex items-center justify-between gap-3.5 rounded-[14px] border py-[13px] pl-[18px] pr-3.5 transition-shadow"
+        className="flex items-center justify-between gap-3.5 rounded-[12px] border py-[13px] pl-[18px] pr-3.5 transition-shadow"
         style={{
           background: "var(--shbz-soft-bg)",
           borderColor: isDragging ? "var(--shbz-accent-solid)" : "var(--shbz-soft-border)",

@@ -198,7 +198,7 @@ export function ShbzDateTimePicker({
           disabled={disabled}
           onClick={() => setIsOpen((current) => !current)}
           aria-expanded={isOpen}
-          className="inline-flex max-w-full items-center gap-1.5 rounded-full border px-2.5 py-1.5 text-[12.5px] font-semibold transition-[border-color,box-shadow]"
+          className="inline-flex max-w-full items-center gap-1.5 rounded-[8px] border px-2.5 py-1.5 text-[12.5px] font-semibold transition-[border-color,box-shadow]"
           style={{
             background: "var(--shbz-card-bg)",
             borderColor: isOpen ? "var(--shbz-input-border-focus)" : "var(--shbz-outline-border)",
@@ -247,7 +247,7 @@ export function ShbzDateTimePicker({
         <div
           ref={popoverRef}
           data-shbz-portal=""
-          className="fixed w-[308px] max-w-[92vw] overflow-y-auto rounded-[18px] border p-4"
+          className="fixed w-[308px] max-w-[92vw] overflow-y-auto rounded-[16px] border p-4"
           style={{
             top: popoverPosition.top,
             bottom: popoverPosition.bottom,
@@ -300,7 +300,7 @@ export function ShbzDateTimePicker({
                   key={day.toISOString()}
                   type="button"
                   onClick={() => pickDay(day)}
-                  className="flex h-9 items-center justify-center rounded-[10px] text-[13px] font-semibold transition-colors"
+                  className="flex h-9 items-center justify-center rounded-[12px] text-[13px] font-semibold transition-colors"
                   style={{
                     background: isSelected ? "var(--shbz-accent-grad)" : "transparent",
                     color: isSelected

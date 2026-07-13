@@ -91,7 +91,7 @@ export function ProgressTimelineChart({ entries, selectedStudentName }: Progress
         <div className="flex flex-col items-end gap-2.5">
           <div className="flex flex-wrap items-center gap-2.5">
             <div
-              className="inline-flex items-center gap-2 rounded-full px-3.5 py-[7px]"
+              className="inline-flex items-center gap-2 rounded-[12px] px-3.5 py-[7px]"
               style={{ background: "var(--shbz-green-soft)" }}
             >
               <span className="h-[9px] w-[9px] rounded-full" style={{ background: "var(--shbz-accent-solid)" }} />
@@ -103,7 +103,7 @@ export function ProgressTimelineChart({ entries, selectedStudentName }: Progress
               </span>
             </div>
             <div
-              className="inline-flex items-center gap-2 rounded-full px-3.5 py-[7px]"
+              className="inline-flex items-center gap-2 rounded-[12px] px-3.5 py-[7px]"
               style={{ background: "var(--shbz-red-soft)" }}
             >
               <span className="h-[9px] w-[9px] rounded-full" style={{ background: "var(--shbz-danger-solid)" }} />

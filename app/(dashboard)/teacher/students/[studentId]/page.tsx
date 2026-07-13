@@ -23,7 +23,7 @@ export default async function TeacherStudentPage({ params }: TeacherStudentPageP
           Раздел ДЗ появится после обновления базы данных до актуальной версии.
         </div>
       ) : assignments.length === 0 ? (
-        <div className="ui-panel-soft rounded-[28px] border-dashed px-5 py-10 text-center">
+        <div className="ui-panel-soft rounded-[16px] border-dashed px-5 py-10 text-center">
           <p className="font-display text-2xl font-semibold text-[var(--theme-text-strong)]">ДЗ пока не выдано</p>
           <p className="ui-copy-muted mt-2 text-sm">Выдайте первое ДЗ во вкладке «Выдать ДЗ».</p>
         </div>

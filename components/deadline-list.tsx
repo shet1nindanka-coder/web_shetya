@@ -53,7 +53,7 @@ export function DeadlineList({ items, emptyMessage = "На эту дату де�
   if (items.length === 0) {
     return (
       <div
-        className="rounded-[10px] px-3.5 py-2 text-[13px] font-medium"
+        className="rounded-[8px] px-3.5 py-2 text-[13px] font-medium"
         style={{ background: "var(--shbz-tab-hover)", color: "var(--shbz-kicker)", display: "inline-block" }}
       >
         {emptyMessage}
@@ -106,7 +106,7 @@ export function DeadlineList({ items, emptyMessage = "На эту дату де�
         }
 
         return (
-          <li key={item.id} className="shbz-card px-[26px] py-6" style={{ borderRadius: 18 }}>
+          <li key={item.id} className="shbz-card px-[26px] py-6" style={{ borderRadius: 16 }}>
             <div className="mb-[18px] flex items-start justify-between gap-4">
               <div className="min-w-0 flex-1">
                 <div className="flex flex-wrap items-center gap-2">

@@ -14,7 +14,7 @@ type TeacherTopicViewNumbersProps = {
 export function TeacherTopicViewNumbers({ numbers }: TeacherTopicViewNumbersProps) {
   if (numbers.length === 0) {
     return (
-      <div className="ui-panel-soft rounded-[28px] border-dashed px-5 py-10 text-center">
+      <div className="ui-panel-soft rounded-[16px] border-dashed px-5 py-10 text-center">
         <p className="font-display text-2xl font-semibold text-[var(--theme-text-strong)]">Номера пока не добавлены</p>
         <p className="ui-copy-muted mt-2 text-sm">Добавьте номера во вкладке «Редактирование».</p>
       </div>
@@ -24,7 +24,7 @@ export function TeacherTopicViewNumbers({ numbers }: TeacherTopicViewNumbersProp
   return (
     <div className="grid gap-3 xl:grid-cols-2">
       {numbers.map((number) => (
-        <article key={number.id} className="teacher-number-card rounded-[10px] border px-4 py-4">
+        <article key={number.id} className="teacher-number-card rounded-[16px] border px-4 py-4">
           <p className="teacher-number-title text-lg font-semibold text-[var(--theme-text-strong)]">№ {number.number}</p>
 
           {number.conditionLatex ? (

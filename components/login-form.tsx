@@ -69,7 +69,7 @@ export function LoginForm({ error }: LoginFormProps) {
                 type="button"
                 onClick={() => setShowPassword((value) => !value)}
                 aria-label={showPassword ? "Скрыть пароль" : "Показать пароль"}
-                className="absolute right-2 top-1/2 h-[34px] -translate-y-1/2 rounded-full px-3 text-[13px] font-semibold transition-colors"
+                className="absolute right-2 top-1/2 h-[34px] -translate-y-1/2 rounded-[12px] px-3 text-[13px] font-semibold transition-colors"
                 style={{ color: "var(--shbz-text-soft)" }}
               >
                 {showPassword ? "Скрыть" : "Показать"}

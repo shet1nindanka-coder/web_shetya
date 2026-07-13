@@ -576,7 +576,7 @@ function DevMetricCard({
   noteColor: string;
 }) {
   return (
-    <div className="shbz-panel-soft rounded-[14px] px-5 py-[18px]">
+    <div className="shbz-panel-soft rounded-[16px] px-5 py-[18px]">
       <div className="text-xs font-semibold" style={{ color: "var(--shbz-kicker)" }}>
         {label}
       </div>

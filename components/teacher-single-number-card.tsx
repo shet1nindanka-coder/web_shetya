@@ -178,7 +178,7 @@ export function TeacherSingleNumberCard({
 
       <div className="grid gap-4 lg:grid-cols-2">
         {/* Условие */}
-        <div className="space-y-2.5 rounded-[8px] border border-[var(--theme-border-soft)] p-3 sm:rounded-[10px] sm:p-4">
+        <div className="space-y-2.5 rounded-[16px] border border-[var(--theme-border-soft)] p-3 sm:p-4">
           <p className="ui-kicker">Условие (LaTeX)</p>
 
           <textarea
@@ -186,11 +186,11 @@ export function TeacherSingleNumberCard({
             onChange={(event) => setDraftCondition(event.target.value)}
             placeholder="Введите условие в формате LaTeX"
             rows={4}
-            className="ui-input w-full rounded-[10px] px-3 py-2 font-mono text-sm sm:rounded-[12px]"
+            className="ui-input w-full rounded-[12px] px-3 py-2 font-mono text-sm"
           />
 
           {savedCondition ? (
-            <div className="rounded-[10px] border border-[var(--theme-border-soft)] p-2 sm:rounded-[12px] sm:p-2.5">
+            <div className="rounded-[16px] border border-[var(--theme-border-soft)] p-2 sm:p-2.5">
               <p className="mb-1 text-xs font-medium text-[var(--theme-text-muted)]">Предпросмотр</p>
               <LatexAnswerPreview value={savedCondition} />
             </div>
@@ -206,7 +206,7 @@ export function TeacherSingleNumberCard({
               onClick={saveCondition}
               disabled={isSavingCondition || !draftCondition.trim() || draftCondition.trim() === savedCondition?.trim()}
               className={cx(
-                "ui-pressable rounded-[10px] px-3.5 py-2 text-sm font-semibold transition sm:rounded-[12px]",
+                "ui-pressable rounded-[12px] px-3.5 py-2 text-sm font-semibold transition",
                 "bg-[var(--theme-accent)] text-white hover:bg-[var(--theme-accent-strong)] disabled:opacity-50"
               )}
             >
@@ -218,7 +218,7 @@ export function TeacherSingleNumberCard({
                 type="button"
                 onClick={deleteCondition}
                 disabled={isSavingCondition}
-                className="ui-pressable ui-button-danger rounded-[10px] px-3.5 py-2 text-sm font-semibold transition sm:rounded-[12px]"
+                className="ui-pressable ui-button-danger rounded-[12px] px-3.5 py-2 text-sm font-semibold transition"
               >
                 Удалить
               </button>
@@ -227,7 +227,7 @@ export function TeacherSingleNumberCard({
         </div>
 
         {/* Ответ */}
-        <div className="space-y-2.5 rounded-[8px] border border-[var(--theme-border-soft)] p-3 sm:rounded-[10px] sm:p-4">
+        <div className="space-y-2.5 rounded-[16px] border border-[var(--theme-border-soft)] p-3 sm:p-4">
           <p className="ui-kicker">Ответ (LaTeX)</p>
 
           <textarea
@@ -235,11 +235,11 @@ export function TeacherSingleNumberCard({
             onChange={(event) => setDraftAnswer(event.target.value)}
             placeholder="Введите ответ в формате LaTeX"
             rows={4}
-            className="ui-input w-full rounded-[10px] px-3 py-2 font-mono text-sm sm:rounded-[12px]"
+            className="ui-input w-full rounded-[12px] px-3 py-2 font-mono text-sm"
           />
 
           {savedAnswer ? (
-            <div className="rounded-[10px] border border-[var(--theme-border-soft)] p-2 sm:rounded-[12px] sm:p-2.5">
+            <div className="rounded-[16px] border border-[var(--theme-border-soft)] p-2 sm:p-2.5">
               <p className="mb-1 text-xs font-medium text-[var(--theme-text-muted)]">Предпросмотр</p>
               <LatexAnswerPreview value={savedAnswer} />
             </div>
@@ -255,7 +255,7 @@ export function TeacherSingleNumberCard({
               onClick={saveAnswer}
               disabled={isSavingAnswer || !draftAnswer.trim() || draftAnswer.trim() === savedAnswer?.trim()}
               className={cx(
-                "ui-pressable rounded-[10px] px-3.5 py-2 text-sm font-semibold transition sm:rounded-[12px]",
+                "ui-pressable rounded-[12px] px-3.5 py-2 text-sm font-semibold transition",
                 "bg-[var(--theme-accent)] text-white hover:bg-[var(--theme-accent-strong)] disabled:opacity-50"
               )}
             >
@@ -267,7 +267,7 @@ export function TeacherSingleNumberCard({
                 type="button"
                 onClick={deleteAnswer}
                 disabled={isSavingAnswer}
-                className="ui-pressable ui-button-danger rounded-[10px] px-3.5 py-2 text-sm font-semibold transition sm:rounded-[12px]"
+                className="ui-pressable ui-button-danger rounded-[12px] px-3.5 py-2 text-sm font-semibold transition"
               >
                 Удалить
               </button>

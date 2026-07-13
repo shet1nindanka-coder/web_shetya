@@ -17,7 +17,7 @@ export function ShbzNavCard({ kicker, title, stats, meta, footer }: ShbzNavCardP
   return (
     <article
       className="shbz-card shbz-card-hover flex flex-col overflow-hidden"
-      style={{ borderRadius: 18, padding: 0 }}
+      style={{ borderRadius: 16, padding: 0 }}
     >
       <div className="h-[5px] shrink-0" style={{ background: "var(--shbz-accent-grad)" }} />
       <div className="flex flex-1 flex-col gap-[18px] p-[22px]">

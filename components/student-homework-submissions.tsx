@@ -42,7 +42,7 @@ function HomeworkCard({ assignment }: { assignment: SubmissionAssignment }) {
   const completed = isCompleted(assignment);
 
   return (
-    <article className="shbz-card px-[26px] py-6" style={{ borderRadius: 18 }}>
+    <article className="shbz-card px-[26px] py-6" style={{ borderRadius: 16 }}>
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
@@ -74,7 +74,7 @@ function HomeworkCard({ assignment }: { assignment: SubmissionAssignment }) {
               key={number.homeworkNumberId}
               title={number.status ? homeworkStatusMeta[number.status].label : "Номер ещё не отмечен"}
               className={cx(
-                "rounded-[10px] border px-3.5 py-2 text-sm font-bold",
+                "rounded-[8px] border px-3.5 py-2 text-sm font-bold",
                 number.status
                   ? homeworkStatusMeta[number.status].subtleClassName
                   : "border-[var(--theme-border)] bg-[var(--theme-surface-strong)] text-[var(--theme-text-default)]"
@@ -109,7 +109,7 @@ export function StudentHomeworkSubmissions({ assignments }: StudentHomeworkSubmi
 
       {active.length === 0 ? (
         <div
-          className="rounded-full px-3.5 py-2 text-[13px] font-medium"
+          className="rounded-[8px] px-3.5 py-2 text-[13px] font-medium"
           style={{ background: "var(--shbz-tab-hover)", color: "var(--shbz-kicker)", display: "inline-block" }}
         >
           Все ДЗ выполнены — новых пока нет.
@@ -119,7 +119,7 @@ export function StudentHomeworkSubmissions({ assignments }: StudentHomeworkSubmi
       {archived.length > 0 ? (
         <details className="group pt-2">
           <summary
-            className="ui-pressable inline-flex cursor-pointer list-none items-center gap-2 rounded-full px-5 py-2.5 text-sm font-bold [&::-webkit-details-marker]:hidden"
+            className="ui-pressable inline-flex cursor-pointer list-none items-center gap-2 rounded-[12px] px-5 py-2.5 text-sm font-bold [&::-webkit-details-marker]:hidden"
             style={{ background: "var(--shbz-tab-hover)", color: "var(--shbz-kicker)" }}
           >
             Выполненные ДЗ ({archived.length})

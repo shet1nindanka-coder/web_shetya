@@ -246,7 +246,7 @@ export function TeacherHomeworkReviewList({ studentId, assignments }: TeacherHom
         const lastCheckedLabel = formatDateTime(latestDone?.checkedAt ?? null);
 
         return (
-          <article key={assignment.id} className="teacher-topic-card rounded-[18px] border p-5 sm:p-6">
+          <article key={assignment.id} className="teacher-topic-card rounded-[16px] border p-5 sm:p-6">
             <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
               <div className="min-w-0 space-y-1.5">
                 <div className="flex flex-wrap items-center gap-2">
@@ -286,7 +286,7 @@ export function TeacherHomeworkReviewList({ studentId, assignments }: TeacherHom
 
             <div className="mt-4 flex flex-wrap gap-2">
               <span
-                className="rounded-[10px] border px-3.5 py-1.5 text-sm font-bold"
+                className="rounded-[8px] border px-3.5 py-1.5 text-sm font-bold"
                 style={{
                   borderColor: "var(--shbz-outline-border)",
                   background: "var(--shbz-card-bg)",
@@ -296,7 +296,7 @@ export function TeacherHomeworkReviewList({ studentId, assignments }: TeacherHom
                 Решено {assignment.solvedCount}/{assignment.totalNumbers}
               </span>
               <span
-                className="rounded-[10px] border px-3.5 py-1.5 text-sm font-bold"
+                className="rounded-[8px] border px-3.5 py-1.5 text-sm font-bold"
                 style={{
                   borderColor: "var(--shbz-outline-border)",
                   background: "var(--shbz-card-bg)",
@@ -306,7 +306,7 @@ export function TeacherHomeworkReviewList({ studentId, assignments }: TeacherHom
                 Красные <span style={{ color: "var(--shbz-danger-text)" }}>{assignment.redCount}</span>
               </span>
               <span
-                className="rounded-[10px] border px-3.5 py-1.5 text-sm font-bold"
+                className="rounded-[8px] border px-3.5 py-1.5 text-sm font-bold"
                 style={{
                   borderColor: "var(--shbz-outline-border)",
                   background: "var(--shbz-card-bg)",
@@ -336,7 +336,7 @@ export function TeacherHomeworkReviewList({ studentId, assignments }: TeacherHom
                       <img
                         src={`/files/${photo.fileId}`}
                         alt={photo.originalName}
-                        className="h-16 w-16 rounded-[14px] border object-cover transition hover:opacity-80"
+                        className="h-16 w-16 rounded-[12px] border object-cover transition hover:opacity-80"
                         style={{ borderColor: "var(--shbz-soft-border)" }}
                       />
                     </a>
@@ -365,7 +365,7 @@ export function TeacherHomeworkReviewList({ studentId, assignments }: TeacherHom
                 return (
                   <div
                     key={number.homeworkNumberId}
-                    className="teacher-number-card rounded-[14px] border border-l-[3px] px-4 py-3.5"
+                    className="teacher-number-card rounded-[16px] border border-l-[3px] px-4 py-3.5"
                     style={{ borderLeftColor: aiMeta ? aiMeta.stripe : "var(--theme-border-soft)" }}
                   >
                     <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
@@ -406,7 +406,7 @@ export function TeacherHomeworkReviewList({ studentId, assignments }: TeacherHom
                           </p>
                         ) : null}
                         {number.note ? (
-                          <div className="ui-card-soft mt-2 rounded-[10px] px-3 py-1.5">
+                          <div className="ui-card-soft mt-2 rounded-[12px] px-3 py-1.5">
                             <p className="text-sm leading-6 text-[var(--theme-text-default)]">{number.note}</p>
                           </div>
                         ) : null}
@@ -425,7 +425,7 @@ export function TeacherHomeworkReviewList({ studentId, assignments }: TeacherHom
                               disabled={savingStatusId === number.homeworkNumberId}
                               onClick={() => void setNumberStatus(number.homeworkNumberId, isActive ? null : option)}
                               className={cx(
-                                "ui-pressable rounded-[8px] px-3.5 py-2 text-center text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-60",
+                                "ui-pressable rounded-[12px] px-3.5 py-2 text-center text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-60",
                                 isActive ? meta.buttonClassName : "ui-status-button"
                               )}
                             >
@@ -441,7 +441,7 @@ export function TeacherHomeworkReviewList({ studentId, assignments }: TeacherHom
             </div>
 
             {assignment.checks.length > 0 ? (
-              <details className="group mt-5 rounded-[14px] border" style={{ borderColor: "var(--shbz-soft-border)" }} open>
+              <details className="group mt-5 rounded-[16px] border" style={{ borderColor: "var(--shbz-soft-border)" }} open>
                 <summary className="flex cursor-pointer list-none flex-wrap items-center gap-2 px-4 py-3.5 [&::-webkit-details-marker]:hidden">
                   <span className="text-[15px] font-bold text-[var(--theme-text-strong)]">История проверок</span>
                   <span className="ui-copy-muted text-sm">· {pluralizeRuns(assignment.checks.length)}</span>
@@ -479,7 +479,7 @@ export function TeacherHomeworkReviewList({ studentId, assignments }: TeacherHom
                             <span className="text-sm font-bold text-[var(--theme-text-strong)]">{timeLabel}</span>
                             {isCurrent ? (
                               <span
-                                className="rounded-[7px] px-2 py-0.5 text-[10.5px] font-bold uppercase tracking-[0.8px]"
+                                className="rounded-[8px] px-2 py-0.5 text-[10.5px] font-bold uppercase tracking-[0.8px]"
                                 style={{ background: "var(--shbz-green-soft)", color: "var(--shbz-green-text)" }}
                               >
                                 Текущая
@@ -487,7 +487,7 @@ export function TeacherHomeworkReviewList({ studentId, assignments }: TeacherHom
                             ) : null}
                             {check.status === "FAILED" ? (
                               <span
-                                className="rounded-[7px] px-2 py-0.5 text-[10.5px] font-bold uppercase tracking-[0.8px]"
+                                className="rounded-[8px] px-2 py-0.5 text-[10.5px] font-bold uppercase tracking-[0.8px]"
                                 style={{ background: "var(--shbz-danger-bg)", color: "var(--shbz-danger-text)" }}
                               >
                                 Сбой
@@ -495,7 +495,7 @@ export function TeacherHomeworkReviewList({ studentId, assignments }: TeacherHom
                             ) : null}
                             {isRunning ? (
                               <span
-                                className="rounded-[7px] px-2 py-0.5 text-[10.5px] font-bold uppercase tracking-[0.8px]"
+                                className="rounded-[8px] px-2 py-0.5 text-[10.5px] font-bold uppercase tracking-[0.8px]"
                                 style={{ background: "var(--shbz-tab-hover)", color: "var(--shbz-kicker)" }}
                               >
                                 Выполняется
@@ -543,7 +543,7 @@ export function TeacherHomeworkReviewList({ studentId, assignments }: TeacherHom
                             {check.results.length > 0 ? (
                               <details>
                                 <summary
-                                  className="flex cursor-pointer list-none flex-wrap items-center gap-2 rounded-[10px] px-2 py-2 transition hover:bg-[var(--shbz-tab-hover)] [&::-webkit-details-marker]:hidden"
+                                  className="flex cursor-pointer list-none flex-wrap items-center gap-2 rounded-[12px] px-2 py-2 transition hover:bg-[var(--shbz-tab-hover)] [&::-webkit-details-marker]:hidden"
                                   title="Показать вердикты по номерам"
                                 >
                                   {headerRow}

@@ -114,7 +114,7 @@ export function StudentSingleNumberCard({
   return (
     <SectionCard title={`Номер ${number}`}>
       {saveError ? (
-        <div className="ui-notice-error mb-4 rounded-[12px] px-3.5 py-3 text-sm font-medium sm:mb-5 sm:rounded-[10px] sm:px-4 sm:py-4">
+        <div className="ui-notice-error mb-4 rounded-[12px] px-3.5 py-3 text-sm font-medium sm:mb-5 sm:px-4 sm:py-4">
           {saveError}
         </div>
       ) : null}
@@ -146,10 +146,10 @@ export function StudentSingleNumberCard({
         {(answerLatex || notesEnabled) ? (
           <div className="grid gap-2.5 sm:gap-3 lg:grid-cols-2">
             {answerLatex ? (
-              <div className="min-w-0 rounded-[12px] border border-[var(--theme-border-soft)] p-2 sm:rounded-[10px] sm:p-2.5">
+              <div className="min-w-0 rounded-[16px] border border-[var(--theme-border-soft)] p-2 sm:p-2.5">
                 <p className="ui-kicker mb-1.5">Ответ</p>
                 <TelegramSpoiler
-                  className="rounded-[8px] sm:rounded-[10px]"
+                  className="rounded-[12px]"
                   ariaLabel={`Показать ответ к номеру ${number}`}
                 >
                   <LatexAnswerPreview value={answerLatex} />
@@ -158,7 +158,7 @@ export function StudentSingleNumberCard({
             ) : null}
 
             {notesEnabled ? (
-              <div className="min-w-0 rounded-[12px] border border-[var(--theme-border-soft)] px-2.5 py-2 sm:rounded-[10px] sm:px-3 sm:py-2.5">
+              <div className="min-w-0 rounded-[16px] border border-[var(--theme-border-soft)] px-2.5 py-2 sm:px-3 sm:py-2.5">
                 <div className="flex items-center justify-between gap-2">
                   <p className="ui-kicker">Заметка</p>
                   <button
@@ -205,7 +205,7 @@ export function StudentSingleNumberCard({
                     }}
                     autoFocus
                     placeholder="Короткая заметка"
-                    className="ui-input mt-1.5 w-full rounded-[8px] px-2.5 py-1.5 text-sm leading-5 sm:rounded-[10px] sm:px-3 sm:py-2"
+                    className="ui-input mt-1.5 w-full rounded-[12px] px-2.5 py-1.5 text-sm leading-5 sm:px-3 sm:py-2"
                   />
                 ) : (
                   <p
@@ -214,7 +214,7 @@ export function StudentSingleNumberCard({
                     onClick={() => setIsNoteOpen(true)}
                     onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") { e.preventDefault(); setIsNoteOpen(true); } }}
                     className={cx(
-                      "mt-1.5 cursor-pointer truncate rounded-[8px] px-2.5 py-1.5 text-sm leading-5 transition hover:bg-[var(--theme-surface-soft)] sm:rounded-[10px] sm:px-3 sm:py-2",
+                      "mt-1.5 cursor-pointer truncate rounded-[12px] px-2.5 py-1.5 text-sm leading-5 transition hover:bg-[var(--theme-surface-soft)] sm:px-3 sm:py-2",
                       notePreview ? "text-[var(--theme-text-default)]" : "text-[var(--theme-text-muted)]"
                     )}
                   >

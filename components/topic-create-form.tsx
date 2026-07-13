@@ -119,7 +119,7 @@ function FileUploadField({
 
       {state.status === "uploaded" && state.file ? (
         <div
-          className="rounded-[14px] px-4 py-3 text-sm"
+          className="rounded-[12px] px-4 py-3 text-sm"
           style={{ background: "var(--shbz-green-soft)", color: "var(--shbz-green-text)" }}
         >
           <span className="font-bold">Загружено:</span>{" "}

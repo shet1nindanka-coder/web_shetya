@@ -106,7 +106,7 @@ export function StudentHomeworkPhotos({ assignmentId, photos }: StudentHomeworkP
           </p>
         </div>
         <span
-          className="rounded-[10px] px-3 py-1.5 text-[13px] font-bold"
+          className="rounded-[8px] px-3 py-1.5 text-[13px] font-bold"
           style={{ background: "var(--shbz-tab-hover)", color: "var(--shbz-kicker)" }}
         >
           {photos.length} / {MAX_PHOTOS}

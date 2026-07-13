@@ -236,7 +236,7 @@ export function AccountSettingsView({ user, notice }: AccountSettingsViewProps) 
         <h2 className="shbz-section-title">Статус профиля</h2>
         <div className="shbz-card shbz-section-pad">
           <div className="grid gap-4" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))" }}>
-            <div className="rounded-[14px] border px-[22px] py-5" style={{ background: "var(--shbz-soft-bg)", borderColor: "var(--shbz-soft-border)" }}>
+            <div className="rounded-[16px] border px-[22px] py-5" style={{ background: "var(--shbz-soft-bg)", borderColor: "var(--shbz-soft-border)" }}>
               <div className="text-[11px] font-bold uppercase tracking-[1.2px]" style={{ color: "var(--shbz-kicker)" }}>
                 Роль
               </div>
@@ -244,7 +244,7 @@ export function AccountSettingsView({ user, notice }: AccountSettingsViewProps) 
                 {roleLabel}
               </div>
             </div>
-            <div className="rounded-[14px] border px-[22px] py-5" style={{ background: "var(--shbz-soft-bg)", borderColor: "var(--shbz-soft-border)" }}>
+            <div className="rounded-[16px] border px-[22px] py-5" style={{ background: "var(--shbz-soft-bg)", borderColor: "var(--shbz-soft-border)" }}>
               <div className="text-[11px] font-bold uppercase tracking-[1.2px]" style={{ color: "var(--shbz-kicker)" }}>
                 На платформе
               </div>

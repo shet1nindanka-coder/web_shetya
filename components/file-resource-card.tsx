@@ -28,7 +28,7 @@ export function FileResourceCard({
   const isExpanded = previewSize === "expanded";
 
   return (
-    <article className="ui-file-card ui-fade-slide ui-surface rounded-[10px] border p-4 sm:rounded-[12px] sm:p-5">
+    <article className="ui-file-card ui-fade-slide ui-surface rounded-[16px] border p-4 sm:rounded-[16px] sm:p-5">
       <div className="ui-file-card-header flex flex-col gap-4 border-b pb-5">
         <div className="space-y-1.5">
           <p className="ui-kicker">{title}</p>
@@ -48,7 +48,7 @@ export function FileResourceCard({
       </div>
 
       {!file ? (
-        <div className="ui-card-soft ui-hint ui-copy-muted mt-5 rounded-[10px] border border-dashed px-4 py-6 text-sm leading-6">
+        <div className="ui-card-soft ui-hint ui-copy-muted mt-5 rounded-[16px] border border-dashed px-4 py-6 text-sm leading-6">
           Файл пока не загружен.
         </div>
       ) : (
@@ -71,13 +71,13 @@ export function FileResourceCard({
           </div>
 
           {!showPreview ? (
-            <div className="ui-card-soft ui-hint ui-copy-muted rounded-[10px] px-4 py-5 text-sm leading-6">
+            <div className="ui-card-soft ui-hint ui-copy-muted rounded-[16px] px-4 py-5 text-sm leading-6">
               Предпросмотр скрыт. Файл можно открыть или скачать.
             </div>
           ) : null}
 
           {showPreview && isPdfMime(file.mimeType) ? (
-            <div className="ui-card-soft overflow-hidden rounded-[10px]">
+            <div className="ui-card-soft overflow-hidden rounded-[16px]">
               <PdfPreview
                 fileId={file.id}
                 fileName={file.originalName}
@@ -87,7 +87,7 @@ export function FileResourceCard({
           ) : null}
 
           {showPreview && !isPdfMime(file.mimeType) && isImageMime(file.mimeType) ? (
-            <div className="ui-card-soft overflow-hidden rounded-[10px] p-2">
+            <div className="ui-card-soft overflow-hidden rounded-[16px] p-2">
               <Image
                 src={`/files/${file.id}`}
                 alt={file.originalName}
@@ -104,7 +104,7 @@ export function FileResourceCard({
           ) : null}
 
           {showPreview && !isPdfMime(file.mimeType) && !isImageMime(file.mimeType) && isOfficeMime(file.mimeType) ? (
-            <div className="ui-card-soft ui-hint ui-copy-muted rounded-[10px] px-4 py-5 text-sm leading-6">
+            <div className="ui-card-soft ui-hint ui-copy-muted rounded-[16px] px-4 py-5 text-sm leading-6">
               Для DOCX встроенный предпросмотр зависит от браузера.
             </div>
           ) : null}
