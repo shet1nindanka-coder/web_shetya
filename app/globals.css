@@ -2741,3 +2741,28 @@ html[data-theme="dark"] .shbz-search input:not([type="checkbox"]):not([type="rad
 @media (max-width: 639px) {
   .shbz-chip--desktop { display: none; }
 }
+
+/* Заметка ученика — всегда открытое поле-стикер */
+.shbz-note-field {
+  width: 100%;
+  min-height: 58px;
+  padding: 10px 14px;
+  font-family: inherit;
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--shbz-text-strong);
+  background: var(--shbz-soft-bg);
+  border: 1.5px dashed var(--shbz-input-border);
+  border-radius: 12px;
+  outline: none;
+  resize: vertical;
+  transition: border-color 0.15s, background 0.15s, box-shadow 0.15s;
+}
+.shbz-note-field:not(:placeholder-shown) { border-style: solid; }
+.shbz-note-field:focus {
+  border-style: solid;
+  border-color: var(--shbz-input-border-focus);
+  background: var(--shbz-input-bg);
+  box-shadow: 0 0 0 4px var(--shbz-input-ring);
+}
+.shbz-note-field::placeholder { color: var(--shbz-placeholder); }

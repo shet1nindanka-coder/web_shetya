@@ -407,7 +407,7 @@ export function TeacherHomeworkReviewList({ studentId, assignments }: TeacherHom
                         ) : null}
                         {number.note ? (
                           <div className="ui-card-soft mt-2 rounded-[12px] px-3 py-1.5">
-                            <p className="text-sm leading-6 text-[var(--theme-text-default)]">{number.note}</p>
+                            <p className="whitespace-pre-line text-sm leading-6 text-[var(--theme-text-default)]">{number.note}</p>
                           </div>
                         ) : null}
                       </div>
