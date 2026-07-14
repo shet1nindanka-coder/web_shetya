@@ -5,7 +5,7 @@ type LatexAnswerPreviewProps = {
   value: string;
 };
 
-function renderInlineLine(line: string, lineIndex: number) {
+function renderInlineLine(line: string, lineKey: string) {
   const parts = line.split(/(\$[^$]+\$)/g).filter(Boolean);
 
   return parts.map((part, partIndex) => {
@@ -14,7 +14,7 @@ function renderInlineLine(line: string, lineIndex: number) {
 
       return (
         <InlineMath
-          key={`math-${lineIndex}-${partIndex}`}
+          key={`math-${lineKey}-${partIndex}`}
           math={math}
           renderError={(error) => (
             <code className="rounded bg-[var(--theme-danger-soft)] px-1 py-0.5 text-[var(--theme-danger-text)]">
@@ -25,8 +25,51 @@ function renderInlineLine(line: string, lineIndex: number) {
       );
     }
 
-    return <Fragment key={`text-${lineIndex}-${partIndex}`}>{part}</Fragment>;
+    return <Fragment key={`text-${lineKey}-${partIndex}`}>{part}</Fragment>;
   });
+}
+
+// Делит строку на пункты по меткам «А)», «Б)», «1)» вне формул: каждый пункт
+// рендерится неразрывным inline-block и переносится на новую строку целиком,
+// а не рвётся посередине.
+function splitLineIntoItems(line: string): string[] {
+  const boundaries: number[] = [];
+  let inMath = false;
+
+  for (let i = 0; i < line.length; i++) {
+    if (line[i] === "$") {
+      inMath = !inMath;
+      continue;
+    }
+
+    if (inMath || (i > 0 && !/\s/.test(line[i - 1]))) {
+      continue;
+    }
+
+    if (/^(?:[А-ЯЁA-Z]|\d{1,2})\)/.test(line.slice(i, i + 3))) {
+      boundaries.push(i);
+    }
+  }
+
+  if (boundaries.length < 2) {
+    return [line];
+  }
+
+  if (boundaries[0] !== 0) {
+    boundaries.unshift(0);
+  }
+
+  const items: string[] = [];
+
+  for (let b = 0; b < boundaries.length; b++) {
+    const item = line.slice(boundaries[b], boundaries[b + 1] ?? line.length).trim();
+
+    if (item) {
+      items.push(item);
+    }
+  }
+
+  return items;
 }
 
 export function LatexAnswerPreview({ value }: LatexAnswerPreviewProps) {
@@ -66,9 +109,24 @@ export function LatexAnswerPreview({ value }: LatexAnswerPreviewProps) {
 
         return (
           <div key={`text-block-${blockIndex}`} className="space-y-2">
-            {block.split("\n").map((line, lineIndex) => (
-              <p key={`line-${blockIndex}-${lineIndex}`}>{renderInlineLine(line, lineIndex)}</p>
-            ))}
+            {block.split("\n").map((line, lineIndex) => {
+              const items = splitLineIntoItems(line);
+
+              return (
+                <p key={`line-${blockIndex}-${lineIndex}`}>
+                  {items.length > 1
+                    ? items.map((item, itemIndex) => (
+                        <Fragment key={`item-${blockIndex}-${lineIndex}-${itemIndex}`}>
+                          {itemIndex > 0 ? " " : null}
+                          <span className="inline-block max-w-full align-baseline">
+                            {renderInlineLine(item, `${lineIndex}-${itemIndex}`)}
+                          </span>
+                        </Fragment>
+                      ))
+                    : renderInlineLine(line, `${lineIndex}`)}
+                </p>
+              );
+            })}
           </div>
         );
       })}
