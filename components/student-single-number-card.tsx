@@ -10,6 +10,42 @@ import { markStudentTopicsNeedsRefresh } from "@/components/student-topics-refre
 import { useStudentStreak } from "@/components/student-streak-provider";
 import { homeworkStatusMeta } from "@/lib/utils";
 
+type AnswerPart = { label: string; value: string };
+
+// Разбивает многопунктовый ответ «А) $...$ Б) $...$» на пункты для сетки чипов.
+// Возвращает null (и ответ рендерится как раньше), если формат не подошёл
+// или разрез попал внутрь формулы.
+function splitAnswerParts(latex: string): AnswerPart[] | null {
+  const source = latex.trim();
+
+  if (source.includes("$$") || source.includes("\\[") || /\n{2,}/.test(source)) {
+    return null;
+  }
+
+  const matches = Array.from(source.matchAll(/(?:^|[\s.;,])([А-ЯЁ])\)\s*/g));
+
+  if (matches.length < 3 || source.slice(0, matches[0].index ?? 0).trim() !== "") {
+    return null;
+  }
+
+  const parts: AnswerPart[] = [];
+
+  for (let i = 0; i < matches.length; i++) {
+    const match = matches[i];
+    const start = (match.index ?? 0) + match[0].length;
+    const end = i + 1 < matches.length ? (matches[i + 1].index ?? source.length) : source.length;
+    const value = source.slice(start, end).trim().replace(/[;,]+$/, "").trim();
+
+    if (!value || (value.split("$").length - 1) % 2 !== 0) {
+      return null;
+    }
+
+    parts.push({ label: match[1], value });
+  }
+
+  return parts;
+}
+
 type StudentSingleNumberCardProps = {
   topicId: string;
   homeworkNumberId: string;
@@ -34,6 +70,7 @@ export function StudentSingleNumberCard({
   notesEnabled
 }: StudentSingleNumberCardProps) {
   const streakContext = useStudentStreak();
+  const answerParts = answerLatex ? splitAnswerParts(answerLatex) : null;
   const status = initialStatus;
   const [note, setNote] = useState(initialNote);
   const [savedNote, setSavedNote] = useState(initialNote);
@@ -145,22 +182,38 @@ export function StudentSingleNumberCard({
           </div>
         ) : null}
 
-        {(answerLatex || notesEnabled) ? (
-          <div className="grid gap-2.5 sm:gap-3 lg:grid-cols-2">
-            {answerLatex ? (
-              <div className="min-w-0 rounded-[16px] border border-[var(--theme-border-soft)] p-2 sm:p-2.5">
-                <p className="ui-kicker mb-1.5">Ответ</p>
-                <TelegramSpoiler
-                  className="rounded-[12px]"
-                  ariaLabel={`Показать ответ к номеру ${number}`}
-                >
-                  <LatexAnswerPreview value={answerLatex} />
-                </TelegramSpoiler>
-              </div>
-            ) : null}
+        {answerLatex ? (
+          <div className="shbz-panel-soft px-4 py-3.5">
+            <p className="ui-kicker mb-2">Ответ</p>
+            <TelegramSpoiler
+              className="rounded-[12px]"
+              ariaLabel={`Показать ответ к номеру ${number}`}
+            >
+              {answerParts ? (
+                <div className="grid grid-cols-[repeat(auto-fill,minmax(120px,1fr))] gap-1.5">
+                  {answerParts.map((part, index) => (
+                    <div
+                      key={`${part.label}-${index}`}
+                      className="flex min-w-0 items-baseline gap-2 rounded-[8px] border border-[var(--shbz-soft-border)] bg-[var(--shbz-card-bg)] px-2.5 py-1.5"
+                    >
+                      <span className="text-[11px] font-bold" style={{ color: "var(--shbz-kicker)" }}>
+                        {part.label})
+                      </span>
+                      <span className="min-w-0">
+                        <LatexAnswerPreview value={part.value} />
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <LatexAnswerPreview value={answerLatex} />
+              )}
+            </TelegramSpoiler>
+          </div>
+        ) : null}
 
-            {notesEnabled ? (
-              <div className="min-w-0">
+        {notesEnabled ? (
+          <div>
                 <div className="flex items-center justify-between gap-2">
                   <p className="ui-kicker">Заметка</p>
                   {isSavingNote ? (
@@ -181,8 +234,6 @@ export function StudentSingleNumberCard({
                   className="shbz-note-field mt-1.5"
                   aria-label={`Заметка к номеру ${number}`}
                 />
-              </div>
-            ) : null}
           </div>
         ) : null}
       </div>
