@@ -27,7 +27,9 @@ test("getHeadersLogContext extracts request metadata and ignores empty values", 
 
   assert.deepEqual(result, {
     scope: "login",
-    clientIp: "203.0.113.1",
+    // Берём последний адрес из X-Forwarded-For — его дописывает наш прокси,
+    // первый элемент контролирует клиент (см. getClientIpFromHeaders).
+    clientIp: "203.0.113.2",
     requestId: "req-42",
     userAgent: "TutorFlow Test"
   });
