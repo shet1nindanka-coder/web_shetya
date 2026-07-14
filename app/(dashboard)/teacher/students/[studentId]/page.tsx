@@ -52,6 +52,7 @@ export default async function TeacherStudentPage({ params }: TeacherStudentPageP
               status: check.status,
               createdAt: toIsoDateTimeString(check.createdAt) ?? "",
               checkedAt: toIsoDateTimeString(check.checkedAt),
+              photos: check.photos,
               results: check.results.map((result) => ({
                 number: result.number,
                 verdict: result.verdict,

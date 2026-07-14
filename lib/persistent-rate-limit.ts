@@ -7,6 +7,8 @@ import {
 } from "@/lib/rate-limit";
 
 const SERIALIZABLE_RETRY_ATTEMPTS = 4;
+const BUCKET_CLEANUP_PROBABILITY = 0.01;
+const BUCKET_MAX_AGE_MS = 30 * 24 * 60 * 60_000;
 
 function isRetryableSerializableError(error: unknown) {
   return (
@@ -22,6 +24,14 @@ export async function consumePersistentRateLimit({
   windowMs,
   now = Date.now()
 }: RateLimitOptions): Promise<RateLimitResult> {
+  // Оппортунистическая уборка: изредка удаляем бакеты, не обновлявшиеся месяц
+  // (случайные IP на логине иначе копятся вечно). Fire-and-forget.
+  if (Math.random() < BUCKET_CLEANUP_PROBABILITY) {
+    void prisma.rateLimitBucket
+      .deleteMany({ where: { updatedAt: { lt: new Date(now - BUCKET_MAX_AGE_MS) } } })
+      .catch(() => undefined);
+  }
+
   const key = buildRateLimitKey(scope, identifier);
   const windowStartMs = Math.floor(now / windowMs) * windowMs;
   const windowStart = new Date(windowStartMs);

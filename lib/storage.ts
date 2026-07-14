@@ -175,7 +175,10 @@ export function getStorageRoot() {
   }
 
   if (process.env.NODE_ENV === "production") {
-    return path.join("/tmp", "uploads");
+    // Раньше здесь молча падали в /tmp/uploads — файлы пропадали после reboot.
+    throw new Error(
+      "Хранилище не настроено: в production задайте STORAGE_DIR (или S3_*/BLOB_*) явно."
+    );
   }
 
   return path.join(process.cwd(), "storage", "uploads");

@@ -1220,6 +1220,17 @@ function queryTeacherStudentHomeworks(studentId: string, notesEnabled: boolean) 
               copySuspected: true,
               copyReason: true
             }
+          },
+          photos: {
+            orderBy: { order: "asc" },
+            select: {
+              file: {
+                select: {
+                  id: true,
+                  originalName: true
+                }
+              }
+            }
           }
         }
       }
@@ -1281,6 +1292,10 @@ async function getTeacherStudentHomeworksUncached(studentId: string) {
       error: check.error,
       createdAt: check.createdAt,
       checkedAt: check.checkedAt,
+      photos: check.photos.map((photo) => ({
+        fileId: photo.file.id,
+        originalName: photo.file.originalName
+      })),
       results: check.results
         .map((result) => ({
           number: numberById.get(result.homeworkNumberId) ?? 0,

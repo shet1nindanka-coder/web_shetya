@@ -1,5 +1,6 @@
 import { UserRole } from "@prisma/client";
 import { NextResponse } from "next/server";
+import { enforceApiRateLimit } from "@/lib/api-rate-limit";
 import { tryGetCurrentUser } from "@/lib/auth";
 import { getRequestLogContext, logErrorEvent, logInfoEvent } from "@/lib/logger";
 import { getProgressTimeline } from "@/lib/platform-data";
@@ -39,7 +40,31 @@ function buildAssignmentState(input: { total: number; solved: number; red: numbe
   return { label: "Не начато", kind: "muted" as const };
 }
 
+// PDF строится синхронно и дорого по CPU/RAM — не даём собирать много параллельно.
+let pdfExportsInFlight = 0;
+const MAX_CONCURRENT_PDF_EXPORTS = 2;
+
 export async function GET(
+  request: Request,
+  context: { params: Promise<{ studentId: string }> }
+) {
+  if (pdfExportsInFlight >= MAX_CONCURRENT_PDF_EXPORTS) {
+    return new NextResponse("Сервер занят формированием отчётов. Попробуйте через минуту.", {
+      status: 503,
+      headers: { "Retry-After": "30" }
+    });
+  }
+
+  pdfExportsInFlight += 1;
+
+  try {
+    return await handleGet(request, context);
+  } finally {
+    pdfExportsInFlight -= 1;
+  }
+}
+
+async function handleGet(
   request: Request,
   { params }: { params: Promise<{ studentId: string }> }
 ) {
@@ -50,6 +75,12 @@ export async function GET(
 
     if (!user || user.role !== UserRole.TEACHER) {
       return new NextResponse("Unauthorized", { status: 401 });
+    }
+
+    const rateLimitResponse = await enforceApiRateLimit("api:pdf-export", user.id, 5, 5 * 60_000);
+
+    if (rateLimitResponse) {
+      return rateLimitResponse;
     }
 
     ({ studentId } = await params);

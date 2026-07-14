@@ -35,6 +35,10 @@ async function drainQueue() {
   }
 }
 
+export function getHomeworkCheckQueueLength() {
+  return queue.length;
+}
+
 export function enqueueHomeworkCheck(checkId: string) {
   queue.push(checkId);
   void drainQueue();

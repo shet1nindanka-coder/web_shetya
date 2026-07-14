@@ -9,13 +9,21 @@ import {
   resetRateLimit
 } from "../lib/rate-limit";
 
-test("getClientIpFromHeaders prefers the first forwarded address", () => {
+test("getClientIpFromHeaders prefers x-real-ip set by the reverse proxy", () => {
   const headers = new Headers({
     "x-forwarded-for": "203.0.113.10, 70.41.3.18",
     "x-real-ip": "198.51.100.1"
   });
 
-  assert.equal(getClientIpFromHeaders(headers), "203.0.113.10");
+  assert.equal(getClientIpFromHeaders(headers), "198.51.100.1");
+});
+
+test("getClientIpFromHeaders takes the last forwarded address (appended by our proxy)", () => {
+  const headers = new Headers({
+    "x-forwarded-for": "1.2.3.4, 70.41.3.18"
+  });
+
+  assert.equal(getClientIpFromHeaders(headers), "70.41.3.18");
 });
 
 test("getClientIpFromHeaders falls back through known headers", () => {

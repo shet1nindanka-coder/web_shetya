@@ -25,6 +25,7 @@ type AssignmentCheck = {
   status: "PENDING" | "CHECKING" | "DONE" | "FAILED";
   createdAt: string;
   checkedAt: string | null;
+  photos: Array<{ fileId: string; originalName: string }>;
   results: CheckResult[];
 };
 
@@ -548,6 +549,30 @@ export function TeacherHomeworkReviewList({ studentId, assignments }: TeacherHom
                                 >
                                   {headerRow}
                                 </summary>
+                                {check.photos.length > 0 ? (
+                                  <div className="px-2 pt-1">
+                                    <p className="ui-kicker mb-1.5">Фото этой попытки</p>
+                                    <div className="flex flex-wrap gap-2">
+                                      {check.photos.map((photo) => (
+                                        <a
+                                          key={photo.fileId}
+                                          href={`/files/${photo.fileId}`}
+                                          target="_blank"
+                                          rel="noreferrer"
+                                          title={photo.originalName}
+                                        >
+                                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                                          <img
+                                            src={`/files/${photo.fileId}`}
+                                            alt={photo.originalName}
+                                            className="h-14 w-14 rounded-[12px] border object-cover transition hover:opacity-80"
+                                            style={{ borderColor: "var(--shbz-soft-border)" }}
+                                          />
+                                        </a>
+                                      ))}
+                                    </div>
+                                  </div>
+                                ) : null}
                                 <div className="flex flex-wrap gap-1.5 px-2 pb-2.5 pt-1">
                                   {check.results.map((result) => (
                                     <span

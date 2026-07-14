@@ -7,7 +7,7 @@ import { logInfoEvent } from "@/lib/logger";
 import { revalidateAllPlatformData } from "@/lib/platform-data-cache";
 import { prisma } from "@/lib/prisma";
 import { failStaleHomeworkChecks, getAiCheckConfig } from "@/lib/solution-check";
-import { enqueueHomeworkCheck } from "@/lib/solution-check-queue";
+import { enqueueHomeworkCheck, getHomeworkCheckQueueLength } from "@/lib/solution-check-queue";
 
 export const runtime = "nodejs";
 
@@ -34,6 +34,28 @@ export async function POST(request: Request) {
 
   if (!user || user.role !== UserRole.STUDENT) {
     return NextResponse.json({ error: "Сессия истекла. Войдите заново." }, { status: 401 });
+  }
+
+  // Предохранители от неограниченных расходов на модель: глобальный дневной
+  // бюджет запусков (на всех учеников) и потолок длины in-memory очереди.
+  const dailyLimitRaw = Number(process.env.AI_CHECK_DAILY_LIMIT);
+  const dailyLimit = Number.isFinite(dailyLimitRaw) && dailyLimitRaw > 0 ? dailyLimitRaw : 300;
+  const globalLimitResponse = await enforceApiRateLimit(
+    "api:homework-checks:global",
+    "global",
+    dailyLimit,
+    24 * 60 * 60_000
+  );
+
+  if (globalLimitResponse) {
+    return globalLimitResponse;
+  }
+
+  if (getHomeworkCheckQueueLength() >= 20) {
+    return NextResponse.json(
+      { error: "Очередь автопроверки переполнена. Попробуйте через несколько минут." },
+      { status: 503, headers: { "Retry-After": "120" } }
+    );
   }
 
   const rateLimitResponse = await enforceApiRateLimit("api:homework-checks", user.id, 10, 60 * 60_000);

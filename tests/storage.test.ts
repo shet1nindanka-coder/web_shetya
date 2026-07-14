@@ -101,7 +101,7 @@ test("getStorageRoot respects STORAGE_DIR and environment defaults", () => {
   });
 
   withEnv({ STORAGE_DIR: undefined, NODE_ENV: "production" }, () => {
-    assert.equal(getStorageRoot(), path.join("/tmp", "uploads"));
+    assert.throws(() => getStorageRoot(), /Хранилище не настроено/);
   });
 
   withEnv({ STORAGE_DIR: undefined, NODE_ENV: "development" }, () => {

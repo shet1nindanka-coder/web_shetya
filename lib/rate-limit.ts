@@ -59,20 +59,25 @@ export function buildRateLimitKey(scope: string, identifier: string) {
 }
 
 export function getClientIpFromHeaders(headers: HeaderSource) {
-  const forwardedFor = headers.get("x-forwarded-for");
-
-  if (forwardedFor) {
-    const firstForwardedIp = forwardedFor.split(",")[0]?.trim();
-
-    if (firstForwardedIp) {
-      return firstForwardedIp;
-    }
-  }
-
+  // Порядок доверия: x-real-ip ПЕРЕЗАПИСЫВАЕТСЯ нашим nginx (proxy_set_header
+  // X-Real-IP $remote_addr), поэтому клиент не может его подделать. А в
+  // X-Forwarded-For nginx ДОПИСЫВАЕТ адрес в конец, значит первый элемент —
+  // это то, что прислал сам клиент. Берём последний элемент, не первый.
   const xRealIp = headers.get("x-real-ip")?.trim();
 
   if (xRealIp) {
     return xRealIp;
+  }
+
+  const forwardedFor = headers.get("x-forwarded-for");
+
+  if (forwardedFor) {
+    const entries = forwardedFor.split(",").map((entry) => entry.trim()).filter(Boolean);
+    const lastForwardedIp = entries[entries.length - 1];
+
+    if (lastForwardedIp) {
+      return lastForwardedIp;
+    }
   }
 
   const cloudflareIp = headers.get("cf-connecting-ip")?.trim();
