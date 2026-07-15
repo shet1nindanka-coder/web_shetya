@@ -1,5 +1,16 @@
 import { UserRole } from "@prisma/client";
-import { saveSiteSettingsAction } from "@/actions/developer";
+import { cookies } from "next/headers";
+import {
+  broadcastNotificationAction,
+  flushCachesAction,
+  resetAiDailyBudgetAction,
+  resetUserPasswordAction,
+  runRetentionNowAction,
+  saveSiteSettingsAction,
+  signOutUserEverywhereAction,
+  testAiConnectionAction,
+  unfreezeChecksAction
+} from "@/actions/developer";
 import { SectionCard } from "@/components/section-card";
 import { requireUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
@@ -10,7 +21,24 @@ import { formatDateTime, formatFileSize } from "@/lib/utils";
 export const dynamic = "force-dynamic";
 
 type DeveloperPageProps = {
-  searchParams: Promise<{ saved?: string; error?: string }>;
+  searchParams: Promise<{
+    saved?: string;
+    error?: string;
+    ai?: string;
+    aiInfo?: string;
+    retention?: string;
+    retentionFiles?: string;
+    unfrozen?: string;
+    done?: string;
+    signedOut?: string;
+    broadcast?: string;
+  }>;
+};
+
+const roleLabels: Record<UserRole, string> = {
+  [UserRole.STUDENT]: "ученик",
+  [UserRole.TEACHER]: "учитель",
+  [UserRole.DEVELOPER]: "разработчик"
 };
 
 function StatBlock({ label, value, hint }: { label: string; value: string; hint?: string }) {
@@ -35,31 +63,95 @@ function FieldLabel({ children, hint }: { children: React.ReactNode; hint?: stri
   );
 }
 
+function ActionButton({ label, hint }: { label: string; hint: string }) {
+  return (
+    <div>
+      <button
+        type="submit"
+        className="ui-pressable ui-button-secondary w-full rounded-[12px] px-4 py-2.5 text-sm font-semibold transition"
+      >
+        {label}
+      </button>
+      <p className="ui-copy-muted mt-1.5 text-xs leading-5">{hint}</p>
+    </div>
+  );
+}
+
 export default async function DeveloperPage({ searchParams }: DeveloperPageProps) {
   await requireUser(UserRole.DEVELOPER);
-  const { saved, error } = await searchParams;
+  const params = await searchParams;
   const settings = await getSiteSettingsUncached();
 
+  const cookieStore = await cookies();
+  type PanelFlash = { kind?: string; name?: string; password?: string };
+  let flash: PanelFlash | null = null;
+
+  try {
+    const raw = cookieStore.get("dev_panel_flash")?.value;
+    flash = raw ? (JSON.parse(raw) as PanelFlash) : null;
+  } catch {
+    flash = null;
+  }
+
   const dayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
-  const [checksLastDay, studentsCount, topicsCount, filesAggregate, lastRetentionRaw] = await Promise.all([
+  const [checksLastDay, studentsCount, topicsCount, filesAggregate, lastRetentionRaw, users] = await Promise.all([
     prisma.homeworkCheck.count({ where: { createdAt: { gte: dayAgo } } }).catch(() => 0),
     prisma.user.count({ where: { role: UserRole.STUDENT } }),
     prisma.topic.count(),
     prisma.storedFile.aggregate({ _count: { _all: true }, _sum: { size: true } }),
-    getInternalSettingValue("internal.retentionLastRunAt")
+    getInternalSettingValue("internal.retentionLastRunAt"),
+    prisma.user.findMany({
+      select: { id: true, name: true, email: true, role: true },
+      orderBy: [{ role: "asc" }, { name: "asc" }]
+    })
   ]);
 
   const lastRetentionLabel = lastRetentionRaw ? formatDateTime(lastRetentionRaw) : "ещё не выполнялся";
   const inputClass = "ui-input w-full rounded-[12px] px-3 py-2.5 text-sm";
 
+  const banners: Array<{ tone: "success" | "error"; text: string }> = [];
+
+  if (params.saved) banners.push({ tone: "success", text: "Настройки сохранены и применены." });
+  if (params.error === "save")
+    banners.push({ tone: "error", text: "Не удалось сохранить настройки. Применена ли миграция SiteSetting?" });
+  if (params.error === "invalid") banners.push({ tone: "error", text: "Проверьте заполнение формы." });
+  if (params.error && !["save", "invalid"].includes(params.error))
+    banners.push({ tone: "error", text: "Действие не выполнено — подробности в логах сервера." });
+  if (params.ai === "ok") banners.push({ tone: "success", text: `Модель отвечает: ${params.aiInfo ?? ""}` });
+  if (params.ai === "fail") banners.push({ tone: "error", text: `Модель недоступна: ${params.aiInfo ?? ""}` });
+  if (params.ai === "off") banners.push({ tone: "error", text: "Автопроверка выключена или не настроен ключ/модель." });
+  if (params.retention !== undefined)
+    banners.push({
+      tone: "success",
+      text: `Автоудаление выполнено: снято ссылок на фото — ${params.retention}, удалено файлов — ${params.retentionFiles ?? 0}.`
+    });
+  if (params.unfrozen !== undefined)
+    banners.push({ tone: "success", text: `Зависших проверок снято: ${params.unfrozen}.` });
+  if (params.done === "budget") banners.push({ tone: "success", text: "Дневной бюджет автопроверки сброшен." });
+  if (params.done === "caches") banners.push({ tone: "success", text: "Кэши платформы сброшены." });
+  if (params.signedOut !== undefined)
+    banners.push({ tone: "success", text: `Сессии пользователя завершены: ${params.signedOut}.` });
+  if (params.broadcast !== undefined)
+    banners.push({ tone: "success", text: `Уведомление отправлено ученикам: ${params.broadcast}.` });
+
   return (
     <SectionCard title="Панель разработчика">
-      {saved ? (
-        <div className="ui-notice-success mb-5 rounded-[12px] px-4 py-3 text-sm">Настройки сохранены и применены.</div>
-      ) : null}
-      {error ? (
-        <div className="ui-notice-error mb-5 rounded-[12px] px-4 py-3 text-sm">
-          Не удалось сохранить настройки. Проверьте, применена ли миграция таблицы SiteSetting.
+      {banners.map((banner, index) => (
+        <div
+          key={index}
+          className={`${banner.tone === "success" ? "ui-notice-success" : "ui-notice-error"} mb-3 rounded-[12px] px-4 py-3 text-sm`}
+        >
+          {banner.text}
+        </div>
+      ))}
+
+      {params.done === "password" && flash?.kind === "password" ? (
+        <div className="ui-notice-warning mb-3 rounded-[12px] px-4 py-3 text-sm">
+          Временный пароль для <b>{flash.name}</b>:{" "}
+          <code className="rounded-[8px] bg-[var(--shbz-tab-hover)] px-2 py-0.5 font-mono text-[13px] font-bold">
+            {flash.password}
+          </code>{" "}
+          — показывается один раз (60 секунд), скопируйте и передайте лично.
         </div>
       ) : null}
 
@@ -85,7 +177,87 @@ export default async function DeveloperPage({ searchParams }: DeveloperPageProps
         <StatBlock label="Последнее автоудаление фото" value={lastRetentionLabel ?? "—"} />
       </div>
 
-      <form action={saveSiteSettingsAction} className="mt-8 space-y-7">
+      <p className="ui-kicker mb-3 mt-8">Действия</p>
+      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+        <form action={testAiConnectionAction}>
+          <ActionButton label="Проверить подключение к ИИ" hint="Тестовый запрос к модели: доступность и задержка." />
+        </form>
+        <form action={runRetentionNowAction}>
+          <ActionButton label="Автоудаление фото сейчас" hint="Не ждать суточного таймера, удалить просроченное." />
+        </form>
+        <form action={resetAiDailyBudgetAction}>
+          <ActionButton label="Сбросить дневной бюджет ИИ" hint="Обнулить счётчик запусков за сегодня." />
+        </form>
+        <form action={unfreezeChecksAction}>
+          <ActionButton
+            label="Разморозить зависшие проверки"
+            hint="Пометить FAILED все проверки старше 15 минут."
+          />
+        </form>
+        <form action={flushCachesAction}>
+          <ActionButton label="Сбросить кэши платформы" hint="Принудительно обновить данные на всех страницах." />
+        </form>
+      </div>
+
+      <p className="ui-kicker mb-3 mt-8">Пользователи</p>
+      <form className="max-w-xl space-y-3">
+        <label className="block">
+          <FieldLabel hint="Действия применяются к выбранному пользователю">Пользователь</FieldLabel>
+          <select name="userId" required className={inputClass} defaultValue="">
+            <option value="" disabled>
+              — выберите пользователя —
+            </option>
+            {users.map((user) => (
+              <option key={user.id} value={user.id}>
+                {user.name} · {roleLabels[user.role]} · {user.email}
+              </option>
+            ))}
+          </select>
+        </label>
+        <div className="flex flex-wrap gap-2.5">
+          <button
+            type="submit"
+            formAction={resetUserPasswordAction}
+            className="ui-pressable ui-button-secondary rounded-[12px] px-4 py-2.5 text-sm font-semibold transition"
+          >
+            Сбросить пароль
+          </button>
+          <button
+            type="submit"
+            formAction={signOutUserEverywhereAction}
+            className="ui-pressable ui-button-danger rounded-[12px] px-4 py-2.5 text-sm font-semibold transition"
+          >
+            Разлогинить везде
+          </button>
+        </div>
+        <p className="ui-copy-muted text-xs leading-5">
+          Сброс пароля создаёт временный (показывается один раз) и завершает все сессии пользователя.
+        </p>
+      </form>
+
+      <p className="ui-kicker mb-3 mt-8">Рассылка ученикам</p>
+      <form action={broadcastNotificationAction} className="max-w-xl space-y-3">
+        <label className="block">
+          <FieldLabel>Заголовок</FieldLabel>
+          <input
+            type="text"
+            name="title"
+            required
+            maxLength={120}
+            placeholder="Например: завтра занятия не будет"
+            className={inputClass}
+          />
+        </label>
+        <label className="block">
+          <FieldLabel hint="Необязательно">Текст</FieldLabel>
+          <input type="text" name="body" maxLength={300} placeholder="Подробности" className={inputClass} />
+        </label>
+        <button type="submit" className="shbz-btn-primary px-5 py-2.5 text-[14px]">
+          Отправить всем ученикам
+        </button>
+      </form>
+
+      <form action={saveSiteSettingsAction} className="mt-9 space-y-7">
         <div>
           <p className="ui-kicker mb-3">Автопроверка ИИ</p>
           <div className="space-y-4">
