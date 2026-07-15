@@ -1974,6 +1974,68 @@ html[data-theme="dark"] {
   font-weight: 700;
 }
 .shbz-chip-green { background: var(--shbz-green-soft); color: var(--shbz-green-text); }
+.shbz-chip-yellow { background: var(--shbz-yellow-soft); color: var(--shbz-yellow-text); }
+
+/* ШБЗ: пульсирующая точка «система живёт» (дев-панель) */
+.shbz-pulse-dot {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 999px;
+  background: var(--shbz-accent-solid);
+  flex-shrink: 0;
+  animation: shbz-pulse-dot 2.2s infinite;
+}
+@keyframes shbz-pulse-dot {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(54, 224, 164, 0.45); }
+  55% { box-shadow: 0 0 0 5px rgba(54, 224, 164, 0); }
+}
+
+/* ШБЗ: переключатель-свитч (функционально круглый — 999px легален) */
+.shbz-switch {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 11px;
+  cursor: pointer;
+  user-select: none;
+}
+.shbz-switch input {
+  position: absolute;
+  opacity: 0;
+  width: 0;
+  height: 0;
+}
+.shbz-switch-track {
+  width: 46px;
+  height: 26px;
+  border-radius: 999px;
+  background: var(--shbz-seg-bg);
+  border: 1.5px solid var(--shbz-input-border);
+  transition: background 0.2s, border-color 0.2s;
+  flex-shrink: 0;
+}
+.shbz-switch-knob {
+  position: absolute;
+  left: 3.5px;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 20px;
+  height: 20px;
+  border-radius: 999px;
+  background: #ffffff;
+  box-shadow: 0 1px 3px rgba(10, 10, 10, 0.25);
+  transition: left 0.2s;
+}
+.shbz-switch input:checked ~ .shbz-switch-track {
+  background: var(--shbz-accent-grad);
+  border-color: transparent;
+}
+.shbz-switch input:checked ~ .shbz-switch-knob { left: 23px; }
+.shbz-switch input:focus-visible ~ .shbz-switch-track {
+  outline: 2px solid var(--shbz-accent-solid);
+  outline-offset: 2px;
+}
 
 .shbz-card-hover { transition: transform 0.18s, box-shadow 0.18s; }
 .shbz-card-hover:hover {
