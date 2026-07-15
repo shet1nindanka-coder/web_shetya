@@ -38,6 +38,13 @@ const nextConfig: NextConfig = {
       static: 180
     }
   },
+  async rewrites() {
+    // URL разработчика: /developer/* рендерятся общими страницами /teacher/*.
+    return [
+      { source: "/developer", destination: "/teacher" },
+      { source: "/developer/:path*", destination: "/teacher/:path*" }
+    ];
+  },
   async headers() {
     return [
       {

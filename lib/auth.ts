@@ -8,6 +8,9 @@ import { createSessionToken, hashSessionToken, verifyPassword } from "@/lib/pass
 import { roleHome } from "@/lib/utils";
 
 const SESSION_COOKIE = "tutor_session";
+// Несекретная кука роли: middleware по ней переводит разработчика на /developer/*.
+// Реальные проверки прав — только в requireUser.
+const ROLE_COOKIE = "tutor_role";
 const SESSION_TTL_DAYS = Number(process.env.SESSION_TTL_DAYS ?? 30);
 
 const authenticatedUserSelect = {
@@ -86,6 +89,7 @@ export async function signIn(login: string, password: string) {
 
   const cookieStore = await cookies();
   cookieStore.set(SESSION_COOKIE, token, await getSessionCookieOptions(expiresAt));
+  cookieStore.set(ROLE_COOKIE, user.role, await getSessionCookieOptions(expiresAt));
 
   return authenticatedUser;
 }
@@ -103,6 +107,7 @@ export async function signOut() {
   }
 
   cookieStore.set(SESSION_COOKIE, "", await getSessionCookieOptions(new Date(0)));
+  cookieStore.set(ROLE_COOKIE, "", await getSessionCookieOptions(new Date(0)));
 }
 
 export async function updatePasswordAndRotateSession(userId: string, passwordHash: string) {
@@ -172,6 +177,7 @@ export async function getCurrentUser() {
     });
 
     cookieStore.set(SESSION_COOKIE, "", await getSessionCookieOptions(new Date(0)));
+  cookieStore.set(ROLE_COOKIE, "", await getSessionCookieOptions(new Date(0)));
 
     return null;
   }

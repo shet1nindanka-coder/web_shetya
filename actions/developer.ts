@@ -24,5 +24,5 @@ export async function saveSiteSettingsAction(formData: FormData) {
     );
   }
 
-  redirect(failed ? "/teacher/developer?error=save" : "/teacher/developer?saved=1");
+  redirect(failed ? "/developer/panel?error=save" : "/developer/panel?saved=1");
 }

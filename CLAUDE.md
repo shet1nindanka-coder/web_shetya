@@ -86,7 +86,7 @@ Postgres service.
 - **Domain helpers** — `lib/utils.ts`: `homeworkStatusMeta` (GREEN/YELLOW/RED labels + CSS classes),
   `roleHome`, `parseNumbersInput` (accepts lists and ranges like `"1-5, 7, 10"`), text
   normalizers, date/size formatters, MIME helpers, allowed-upload lists.
-- **Site settings** — панель разработчика `/teacher/developer` (роль DEVELOPER): настройки автопроверки
+- **Site settings** — панель разработчика `/developer/panel` (роль DEVELOPER, файлы в `app/(dashboard)/teacher/panel/`): настройки автопроверки
   (модель, effort, порог, лимиты) и файлов (ретеншен, макс. фото, глубина истории) в таблице `SiteSetting`.
   Чтение/запись через raw SQL в `lib/site-settings.ts` (кэш 15с в памяти); значение из БД переопределяет env.
   Новые крутилки добавлять туда, а не в env.
@@ -103,7 +103,7 @@ Postgres service.
 - `User` — `role: TEACHER | STUDENT | DEVELOPER`, `email` (used as login), `passwordHash`.
   DEVELOPER manages content (topic CRUD, numbers, files, LaTeX conditions/answers, reorder,
   uploads) and sees statistics; TEACHER has read-only topics plus students/homework/statistics.
-  Developer shares the `/teacher/*` route group; `requireUser` accepts a role array. Create a
+  Developer видит свои URL `/developer/*`: это те же страницы `/teacher/*` через rewrite (next.config) + middleware-редирект по несекретной куке `tutor_role` (ставится при логине); права проверяет только `requireUser` (accepts a role array). Create a
   developer via seed (`dev@example.com` / `dev123`) or `npx tsx scripts/create-developer.ts`.
 - `Session` — server sessions for cookie auth (`tokenHash`, `expiresAt`).
 - `StoredFile` — file metadata (`originalName`, `storageKey`, `mimeType`, `size`); reused across

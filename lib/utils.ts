@@ -71,7 +71,7 @@ export function roleHome(role: UserRole) {
   }
 
   if (role === UserRole.DEVELOPER) {
-    return "/teacher/topics";
+    return "/developer/topics";
   }
 
   return "/student";

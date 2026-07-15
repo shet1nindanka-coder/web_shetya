@@ -39,7 +39,7 @@ export async function POST(request: Request) {
 
   // Предохранители от неограниченных расходов на модель: глобальный дневной
   // бюджет запусков (на всех учеников) и потолок длины in-memory очереди.
-  // Значения управляются панелью разработчика (/teacher/developer).
+  // Значения управляются панелью разработчика (/developer/panel).
   const settings = await getSiteSettings();
   const globalLimitResponse = await enforceApiRateLimit(
     "api:homework-checks:global",

@@ -33,13 +33,13 @@ const studentItems = [
 ];
 
 const developerItems = [
-  { href: "/teacher/topics", label: "темы", match: (p: string) => p.startsWith("/teacher/topics") },
-  { href: "/teacher/statistics", label: "статистика", match: (p: string) => p.startsWith("/teacher/statistics") },
-  { href: "/teacher/developer", label: "дев-панель", match: (p: string) => p.startsWith("/teacher/developer") },
+  { href: "/developer/topics", label: "темы", match: (p: string) => p.startsWith("/developer/topics") },
+  { href: "/developer/statistics", label: "статистика", match: (p: string) => p.startsWith("/developer/statistics") },
+  { href: "/developer/panel", label: "дев-панель", match: (p: string) => p.startsWith("/developer/panel") },
   {
-    href: "/teacher/settings",
+    href: "/developer/settings",
     label: "настройки",
-    match: (p: string) => p.startsWith("/teacher/settings") || p.startsWith("/teacher/account")
+    match: (p: string) => p.startsWith("/developer/settings") || p.startsWith("/developer/account")
   }
 ];
 
