@@ -1,14 +1,11 @@
 "use server";
 
-import { randomBytes } from "node:crypto";
 import { SolutionCheckStatus, UserRole } from "@prisma/client";
-import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { requireUser } from "@/lib/auth";
 import { pruneExpiredHomeworkPhotos } from "@/lib/homework-photo-retention";
 import { logErrorEvent, logInfoEvent } from "@/lib/logger";
 import { createNotification } from "@/lib/notifications";
-import { hashPassword } from "@/lib/password";
 import { resetPersistentRateLimit } from "@/lib/persistent-rate-limit";
 import { revalidateAllPlatformData } from "@/lib/platform-data-cache";
 import { prisma } from "@/lib/prisma";
@@ -22,34 +19,7 @@ import {
 import { getAiCheckConfig } from "@/lib/solution-check";
 
 const PANEL_PATH = "/developer/panel";
-const FLASH_COOKIE = "dev_panel_flash";
 const STALE_CHECK_UNFREEZE_MS = 15 * 60_000;
-
-// Без похожих символов (0/O, 1/l/I), чтобы пароль легко диктовался.
-const TEMP_PASSWORD_ALPHABET = "abcdefghjkmnpqrstuvwxyz23456789";
-const TEMP_PASSWORD_LENGTH = 10;
-
-function generateTempPassword() {
-  const bytes = randomBytes(TEMP_PASSWORD_LENGTH);
-  let password = "";
-
-  for (let i = 0; i < TEMP_PASSWORD_LENGTH; i += 1) {
-    password += TEMP_PASSWORD_ALPHABET[bytes[i] % TEMP_PASSWORD_ALPHABET.length];
-  }
-
-  return password;
-}
-
-async function setFlash(value: Record<string, string>) {
-  const cookieStore = await cookies();
-  cookieStore.set(FLASH_COOKIE, JSON.stringify(value), {
-    httpOnly: true,
-    sameSite: "lax",
-    secure: process.env.NODE_ENV === "production",
-    path: "/",
-    maxAge: 60
-  });
-}
 
 export async function saveSiteSettingsAction(formData: FormData) {
   const user = await requireUser(UserRole.DEVELOPER);
@@ -203,64 +173,26 @@ export async function flushCachesAction() {
   redirect(`${PANEL_PATH}?done=caches`);
 }
 
-export async function resetUserPasswordAction(formData: FormData) {
-  const developer = await requireUser(UserRole.DEVELOPER);
-  const userId = String(formData.get("userId") ?? "").trim();
-
-  if (!userId) {
-    redirect(`${PANEL_PATH}?error=invalid`);
-  }
-
-  const target = await prisma.user.findUnique({
-    where: { id: userId },
-    select: { id: true, name: true }
-  });
-
-  if (!target) {
-    redirect(`${PANEL_PATH}?error=invalid`);
-  }
-
-  const tempPassword = generateTempPassword();
-  const passwordHash = await hashPassword(tempPassword);
-
-  await prisma.$transaction([
-    prisma.user.update({ where: { id: target.id }, data: { passwordHash } }),
-    prisma.session.deleteMany({ where: { userId: target.id } })
-  ]);
-
-  logInfoEvent("site_settings.password_reset", { userId: developer.id, targetUserId: target.id });
-  await setFlash({ kind: "password", name: target.name, password: tempPassword });
-  redirect(`${PANEL_PATH}?done=password`);
-}
-
-export async function signOutUserEverywhereAction(formData: FormData) {
-  const developer = await requireUser(UserRole.DEVELOPER);
-  const userId = String(formData.get("userId") ?? "").trim();
-
-  if (!userId) {
-    redirect(`${PANEL_PATH}?error=invalid`);
-  }
-
-  const result = await prisma.session.deleteMany({ where: { userId } });
-  logInfoEvent("site_settings.user_signed_out", {
-    userId: developer.id,
-    targetUserId: userId,
-    sessions: result.count
-  });
-  redirect(`${PANEL_PATH}?signedOut=${result.count}`);
-}
-
 export async function broadcastNotificationAction(formData: FormData) {
   const developer = await requireUser(UserRole.DEVELOPER);
   const title = String(formData.get("title") ?? "").trim().slice(0, 120);
   const body = String(formData.get("body") ?? "").trim().slice(0, 300);
+  const toAll = formData.get("toAll") === "on";
+  const selectedIds = formData
+    .getAll("recipients")
+    .map((value) => String(value).trim())
+    .filter(Boolean);
 
-  if (!title) {
+  if (!title || (!toAll && selectedIds.length === 0)) {
     redirect(`${PANEL_PATH}?error=invalid`);
   }
 
+  // Отправляем только реальным ученикам: выбранные id перепроверяются по роли.
   const students = await prisma.user.findMany({
-    where: { role: UserRole.STUDENT },
+    where: {
+      role: UserRole.STUDENT,
+      ...(toAll ? {} : { id: { in: selectedIds } })
+    },
     select: { id: true }
   });
 
@@ -274,6 +206,10 @@ export async function broadcastNotificationAction(formData: FormData) {
     });
   }
 
-  logInfoEvent("site_settings.broadcast_sent", { userId: developer.id, recipients: students.length });
+  logInfoEvent("site_settings.broadcast_sent", {
+    userId: developer.id,
+    recipients: students.length,
+    toAll
+  });
   redirect(`${PANEL_PATH}?broadcast=${students.length}`);
 }

@@ -1,13 +1,10 @@
 import { UserRole } from "@prisma/client";
-import { cookies } from "next/headers";
 import {
   broadcastNotificationAction,
   flushCachesAction,
   resetAiDailyBudgetAction,
-  resetUserPasswordAction,
   runRetentionNowAction,
   saveSiteSettingsAction,
-  signOutUserEverywhereAction,
   testAiConnectionAction,
   unfreezeChecksAction
 } from "@/actions/developer";
@@ -30,15 +27,8 @@ type DeveloperPageProps = {
     retentionFiles?: string;
     unfrozen?: string;
     done?: string;
-    signedOut?: string;
     broadcast?: string;
   }>;
-};
-
-const roleLabels: Record<UserRole, string> = {
-  [UserRole.STUDENT]: "ученик",
-  [UserRole.TEACHER]: "учитель",
-  [UserRole.DEVELOPER]: "разработчик"
 };
 
 function StatBlock({ label, value, hint }: { label: string; value: string; hint?: string }) {
@@ -82,17 +72,6 @@ export default async function DeveloperPage({ searchParams }: DeveloperPageProps
   const params = await searchParams;
   const settings = await getSiteSettingsUncached();
 
-  const cookieStore = await cookies();
-  type PanelFlash = { kind?: string; name?: string; password?: string };
-  let flash: PanelFlash | null = null;
-
-  try {
-    const raw = cookieStore.get("dev_panel_flash")?.value;
-    flash = raw ? (JSON.parse(raw) as PanelFlash) : null;
-  } catch {
-    flash = null;
-  }
-
   const dayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
   const [checksLastDay, studentsCount, topicsCount, filesAggregate, lastRetentionRaw, users] = await Promise.all([
     prisma.homeworkCheck.count({ where: { createdAt: { gte: dayAgo } } }).catch(() => 0),
@@ -101,8 +80,9 @@ export default async function DeveloperPage({ searchParams }: DeveloperPageProps
     prisma.storedFile.aggregate({ _count: { _all: true }, _sum: { size: true } }),
     getInternalSettingValue("internal.retentionLastRunAt"),
     prisma.user.findMany({
-      select: { id: true, name: true, email: true, role: true },
-      orderBy: [{ role: "asc" }, { name: "asc" }]
+      where: { role: UserRole.STUDENT },
+      select: { id: true, name: true },
+      orderBy: { name: "asc" }
     })
   ]);
 
@@ -129,8 +109,6 @@ export default async function DeveloperPage({ searchParams }: DeveloperPageProps
     banners.push({ tone: "success", text: `Зависших проверок снято: ${params.unfrozen}.` });
   if (params.done === "budget") banners.push({ tone: "success", text: "Дневной бюджет автопроверки сброшен." });
   if (params.done === "caches") banners.push({ tone: "success", text: "Кэши платформы сброшены." });
-  if (params.signedOut !== undefined)
-    banners.push({ tone: "success", text: `Сессии пользователя завершены: ${params.signedOut}.` });
   if (params.broadcast !== undefined)
     banners.push({ tone: "success", text: `Уведомление отправлено ученикам: ${params.broadcast}.` });
 
@@ -144,16 +122,6 @@ export default async function DeveloperPage({ searchParams }: DeveloperPageProps
           {banner.text}
         </div>
       ))}
-
-      {params.done === "password" && flash?.kind === "password" ? (
-        <div className="ui-notice-warning mb-3 rounded-[12px] px-4 py-3 text-sm">
-          Временный пароль для <b>{flash.name}</b>:{" "}
-          <code className="rounded-[8px] bg-[var(--shbz-tab-hover)] px-2 py-0.5 font-mono text-[13px] font-bold">
-            {flash.password}
-          </code>{" "}
-          — показывается один раз (60 секунд), скопируйте и передайте лично.
-        </div>
-      ) : null}
 
       <p className="ui-kicker mb-2.5">Статус системы</p>
       <div className="grid gap-2.5 sm:grid-cols-2 xl:grid-cols-3">
@@ -199,44 +167,8 @@ export default async function DeveloperPage({ searchParams }: DeveloperPageProps
         </form>
       </div>
 
-      <p className="ui-kicker mb-3 mt-8">Пользователи</p>
-      <form className="max-w-xl space-y-3">
-        <label className="block">
-          <FieldLabel hint="Действия применяются к выбранному пользователю">Пользователь</FieldLabel>
-          <select name="userId" required className={inputClass} defaultValue="">
-            <option value="" disabled>
-              — выберите пользователя —
-            </option>
-            {users.map((user) => (
-              <option key={user.id} value={user.id}>
-                {user.name} · {roleLabels[user.role]} · {user.email}
-              </option>
-            ))}
-          </select>
-        </label>
-        <div className="flex flex-wrap gap-2.5">
-          <button
-            type="submit"
-            formAction={resetUserPasswordAction}
-            className="ui-pressable ui-button-secondary rounded-[12px] px-4 py-2.5 text-sm font-semibold transition"
-          >
-            Сбросить пароль
-          </button>
-          <button
-            type="submit"
-            formAction={signOutUserEverywhereAction}
-            className="ui-pressable ui-button-danger rounded-[12px] px-4 py-2.5 text-sm font-semibold transition"
-          >
-            Разлогинить везде
-          </button>
-        </div>
-        <p className="ui-copy-muted text-xs leading-5">
-          Сброс пароля создаёт временный (показывается один раз) и завершает все сессии пользователя.
-        </p>
-      </form>
-
-      <p className="ui-kicker mb-3 mt-8">Рассылка ученикам</p>
-      <form action={broadcastNotificationAction} className="max-w-xl space-y-3">
+      <p className="ui-kicker mb-3 mt-8">Рассылка уведомлений</p>
+      <form action={broadcastNotificationAction} className="max-w-2xl space-y-3">
         <label className="block">
           <FieldLabel>Заголовок</FieldLabel>
           <input
@@ -252,8 +184,36 @@ export default async function DeveloperPage({ searchParams }: DeveloperPageProps
           <FieldLabel hint="Необязательно">Текст</FieldLabel>
           <input type="text" name="body" maxLength={300} placeholder="Подробности" className={inputClass} />
         </label>
+
+        <div>
+          <FieldLabel hint="Либо всем сразу, либо отметьте конкретных получателей">Получатели</FieldLabel>
+          <label className="mb-2 flex items-center gap-2.5 text-sm font-semibold text-[var(--theme-text-strong)]">
+            <input type="checkbox" name="toAll" defaultChecked className="h-4 w-4" />
+            Всем ученикам ({users.length})
+          </label>
+          {users.length > 0 ? (
+            <div
+              className="grid max-h-56 gap-1.5 overflow-y-auto rounded-[12px] border border-[var(--shbz-soft-border)] p-2.5 sm:grid-cols-2 xl:grid-cols-3"
+              style={{ background: "var(--shbz-soft-bg)" }}
+            >
+              {users.map((student) => (
+                <label
+                  key={student.id}
+                  className="flex items-center gap-2 rounded-[8px] px-2 py-1.5 text-sm text-[var(--theme-text-default)]"
+                >
+                  <input type="checkbox" name="recipients" value={student.id} className="h-4 w-4 shrink-0" />
+                  <span className="truncate">{student.name}</span>
+                </label>
+              ))}
+            </div>
+          ) : null}
+          <p className="ui-copy-muted mt-1.5 text-xs leading-5">
+            Если галочка «всем ученикам» включена, отдельный выбор игнорируется.
+          </p>
+        </div>
+
         <button type="submit" className="shbz-btn-primary px-5 py-2.5 text-[14px]">
-          Отправить всем ученикам
+          Отправить уведомление
         </button>
       </form>
 
