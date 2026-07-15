@@ -86,6 +86,9 @@ Postgres service.
 - **Domain helpers** — `lib/utils.ts`: `homeworkStatusMeta` (GREEN/YELLOW/RED labels + CSS classes),
   `roleHome`, `parseNumbersInput` (accepts lists and ranges like `"1-5, 7, 10"`), text
   normalizers, date/size formatters, MIME helpers, allowed-upload lists.
+- **Background jobs** — `instrumentation.ts` (Next register hook, единственный инстанс): ежедневный
+  ретеншен фото ДЗ `lib/homework-photo-retention.ts` (env `HOMEWORK_PHOTO_RETENTION_DAYS`, дефолт 365,
+  0 = выключен; чистит `HomeworkSubmissionPhoto`+`HomeworkCheckPhoto` и файлы через `deleteStoredFileRecordIfUnused`).
 - **Rate limiting** — `lib/rate-limit.ts`, in-memory token bucket (login and student creation).
 - **Logging** — `lib/logger.ts` (pino). Use `logInfoEvent` / `logWarnEvent` / `logErrorEvent(event,
   context, error?, message?)` with dotted event names, e.g. `topic.create.succeeded`,
