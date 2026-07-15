@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useFormStatus } from "react-dom";
 import {
   broadcastNotificationAction,
   flushCachesAction,
@@ -87,15 +88,33 @@ function FieldLabel({ children, hint }: { children: React.ReactNode; hint?: stri
 }
 
 function ActionButton({ label, hint }: { label: string; hint: string }) {
+  const { pending } = useFormStatus();
+
   return (
     <div>
-      <button type="submit" className="shbz-btn-outline w-full">
-        {label}
+      <button type="submit" disabled={pending} className="shbz-btn-outline w-full">
+        <span className="inline-flex items-center justify-center gap-2">
+          {pending ? <span className="shbz-spinner" aria-hidden /> : null}
+          {pending ? "Выполняем…" : label}
+        </span>
       </button>
-      <p className="mt-2 text-xs leading-5" style={{ color: "var(--shbz-text-muted)" }}>
-        {hint}
+      <p aria-live="polite" className="mt-2 text-xs leading-5" style={{ color: "var(--shbz-text-muted)" }}>
+        {pending ? "Действие выполняется, не закрывайте страницу." : hint}
       </p>
     </div>
+  );
+}
+
+function SubmitPrimaryButton({ label, pendingLabel }: { label: string; pendingLabel: string }) {
+  const { pending } = useFormStatus();
+
+  return (
+    <button type="submit" disabled={pending} className="shbz-btn-primary px-[26px] py-[13px] text-[15px]">
+      <span className="inline-flex items-center justify-center gap-2.5">
+        {pending ? <span className="shbz-spinner" aria-hidden /> : null}
+        {pending ? pendingLabel : label}
+      </span>
+    </button>
   );
 }
 
@@ -123,7 +142,7 @@ export function DeveloperPanel({ initialTab, stats, settings, students }: Develo
 
       <div className="mt-[18px]">
         {tab === "status" ? (
-          <div className="shbz-card shbz-section-pad">
+          <div className="shbz-card shbz-section-pad ui-fade-slide">
             <div className="grid gap-4" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))" }}>
               <StatBlock
                 label="Очередь автопроверки"
@@ -167,7 +186,7 @@ export function DeveloperPanel({ initialTab, stats, settings, students }: Develo
         ) : null}
 
         {tab === "actions" ? (
-          <div className="shbz-card shbz-section-pad">
+          <div className="shbz-card shbz-section-pad ui-fade-slide">
             <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
               <form action={testAiConnectionAction}>
                 <ActionButton label="Проверить подключение к ИИ" hint="Тестовый запрос к модели: доступность и задержка." />
@@ -189,7 +208,7 @@ export function DeveloperPanel({ initialTab, stats, settings, students }: Develo
         ) : null}
 
         {tab === "broadcast" ? (
-          <div className="shbz-card shbz-section-pad">
+          <div className="shbz-card shbz-section-pad ui-fade-slide">
             <form action={broadcastNotificationAction} className="max-w-2xl space-y-5">
               <label className="block">
                 <FieldLabel>Заголовок</FieldLabel>
@@ -212,15 +231,13 @@ export function DeveloperPanel({ initialTab, stats, settings, students }: Develo
                 <DeveloperBroadcastRecipients students={students} />
               </div>
 
-              <button type="submit" className="shbz-btn-primary px-[26px] py-[13px] text-[15px]">
-                Отправить уведомление
-              </button>
+              <SubmitPrimaryButton label="Отправить уведомление" pendingLabel="Отправляем…" />
             </form>
           </div>
         ) : null}
 
         {tab === "settings" ? (
-          <div className="shbz-card shbz-section-pad">
+          <div className="shbz-card shbz-section-pad ui-fade-slide">
             <form action={saveSiteSettingsAction}>
               <p className="shbz-kicker mb-4">Автопроверка ИИ</p>
 
@@ -337,9 +354,7 @@ export function DeveloperPanel({ initialTab, stats, settings, students }: Develo
               </div>
 
               <div className="mt-[26px] flex flex-wrap items-center gap-3.5">
-                <button type="submit" className="shbz-btn-primary px-[26px] py-[13px] text-[15px]">
-                  Сохранить настройки
-                </button>
+                <SubmitPrimaryButton label="Сохранить настройки" pendingLabel="Сохраняем…" />
                 <p className="text-[13px]" style={{ color: "var(--shbz-text-muted)" }}>
                   Значения перекрывают .env и применяются в течение 15 секунд без рестарта.
                 </p>

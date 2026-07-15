@@ -1896,6 +1896,26 @@ html[data-theme="dark"] {
   transition: border-color 0.15s;
 }
 .shbz-btn-outline:hover { border-color: var(--shbz-outline-hover); }
+.shbz-btn-outline:disabled {
+  opacity: 0.6;
+  cursor: default;
+  border-color: var(--shbz-outline-border);
+}
+
+/* ШБЗ: спиннер выполнения (функционально круглый) */
+.shbz-spinner {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border-radius: 999px;
+  border: 2px solid currentColor;
+  border-top-color: transparent;
+  animation: shbz-spin 0.7s linear infinite;
+  flex-shrink: 0;
+}
+@keyframes shbz-spin {
+  to { transform: rotate(360deg); }
+}
 
 .shbz-kicker {
   font-size: 12px;

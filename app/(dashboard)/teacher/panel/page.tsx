@@ -117,7 +117,7 @@ export default async function DeveloperPage({ searchParams }: DeveloperPageProps
           {banners.map((banner, index) => (
             <div
               key={index}
-              className={`${banner.tone === "success" ? "shbz-notice-success" : "shbz-notice-error"} px-5 py-4 text-sm font-medium`}
+              className={`${banner.tone === "success" ? "shbz-notice-success" : "shbz-notice-error"} ui-fade-slide px-5 py-4 text-sm font-medium`}
               aria-live="polite"
             >
               {banner.text}
