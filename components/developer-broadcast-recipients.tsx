@@ -87,7 +87,7 @@ export function DeveloperBroadcastRecipients({ students }: DeveloperBroadcastRec
         : null}
 
       {mode === "all" ? (
-        <p className="ui-copy-muted text-sm">
+        <p className="text-sm" style={{ color: "var(--shbz-text-muted)" }}>
           Уведомление получат все ученики: {students.length}.
         </p>
       ) : (
@@ -101,7 +101,7 @@ export function DeveloperBroadcastRecipients({ students }: DeveloperBroadcastRec
             }}
             onFocus={() => setIsDropdownOpen(true)}
             placeholder="Начните вводить имя ученика…"
-            className="ui-input w-full rounded-[12px] px-3 py-2.5 text-sm"
+            className="shbz-input"
             aria-label="Поиск ученика"
           />
 
@@ -121,7 +121,9 @@ export function DeveloperBroadcastRecipients({ students }: DeveloperBroadcastRec
                   </button>
                 ))
               ) : (
-                <p className="ui-copy-muted px-3.5 py-2 text-sm">Никого не нашлось</p>
+                <p className="px-3.5 py-2 text-sm" style={{ color: "var(--shbz-text-muted)" }}>
+                  Никого не нашлось
+                </p>
               )}
             </div>
           ) : null}
@@ -148,7 +150,7 @@ export function DeveloperBroadcastRecipients({ students }: DeveloperBroadcastRec
             </div>
           ) : null}
 
-          <p className="ui-copy-muted mt-2 text-xs">
+          <p className="mt-2 text-xs" style={{ color: "var(--shbz-text-muted)" }}>
             {picked.length > 0 ? `Выбрано: ${picked.length}` : "Пока никто не выбран — найдите ученика по имени."}
           </p>
         </div>
