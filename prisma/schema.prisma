@@ -475,3 +475,11 @@ model RateLimitBucket {
 
   @@index([updatedAt])
 }
+
+// Настройки сайта из панели разработчика (/teacher/developer).
+// Доступ через raw SQL в lib/site-settings.ts (не требует regenerate до миграции).
+model SiteSetting {
+  key       String   @id
+  value     String
+  updatedAt DateTime @updatedAt
+}

@@ -35,6 +35,7 @@ const studentItems = [
 const developerItems = [
   { href: "/teacher/topics", label: "темы", match: (p: string) => p.startsWith("/teacher/topics") },
   { href: "/teacher/statistics", label: "статистика", match: (p: string) => p.startsWith("/teacher/statistics") },
+  { href: "/teacher/developer", label: "дев-панель", match: (p: string) => p.startsWith("/teacher/developer") },
   {
     href: "/teacher/settings",
     label: "настройки",

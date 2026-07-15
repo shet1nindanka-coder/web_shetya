@@ -31,9 +31,9 @@ function isReasoningModel(model: string) {
   return /(^|\/)(gpt-5|o\d)/i.test(model);
 }
 
-export function getAiCheckConfig() {
+export function getAiCheckConfig(settings?: { aiModel?: string; aiReasoningEffort?: string }) {
   const apiKey = process.env.AI_CHECK_API_KEY?.trim();
-  const model = process.env.AI_CHECK_MODEL?.trim();
+  const model = settings?.aiModel?.trim() || process.env.AI_CHECK_MODEL?.trim();
 
   if (!apiKey || !model) {
     return null;
@@ -42,14 +42,10 @@ export function getAiCheckConfig() {
   return {
     apiKey,
     model,
-    baseUrl: process.env.AI_CHECK_BASE_URL?.trim() || "https://openrouter.ai/api/v1"
+    baseUrl: process.env.AI_CHECK_BASE_URL?.trim() || "https://openrouter.ai/api/v1",
+    reasoningEffort:
+      settings?.aiReasoningEffort || process.env.AI_CHECK_REASONING_EFFORT?.trim() || "high"
   };
-}
-
-function getMinConfidence() {
-  const raw = Number(process.env.AI_CHECK_MIN_CONFIDENCE);
-
-  return Number.isFinite(raw) && raw >= 0 && raw <= 1 ? raw : 0.6;
 }
 
 const SYSTEM_PROMPT = [
@@ -263,7 +259,7 @@ async function callModelOnce(
         ...(isReasoningModel(config.model)
           ? {
               max_completion_tokens: 16000,
-              reasoning_effort: process.env.AI_CHECK_REASONING_EFFORT?.trim() || "high"
+              reasoning_effort: config.reasoningEffort
             }
           : { temperature: 0, max_tokens: 8000 }),
         response_format: { type: "json_object" },
@@ -378,7 +374,9 @@ export async function pruneCompletedHomeworkChecks(studentId: string) {
       status: true
     }
   });
-  const checkIds = selectCompletedCheckIdsToPrune(checks);
+  const { getSiteSettingsUncached: getSettingsForPrune } = await import("@/lib/site-settings");
+  const { completedChecksKept } = await getSettingsForPrune();
+  const checkIds = selectCompletedCheckIdsToPrune(checks, completedChecksKept);
 
   if (checkIds.length === 0) {
     return;
@@ -528,7 +526,9 @@ async function applyVerdictsToProgress(assignment: CheckAssignment, results: Par
 }
 
 export async function runHomeworkCheck(checkId: string) {
-  const config = getAiCheckConfig();
+  const { getSiteSettingsUncached } = await import("@/lib/site-settings");
+  const settings = await getSiteSettingsUncached();
+  const config = settings.aiEnabled ? getAiCheckConfig(settings) : null;
 
   const check = await prisma.homeworkCheck.findUnique({
     where: { id: checkId },
@@ -619,7 +619,11 @@ export async function runHomeworkCheck(checkId: string) {
   };
 
   if (!config) {
-    await failCheck("Автопроверка не настроена: нет AI_CHECK_API_KEY или AI_CHECK_MODEL.");
+    await failCheck(
+      settings.aiEnabled
+        ? "Автопроверка не настроена: нет AI_CHECK_API_KEY или модели."
+        : "Автопроверка отключена разработчиком."
+    );
     return;
   }
 
@@ -685,7 +689,7 @@ export async function runHomeworkCheck(checkId: string) {
     }
 
     // Низкая или отсутствующая уверенность всегда закрывается в UNCERTAIN.
-    results = normalizeCheckResultsByConfidence(results, getMinConfidence());
+    results = normalizeCheckResultsByConfidence(results, settings.aiMinConfidence);
 
     if (results.length === 0) {
       await failCheck("Модель не вернула ни одного вердикта.");

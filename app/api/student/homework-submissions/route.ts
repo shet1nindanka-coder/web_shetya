@@ -1,6 +1,7 @@
 import { Prisma, UserRole } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { NextResponse } from "next/server";
+import { getSiteSettings } from "@/lib/site-settings";
 import { enforceApiRateLimit } from "@/lib/api-rate-limit";
 import { tryGetCurrentUser } from "@/lib/auth";
 import { publishDashboardRealtimeEvent } from "@/lib/dashboard-realtime";
@@ -17,7 +18,6 @@ import {
 
 export const runtime = "nodejs";
 
-const MAX_PHOTOS_PER_ASSIGNMENT = 10;
 const MAX_MULTIPART_OVERHEAD_BYTES = 512 * 1024;
 const MAX_STUDENT_UPLOAD_BODY_SIZE = MAX_UPLOAD_SIZE_BYTES + MAX_MULTIPART_OVERHEAD_BYTES;
 const allowedPhotoExtensions = new Set([".png", ".jpg", ".jpeg"]);
@@ -78,6 +78,7 @@ function revalidateSubmissionRoutes(studentId: string, topicId: string) {
 }
 
 export async function POST(request: Request) {
+  const { maxPhotosPerAssignment: maxPhotos } = await getSiteSettings();
   const user = await tryGetCurrentUser();
 
   if (!user || user.role !== UserRole.STUDENT) {
@@ -168,9 +169,9 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "ДЗ не найдено." }, { status: 404 });
   }
 
-  if (assignment.photosCount + files.length > MAX_PHOTOS_PER_ASSIGNMENT) {
+  if (assignment.photosCount + files.length > maxPhotos) {
     return NextResponse.json(
-      { error: `К одному ДЗ можно прикрепить не больше ${MAX_PHOTOS_PER_ASSIGNMENT} фото.` },
+      { error: `К одному ДЗ можно прикрепить не больше ${maxPhotos} фото.` },
       { status: 400 }
     );
   }
@@ -213,7 +214,7 @@ export async function POST(request: Request) {
           throw new AssignmentNotFoundError();
         }
 
-        if (currentAssignment._count.photos + storedUploads.length > MAX_PHOTOS_PER_ASSIGNMENT) {
+        if (currentAssignment._count.photos + storedUploads.length > maxPhotos) {
           throw new PhotoLimitExceededError();
         }
 
@@ -261,7 +262,7 @@ export async function POST(request: Request) {
 
     if (error instanceof PhotoLimitExceededError) {
       return NextResponse.json(
-        { error: `К одному ДЗ можно прикрепить не больше ${MAX_PHOTOS_PER_ASSIGNMENT} фото.` },
+        { error: `К одному ДЗ можно прикрепить не больше ${maxPhotos} фото.` },
         { status: 400 }
       );
     }

@@ -9,6 +9,7 @@ const MAX_PHOTOS = 10;
 
 type StudentHomeworkPhotosProps = {
   assignmentId: string;
+  maxPhotos?: number;
   photos: Array<{
     id: string;
     fileId: string;
@@ -16,7 +17,7 @@ type StudentHomeworkPhotosProps = {
   }>;
 };
 
-export function StudentHomeworkPhotos({ assignmentId, photos }: StudentHomeworkPhotosProps) {
+export function StudentHomeworkPhotos({ assignmentId, maxPhotos = MAX_PHOTOS, photos }: StudentHomeworkPhotosProps) {
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [isUploading, setIsUploading] = useState(false);
@@ -25,7 +26,7 @@ export function StudentHomeworkPhotos({ assignmentId, photos }: StudentHomeworkP
   const [error, setError] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
 
-  const atLimit = photos.length >= MAX_PHOTOS;
+  const atLimit = photos.length >= maxPhotos;
 
   const uploadPhotos = async (files: FileList | null) => {
     if (!files || !files.length) {
@@ -109,7 +110,7 @@ export function StudentHomeworkPhotos({ assignmentId, photos }: StudentHomeworkP
           className="rounded-[8px] px-3 py-1.5 text-[13px] font-bold"
           style={{ background: "var(--shbz-tab-hover)", color: "var(--shbz-kicker)" }}
         >
-          {photos.length} / {MAX_PHOTOS}
+          {photos.length} / {maxPhotos}
         </span>
       </div>
 
@@ -162,11 +163,11 @@ export function StudentHomeworkPhotos({ assignmentId, photos }: StudentHomeworkP
           {isUploading
             ? "Загружаем..."
             : atLimit
-              ? "Достигнут лимит — 10 фото"
+              ? `Достигнут лимит — ${maxPhotos} фото`
               : "Перетащите фото сюда или нажмите"}
         </span>
         <span className="text-[12.5px]" style={{ color: "var(--shbz-kicker)" }}>
-          До 10 фото · PNG или JPG
+          {`До ${maxPhotos} фото · PNG или JPG`}
         </span>
       </label>
 

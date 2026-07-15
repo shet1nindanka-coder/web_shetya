@@ -86,6 +86,10 @@ Postgres service.
 - **Domain helpers** — `lib/utils.ts`: `homeworkStatusMeta` (GREEN/YELLOW/RED labels + CSS classes),
   `roleHome`, `parseNumbersInput` (accepts lists and ranges like `"1-5, 7, 10"`), text
   normalizers, date/size formatters, MIME helpers, allowed-upload lists.
+- **Site settings** — панель разработчика `/teacher/developer` (роль DEVELOPER): настройки автопроверки
+  (модель, effort, порог, лимиты) и файлов (ретеншен, макс. фото, глубина истории) в таблице `SiteSetting`.
+  Чтение/запись через raw SQL в `lib/site-settings.ts` (кэш 15с в памяти); значение из БД переопределяет env.
+  Новые крутилки добавлять туда, а не в env.
 - **Background jobs** — `instrumentation.ts` (Next register hook, единственный инстанс): ежедневный
   ретеншен фото ДЗ `lib/homework-photo-retention.ts` (env `HOMEWORK_PHOTO_RETENTION_DAYS`, дефолт 365,
   0 = выключен; чистит `HomeworkSubmissionPhoto`+`HomeworkCheckPhoto` и файлы через `deleteStoredFileRecordIfUnused`).

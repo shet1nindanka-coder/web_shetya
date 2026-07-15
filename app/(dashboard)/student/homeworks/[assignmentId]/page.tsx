@@ -8,6 +8,7 @@ import { StudentHomeworkPhotos } from "@/components/student-homework-photos";
 import { StudentSingleNumberCard } from "@/components/student-single-number-card";
 import { requireUser } from "@/lib/auth";
 import { getStudentHomeworks } from "@/lib/platform-data";
+import { getSiteSettings } from "@/lib/site-settings";
 import { formatDateTime, isHomeworkOverdue, toIsoDateTimeString } from "@/lib/utils";
 
 type StudentHomeworkPageProps = {
@@ -20,6 +21,7 @@ export default async function StudentHomeworkPage({ params }: StudentHomeworkPag
   const user = await requireUser(UserRole.STUDENT);
   const { assignmentId } = await params;
   const { assignmentsEnabled, notesEnabled, assignments } = await getStudentHomeworks(user.id);
+  const siteSettings = await getSiteSettings();
   const assignment = assignments.find((entry) => entry.id === assignmentId);
 
   if (!assignmentsEnabled || !assignment) {
@@ -60,6 +62,7 @@ export default async function StudentHomeworkPage({ params }: StudentHomeworkPag
       <section className="mb-8">
         <StudentHomeworkPhotos
           assignmentId={assignment.id}
+          maxPhotos={siteSettings.maxPhotosPerAssignment}
           photos={assignment.photos.map((photo) => ({
             id: photo.id,
             fileId: photo.fileId,

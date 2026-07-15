@@ -12,6 +12,9 @@ declare global {
 async function sweep() {
   try {
     await pruneExpiredHomeworkPhotos();
+
+    const { setInternalSettingValue } = await import("@/lib/site-settings");
+    await setInternalSettingValue("internal.retentionLastRunAt", new Date().toISOString());
   } catch (error) {
     logErrorEvent(
       "retention.sweep_failed",

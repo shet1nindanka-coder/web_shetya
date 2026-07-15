@@ -77,7 +77,10 @@ async function pruneBatch(cutoff: Date) {
 }
 
 export async function pruneExpiredHomeworkPhotos(now = new Date()) {
-  const retentionDays = getHomeworkPhotoRetentionDays();
+  // Срок управляется панелью разработчика; env — дефолт (см. lib/site-settings.ts).
+  const { getSiteSettingsUncached } = await import("@/lib/site-settings");
+  const { photoRetentionDays } = await getSiteSettingsUncached();
+  const retentionDays = photoRetentionDays > 0 ? photoRetentionDays : null;
 
   if (!retentionDays) {
     return { submissionPhotos: 0, checkPhotos: 0, files: 0 };

@@ -8,6 +8,7 @@ import { revalidateAllPlatformData } from "@/lib/platform-data-cache";
 import { prisma } from "@/lib/prisma";
 import { failStaleHomeworkChecks, getAiCheckConfig } from "@/lib/solution-check";
 import { enqueueHomeworkCheck, getHomeworkCheckQueueLength } from "@/lib/solution-check-queue";
+import { getSiteSettings } from "@/lib/site-settings";
 
 export const runtime = "nodejs";
 
@@ -38,12 +39,12 @@ export async function POST(request: Request) {
 
   // Предохранители от неограниченных расходов на модель: глобальный дневной
   // бюджет запусков (на всех учеников) и потолок длины in-memory очереди.
-  const dailyLimitRaw = Number(process.env.AI_CHECK_DAILY_LIMIT);
-  const dailyLimit = Number.isFinite(dailyLimitRaw) && dailyLimitRaw > 0 ? dailyLimitRaw : 300;
+  // Значения управляются панелью разработчика (/teacher/developer).
+  const settings = await getSiteSettings();
   const globalLimitResponse = await enforceApiRateLimit(
     "api:homework-checks:global",
     "global",
-    dailyLimit,
+    settings.aiDailyLimit,
     24 * 60 * 60_000
   );
 
@@ -58,15 +59,20 @@ export async function POST(request: Request) {
     );
   }
 
-  const rateLimitResponse = await enforceApiRateLimit("api:homework-checks", user.id, 10, 60 * 60_000);
+  const rateLimitResponse = await enforceApiRateLimit(
+    "api:homework-checks",
+    user.id,
+    settings.aiPerStudentHourlyLimit,
+    60 * 60_000
+  );
 
   if (rateLimitResponse) {
     return rateLimitResponse;
   }
 
-  if (!getAiCheckConfig()) {
+  if (!settings.aiEnabled || !getAiCheckConfig(settings)) {
     return NextResponse.json(
-      { error: "Автоматическая проверка пока не подключена. Попросите разработчика настроить её." },
+      { error: "Автоматическая проверка сейчас отключена. Попросите разработчика включить её." },
       { status: 503 }
     );
   }
