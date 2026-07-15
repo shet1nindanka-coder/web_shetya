@@ -336,6 +336,7 @@ export function TeacherHomeworkReviewList({ studentId, assignments }: TeacherHom
                       {/* eslint-disable-next-line @next/next/no-img-element */}
                       <img
                         src={`/files/${photo.fileId}`}
+                        loading="lazy"
                         alt={photo.originalName}
                         className="h-16 w-16 rounded-[12px] border object-cover transition hover:opacity-80"
                         style={{ borderColor: "var(--shbz-soft-border)" }}
@@ -564,6 +565,7 @@ export function TeacherHomeworkReviewList({ studentId, assignments }: TeacherHom
                                           {/* eslint-disable-next-line @next/next/no-img-element */}
                                           <img
                                             src={`/files/${photo.fileId}`}
+                                            loading="lazy"
                                             alt={photo.originalName}
                                             className="h-14 w-14 rounded-[12px] border object-cover transition hover:opacity-80"
                                             style={{ borderColor: "var(--shbz-soft-border)" }}

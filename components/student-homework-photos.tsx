@@ -178,6 +178,7 @@ export function StudentHomeworkPhotos({ assignmentId, photos }: StudentHomeworkP
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
                   src={`/files/${photo.fileId}`}
+                  loading="lazy"
                   alt={photo.originalName}
                   className="h-24 w-24 rounded-[12px] border object-cover"
                   style={{ borderColor: "var(--shbz-soft-border)" }}
