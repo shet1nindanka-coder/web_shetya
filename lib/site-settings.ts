@@ -18,10 +18,21 @@ export type SiteSettings = {
 
 const REASONING_EFFORTS: ReasoningEffort[] = ["low", "medium", "high"];
 
-function clampInt(raw: unknown, min: number, max: number, fallback: number) {
+// Number("") === 0, поэтому пустую строку считаем отсутствием значения, а не нулём.
+function toFiniteNumber(raw: unknown) {
+  if (typeof raw === "string" && raw.trim() === "") {
+    return null;
+  }
+
   const value = Number(raw);
 
-  if (!Number.isFinite(value)) {
+  return Number.isFinite(value) ? value : null;
+}
+
+function clampInt(raw: unknown, min: number, max: number, fallback: number) {
+  const value = toFiniteNumber(raw);
+
+  if (value === null) {
     return fallback;
   }
 
@@ -29,9 +40,9 @@ function clampInt(raw: unknown, min: number, max: number, fallback: number) {
 }
 
 function clampFloat(raw: unknown, min: number, max: number, fallback: number) {
-  const value = Number(raw);
+  const value = toFiniteNumber(raw);
 
-  if (!Number.isFinite(value)) {
+  if (value === null) {
     return fallback;
   }
 
