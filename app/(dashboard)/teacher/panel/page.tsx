@@ -1,5 +1,5 @@
 import { UserRole } from "@prisma/client";
-import { DeveloperPanel, type DeveloperPanelTab } from "@/components/developer-panel";
+import { DeveloperPanel } from "@/components/developer-panel";
 import { ShbzPageHeader } from "@/components/shbz-page-header";
 import { requireUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
@@ -11,31 +11,8 @@ export const dynamic = "force-dynamic";
 
 const STORAGE_WARN_BYTES = 512 * 1024 * 1024;
 
-type DeveloperPageProps = {
-  searchParams: Promise<{
-    saved?: string;
-    error?: string;
-    ai?: string;
-    aiInfo?: string;
-    retention?: string;
-    retentionFiles?: string;
-    unfrozen?: string;
-    done?: string;
-    broadcast?: string;
-  }>;
-};
-
-function resolveInitialTab(params: Awaited<DeveloperPageProps["searchParams"]>): DeveloperPanelTab {
-  if (params.saved || params.error === "save") return "settings";
-  if (params.broadcast !== undefined || params.error === "invalid") return "broadcast";
-  if (params.ai || params.retention !== undefined || params.unfrozen !== undefined || params.done || params.error)
-    return "actions";
-  return "status";
-}
-
-export default async function DeveloperPage({ searchParams }: DeveloperPageProps) {
+export default async function DeveloperPage() {
   await requireUser(UserRole.DEVELOPER);
-  const params = await searchParams;
   const settings = await getSiteSettingsUncached();
 
   const dayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
@@ -57,29 +34,6 @@ export default async function DeveloperPage({ searchParams }: DeveloperPageProps
   const filesSizeLabel = formatFileSize(filesSizeBytes);
   const lastRetentionLabel = (lastRetentionRaw ? formatDateTime(lastRetentionRaw) : null) ?? "ещё не выполнялся";
   const budgetBusy = checksLastDay >= settings.aiDailyLimit * 0.8;
-
-  const banners: Array<{ tone: "success" | "error"; text: string }> = [];
-
-  if (params.saved) banners.push({ tone: "success", text: "Настройки сохранены и применены." });
-  if (params.error === "save")
-    banners.push({ tone: "error", text: "Не удалось сохранить настройки. Применена ли миграция SiteSetting?" });
-  if (params.error === "invalid") banners.push({ tone: "error", text: "Проверьте заполнение формы." });
-  if (params.error && !["save", "invalid"].includes(params.error))
-    banners.push({ tone: "error", text: "Действие не выполнено — подробности в логах сервера." });
-  if (params.ai === "ok") banners.push({ tone: "success", text: `Модель отвечает: ${params.aiInfo ?? ""}` });
-  if (params.ai === "fail") banners.push({ tone: "error", text: `Модель недоступна: ${params.aiInfo ?? ""}` });
-  if (params.ai === "off") banners.push({ tone: "error", text: "Автопроверка выключена или не настроен ключ/модель." });
-  if (params.retention !== undefined)
-    banners.push({
-      tone: "success",
-      text: `Автоудаление выполнено: снято ссылок на фото — ${params.retention}, удалено файлов — ${params.retentionFiles ?? 0}.`
-    });
-  if (params.unfrozen !== undefined)
-    banners.push({ tone: "success", text: `Зависших проверок снято: ${params.unfrozen}.` });
-  if (params.done === "budget") banners.push({ tone: "success", text: "Дневной бюджет автопроверки сброшен." });
-  if (params.done === "caches") banners.push({ tone: "success", text: "Кэши платформы сброшены." });
-  if (params.broadcast !== undefined)
-    banners.push({ tone: "success", text: `Уведомление отправлено ученикам: ${params.broadcast}.` });
 
   return (
     <div>
@@ -112,22 +66,7 @@ export default async function DeveloperPage({ searchParams }: DeveloperPageProps
         }
       />
 
-      {banners.length > 0 ? (
-        <div className="mb-6 space-y-3">
-          {banners.map((banner, index) => (
-            <div
-              key={index}
-              className={`${banner.tone === "success" ? "shbz-notice-success" : "shbz-notice-error"} ui-fade-slide px-5 py-4 text-sm font-medium`}
-              aria-live="polite"
-            >
-              {banner.text}
-            </div>
-          ))}
-        </div>
-      ) : null}
-
       <DeveloperPanel
-        initialTab={resolveInitialTab(params)}
         stats={{
           queueLength,
           checksLastDay,

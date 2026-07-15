@@ -1,7 +1,6 @@
 "use server";
 
 import { SolutionCheckStatus, UserRole } from "@prisma/client";
-import { redirect } from "next/navigation";
 import { requireUser } from "@/lib/auth";
 import { pruneExpiredHomeworkPhotos } from "@/lib/homework-photo-retention";
 import { logErrorEvent, logInfoEvent } from "@/lib/logger";
@@ -18,42 +17,44 @@ import {
 } from "@/lib/site-settings";
 import { getAiCheckConfig } from "@/lib/solution-check";
 
-const PANEL_PATH = "/developer/panel";
 const STALE_CHECK_UNFREEZE_MS = 15 * 60_000;
 
-export async function saveSiteSettingsAction(formData: FormData) {
+// Результат действия дев-панели: показывается на клиенте без перезагрузки страницы.
+type ActionResult = { ok: boolean; message: string };
+
+export async function saveSiteSettingsAction(formData: FormData): Promise<ActionResult> {
   const user = await requireUser(UserRole.DEVELOPER);
   const values = parseSiteSettingsForm(formData);
-  let failed = false;
 
   try {
     await saveSiteSettings(values);
     logInfoEvent("site_settings.updated", { userId: user.id });
+    return { ok: true, message: "Настройки сохранены и применены — подействуют в течение 15 секунд." };
   } catch (error) {
-    failed = true;
     logErrorEvent(
       "site_settings.update_failed",
       { userId: user.id },
       error instanceof Error ? error : undefined,
       "Failed to save site settings."
     );
+    return { ok: false, message: "Не удалось сохранить настройки. Применена ли миграция SiteSetting?" };
   }
-
-  redirect(failed ? `${PANEL_PATH}?error=save` : `${PANEL_PATH}?saved=1`);
 }
 
-export async function testAiConnectionAction() {
+export async function testAiConnectionAction(
+  _prevState: ActionResult | null,
+  _formData: FormData
+): Promise<ActionResult> {
   await requireUser(UserRole.DEVELOPER);
   const settings = await getSiteSettingsUncached();
   const config = settings.aiEnabled ? getAiCheckConfig(settings) : null;
 
   if (!config) {
-    redirect(`${PANEL_PATH}?ai=off`);
+    return { ok: false, message: "Автопроверка выключена или не настроен ключ/модель." };
   }
 
   const isReasoning = /(^|\/)(gpt-5|o\d)/i.test(config.model);
   const startedAt = Date.now();
-  let query: string;
 
   try {
     const controller = new AbortController();
@@ -75,32 +76,35 @@ export async function testAiConnectionAction() {
     const elapsedMs = Date.now() - startedAt;
 
     if (response.ok) {
-      query = `ai=ok&aiInfo=${encodeURIComponent(`${config.model} · ${elapsedMs} мс`)}`;
-    } else {
-      const text = (await response.text().catch(() => "")).slice(0, 140);
-      query = `ai=fail&aiInfo=${encodeURIComponent(`HTTP ${response.status} ${text}`.trim())}`;
+      return { ok: true, message: `Модель отвечает: ${config.model} · ${elapsedMs} мс.` };
     }
+
+    const text = (await response.text().catch(() => "")).slice(0, 140);
+    return { ok: false, message: `Модель недоступна: HTTP ${response.status} ${text}`.trim() + "." };
   } catch (error) {
     const message = error instanceof Error && error.name === "AbortError"
       ? "таймаут 20 секунд"
       : error instanceof Error
         ? error.message.slice(0, 140)
         : "неизвестная ошибка";
-    query = `ai=fail&aiInfo=${encodeURIComponent(message)}`;
+    return { ok: false, message: `Модель недоступна: ${message}.` };
   }
-
-  redirect(`${PANEL_PATH}?${query}`);
 }
 
-export async function runRetentionNowAction() {
+export async function runRetentionNowAction(
+  _prevState: ActionResult | null,
+  _formData: FormData
+): Promise<ActionResult> {
   const user = await requireUser(UserRole.DEVELOPER);
-  let query = "error=retention";
 
   try {
     const result = await pruneExpiredHomeworkPhotos();
     await setInternalSettingValue("internal.retentionLastRunAt", new Date().toISOString());
     logInfoEvent("site_settings.retention_manual_run", { userId: user.id, ...result });
-    query = `retention=${result.submissionPhotos + result.checkPhotos}&retentionFiles=${result.files}`;
+    return {
+      ok: true,
+      message: `Автоудаление выполнено: снято ссылок на фото — ${result.submissionPhotos + result.checkPhotos}, удалено файлов — ${result.files}.`
+    };
   } catch (error) {
     logErrorEvent(
       "site_settings.retention_manual_failed",
@@ -108,28 +112,30 @@ export async function runRetentionNowAction() {
       error instanceof Error ? error : undefined,
       "Manual retention run failed."
     );
+    return { ok: false, message: "Автоудаление не выполнено — подробности в логах сервера." };
   }
-
-  redirect(`${PANEL_PATH}?${query}`);
 }
 
-export async function resetAiDailyBudgetAction() {
+export async function resetAiDailyBudgetAction(
+  _prevState: ActionResult | null,
+  _formData: FormData
+): Promise<ActionResult> {
   const user = await requireUser(UserRole.DEVELOPER);
-  let failed = false;
 
   try {
     await resetPersistentRateLimit("api:homework-checks:global", "global");
     logInfoEvent("site_settings.ai_budget_reset", { userId: user.id });
+    return { ok: true, message: "Дневной бюджет автопроверки сброшен." };
   } catch {
-    failed = true;
+    return { ok: false, message: "Не удалось сбросить бюджет — подробности в логах сервера." };
   }
-
-  redirect(failed ? `${PANEL_PATH}?error=budget` : `${PANEL_PATH}?done=budget`);
 }
 
-export async function unfreezeChecksAction() {
+export async function unfreezeChecksAction(
+  _prevState: ActionResult | null,
+  _formData: FormData
+): Promise<ActionResult> {
   const user = await requireUser(UserRole.DEVELOPER);
-  let query = "error=unfreeze";
 
   try {
     const threshold = new Date(Date.now() - STALE_CHECK_UNFREEZE_MS);
@@ -146,7 +152,7 @@ export async function unfreezeChecksAction() {
       }
     });
     logInfoEvent("site_settings.checks_unfrozen", { userId: user.id, count: result.count });
-    query = `unfrozen=${result.count}`;
+    return { ok: true, message: `Зависших проверок снято: ${result.count}.` };
   } catch (error) {
     logErrorEvent(
       "site_settings.unfreeze_failed",
@@ -154,12 +160,14 @@ export async function unfreezeChecksAction() {
       error instanceof Error ? error : undefined,
       "Failed to unfreeze stale checks."
     );
+    return { ok: false, message: "Не удалось снять зависшие проверки — подробности в логах сервера." };
   }
-
-  redirect(`${PANEL_PATH}?${query}`);
 }
 
-export async function flushCachesAction() {
+export async function flushCachesAction(
+  _prevState: ActionResult | null,
+  _formData: FormData
+): Promise<ActionResult> {
   const user = await requireUser(UserRole.DEVELOPER);
 
   try {
@@ -170,10 +178,10 @@ export async function flushCachesAction() {
 
   invalidateSiteSettingsCache();
   logInfoEvent("site_settings.caches_flushed", { userId: user.id });
-  redirect(`${PANEL_PATH}?done=caches`);
+  return { ok: true, message: "Кэши платформы сброшены." };
 }
 
-export async function broadcastNotificationAction(formData: FormData) {
+export async function broadcastNotificationAction(formData: FormData): Promise<ActionResult> {
   const developer = await requireUser(UserRole.DEVELOPER);
   const title = String(formData.get("title") ?? "").trim().slice(0, 120);
   const body = String(formData.get("body") ?? "").trim().slice(0, 300);
@@ -184,7 +192,7 @@ export async function broadcastNotificationAction(formData: FormData) {
     .filter(Boolean);
 
   if (!title || (!toAll && selectedIds.length === 0)) {
-    redirect(`${PANEL_PATH}?error=invalid`);
+    return { ok: false, message: "Заполните заголовок и выберите получателей." };
   }
 
   // Отправляем только реальным ученикам: выбранные id перепроверяются по роли.
@@ -211,5 +219,5 @@ export async function broadcastNotificationAction(formData: FormData) {
     recipients: students.length,
     toAll
   });
-  redirect(`${PANEL_PATH}?broadcast=${students.length}`);
+  return { ok: true, message: `Уведомление отправлено ученикам: ${students.length}.` };
 }

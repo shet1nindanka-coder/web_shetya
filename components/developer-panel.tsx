@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { useFormStatus } from "react-dom";
+import { useRouter } from "next/navigation";
+import { useActionState, useRef, useState, useTransition } from "react";
 import {
   broadcastNotificationAction,
   flushCachesAction,
@@ -26,8 +26,9 @@ export type DeveloperPanelStats = {
   lastRetentionLabel: string;
 };
 
+type ActionResult = { ok: boolean; message: string };
+
 type DeveloperPanelProps = {
-  initialTab: DeveloperPanelTab;
   stats: DeveloperPanelStats;
   settings: SiteSettings;
   students: Array<{ id: string; name: string }>;
@@ -87,40 +88,275 @@ function FieldLabel({ children, hint }: { children: React.ReactNode; hint?: stri
   );
 }
 
-function ActionButton({ label, hint }: { label: string; hint: string }) {
-  const { pending } = useFormStatus();
+function resultColor(result: ActionResult | null) {
+  if (!result) return "var(--shbz-text-muted)";
+  return result.ok ? "var(--shbz-green-text)" : "var(--shbz-danger-text)";
+}
+
+/** Кнопка сервисного действия: вызывает server action без перезагрузки, результат — под кнопкой. */
+function ActionForm({
+  action,
+  label,
+  hint
+}: {
+  action: (prevState: ActionResult | null, formData: FormData) => Promise<ActionResult>;
+  label: string;
+  hint: string;
+}) {
+  const router = useRouter();
+  const [state, formAction, pending] = useActionState(
+    async (prevState: ActionResult | null, formData: FormData) => {
+      const result = await action(prevState, formData);
+      // Обновляем серверные данные (статус, чипы) фоном, без перезагрузки страницы.
+      router.refresh();
+      return result;
+    },
+    null
+  );
 
   return (
-    <div>
+    <form action={formAction}>
       <button type="submit" disabled={pending} className="shbz-btn-outline w-full">
         <span className="inline-flex items-center justify-center gap-2">
           {pending ? <span className="shbz-spinner" aria-hidden /> : null}
           {pending ? "Выполняем…" : label}
         </span>
       </button>
-      <p aria-live="polite" className="mt-2 text-xs leading-5" style={{ color: "var(--shbz-text-muted)" }}>
-        {pending ? "Действие выполняется, не закрывайте страницу." : hint}
+      <p
+        aria-live="polite"
+        className={`mt-2 text-xs leading-5 ${state && !pending ? "ui-fade-slide" : ""}`}
+        style={{ color: pending ? "var(--shbz-text-muted)" : resultColor(state) }}
+      >
+        {pending ? "Действие выполняется…" : state ? state.message : hint}
       </p>
-    </div>
+    </form>
   );
 }
 
-function SubmitPrimaryButton({ label, pendingLabel }: { label: string; pendingLabel: string }) {
-  const { pending } = useFormStatus();
+/** Рассылка: отправка без перезагрузки, при успехе форма и выбранные ученики очищаются. */
+function BroadcastForm({ students }: { students: Array<{ id: string; name: string }> }) {
+  const [pending, startTransition] = useTransition();
+  const [result, setResult] = useState<ActionResult | null>(null);
+  const [pickerKey, setPickerKey] = useState(0);
+  const formRef = useRef<HTMLFormElement | null>(null);
+
+  const onSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const formData = new FormData(event.currentTarget);
+
+    startTransition(async () => {
+      const response = await broadcastNotificationAction(formData);
+      setResult(response);
+
+      if (response.ok) {
+        formRef.current?.reset();
+        setPickerKey((key) => key + 1);
+      }
+    });
+  };
 
   return (
-    <button type="submit" disabled={pending} className="shbz-btn-primary px-[26px] py-[13px] text-[15px]">
-      <span className="inline-flex items-center justify-center gap-2.5">
-        {pending ? <span className="shbz-spinner" aria-hidden /> : null}
-        {pending ? pendingLabel : label}
-      </span>
-    </button>
+    <form ref={formRef} onSubmit={onSubmit} className="max-w-2xl space-y-5">
+      <label className="block">
+        <FieldLabel>Заголовок</FieldLabel>
+        <input
+          type="text"
+          name="title"
+          required
+          maxLength={120}
+          placeholder="Например: завтра занятия не будет"
+          className="shbz-input"
+        />
+      </label>
+      <label className="block">
+        <FieldLabel hint="Необязательно">Текст</FieldLabel>
+        <input type="text" name="body" maxLength={300} placeholder="Подробности" className="shbz-input" />
+      </label>
+
+      <div>
+        <FieldLabel hint="Всем сразу или конкретным ученикам">Получатели</FieldLabel>
+        <DeveloperBroadcastRecipients key={pickerKey} students={students} />
+      </div>
+
+      <div className="flex flex-wrap items-center gap-3.5">
+        <button type="submit" disabled={pending} className="shbz-btn-primary px-[26px] py-[13px] text-[15px]">
+          <span className="inline-flex items-center justify-center gap-2.5">
+            {pending ? <span className="shbz-spinner" aria-hidden /> : null}
+            {pending ? "Отправляем…" : "Отправить уведомление"}
+          </span>
+        </button>
+        {result && !pending ? (
+          <p aria-live="polite" className="ui-fade-slide text-[13px] font-medium" style={{ color: resultColor(result) }}>
+            {result.message}
+          </p>
+        ) : null}
+      </div>
+    </form>
   );
 }
 
-export function DeveloperPanel({ initialTab, stats, settings, students }: DeveloperPanelProps) {
-  const [tab, setTab] = useState<DeveloperPanelTab>(initialTab);
+/** Настройки: сохранение без перезагрузки, значения в форме не сбрасываются. */
+function SettingsForm({ settings }: { settings: SiteSettings }) {
+  const router = useRouter();
+  const [pending, startTransition] = useTransition();
+  const [result, setResult] = useState<ActionResult | null>(null);
   const [aiOn, setAiOn] = useState(settings.aiEnabled);
+
+  const onSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    const formData = new FormData(event.currentTarget);
+
+    startTransition(async () => {
+      const response = await saveSiteSettingsAction(formData);
+      setResult(response);
+
+      if (response.ok) {
+        router.refresh();
+      }
+    });
+  };
+
+  return (
+    <form onSubmit={onSubmit}>
+      <p className="shbz-kicker mb-4">Автопроверка ИИ</p>
+
+      <label className="shbz-switch">
+        <input
+          type="checkbox"
+          name="aiEnabled"
+          defaultChecked={settings.aiEnabled}
+          onChange={(event) => setAiOn(event.target.checked)}
+        />
+        <span className="shbz-switch-track" />
+        <span className="shbz-switch-knob" />
+        <span>
+          <span className="block text-[14px] font-semibold" style={{ color: "var(--shbz-text-strong)" }}>
+            Автопроверка ИИ
+          </span>
+          <span className="block text-xs" style={{ color: "var(--shbz-text-muted)" }}>
+            {aiOn
+              ? "включена — решения учеников проверяются автоматически"
+              : "выключена — все решения ждут ручной проверки"}
+          </span>
+        </span>
+      </label>
+
+      <div className="mt-[18px] grid gap-5" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))" }}>
+        <label className="flex flex-col">
+          <FieldLabel hint="Например gpt-5.6-sol / gpt-5.6-terra. Ключ API остаётся в .env">Модель</FieldLabel>
+          <input type="text" name="aiModel" defaultValue={settings.aiModel} maxLength={100} className="shbz-input mt-auto" />
+        </label>
+        <label className="flex flex-col">
+          <FieldLabel hint="Больше — точнее, но дольше и дороже">Reasoning effort</FieldLabel>
+          <select name="aiReasoningEffort" defaultValue={settings.aiReasoningEffort} className="shbz-input mt-auto">
+            <option value="low">low — быстрый</option>
+            <option value="medium">medium — сбалансированный</option>
+            <option value="high">high — максимальная точность</option>
+          </select>
+        </label>
+        <label className="flex flex-col">
+          <FieldLabel hint="Ниже порога — на ручную проверку (0–1)">Порог уверенности</FieldLabel>
+          <input
+            type="number"
+            name="aiMinConfidence"
+            defaultValue={settings.aiMinConfidence}
+            min={0}
+            max={1}
+            step={0.05}
+            className="shbz-input mt-auto"
+          />
+        </label>
+        <label className="flex flex-col">
+          <FieldLabel hint="Общий предохранитель расходов">Запусков в день, всего</FieldLabel>
+          <input
+            type="number"
+            name="aiDailyLimit"
+            defaultValue={settings.aiDailyLimit}
+            min={1}
+            max={100000}
+            step={1}
+            className="shbz-input mt-auto"
+          />
+        </label>
+        <label className="flex flex-col">
+          <FieldLabel hint="Лимит на одного ученика">Запусков в час на ученика</FieldLabel>
+          <input
+            type="number"
+            name="aiPerStudentHourlyLimit"
+            defaultValue={settings.aiPerStudentHourlyLimit}
+            min={1}
+            max={1000}
+            step={1}
+            className="shbz-input mt-auto"
+          />
+        </label>
+      </div>
+
+      <p className="shbz-kicker mb-4 mt-8">Файлы и хранение</p>
+      <div className="grid gap-5" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))" }}>
+        <label className="flex flex-col">
+          <FieldLabel hint="0 — не удалять автоматически">Автоудаление фото ДЗ, дней</FieldLabel>
+          <input
+            type="number"
+            name="photoRetentionDays"
+            defaultValue={settings.photoRetentionDays}
+            min={0}
+            max={3650}
+            step={1}
+            className="shbz-input mt-auto"
+          />
+        </label>
+        <label className="flex flex-col">
+          <FieldLabel hint="Действует на новые загрузки">Максимум фото на одно ДЗ</FieldLabel>
+          <input
+            type="number"
+            name="maxPhotosPerAssignment"
+            defaultValue={settings.maxPhotosPerAssignment}
+            min={1}
+            max={30}
+            step={1}
+            className="shbz-input mt-auto"
+          />
+        </label>
+        <label className="flex flex-col">
+          <FieldLabel hint="Старые удаляются со снапшотами фото">Хранить завершённых проверок на ученика</FieldLabel>
+          <input
+            type="number"
+            name="completedChecksKept"
+            defaultValue={settings.completedChecksKept}
+            min={1}
+            max={500}
+            step={1}
+            className="shbz-input mt-auto"
+          />
+        </label>
+      </div>
+
+      <div className="mt-[26px] flex flex-wrap items-center gap-3.5">
+        <button type="submit" disabled={pending} className="shbz-btn-primary px-[26px] py-[13px] text-[15px]">
+          <span className="inline-flex items-center justify-center gap-2.5">
+            {pending ? <span className="shbz-spinner" aria-hidden /> : null}
+            {pending ? "Сохраняем…" : "Сохранить настройки"}
+          </span>
+        </button>
+        <p
+          aria-live="polite"
+          className={`text-[13px] ${result && !pending ? "ui-fade-slide font-medium" : ""}`}
+          style={{ color: pending ? "var(--shbz-text-muted)" : resultColor(result) }}
+        >
+          {pending
+            ? "Сохраняем настройки…"
+            : result
+              ? result.message
+              : "Значения перекрывают .env и применяются в течение 15 секунд без рестарта."}
+        </p>
+      </div>
+    </form>
+  );
+}
+
+export function DeveloperPanel({ stats, settings, students }: DeveloperPanelProps) {
+  const [tab, setTab] = useState<DeveloperPanelTab>("status");
 
   const budgetPercent = Math.min(100, Math.round((stats.checksLastDay / Math.max(1, settings.aiDailyLimit)) * 100));
 
@@ -188,178 +424,44 @@ export function DeveloperPanel({ initialTab, stats, settings, students }: Develo
         {tab === "actions" ? (
           <div className="shbz-card shbz-section-pad ui-fade-slide">
             <div className="grid gap-5 sm:grid-cols-2 xl:grid-cols-3">
-              <form action={testAiConnectionAction}>
-                <ActionButton label="Проверить подключение к ИИ" hint="Тестовый запрос к модели: доступность и задержка." />
-              </form>
-              <form action={runRetentionNowAction}>
-                <ActionButton label="Автоудаление фото сейчас" hint="Не ждать суточного таймера, удалить просроченное." />
-              </form>
-              <form action={resetAiDailyBudgetAction}>
-                <ActionButton label="Сбросить дневной бюджет ИИ" hint="Обнулить счётчик запусков за сегодня." />
-              </form>
-              <form action={unfreezeChecksAction}>
-                <ActionButton label="Разморозить зависшие проверки" hint="Пометить FAILED все проверки старше 15 минут." />
-              </form>
-              <form action={flushCachesAction}>
-                <ActionButton label="Сбросить кэши платформы" hint="Принудительно обновить данные на всех страницах." />
-              </form>
+              <ActionForm
+                action={testAiConnectionAction}
+                label="Проверить подключение к ИИ"
+                hint="Тестовый запрос к модели: доступность и задержка."
+              />
+              <ActionForm
+                action={runRetentionNowAction}
+                label="Автоудаление фото сейчас"
+                hint="Не ждать суточного таймера, удалить просроченное."
+              />
+              <ActionForm
+                action={resetAiDailyBudgetAction}
+                label="Сбросить дневной бюджет ИИ"
+                hint="Обнулить счётчик запусков за сегодня."
+              />
+              <ActionForm
+                action={unfreezeChecksAction}
+                label="Разморозить зависшие проверки"
+                hint="Пометить FAILED все проверки старше 15 минут."
+              />
+              <ActionForm
+                action={flushCachesAction}
+                label="Сбросить кэши платформы"
+                hint="Принудительно обновить данные на всех страницах."
+              />
             </div>
           </div>
         ) : null}
 
         {tab === "broadcast" ? (
           <div className="shbz-card shbz-section-pad ui-fade-slide">
-            <form action={broadcastNotificationAction} className="max-w-2xl space-y-5">
-              <label className="block">
-                <FieldLabel>Заголовок</FieldLabel>
-                <input
-                  type="text"
-                  name="title"
-                  required
-                  maxLength={120}
-                  placeholder="Например: завтра занятия не будет"
-                  className="shbz-input"
-                />
-              </label>
-              <label className="block">
-                <FieldLabel hint="Необязательно">Текст</FieldLabel>
-                <input type="text" name="body" maxLength={300} placeholder="Подробности" className="shbz-input" />
-              </label>
-
-              <div>
-                <FieldLabel hint="Всем сразу или конкретным ученикам">Получатели</FieldLabel>
-                <DeveloperBroadcastRecipients students={students} />
-              </div>
-
-              <SubmitPrimaryButton label="Отправить уведомление" pendingLabel="Отправляем…" />
-            </form>
+            <BroadcastForm students={students} />
           </div>
         ) : null}
 
         {tab === "settings" ? (
           <div className="shbz-card shbz-section-pad ui-fade-slide">
-            <form action={saveSiteSettingsAction}>
-              <p className="shbz-kicker mb-4">Автопроверка ИИ</p>
-
-              <label className="shbz-switch">
-                <input
-                  type="checkbox"
-                  name="aiEnabled"
-                  defaultChecked={settings.aiEnabled}
-                  onChange={(event) => setAiOn(event.target.checked)}
-                />
-                <span className="shbz-switch-track" />
-                <span className="shbz-switch-knob" />
-                <span>
-                  <span className="block text-[14px] font-semibold" style={{ color: "var(--shbz-text-strong)" }}>
-                    Автопроверка ИИ
-                  </span>
-                  <span className="block text-xs" style={{ color: "var(--shbz-text-muted)" }}>
-                    {aiOn
-                      ? "включена — решения учеников проверяются автоматически"
-                      : "выключена — все решения ждут ручной проверки"}
-                  </span>
-                </span>
-              </label>
-
-              <div className="mt-[18px] grid gap-5" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))" }}>
-                <label className="flex flex-col">
-                  <FieldLabel hint="Например gpt-5.6-sol / gpt-5.6-terra. Ключ API остаётся в .env">Модель</FieldLabel>
-                  <input type="text" name="aiModel" defaultValue={settings.aiModel} maxLength={100} className="shbz-input mt-auto" />
-                </label>
-                <label className="flex flex-col">
-                  <FieldLabel hint="Больше — точнее, но дольше и дороже">Reasoning effort</FieldLabel>
-                  <select name="aiReasoningEffort" defaultValue={settings.aiReasoningEffort} className="shbz-input mt-auto">
-                    <option value="low">low — быстрый</option>
-                    <option value="medium">medium — сбалансированный</option>
-                    <option value="high">high — максимальная точность</option>
-                  </select>
-                </label>
-                <label className="flex flex-col">
-                  <FieldLabel hint="Ниже порога — на ручную проверку (0–1)">Порог уверенности</FieldLabel>
-                  <input
-                    type="number"
-                    name="aiMinConfidence"
-                    defaultValue={settings.aiMinConfidence}
-                    min={0}
-                    max={1}
-                    step={0.05}
-                    className="shbz-input mt-auto"
-                  />
-                </label>
-                <label className="flex flex-col">
-                  <FieldLabel hint="Общий предохранитель расходов">Запусков в день, всего</FieldLabel>
-                  <input
-                    type="number"
-                    name="aiDailyLimit"
-                    defaultValue={settings.aiDailyLimit}
-                    min={1}
-                    max={100000}
-                    step={1}
-                    className="shbz-input mt-auto"
-                  />
-                </label>
-                <label className="flex flex-col">
-                  <FieldLabel hint="Лимит на одного ученика">Запусков в час на ученика</FieldLabel>
-                  <input
-                    type="number"
-                    name="aiPerStudentHourlyLimit"
-                    defaultValue={settings.aiPerStudentHourlyLimit}
-                    min={1}
-                    max={1000}
-                    step={1}
-                    className="shbz-input mt-auto"
-                  />
-                </label>
-              </div>
-
-              <p className="shbz-kicker mb-4 mt-8">Файлы и хранение</p>
-              <div className="grid gap-5" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))" }}>
-                <label className="flex flex-col">
-                  <FieldLabel hint="0 — не удалять автоматически">Автоудаление фото ДЗ, дней</FieldLabel>
-                  <input
-                    type="number"
-                    name="photoRetentionDays"
-                    defaultValue={settings.photoRetentionDays}
-                    min={0}
-                    max={3650}
-                    step={1}
-                    className="shbz-input mt-auto"
-                  />
-                </label>
-                <label className="flex flex-col">
-                  <FieldLabel hint="Действует на новые загрузки">Максимум фото на одно ДЗ</FieldLabel>
-                  <input
-                    type="number"
-                    name="maxPhotosPerAssignment"
-                    defaultValue={settings.maxPhotosPerAssignment}
-                    min={1}
-                    max={30}
-                    step={1}
-                    className="shbz-input mt-auto"
-                  />
-                </label>
-                <label className="flex flex-col">
-                  <FieldLabel hint="Старые удаляются со снапшотами фото">Хранить завершённых проверок на ученика</FieldLabel>
-                  <input
-                    type="number"
-                    name="completedChecksKept"
-                    defaultValue={settings.completedChecksKept}
-                    min={1}
-                    max={500}
-                    step={1}
-                    className="shbz-input mt-auto"
-                  />
-                </label>
-              </div>
-
-              <div className="mt-[26px] flex flex-wrap items-center gap-3.5">
-                <SubmitPrimaryButton label="Сохранить настройки" pendingLabel="Сохраняем…" />
-                <p className="text-[13px]" style={{ color: "var(--shbz-text-muted)" }}>
-                  Значения перекрывают .env и применяются в течение 15 секунд без рестарта.
-                </p>
-              </div>
-            </form>
+            <SettingsForm settings={settings} />
           </div>
         ) : null}
       </div>
