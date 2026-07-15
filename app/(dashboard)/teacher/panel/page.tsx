@@ -8,6 +8,7 @@ import {
   testAiConnectionAction,
   unfreezeChecksAction
 } from "@/actions/developer";
+import { DeveloperBroadcastRecipients } from "@/components/developer-broadcast-recipients";
 import { SectionCard } from "@/components/section-card";
 import { requireUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
@@ -186,30 +187,8 @@ export default async function DeveloperPage({ searchParams }: DeveloperPageProps
         </label>
 
         <div>
-          <FieldLabel hint="Либо всем сразу, либо отметьте конкретных получателей">Получатели</FieldLabel>
-          <label className="mb-2 flex items-center gap-2.5 text-sm font-semibold text-[var(--theme-text-strong)]">
-            <input type="checkbox" name="toAll" defaultChecked className="h-4 w-4" />
-            Всем ученикам ({users.length})
-          </label>
-          {users.length > 0 ? (
-            <div
-              className="grid max-h-56 gap-1.5 overflow-y-auto rounded-[12px] border border-[var(--shbz-soft-border)] p-2.5 sm:grid-cols-2 xl:grid-cols-3"
-              style={{ background: "var(--shbz-soft-bg)" }}
-            >
-              {users.map((student) => (
-                <label
-                  key={student.id}
-                  className="flex items-center gap-2 rounded-[8px] px-2 py-1.5 text-sm text-[var(--theme-text-default)]"
-                >
-                  <input type="checkbox" name="recipients" value={student.id} className="h-4 w-4 shrink-0" />
-                  <span className="truncate">{student.name}</span>
-                </label>
-              ))}
-            </div>
-          ) : null}
-          <p className="ui-copy-muted mt-1.5 text-xs leading-5">
-            Если галочка «всем ученикам» включена, отдельный выбор игнорируется.
-          </p>
+          <FieldLabel hint="Всем сразу или конкретным ученикам">Получатели</FieldLabel>
+          <DeveloperBroadcastRecipients students={users.map((student) => ({ id: student.id, name: student.name }))} />
         </div>
 
         <button type="submit" className="shbz-btn-primary px-5 py-2.5 text-[14px]">
