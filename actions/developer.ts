@@ -5,6 +5,7 @@ import { requireUser } from "@/lib/auth";
 import { pruneExpiredHomeworkPhotos } from "@/lib/homework-photo-retention";
 import { logErrorEvent, logInfoEvent } from "@/lib/logger";
 import { createNotification } from "@/lib/notifications";
+import { tagUntaggedNumbers } from "@/lib/number-tagging";
 import { resetPersistentRateLimit } from "@/lib/persistent-rate-limit";
 import { revalidateAllPlatformData } from "@/lib/platform-data-cache";
 import { prisma } from "@/lib/prisma";
@@ -179,6 +180,47 @@ export async function flushCachesAction(
   invalidateSiteSettingsCache();
   logInfoEvent("site_settings.caches_flushed", { userId: user.id });
   return { ok: true, message: "Кэши платформы сброшены." };
+}
+
+export async function tagNumbersDifficultyAction(
+  _prevState: ActionResult | null,
+  _formData: FormData
+): Promise<ActionResult> {
+  const user = await requireUser(UserRole.DEVELOPER);
+  const settings = await getSiteSettingsUncached();
+
+  if (!settings.aiEnabled) {
+    return { ok: false, message: "Автопроверка выключена — включите ИИ во вкладке «Настройки»." };
+  }
+
+  try {
+    const result = await tagUntaggedNumbers();
+    logInfoEvent("site_settings.numbers_tagged", { userId: user.id, ...result });
+
+    if (result.tagged === 0 && result.remaining === 0 && result.failed === 0) {
+      return {
+        ok: true,
+        message: result.skippedNoCondition
+          ? `Все номера с условием уже размечены. Без условия (пропущены): ${result.skippedNoCondition}.`
+          : "Все номера уже размечены."
+      };
+    }
+
+    const parts = [`Размечено: ${result.tagged}.`];
+    if (result.remaining > 0) parts.push(`Осталось: ${result.remaining} — нажмите ещё раз.`);
+    if (result.failed > 0) parts.push(`Не получилось: ${result.failed}.`);
+    if (result.skippedNoCondition > 0) parts.push(`Без условия (пропущены): ${result.skippedNoCondition}.`);
+
+    return { ok: result.tagged > 0 || result.failed === 0, message: parts.join(" ") };
+  } catch (error) {
+    logErrorEvent(
+      "site_settings.numbers_tagging_failed",
+      { userId: user.id },
+      error instanceof Error ? error : undefined,
+      "Number difficulty tagging run failed."
+    );
+    return { ok: false, message: "Разметка не выполнена — подробности в логах сервера." };
+  }
 }
 
 export async function broadcastNotificationAction(formData: FormData): Promise<ActionResult> {

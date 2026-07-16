@@ -155,6 +155,7 @@ model TopicHomeworkNumber {
   answerLatex        String?
   difficulty         Int?
   estimatedMinutes   Int?
+  difficultySource   String?
   usableInDiagnostic Boolean                    @default(false)
   topic              Topic                      @relation(fields: [topicId], references: [id], onDelete: Cascade)
   answerFile         StoredFile?                @relation("NumberAnswerFile", fields: [answerFileId], references: [id], onDelete: SetNull)

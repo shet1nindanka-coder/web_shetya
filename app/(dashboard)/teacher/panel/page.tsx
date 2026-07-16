@@ -16,7 +16,16 @@ export default async function DeveloperPage() {
   const settings = await getSiteSettingsUncached();
 
   const dayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
-  const [checksLastDay, studentsCount, topicsCount, filesAggregate, lastRetentionRaw, students] = await Promise.all([
+  const [
+    checksLastDay,
+    studentsCount,
+    topicsCount,
+    filesAggregate,
+    lastRetentionRaw,
+    students,
+    totalNumbersCount,
+    taggedNumbersCount
+  ] = await Promise.all([
     prisma.homeworkCheck.count({ where: { createdAt: { gte: dayAgo } } }).catch(() => 0),
     prisma.user.count({ where: { role: UserRole.STUDENT } }),
     prisma.topic.count(),
@@ -26,7 +35,9 @@ export default async function DeveloperPage() {
       where: { role: UserRole.STUDENT },
       select: { id: true, name: true },
       orderBy: { name: "asc" }
-    })
+    }),
+    prisma.topicHomeworkNumber.count(),
+    prisma.topicHomeworkNumber.count({ where: { difficulty: { not: null } } }).catch(() => 0)
   ]);
 
   const queueLength = getHomeworkCheckQueueLength();
@@ -68,7 +79,9 @@ export default async function DeveloperPage() {
           topicsCount,
           filesCount: filesAggregate._count._all,
           filesSizeLabel,
-          lastRetentionLabel
+          lastRetentionLabel,
+          taggedNumbersCount,
+          totalNumbersCount
         }}
         settings={settings}
         students={students}

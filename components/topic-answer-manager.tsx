@@ -21,6 +21,10 @@ type NumberAnswerCard = {
   isSavingAnswer: boolean;
   answerError: string | null;
   isDeletingAnswer: boolean;
+  difficulty: number | null;
+  difficultySource: string | null;
+  isSavingDifficulty: boolean;
+  difficultyError: string | null;
 };
 
 type TopicAnswerManagerProps = {
@@ -31,6 +35,8 @@ type TopicAnswerManagerProps = {
     number: number;
     conditionLatex: string | null;
     answerLatex: string | null;
+    difficulty: number | null;
+    difficultySource: string | null;
   }>;
 };
 
@@ -103,7 +109,11 @@ export function TopicAnswerManager({ topicId, initialNumber = null, numbers }: T
         draftAnswerLatex: number.answerLatex ?? "",
         isSavingAnswer: false,
         answerError: null,
-        isDeletingAnswer: false
+        isDeletingAnswer: false,
+        difficulty: number.difficulty,
+        difficultySource: number.difficultySource,
+        isSavingDifficulty: false,
+        difficultyError: null
       })),
     [numbers]
   );
@@ -472,6 +482,58 @@ export function TopicAnswerManager({ topicId, initialNumber = null, numbers }: T
     [updateItems]
   );
 
+  const saveDifficulty = useCallback(
+    async (homeworkNumberId: string, difficulty: number | null) => {
+      updateItems((current) =>
+        current.map((item) =>
+          item.id === homeworkNumberId ? { ...item, isSavingDifficulty: true, difficultyError: null } : item
+        )
+      );
+
+      try {
+        const response = await fetch("/api/teacher/number-difficulty", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ homeworkNumberId, difficulty })
+        });
+        const result = (await response.json().catch(() => null)) as
+          | { difficulty?: number | null; difficultySource?: string | null; error?: string }
+          | null;
+
+        if (!response.ok) {
+          throw new Error(result?.error || "Не удалось сохранить сложность.");
+        }
+
+        updateItems((current) =>
+          current.map((item) =>
+            item.id === homeworkNumberId
+              ? {
+                  ...item,
+                  difficulty: result?.difficulty ?? null,
+                  difficultySource: result?.difficultySource ?? null,
+                  isSavingDifficulty: false,
+                  difficultyError: null
+                }
+              : item
+          )
+        );
+      } catch (error) {
+        updateItems((current) =>
+          current.map((item) =>
+            item.id === homeworkNumberId
+              ? {
+                  ...item,
+                  isSavingDifficulty: false,
+                  difficultyError: error instanceof Error ? error.message : "Не удалось сохранить сложность."
+                }
+              : item
+          )
+        );
+      }
+    },
+    [updateItems]
+  );
+
   return (
     <div className="space-y-5">
       <div className="topic-answer-nav ui-toolbar-shell rounded-[16px] p-4 sm:rounded-[16px] sm:p-5">
@@ -593,6 +655,37 @@ export function TopicAnswerManager({ topicId, initialNumber = null, numbers }: T
                   </Badge>
                   <Badge className={cardStatus.className}>{cardStatus.label}</Badge>
                 </div>
+              </div>
+
+              <div className="mt-3.5 flex flex-wrap items-center gap-x-3 gap-y-1.5">
+                <span className="text-sm font-medium text-[var(--theme-text-default)]">Сложность</span>
+                <div style={{ width: 132 }}>
+                  <ShbzSelect
+                    size="xs"
+                    ariaLabel={`Сложность номера ${item.number}`}
+                    value={item.difficulty ? String(item.difficulty) : ""}
+                    disabled={item.isSavingDifficulty}
+                    placeholder="Не задана"
+                    onChange={(nextValue) =>
+                      void saveDifficulty(item.id, nextValue === "" ? null : Number(nextValue))
+                    }
+                    options={[
+                      { value: "", label: "Не задана" },
+                      ...Array.from({ length: 10 }, (_, index) => ({
+                        value: String(index + 1),
+                        label: `${index + 1} из 10`
+                      }))
+                    ]}
+                  />
+                </div>
+                {item.difficulty ? (
+                  <span className="ui-hint text-xs text-[var(--theme-text-muted)]">
+                    {item.difficultySource === "manual" ? "задана вручную" : "оценка ИИ"}
+                  </span>
+                ) : null}
+                {item.difficultyError ? (
+                  <span className="text-xs text-[var(--theme-danger-text,#d64550)]">{item.difficultyError}</span>
+                ) : null}
               </div>
 
               <div className="mt-4 space-y-5">

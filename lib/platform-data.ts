@@ -635,6 +635,9 @@ async function getTeacherTopicDetailUncached(topicId: string) {
             id: true,
             number: true,
             displayOrder: true,
+            difficulty: true,
+            estimatedMinutes: true,
+            difficultySource: true,
             ...(conditionLatexEnabled ? { conditionLatex: true } : {}),
             ...(answerLatexEnabled ? { answerLatex: true } : {})
           }

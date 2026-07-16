@@ -8,6 +8,7 @@ import {
   resetAiDailyBudgetAction,
   runRetentionNowAction,
   saveSiteSettingsAction,
+  tagNumbersDifficultyAction,
   testAiConnectionAction,
   unfreezeChecksAction
 } from "@/actions/developer";
@@ -25,6 +26,8 @@ export type DeveloperPanelStats = {
   filesCount: number;
   filesSizeLabel: string;
   lastRetentionLabel: string;
+  taggedNumbersCount: number;
+  totalNumbersCount: number;
 };
 
 type ActionResult = { ok: boolean; message: string };
@@ -421,6 +424,16 @@ export function DeveloperPanel({ stats, settings, students }: DeveloperPanelProp
               <StatBlock label="Учеников" value={String(stats.studentsCount)} />
               <StatBlock label="Тем" value={String(stats.topicsCount)} />
               <StatBlock
+                label="Сложность номеров"
+                value={
+                  <>
+                    {stats.taggedNumbersCount}{" "}
+                    <span style={{ color: "var(--shbz-kicker)" }}>/ {stats.totalNumbersCount}</span>
+                  </>
+                }
+                hint="размечено ИИ или вручную"
+              />
+              <StatBlock
                 label="Последнее автоудаление фото"
                 value={<span className="text-[16px]">{stats.lastRetentionLabel}</span>}
               />
@@ -440,6 +453,11 @@ export function DeveloperPanel({ stats, settings, students }: DeveloperPanelProp
                 action={runRetentionNowAction}
                 label="Автоудаление фото сейчас"
                 hint="Не ждать суточного таймера, удалить просроченное."
+              />
+              <ActionForm
+                action={tagNumbersDifficultyAction}
+                label="Разметить сложность номеров (ИИ)"
+                hint="До 100 неразмеченных номеров за запуск: сложность 1–10 и время решения. Ручные оценки не перезаписываются."
               />
               <ActionForm
                 action={resetAiDailyBudgetAction}

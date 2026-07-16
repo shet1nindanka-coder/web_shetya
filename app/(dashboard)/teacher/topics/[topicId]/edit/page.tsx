@@ -220,7 +220,9 @@ export default async function TeacherTopicPage({ params, searchParams }: Teacher
               id: number.id,
               number: number.number,
               conditionLatex: number.conditionLatex,
-              answerLatex: number.answerLatex
+              answerLatex: number.answerLatex,
+              difficulty: number.difficulty,
+              difficultySource: number.difficultySource
             }))}
           />
         </SectionCard>
