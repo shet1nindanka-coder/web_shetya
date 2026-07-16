@@ -42,13 +42,7 @@ export default async function DeveloperPage() {
         title="Панель разработчика"
         aside={
           <div className="flex flex-wrap gap-2 pb-1">
-            <span
-              className="shbz-chip shbz-chip-green"
-              style={{ display: "inline-flex", alignItems: "center", gap: "7px" }}
-            >
-              <span className="shbz-pulse-dot" />
-              Очередь: {queueLength}
-            </span>
+            <span className="shbz-chip shbz-chip-green">Очередь: {queueLength}</span>
             <span className={`shbz-chip ${budgetBusy ? "shbz-chip-yellow" : "shbz-chip-green"}`}>
               ИИ: {checksLastDay} / {settings.aiDailyLimit} за 24 ч
             </span>

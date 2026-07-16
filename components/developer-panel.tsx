@@ -12,7 +12,8 @@ import {
   unfreezeChecksAction
 } from "@/actions/developer";
 import { DeveloperBroadcastRecipients } from "@/components/developer-broadcast-recipients";
-import type { SiteSettings } from "@/lib/site-settings";
+import { ShbzSelect } from "@/components/shbz-select";
+import type { ReasoningEffort, SiteSettings } from "@/lib/site-settings";
 
 export type DeveloperPanelTab = "status" | "actions" | "broadcast" | "settings";
 
@@ -33,6 +34,12 @@ type DeveloperPanelProps = {
   settings: SiteSettings;
   students: Array<{ id: string; name: string }>;
 };
+
+const EFFORT_OPTIONS = [
+  { value: "low", label: "low — быстрый" },
+  { value: "medium", label: "medium — сбалансированный" },
+  { value: "high", label: "high — максимальная точность" }
+];
 
 const TABS: Array<{ key: DeveloperPanelTab; label: string }> = [
   { key: "status", label: "Статус" },
@@ -201,6 +208,7 @@ function SettingsForm({ settings }: { settings: SiteSettings }) {
   const [pending, startTransition] = useTransition();
   const [result, setResult] = useState<ActionResult | null>(null);
   const [aiOn, setAiOn] = useState(settings.aiEnabled);
+  const [effort, setEffort] = useState<ReasoningEffort>(settings.aiReasoningEffort);
 
   const onSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -246,14 +254,18 @@ function SettingsForm({ settings }: { settings: SiteSettings }) {
           <FieldLabel hint="Например gpt-5.6-sol / gpt-5.6-terra. Ключ API остаётся в .env">Модель</FieldLabel>
           <input type="text" name="aiModel" defaultValue={settings.aiModel} maxLength={100} className="shbz-input mt-auto" />
         </label>
-        <label className="flex flex-col">
+        <div className="flex flex-col">
           <FieldLabel hint="Больше — точнее, но дольше и дороже">Reasoning effort</FieldLabel>
-          <select name="aiReasoningEffort" defaultValue={settings.aiReasoningEffort} className="shbz-input mt-auto">
-            <option value="low">low — быстрый</option>
-            <option value="medium">medium — сбалансированный</option>
-            <option value="high">high — максимальная точность</option>
-          </select>
-        </label>
+          <div className="mt-auto">
+            <ShbzSelect
+              value={effort}
+              onChange={(value) => setEffort(value as ReasoningEffort)}
+              options={EFFORT_OPTIONS}
+              ariaLabel="Reasoning effort"
+            />
+            <input type="hidden" name="aiReasoningEffort" value={effort} />
+          </div>
+        </div>
         <label className="flex flex-col">
           <FieldLabel hint="Ниже порога — на ручную проверку (0–1)">Порог уверенности</FieldLabel>
           <input
@@ -382,12 +394,7 @@ export function DeveloperPanel({ stats, settings, students }: DeveloperPanelProp
             <div className="grid gap-4" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))" }}>
               <StatBlock
                 label="Очередь автопроверки"
-                value={
-                  <span className="inline-flex items-center gap-2.5">
-                    <span className="shbz-pulse-dot" />
-                    {stats.queueLength}
-                  </span>
-                }
+                value={String(stats.queueLength)}
                 hint="проверок ждут выполнения сейчас"
               />
               <StatBlock

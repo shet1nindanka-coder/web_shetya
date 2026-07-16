@@ -1996,21 +1996,6 @@ html[data-theme="dark"] {
 .shbz-chip-green { background: var(--shbz-green-soft); color: var(--shbz-green-text); }
 .shbz-chip-yellow { background: var(--shbz-yellow-soft); color: var(--shbz-yellow-text); }
 
-/* ШБЗ: пульсирующая точка «система живёт» (дев-панель) */
-.shbz-pulse-dot {
-  display: inline-block;
-  width: 8px;
-  height: 8px;
-  border-radius: 999px;
-  background: var(--shbz-accent-solid);
-  flex-shrink: 0;
-  animation: shbz-pulse-dot 2.2s infinite;
-}
-@keyframes shbz-pulse-dot {
-  0%, 100% { box-shadow: 0 0 0 0 rgba(54, 224, 164, 0.45); }
-  55% { box-shadow: 0 0 0 5px rgba(54, 224, 164, 0); }
-}
-
 /* ШБЗ: переключатель-свитч (функционально круглый — 999px легален) */
 .shbz-switch {
   position: relative;
