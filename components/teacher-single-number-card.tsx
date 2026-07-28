@@ -176,9 +176,9 @@ export function TeacherSingleNumberCard({
         <Badge className={status.className}>{status.label}</Badge>
       </div>
 
-      <div className="grid gap-4 lg:grid-cols-2">
+      <div className="grid min-w-0 gap-4 lg:grid-cols-2">
         {/* Условие */}
-        <div className="space-y-2.5 rounded-[16px] border border-[var(--theme-border-soft)] p-3 sm:p-4">
+        <div className="min-w-0 space-y-2.5 rounded-[16px] border border-[var(--theme-border-soft)] p-3 sm:p-4">
           <p className="ui-kicker">Условие (LaTeX)</p>
 
           <textarea
@@ -227,7 +227,7 @@ export function TeacherSingleNumberCard({
         </div>
 
         {/* Ответ */}
-        <div className="space-y-2.5 rounded-[16px] border border-[var(--theme-border-soft)] p-3 sm:p-4">
+        <div className="min-w-0 space-y-2.5 rounded-[16px] border border-[var(--theme-border-soft)] p-3 sm:p-4">
           <p className="ui-kicker">Ответ (LaTeX)</p>
 
           <textarea

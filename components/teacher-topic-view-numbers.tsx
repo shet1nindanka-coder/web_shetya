@@ -22,9 +22,9 @@ export function TeacherTopicViewNumbers({ numbers }: TeacherTopicViewNumbersProp
   }
 
   return (
-    <div className="grid gap-3 xl:grid-cols-2">
+    <div className="grid min-w-0 gap-3 xl:grid-cols-2">
       {numbers.map((number) => (
-        <article key={number.id} className="teacher-number-card rounded-[16px] border px-4 py-4">
+        <article key={number.id} className="teacher-number-card min-w-0 rounded-[16px] border px-4 py-4">
           <p className="teacher-number-title text-lg font-semibold text-[var(--theme-text-strong)]">№ {number.number}</p>
 
           {number.conditionLatex ? (

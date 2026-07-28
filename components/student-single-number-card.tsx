@@ -139,14 +139,14 @@ export function StudentSingleNumberCard({
         {conditionLatex ? (
           <div>
             <p className="ui-kicker mb-1.5">Условие</p>
-            <div className="text-sm leading-relaxed text-[var(--theme-text-default)]">
+            <div className="min-w-0 max-w-full text-sm leading-relaxed text-[var(--theme-text-default)]">
               <LatexAnswerPreview value={conditionLatex} />
             </div>
           </div>
         ) : null}
 
         {answerLatex ? (
-          <div className="shbz-panel-soft px-4 py-3.5">
+          <div className="shbz-panel-soft min-w-0 px-4 py-3.5">
             <p className="ui-kicker mb-2">Ответ</p>
             <TelegramSpoiler
               className="rounded-[12px]"

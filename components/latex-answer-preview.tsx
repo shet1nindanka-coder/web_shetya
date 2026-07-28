@@ -1,5 +1,6 @@
 import { Fragment } from "react";
 import { BlockMath, InlineMath } from "react-katex";
+import { splitLineIntoItems } from "@/lib/latex-line-items";
 
 type LatexAnswerPreviewProps = {
   value: string;
@@ -29,49 +30,6 @@ function renderInlineLine(line: string, lineKey: string) {
   });
 }
 
-// Делит строку на пункты по меткам «А)», «Б)», «1)» вне формул: каждый пункт
-// рендерится неразрывным inline-block и переносится на новую строку целиком,
-// а не рвётся посередине.
-function splitLineIntoItems(line: string): string[] {
-  const boundaries: number[] = [];
-  let inMath = false;
-
-  for (let i = 0; i < line.length; i++) {
-    if (line[i] === "$") {
-      inMath = !inMath;
-      continue;
-    }
-
-    if (inMath || (i > 0 && !/\s/.test(line[i - 1]))) {
-      continue;
-    }
-
-    if (/^(?:[А-ЯЁA-Z]|\d{1,2})\)/.test(line.slice(i, i + 3))) {
-      boundaries.push(i);
-    }
-  }
-
-  if (boundaries.length < 2) {
-    return [line];
-  }
-
-  if (boundaries[0] !== 0) {
-    boundaries.unshift(0);
-  }
-
-  const items: string[] = [];
-
-  for (let b = 0; b < boundaries.length; b++) {
-    const item = line.slice(boundaries[b], boundaries[b + 1] ?? line.length).trim();
-
-    if (item) {
-      items.push(item);
-    }
-  }
-
-  return items;
-}
-
 export function LatexAnswerPreview({ value }: LatexAnswerPreviewProps) {
   const blocks = value
     .trim()
@@ -84,7 +42,7 @@ export function LatexAnswerPreview({ value }: LatexAnswerPreviewProps) {
   }
 
   return (
-    <div className="space-y-4 text-sm leading-7 text-[var(--theme-text-default)]">
+    <div className="min-w-0 max-w-full space-y-4 text-sm leading-7 text-[var(--theme-text-default)]">
       {blocks.map((block, blockIndex) => {
         const isDisplayMath =
           (block.startsWith("$$") && block.endsWith("$$") && block.length > 4) ||
@@ -94,7 +52,7 @@ export function LatexAnswerPreview({ value }: LatexAnswerPreviewProps) {
           const math = block.startsWith("$$") ? block.slice(2, -2).trim() : block.slice(2, -2).trim();
 
           return (
-            <div key={`block-${blockIndex}`} className="overflow-x-auto rounded-2xl bg-[var(--theme-surface-soft)] px-3 py-3">
+            <div key={`block-${blockIndex}`} className="min-w-0 max-w-full rounded-2xl bg-[var(--theme-surface-soft)] px-3 py-3">
               <BlockMath
                 math={math}
                 renderError={(error) => (
@@ -110,11 +68,11 @@ export function LatexAnswerPreview({ value }: LatexAnswerPreviewProps) {
         return (
           <div key={`text-block-${blockIndex}`} className="space-y-2">
             {block.split("\n").map((line, lineIndex) => {
-              const items = splitLineIntoItems(line);
+              const { items, labeled } = splitLineIntoItems(line);
 
               return (
                 <p key={`line-${blockIndex}-${lineIndex}`}>
-                  {items.length > 1
+                  {labeled
                     ? items.map((item, itemIndex) => (
                         <Fragment key={`item-${blockIndex}-${lineIndex}-${itemIndex}`}>
                           {itemIndex > 0 ? " " : null}

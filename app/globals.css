@@ -2833,3 +2833,10 @@ html[data-theme="dark"] .shbz-search input:not([type="checkbox"]):not([type="rad
   box-shadow: 0 0 0 4px var(--shbz-input-ring);
 }
 .shbz-note-field::placeholder { color: var(--shbz-placeholder); }
+
+/* ШБЗ: перенос длинных формул. katex.min.css ставит white-space: nowrap на всю
+   формулу — из-за этого условие задаёт минимальную ширину карточки и растягивает
+   сетку. Разрешаем перенос между атомами, но не внутри дроби/корня (.base). */
+.katex { white-space: normal; }
+.katex .base { white-space: nowrap; }
+.katex-display > .katex { white-space: normal; text-align: left; }
