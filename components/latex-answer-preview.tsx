@@ -62,7 +62,7 @@ export function LatexAnswerPreview({ value }: LatexAnswerPreviewProps) {
               >
                 <div className="flex flex-wrap items-center gap-x-7 gap-y-3">
                   {mathItems.items.map((item, itemIndex) => (
-                    <span key={`math-item-${blockIndex}-${itemIndex}`} className="max-w-full overflow-x-auto py-0.5">
+                    <span key={`math-item-${blockIndex}-${itemIndex}`} className="inline-block max-w-full py-0.5">
                       <InlineMath
                         math={`\\displaystyle ${item}`}
                         renderError={(error) => (
