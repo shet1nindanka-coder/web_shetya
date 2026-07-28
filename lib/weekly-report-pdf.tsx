@@ -134,13 +134,29 @@ const styles = StyleSheet.create({
   },
   headerRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start" },
   brandRow: { flexDirection: "row", alignItems: "center" },
-  brand: { fontSize: 18, fontWeight: 700, letterSpacing: -0.8 },
-  brandDivider: { width: 1, height: 14, backgroundColor: "#e4e5e7", marginHorizontal: 8 },
-  brandSub: { fontSize: 8.5, color: colors.soft },
-  kicker: { fontSize: 8.5, letterSpacing: 1.4, color: colors.soft, textAlign: "right" },
-  generated: { fontSize: 8.5, color: colors.muted, marginTop: 3, textAlign: "right" },
-  gradientLine: { flexDirection: "row", height: 3, borderRadius: 2, overflow: "hidden", marginTop: 12, marginBottom: 16 },
-  gradientSegment: { flexGrow: 1 },
+  brandBadge: {
+    width: 28,
+    height: 28,
+    borderRadius: 7,
+    backgroundColor: "#0a0a0a",
+    alignItems: "center",
+    justifyContent: "center",
+    marginRight: 8
+  },
+  brandBadgeText: { color: "#ffffff", fontSize: 9, fontWeight: 700, letterSpacing: 0.3 },
+  brand: { fontSize: 10.5, fontWeight: 700, color: "#0a0a0a" },
+  brandSub: { fontSize: 7.5, color: colors.soft },
+  kicker: { fontSize: 9, fontWeight: 700, letterSpacing: 1.6, color: "#0a0a0a", textAlign: "right" },
+  kickerAccent: {
+    height: 3,
+    width: 34,
+    backgroundColor: "#16b07e",
+    borderRadius: 2,
+    marginTop: 4,
+    marginLeft: "auto"
+  },
+  generated: { fontSize: 8.5, color: colors.muted, marginTop: 4, textAlign: "right" },
+  headRule: { height: 2, backgroundColor: "#0a0a0a", marginTop: 12, marginBottom: 14 },
   studentRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-end", marginBottom: 14 },
   studentName: { fontSize: 16, fontWeight: 700 },
   studentEmail: { fontSize: 8.5, color: colors.muted, marginTop: 2 },
@@ -203,20 +219,21 @@ function WeeklyReportDocument({ input }: { input: WeeklyPdfInput }) {
       <Page size="A4" style={styles.page}>
         <View style={styles.headerRow}>
           <View style={styles.brandRow}>
-            <Text style={styles.brand}>ШБЗ</Text>
-            <View style={styles.brandDivider} />
-            <Text style={styles.brandSub}>Школа Базовых Знаний</Text>
+            <View style={styles.brandBadge}>
+              <Text style={styles.brandBadgeText}>ШБЗ</Text>
+            </View>
+            <View>
+              <Text style={styles.brand}>ШБЗ</Text>
+              <Text style={styles.brandSub}>Школа Базовых Знаний</Text>
+            </View>
           </View>
           <View>
             <Text style={styles.kicker}>ОТЧЁТ ЗА 7 ДНЕЙ</Text>
+            <View style={styles.kickerAccent} />
             <Text style={styles.generated}>сформирован {input.generatedLabel}</Text>
           </View>
         </View>
-        <View style={styles.gradientLine}>
-          {colors.gradient.map((color) => (
-            <View key={color} style={[styles.gradientSegment, { backgroundColor: color }]} />
-          ))}
-        </View>
+        <View style={styles.headRule} />
 
         <View style={styles.studentRow}>
           <View>

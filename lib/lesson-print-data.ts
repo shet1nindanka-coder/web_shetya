@@ -17,6 +17,7 @@ export async function buildLessonPrintPayload(lessonId: string, studentId: strin
     title: lesson.title,
     createdAt: lesson.createdAt,
     groupName: lesson.group?.name ?? null,
+    durationMinutes: lesson.durationMinutes,
     participants: participants.map((participant) => ({
       studentName: participant.studentName,
       items: participant.items.map((item) => ({

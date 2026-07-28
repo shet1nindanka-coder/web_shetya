@@ -4,6 +4,7 @@ import { enforceApiRateLimit } from "@/lib/api-rate-limit";
 import { tryGetCurrentUser } from "@/lib/auth";
 import { buildLessonPrintPayload } from "@/lib/lesson-print-data";
 import { renderLessonPrintHtml } from "@/lib/lesson-print-html";
+import { embedKatexAssets } from "@/lib/print-theme";
 
 export const runtime = "nodejs";
 
@@ -31,7 +32,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ less
     return NextResponse.json({ error: "Урок не найден." }, { status: 404 });
   }
 
-  return new NextResponse(renderLessonPrintHtml(payload.printData), {
+  return new NextResponse(embedKatexAssets(renderLessonPrintHtml(payload.printData)), {
     status: 200,
     headers: { "Content-Type": "text/html; charset=utf-8" }
   });

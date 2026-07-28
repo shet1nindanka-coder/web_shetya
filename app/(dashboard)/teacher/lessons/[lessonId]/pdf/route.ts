@@ -4,6 +4,7 @@ import { enforceApiRateLimit } from "@/lib/api-rate-limit";
 import { tryGetCurrentUser } from "@/lib/auth";
 import { buildLessonPrintPayload } from "@/lib/lesson-print-data";
 import { renderLessonPrintHtml } from "@/lib/lesson-print-html";
+import { embedKatexAssets } from "@/lib/print-theme";
 import { getRequestLogContext, logInfoEvent } from "@/lib/logger";
 import { renderPdfFromHtml } from "@/lib/pdf-renderer";
 
@@ -33,7 +34,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ less
     return NextResponse.json({ error: "Урок не найден." }, { status: 404 });
   }
 
-  const html = renderLessonPrintHtml(payload.printData);
+  const html = embedKatexAssets(renderLessonPrintHtml(payload.printData));
   const pdf = await renderPdfFromHtml(html);
 
   if (!pdf) {

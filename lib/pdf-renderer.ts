@@ -133,7 +133,7 @@ export async function renderPdfFromHtml(html: string): Promise<Buffer | null> {
       displayHeaderFooter: true,
       headerTemplate: "<span></span>",
       footerTemplate:
-        '<div style="width:100%;text-align:center;font-size:9px;color:#666;"><span class="pageNumber"></span> / <span class="totalPages"></span></div>',
+        '<div style="width:100%;display:flex;justify-content:space-between;font-size:8px;color:#a6abb3;padding:0 15mm;font-family:sans-serif;"><span>ШБЗ · Школа Базовых Знаний</span><span>стр. <span class="pageNumber"></span> из <span class="totalPages"></span></span></div>',
       timeout: RENDER_TIMEOUT_MS
     });
 
