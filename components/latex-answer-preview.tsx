@@ -1,6 +1,6 @@
 import { Fragment } from "react";
 import { BlockMath, InlineMath } from "react-katex";
-import { splitLineIntoItems } from "@/lib/latex-line-items";
+import { splitLineIntoItems, splitMathIntoItems } from "@/lib/latex-line-items";
 
 type LatexAnswerPreviewProps = {
   value: string;
@@ -49,10 +49,40 @@ export function LatexAnswerPreview({ value }: LatexAnswerPreviewProps) {
           (block.startsWith("\\[") && block.endsWith("\\]") && block.length > 4);
 
         if (isDisplayMath) {
-          const math = block.startsWith("$$") ? block.slice(2, -2).trim() : block.slice(2, -2).trim();
+          const math = block.slice(2, -2).trim();
+          const mathItems = splitMathIntoItems(math);
+
+          // Формула с пунктами «А) … Б) …» на верхнем уровне: каждый пункт —
+          // отдельная формула, переносится на новую строку целиком.
+          if (mathItems.labeled && mathItems.items.length > 1) {
+            return (
+              <div
+                key={`block-${blockIndex}`}
+                className="min-w-0 max-w-full rounded-2xl bg-[var(--theme-surface-soft)] px-3 py-3"
+              >
+                <div className="flex flex-wrap items-center gap-x-7 gap-y-3">
+                  {mathItems.items.map((item, itemIndex) => (
+                    <span key={`math-item-${blockIndex}-${itemIndex}`} className="max-w-full overflow-x-auto py-0.5">
+                      <InlineMath
+                        math={`\\displaystyle ${item}`}
+                        renderError={(error) => (
+                          <code className="rounded bg-[var(--theme-danger-soft)] px-1 py-0.5 text-[var(--theme-danger-text)]">
+                            {error.name}
+                          </code>
+                        )}
+                      />
+                    </span>
+                  ))}
+                </div>
+              </div>
+            );
+          }
 
           return (
-            <div key={`block-${blockIndex}`} className="min-w-0 max-w-full rounded-2xl bg-[var(--theme-surface-soft)] px-3 py-3">
+            <div
+              key={`block-${blockIndex}`}
+              className="min-w-0 max-w-full overflow-x-auto rounded-2xl bg-[var(--theme-surface-soft)] px-3 py-3"
+            >
               <BlockMath
                 math={math}
                 renderError={(error) => (

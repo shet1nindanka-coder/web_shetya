@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { splitLineIntoItems } from "../lib/latex-line-items";
+import { splitLineIntoItems, splitMathIntoItems } from "../lib/latex-line-items";
 
 test("splits uppercase and digit labels with a bracket", () => {
   const result = splitLineIntoItems("А) первый пункт Б) второй 10) десятый");
@@ -50,4 +50,39 @@ test("plain text without labels is returned as-is", () => {
 
   assert.equal(result.labeled, false);
   assert.deepEqual(result.items, ["Просто длинное условие без пунктов"]);
+});
+
+test("splitMathIntoItems splits display math by top-level labels", () => {
+  const math =
+    "\\text{А)} \\begin{cases} x+y=-1 \\\\ x-y=1 \\end{cases} Б) \\begin{cases} 5x+y-7=0 \\\\ x-3y-11=0 \\end{cases}";
+  const result = splitMathIntoItems(math);
+
+  assert.equal(result.labeled, true);
+  assert.equal(result.items.length, 2);
+  assert.ok(result.items[1].startsWith("Б)"));
+});
+
+test("splitMathIntoItems treats top-level \\text{А)} as a label too", () => {
+  const math = "\\text{А)} \\begin{cases} x=1 \\end{cases} \\text{Б)} \\begin{cases} y=2 \\end{cases}";
+  const result = splitMathIntoItems(math);
+
+  assert.equal(result.labeled, true);
+  assert.equal(result.items.length, 2);
+  assert.ok(result.items[0].startsWith("\\text{А)}"));
+  assert.ok(result.items[1].startsWith("\\text{Б)}"));
+});
+
+test("splitMathIntoItems ignores labels inside cases environments and groups", () => {
+  const insideEnv = splitMathIntoItems("\\begin{cases} a) x \\\\ b) y \\end{cases}");
+  const insideGroup = splitMathIntoItems("\\text{решите: а) и б)}");
+
+  assert.equal(insideEnv.labeled, false);
+  assert.equal(insideGroup.labeled, false);
+});
+
+test("splitMathIntoItems keeps a plain formula untouched", () => {
+  const result = splitMathIntoItems("x^2 + y^2 = r^2");
+
+  assert.equal(result.labeled, false);
+  assert.deepEqual(result.items, ["x^2 + y^2 = r^2"]);
 });
