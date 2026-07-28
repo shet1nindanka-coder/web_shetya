@@ -108,7 +108,7 @@ export default async function GroupDetailPage({ params, searchParams }: GroupDet
               </span>
               <input type="text" name="name" required maxLength={120} defaultValue={group.name} className="shbz-input" />
             </label>
-            <button type="submit" className="shbz-btn-outline">
+            <button type="submit" className="shbz-btn-outline shbz-btn-outline--field">
               Переименовать
             </button>
           </form>

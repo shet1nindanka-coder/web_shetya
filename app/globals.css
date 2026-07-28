@@ -1902,6 +1902,13 @@ html[data-theme="dark"] {
   padding: 11.5px 24px;
   font-size: 15px;
 }
+
+/* Кнопка в одну строку с .shbz-input: та же высота 52px и тот же кегль */
+.shbz-btn-outline--field {
+  height: 52px;
+  padding: 0 24px;
+  font-size: 15px;
+}
 .shbz-btn-outline:disabled {
   opacity: 0.6;
   cursor: default;
