@@ -1,6 +1,6 @@
 import { UserRole } from "@prisma/client";
-import { deleteTopicFileAction, updateTopicAction } from "@/actions/topic";
-import { DeleteTopicDialog } from "@/components/delete-topic-dialog";
+import { deleteTopicAction, deleteTopicFileAction, updateTopicAction } from "@/actions/topic";
+import { DeleteButton } from "@/components/delete-button";
 import { FileDropInput } from "@/components/file-drop-input";
 import { FileResourceCard } from "@/components/file-resource-card";
 import { PageHeader } from "@/components/page-header";
@@ -98,11 +98,17 @@ export default async function TeacherTopicPage({ params, searchParams }: Teacher
         description={data.topic.description}
         actions={
           <>
-            <DeleteTopicDialog
-              topicId={data.topic.id}
-              topicTitle={data.topic.title}
-              triggerLabel="Удалить тему"
-              triggerClassName="ui-pressable ui-button-danger rounded-[12px] px-3.5 py-2 text-sm font-semibold transition sm:rounded-[12px]"
+            <DeleteButton
+              label="Удалить тему"
+              title="Удалить тему?"
+              description={
+                <>
+                  Тема <span className="font-semibold">«{data.topic.title}»</span> будет удалена вместе с
+                  прикреплёнными файлами и статусами по номерам. Это действие нельзя отменить.
+                </>
+              }
+              action={deleteTopicAction}
+              fields={{ topicId: data.topic.id }}
             />
           </>
         }
@@ -165,17 +171,14 @@ export default async function TeacherTopicPage({ params, searchParams }: Teacher
                   helperText="Можно выбрать новый файл или перетащить его сюда."
                 />
                 {data.topic.theoryFile ? (
-                  <button
-                    type="submit"
-                    formAction={deleteTopicFileAction}
-                    formNoValidate
-                    formEncType="application/x-www-form-urlencoded"
-                    name="fileKind"
-                    value="theory"
-                    className="ui-pressable ui-button-danger rounded-[12px] px-3.5 py-1.5 text-sm font-semibold transition"
-                  >
-                    Удалить файл теории
-                  </button>
+                  <DeleteButton
+                    variant="sm"
+                    label="Удалить файл теории"
+                    title="Удалить файл теории?"
+                    description="Файл теории будет откреплён от темы и удалён из хранилища. Ученики перестанут его видеть. Это действие нельзя отменить."
+                    action={deleteTopicFileAction}
+                    fields={{ topicId: data.topic.id, fileKind: "theory" }}
+                  />
                 ) : null}
               </div>
 
@@ -188,17 +191,14 @@ export default async function TeacherTopicPage({ params, searchParams }: Teacher
                   helperText="Можно выбрать новый файл или перетащить его сюда."
                 />
                 {data.topic.homeworkFile ? (
-                  <button
-                    type="submit"
-                    formAction={deleteTopicFileAction}
-                    formNoValidate
-                    formEncType="application/x-www-form-urlencoded"
-                    name="fileKind"
-                    value="homework"
-                    className="ui-pressable ui-button-danger rounded-[12px] px-3.5 py-1.5 text-sm font-semibold transition"
-                  >
-                    Удалить файл заданий
-                  </button>
+                  <DeleteButton
+                    variant="sm"
+                    label="Удалить файл заданий"
+                    title="Удалить файл заданий?"
+                    description="Файл заданий будет откреплён от темы и удалён из хранилища. Ученики перестанут его видеть. Это действие нельзя отменить."
+                    action={deleteTopicFileAction}
+                    fields={{ topicId: data.topic.id, fileKind: "homework" }}
+                  />
                 ) : null}
               </div>
             </div>

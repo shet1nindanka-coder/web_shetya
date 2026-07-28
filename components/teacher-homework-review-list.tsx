@@ -4,7 +4,7 @@ import { HomeworkNumberStatus } from "@prisma/client";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Badge } from "@/components/badge";
-import { ConfirmDialog } from "@/components/confirm-dialog";
+import { DeleteButton } from "@/components/delete-button";
 import { HomeworkStatusBadge } from "@/components/homework-status-badge";
 import { cx, homeworkStatusMeta } from "@/lib/utils";
 import { ProgressBar } from "@/components/progress-bar";
@@ -170,8 +170,6 @@ const statusOptions = [HomeworkNumberStatus.GREEN, HomeworkNumberStatus.YELLOW, 
 
 export function TeacherHomeworkReviewList({ studentId, assignments }: TeacherHomeworkReviewListProps) {
   const router = useRouter();
-  const [cancelingId, setCancelingId] = useState<string | null>(null);
-  const [confirmCancelId, setConfirmCancelId] = useState<string | null>(null);
   const [savingStatusId, setSavingStatusId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -203,31 +201,23 @@ export function TeacherHomeworkReviewList({ studentId, assignments }: TeacherHom
   };
 
   const cancelAssignment = async (assignmentId: string) => {
-    setCancelingId(assignmentId);
     setError(null);
 
-    try {
-      const response = await fetch("/api/teacher/homeworks", {
-        method: "DELETE",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({ assignmentId })
-      });
+    const response = await fetch("/api/teacher/homeworks", {
+      method: "DELETE",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ assignmentId })
+    });
 
-      const result = (await response.json().catch(() => null)) as { error?: string } | null;
+    const result = (await response.json().catch(() => null)) as { error?: string } | null;
 
-      if (!response.ok) {
-        throw new Error(result?.error || "Не удалось отменить ДЗ.");
-      }
-
-      router.refresh();
-    } catch (cancelError) {
-      setError(cancelError instanceof Error ? cancelError.message : "Не удалось отменить ДЗ.");
-    } finally {
-      setCancelingId(null);
-      setConfirmCancelId(null);
+    if (!response.ok) {
+      throw new Error(result?.error || "Не удалось отменить ДЗ.");
     }
+
+    router.refresh();
   };
 
   return (
@@ -274,14 +264,17 @@ export function TeacherHomeworkReviewList({ studentId, assignments }: TeacherHom
               </div>
 
               <div className="flex flex-none items-center gap-3">
-                <button
-                  type="button"
-                  disabled={cancelingId === assignment.id}
-                  onClick={() => setConfirmCancelId(assignment.id)}
-                  className="ui-pressable ui-button-secondary rounded-[12px] px-4 py-2.5 text-sm font-semibold transition disabled:cursor-not-allowed"
-                >
-                  {cancelingId === assignment.id ? "Отменяем..." : "Отменить ДЗ"}
-                </button>
+                <DeleteButton
+                  label="Отменить ДЗ"
+                  title="Отменить ДЗ?"
+                  description="ДЗ будет удалено, дедлайны будут сняты с его номеров. Это действие нельзя отменить."
+                  confirmLabel="Да, отменить"
+                  pendingLabel="Отменяем..."
+                  onConfirm={() => cancelAssignment(assignment.id)}
+                  onError={(cancelError) =>
+                    setError(cancelError instanceof Error ? cancelError.message : "Не удалось отменить ДЗ.")
+                  }
+                />
               </div>
             </div>
 
@@ -608,21 +601,6 @@ export function TeacherHomeworkReviewList({ studentId, assignments }: TeacherHom
           </article>
         );
       })}
-
-      <ConfirmDialog
-        open={confirmCancelId !== null}
-        title="Отменить ДЗ?"
-        description="ДЗ будет удалено, дедлайны будут сняты с его номеров. Это действие нельзя отменить."
-        confirmLabel="Да, отменить"
-        pendingLabel="Отменяем..."
-        isPending={cancelingId !== null}
-        onConfirm={() => {
-          if (confirmCancelId) {
-            void cancelAssignment(confirmCancelId);
-          }
-        }}
-        onCancel={() => setConfirmCancelId(null)}
-      />
     </div>
   );
 }

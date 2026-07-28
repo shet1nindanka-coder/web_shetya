@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from "react";
+import { DeleteButton } from "@/components/delete-button";
 import { ShbzSelect } from "@/components/shbz-select";
 
 const STALE_PLAN_MS = 15 * 60_000;
@@ -71,7 +72,6 @@ export function TeacherLessonBoard({ prefix, aiAvailable, lesson, bank }: Teache
   const [participants, setParticipants] = useState(lesson.participants);
   const [notice, setNotice] = useState<{ tone: "success" | "error"; text: string } | null>(null);
   const [busyParticipantId, setBusyParticipantId] = useState<string | null>(null);
-  const [confirmDelete, setConfirmDelete] = useState(false);
   const [, startTransition] = useTransition();
   const lastSignature = useRef("");
 
@@ -180,18 +180,14 @@ export function TeacherLessonBoard({ prefix, aiAvailable, lesson, bank }: Teache
   );
 
   const deleteLesson = useCallback(async () => {
-    try {
-      const response = await fetch(`/api/teacher/lessons/${lesson.id}`, { method: "DELETE" });
+    const response = await fetch(`/api/teacher/lessons/${lesson.id}`, { method: "DELETE" });
 
-      if (!response.ok) {
-        const result = (await response.json().catch(() => null)) as { error?: string } | null;
-        throw new Error(result?.error || "Не удалось удалить урок.");
-      }
-
-      router.push(`${prefix}/lessons`);
-    } catch (error) {
-      setNotice({ tone: "error", text: error instanceof Error ? error.message : "Не удалось удалить урок." });
+    if (!response.ok) {
+      const result = (await response.json().catch(() => null)) as { error?: string } | null;
+      throw new Error(result?.error || "Не удалось удалить урок.");
     }
+
+    router.push(`${prefix}/lessons`);
   }, [lesson.id, prefix, router]);
 
   return (
@@ -224,29 +220,16 @@ export function TeacherLessonBoard({ prefix, aiAvailable, lesson, bank }: Teache
           </span>
         ) : null}
         <span className="ml-auto">
-          {confirmDelete ? (
-            <span className="inline-flex items-center gap-2">
-              <button
-                type="button"
-                onClick={() => void deleteLesson()}
-                className="ui-pressable ui-button-danger rounded-[12px] px-3.5 py-2 text-sm font-semibold transition"
-              >
-                Точно удалить
-              </button>
-              <button type="button" onClick={() => setConfirmDelete(false)} className="shbz-btn-outline">
-                Отмена
-              </button>
-            </span>
-          ) : (
-            <button
-              type="button"
-              onClick={() => setConfirmDelete(true)}
-              className="text-sm font-semibold"
-              style={{ color: "var(--shbz-danger-text)" }}
-            >
-              Удалить урок
-            </button>
-          )}
+          <DeleteButton
+            variant="sm"
+            label="Удалить урок"
+            title="Удалить урок?"
+            description="Занятие и все подобранные наборы задач будут удалены. Это действие нельзя отменить."
+            onConfirm={deleteLesson}
+            onError={(error) =>
+              setNotice({ tone: "error", text: error instanceof Error ? error.message : "Не удалось удалить урок." })
+            }
+          />
         </span>
       </div>
 

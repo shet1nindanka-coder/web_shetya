@@ -2873,3 +2873,67 @@ html[data-theme="dark"] .shbz-search input:not([type="checkbox"]):not([type="rad
 .katex { white-space: normal; }
 .katex .base { white-space: nowrap; }
 .katex-display > .katex { white-space: normal; text-align: left; }
+
+/* ШБЗ: единый стиль кнопок удаления (см. components/delete-button.tsx) */
+.shbz-btn-danger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+.shbz-btn-danger--sm {
+  padding: 7px 14px;
+  font-size: 13px;
+  border-radius: 10px;
+}
+
+.shbz-btn-danger-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: none;
+  width: 26px;
+  height: 26px;
+  padding: 0;
+  border: 1.5px solid transparent;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--shbz-danger-text);
+  font-family: inherit;
+  font-size: 17px;
+  line-height: 1;
+  cursor: pointer;
+  opacity: 0.55;
+  transition: opacity 0.15s, background 0.15s, border-color 0.15s;
+}
+.shbz-btn-danger-icon:hover {
+  opacity: 1;
+  background: var(--shbz-red-soft);
+  border-color: var(--shbz-danger-outline);
+}
+.shbz-btn-danger-icon:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+  background: transparent;
+  border-color: transparent;
+}
+
+/* Иконка поверх изображения: нужен собственный фон, чтобы крестик был читаем */
+.shbz-btn-danger-icon--raised {
+  opacity: 1;
+  background: var(--shbz-card-bg);
+  border-color: var(--shbz-soft-border);
+  color: var(--shbz-text-muted);
+  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.14);
+}
+.shbz-btn-danger-icon--raised:hover {
+  background: var(--shbz-red-soft);
+  border-color: var(--shbz-danger-outline);
+  color: var(--shbz-danger-text);
+}
+.shbz-btn-danger-icon--raised:disabled {
+  opacity: 0.4;
+  background: var(--shbz-card-bg);
+  border-color: var(--shbz-soft-border);
+}

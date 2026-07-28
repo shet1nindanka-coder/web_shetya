@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
+import { DeleteButton } from "@/components/delete-button";
 import { ShbzSelect } from "@/components/shbz-select";
 
 const STALE_PLAN_MS = 15 * 60_000;
@@ -68,7 +69,6 @@ export function TeacherHomeworkPlanBoard({ prefix, aiAvailable, plan, topicNumbe
   const [notice, setNotice] = useState<{ tone: "success" | "error"; text: string } | null>(null);
   const [issueFailures, setIssueFailures] = useState<Array<{ name: string; message: string }>>([]);
   const [busyId, setBusyId] = useState<string | null>(null);
-  const [confirmDelete, setConfirmDelete] = useState(false);
   const [, startTransition] = useTransition();
   const lastSignature = useRef("");
 
@@ -217,18 +217,14 @@ export function TeacherHomeworkPlanBoard({ prefix, aiAvailable, plan, topicNumbe
   );
 
   const deletePlan = useCallback(async () => {
-    try {
-      const response = await fetch(`/api/teacher/homework-plans/${plan.id}`, { method: "DELETE" });
+    const response = await fetch(`/api/teacher/homework-plans/${plan.id}`, { method: "DELETE" });
 
-      if (!response.ok) {
-        const result = (await response.json().catch(() => null)) as { error?: string } | null;
-        throw new Error(result?.error || "Не удалось удалить черновик.");
-      }
-
-      router.push(`${prefix}/homework-plans`);
-    } catch (error) {
-      setNotice({ tone: "error", text: error instanceof Error ? error.message : "Не удалось удалить черновик." });
+    if (!response.ok) {
+      const result = (await response.json().catch(() => null)) as { error?: string } | null;
+      throw new Error(result?.error || "Не удалось удалить черновик.");
     }
+
+    router.push(`${prefix}/homework-plans`);
   }, [plan.id, prefix, router]);
 
   return (
@@ -255,29 +251,16 @@ export function TeacherHomeworkPlanBoard({ prefix, aiAvailable, plan, topicNumbe
           </span>
         ) : null}
         <span className="ml-auto">
-          {confirmDelete ? (
-            <span className="inline-flex items-center gap-2">
-              <button
-                type="button"
-                onClick={() => void deletePlan()}
-                className="ui-pressable ui-button-danger rounded-[12px] px-3.5 py-2 text-sm font-semibold transition"
-              >
-                Точно удалить
-              </button>
-              <button type="button" onClick={() => setConfirmDelete(false)} className="shbz-btn-outline">
-                Отмена
-              </button>
-            </span>
-          ) : (
-            <button
-              type="button"
-              onClick={() => setConfirmDelete(true)}
-              className="text-sm font-semibold"
-              style={{ color: "var(--shbz-danger-text)" }}
-            >
-              Удалить черновик
-            </button>
-          )}
+          <DeleteButton
+            variant="sm"
+            label="Удалить черновик"
+            title="Удалить черновик ДЗ?"
+            description="Черновик и подобранные наборы будут удалены. Уже выданные ДЗ останутся у учеников. Это действие нельзя отменить."
+            onConfirm={deletePlan}
+            onError={(error) =>
+              setNotice({ tone: "error", text: error instanceof Error ? error.message : "Не удалось удалить черновик." })
+            }
+          />
         </span>
       </div>
 

@@ -1,7 +1,8 @@
 import { UserRole } from "@prisma/client";
 import { notFound } from "next/navigation";
 import type { ReactNode } from "react";
-import { DeleteStudentDialog } from "@/components/delete-student-dialog";
+import { deleteStudentAction } from "@/actions/student";
+import { DeleteButton } from "@/components/delete-button";
 import { PageHeader } from "@/components/page-header";
 import { TeacherStudentTabs } from "@/components/teacher-student-tabs";
 import { requireUser } from "@/lib/auth";
@@ -46,10 +47,17 @@ export default async function TeacherStudentLayout({ children, params }: Teacher
             >
               Что сделано за 7 дней (PDF)
             </a>
-            <DeleteStudentDialog
-              studentId={data.student.id}
-              studentName={data.student.name}
-              triggerLabel="Удалить ученика"
+            <DeleteButton
+              label="Удалить ученика"
+              title="Удалить ученика?"
+              description={
+                <>
+                  Аккаунт <span className="font-semibold">«{data.student.name}»</span> будет удалён вместе со
+                  статусами по номерам и назначенными дедлайнами. Это действие нельзя отменить.
+                </>
+              }
+              action={deleteStudentAction}
+              fields={{ studentId: data.student.id }}
             />
           </>
         }

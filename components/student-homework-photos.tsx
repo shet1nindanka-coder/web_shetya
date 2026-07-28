@@ -2,7 +2,7 @@
 
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { ConfirmDialog } from "@/components/confirm-dialog";
+import { DeleteButton } from "@/components/delete-button";
 import { cx } from "@/lib/utils";
 
 const MAX_PHOTOS = 10;
@@ -21,8 +21,6 @@ export function StudentHomeworkPhotos({ assignmentId, maxPhotos = MAX_PHOTOS, ph
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [isUploading, setIsUploading] = useState(false);
-  const [deletingPhotoId, setDeletingPhotoId] = useState<string | null>(null);
-  const [confirmPhotoId, setConfirmPhotoId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [isDragging, setIsDragging] = useState(false);
 
@@ -68,31 +66,23 @@ export function StudentHomeworkPhotos({ assignmentId, maxPhotos = MAX_PHOTOS, ph
   };
 
   const deletePhoto = async (photoId: string) => {
-    setDeletingPhotoId(photoId);
     setError(null);
 
-    try {
-      const response = await fetch("/api/student/homework-submissions", {
-        method: "DELETE",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({ photoId })
-      });
+    const response = await fetch("/api/student/homework-submissions", {
+      method: "DELETE",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ photoId })
+    });
 
-      const result = (await response.json().catch(() => null)) as { error?: string } | null;
+    const result = (await response.json().catch(() => null)) as { error?: string } | null;
 
-      if (!response.ok) {
-        throw new Error(result?.error || "Не удалось удалить фото.");
-      }
-
-      router.refresh();
-    } catch (deleteError) {
-      setError(deleteError instanceof Error ? deleteError.message : "Не удалось удалить фото.");
-    } finally {
-      setDeletingPhotoId(null);
-      setConfirmPhotoId(null);
+    if (!response.ok) {
+      throw new Error(result?.error || "Не удалось удалить фото.");
     }
+
+    router.refresh();
   };
 
   return (
@@ -185,33 +175,21 @@ export function StudentHomeworkPhotos({ assignmentId, maxPhotos = MAX_PHOTOS, ph
                   style={{ borderColor: "var(--shbz-soft-border)" }}
                 />
               </a>
-              <button
-                type="button"
-                disabled={deletingPhotoId === photo.id}
-                onClick={() => setConfirmPhotoId(photo.id)}
-                aria-label="Удалить фото"
-                className="absolute -right-2 -top-2 inline-flex h-6 w-6 items-center justify-center rounded-full border bg-[var(--theme-surface-strong)] text-xs font-bold text-[var(--theme-text-muted)] shadow transition hover:text-[var(--theme-danger-text)] disabled:cursor-not-allowed disabled:opacity-60"
-                style={{ borderColor: "var(--shbz-soft-border)" }}
-              >
-                ×
-              </button>
+              <DeleteButton
+                variant="icon"
+                ariaLabel="Удалить фото"
+                title="Удалить фото?"
+                description="Фото решения будет удалено. Это действие нельзя отменить."
+                className="shbz-btn-danger-icon--raised absolute -right-2 -top-2"
+                onConfirm={() => deletePhoto(photo.id)}
+                onError={(deleteError) =>
+                  setError(deleteError instanceof Error ? deleteError.message : "Не удалось удалить фото.")
+                }
+              />
             </div>
           ))}
         </div>
       ) : null}
-
-      <ConfirmDialog
-        open={confirmPhotoId !== null}
-        title="Удалить фото?"
-        description="Фото решения будет удалено. Это действие нельзя отменить."
-        isPending={deletingPhotoId !== null}
-        onConfirm={() => {
-          if (confirmPhotoId) {
-            void deletePhoto(confirmPhotoId);
-          }
-        }}
-        onCancel={() => setConfirmPhotoId(null)}
-      />
     </div>
   );
 }

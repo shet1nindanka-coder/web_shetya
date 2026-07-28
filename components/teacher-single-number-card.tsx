@@ -2,6 +2,7 @@
 
 import { useCallback, useState } from "react";
 import { Badge } from "@/components/badge";
+import { DeleteButton } from "@/components/delete-button";
 import { LatexAnswerPreview } from "@/components/latex-answer-preview";
 import { cx } from "@/lib/utils";
 
@@ -89,25 +90,21 @@ export function TeacherSingleNumberCard({
     setIsSavingCondition(true);
     setConditionError(null);
 
-    try {
-      const response = await fetch("/api/teacher/number-conditions", {
-        method: "DELETE",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ homeworkNumberId })
-      });
+    const response = await fetch("/api/teacher/number-conditions", {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ homeworkNumberId })
+    });
 
-      if (!response.ok) {
-        const result = (await response.json().catch(() => null)) as { error?: string } | null;
-        throw new Error(result?.error || "Не удалось удалить условие.");
-      }
-
-      setSavedCondition(null);
-      setDraftCondition("");
-    } catch (error) {
-      setConditionError(error instanceof Error ? error.message : "Не удалось удалить условие.");
-    } finally {
+    if (!response.ok) {
       setIsSavingCondition(false);
+      const result = (await response.json().catch(() => null)) as { error?: string } | null;
+      throw new Error(result?.error || "Не удалось удалить условие.");
     }
+
+    setSavedCondition(null);
+    setDraftCondition("");
+    setIsSavingCondition(false);
   }, [homeworkNumberId, savedCondition]);
 
   const saveAnswer = useCallback(async () => {
@@ -146,25 +143,21 @@ export function TeacherSingleNumberCard({
     setIsSavingAnswer(true);
     setAnswerError(null);
 
-    try {
-      const response = await fetch("/api/teacher/number-answers", {
-        method: "DELETE",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ homeworkNumberId })
-      });
+    const response = await fetch("/api/teacher/number-answers", {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ homeworkNumberId })
+    });
 
-      if (!response.ok) {
-        const result = (await response.json().catch(() => null)) as { error?: string } | null;
-        throw new Error(result?.error || "Не удалось удалить ответ.");
-      }
-
-      setSavedAnswer(null);
-      setDraftAnswer("");
-    } catch (error) {
-      setAnswerError(error instanceof Error ? error.message : "Не удалось удалить ответ.");
-    } finally {
+    if (!response.ok) {
       setIsSavingAnswer(false);
+      const result = (await response.json().catch(() => null)) as { error?: string } | null;
+      throw new Error(result?.error || "Не удалось удалить ответ.");
     }
+
+    setSavedAnswer(null);
+    setDraftAnswer("");
+    setIsSavingAnswer(false);
   }, [homeworkNumberId, savedAnswer]);
 
   return (
@@ -214,14 +207,17 @@ export function TeacherSingleNumberCard({
             </button>
 
             {savedCondition ? (
-              <button
-                type="button"
-                onClick={deleteCondition}
+              <DeleteButton
+                variant="sm"
+                label="Удалить условие"
+                title={`Удалить условие № ${number}?`}
+                description="Сохранённое условие в LaTeX будет удалено. Ученики и ИИ-проверка перестанут его видеть. Это действие нельзя отменить."
                 disabled={isSavingCondition}
-                className="ui-pressable ui-button-danger rounded-[12px] px-3.5 py-2 text-sm font-semibold transition"
-              >
-                Удалить
-              </button>
+                onConfirm={deleteCondition}
+                onError={(error) =>
+                  setConditionError(error instanceof Error ? error.message : "Не удалось удалить условие.")
+                }
+              />
             ) : null}
           </div>
         </div>
@@ -263,14 +259,15 @@ export function TeacherSingleNumberCard({
             </button>
 
             {savedAnswer ? (
-              <button
-                type="button"
-                onClick={deleteAnswer}
+              <DeleteButton
+                variant="sm"
+                label="Удалить ответ"
+                title={`Удалить ответ № ${number}?`}
+                description="Сохранённый ответ в LaTeX будет удалён. ИИ-проверка перестанет сверять решения с ним. Это действие нельзя отменить."
                 disabled={isSavingAnswer}
-                className="ui-pressable ui-button-danger rounded-[12px] px-3.5 py-2 text-sm font-semibold transition"
-              >
-                Удалить
-              </button>
+                onConfirm={deleteAnswer}
+                onError={(error) => setAnswerError(error instanceof Error ? error.message : "Не удалось удалить ответ.")}
+              />
             ) : null}
           </div>
         </div>

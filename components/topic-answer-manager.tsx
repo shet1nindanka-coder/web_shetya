@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Badge } from "@/components/badge";
+import { DeleteButton } from "@/components/delete-button";
 import { ShbzSelect } from "@/components/shbz-select";
 import { LatexAnswerPreview } from "@/components/latex-answer-preview";
 import { cx } from "@/lib/utils";
@@ -749,14 +750,14 @@ export function TopicAnswerManager({ topicId, initialNumber = null, numbers }: T
                     </button>
 
                     {item.savedConditionLatex ? (
-                      <button
-                        type="button"
-                        onClick={() => void removeCondition(item.id)}
+                      <DeleteButton
+                        variant="sm"
+                        label="Удалить условие"
+                        title={`Удалить условие № ${item.number}?`}
+                        description="Сохранённое условие в LaTeX будет удалено. Ученики и ИИ-проверка перестанут его видеть. Это действие нельзя отменить."
                         disabled={item.isDeletingCondition || item.isSavingCondition}
-                        className="ui-pressable ui-button-danger rounded-[12px] px-3.5 py-2 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-60"
-                      >
-                        {item.isDeletingCondition ? "Удаляем..." : "Удалить условие"}
-                      </button>
+                        onConfirm={() => removeCondition(item.id)}
+                      />
                     ) : null}
                   </div>
                 </section>
@@ -819,14 +820,14 @@ export function TopicAnswerManager({ topicId, initialNumber = null, numbers }: T
                     </button>
 
                     {item.savedAnswerLatex ? (
-                      <button
-                        type="button"
-                        onClick={() => void removeAnswer(item.id)}
+                      <DeleteButton
+                        variant="sm"
+                        label="Удалить ответ"
+                        title={`Удалить ответ № ${item.number}?`}
+                        description="Сохранённый ответ в LaTeX будет удалён. ИИ-проверка перестанет сверять решения с ним. Это действие нельзя отменить."
                         disabled={item.isDeletingAnswer || item.isSavingAnswer}
-                        className="ui-pressable ui-button-danger rounded-[12px] px-3.5 py-2 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-60"
-                      >
-                        {item.isDeletingAnswer ? "Удаляем..." : "Удалить ответ"}
-                      </button>
+                        onConfirm={() => removeAnswer(item.id)}
+                      />
                     ) : null}
                   </div>
                 </section>

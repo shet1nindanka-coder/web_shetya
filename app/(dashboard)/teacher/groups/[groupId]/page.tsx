@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { UserRole } from "@prisma/client";
 import { deleteGroupAction, renameGroupAction } from "@/actions/group";
+import { DeleteButton } from "@/components/delete-button";
 import { GroupMembersManager } from "@/components/group-members-manager";
 import { ShbzPageHeader } from "@/components/shbz-page-header";
 import { requireUser } from "@/lib/auth";
@@ -112,23 +113,20 @@ export default async function GroupDetailPage({ params, searchParams }: GroupDet
             </button>
           </form>
 
-          <details className="mt-6">
-            <summary className="cursor-pointer text-sm font-semibold" style={{ color: "var(--shbz-danger-text)" }}>
-              Опасная зона
-            </summary>
-            <form action={deleteGroupAction} className="mt-3">
-              <input type="hidden" name="groupId" value={group.id} />
-              <button
-                type="submit"
-                className="ui-pressable ui-button-danger rounded-[12px] px-4 py-2.5 text-sm font-semibold transition"
-              >
-                Удалить группу
-              </button>
-              <p className="mt-2 text-xs" style={{ color: "var(--shbz-text-muted)" }}>
-                Ученики и их прогресс не удаляются — они просто перестанут состоять в группе.
-              </p>
-            </form>
-          </details>
+          <div className="mt-6">
+            <DeleteButton
+              label="Удалить группу"
+              title="Удалить группу?"
+              description={
+                <>
+                  Группа <span className="font-semibold">«{group.name}»</span> будет удалена. Ученики и их
+                  прогресс не удаляются — они просто перестанут состоять в группе.
+                </>
+              }
+              action={deleteGroupAction}
+              fields={{ groupId: group.id }}
+            />
+          </div>
         </div>
       </section>
     </div>

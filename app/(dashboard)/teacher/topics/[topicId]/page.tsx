@@ -1,5 +1,6 @@
 import { UserRole } from "@prisma/client";
-import { DeleteTopicDialog } from "@/components/delete-topic-dialog";
+import { deleteTopicAction } from "@/actions/topic";
+import { DeleteButton } from "@/components/delete-button";
 import { FileResourceCard } from "@/components/file-resource-card";
 import { PageHeader } from "@/components/page-header";
 import { SectionCard } from "@/components/section-card";
@@ -30,11 +31,17 @@ export default async function TeacherTopicPage({ params }: TeacherTopicPageProps
         description={data.topic.description}
         actions={
           isDeveloper ? (
-            <DeleteTopicDialog
-              topicId={data.topic.id}
-              topicTitle={data.topic.title}
-              triggerLabel="Удалить тему"
-              triggerClassName="ui-pressable ui-button-danger rounded-[12px] px-3.5 py-2 text-sm font-semibold transition sm:rounded-[12px]"
+            <DeleteButton
+              label="Удалить тему"
+              title="Удалить тему?"
+              description={
+                <>
+                  Тема <span className="font-semibold">«{data.topic.title}»</span> будет удалена вместе с
+                  прикреплёнными файлами и статусами по номерам. Это действие нельзя отменить.
+                </>
+              }
+              action={deleteTopicAction}
+              fields={{ topicId: data.topic.id }}
             />
           ) : undefined
         }

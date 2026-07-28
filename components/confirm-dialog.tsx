@@ -1,12 +1,12 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, type ReactNode } from "react";
 import { createPortal } from "react-dom";
 
 type ConfirmDialogProps = {
   open: boolean;
   title: string;
-  description?: string;
+  description?: ReactNode;
   confirmLabel?: string;
   pendingLabel?: string;
   cancelLabel?: string;
@@ -59,7 +59,13 @@ export function ConfirmDialog({
         }
       }}
     >
-      <div className="shbz-card w-full max-w-md p-6" onClick={(event) => event.stopPropagation()}>
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-label={title}
+        className="shbz-card w-full max-w-md p-6"
+        onClick={(event) => event.stopPropagation()}
+      >
         <div className="space-y-3">
           <p className="text-xs font-bold uppercase tracking-[1.6px]" style={{ color: "var(--shbz-danger-solid)" }}>
             Подтверждение
@@ -67,11 +73,17 @@ export function ConfirmDialog({
           <h3 className="text-2xl font-extrabold tracking-[-0.5px]" style={{ color: "var(--shbz-text-strong)" }}>
             {title}
           </h3>
-          {description ? <p className="text-sm leading-6">{description}</p> : null}
+          {description ? <div className="text-sm leading-6">{description}</div> : null}
         </div>
 
         <div className="mt-5 flex flex-wrap gap-3">
-          <button type="button" onClick={onCancel} disabled={isPending} className="shbz-btn-outline disabled:opacity-60">
+          <button
+            type="button"
+            onClick={onCancel}
+            disabled={isPending}
+            autoFocus
+            className="shbz-btn-outline disabled:opacity-60"
+          >
             {cancelLabel}
           </button>
           <button

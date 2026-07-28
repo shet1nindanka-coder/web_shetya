@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState, useTransition } from "react";
 import { addGroupMemberAction, removeGroupMemberAction } from "@/actions/group";
+import { DeleteButton } from "@/components/delete-button";
 import { GroupMemberEditor } from "@/components/group-member-editor";
 
 type GroupMember = {
@@ -133,17 +134,20 @@ export function GroupMembersManager({ groupId, members, allStudents }: GroupMemb
                   <span className="shbz-chip" style={{ background: "var(--shbz-danger-bg)", color: "var(--shbz-danger-text)" }}>
                     {member.progress.redCount}
                   </span>
-                  <button
-                    type="button"
+                  <DeleteButton
+                    variant="icon"
+                    ariaLabel={`Убрать ${member.name} из группы`}
+                    title="Убрать из группы?"
+                    description={
+                      <>
+                        <span className="font-semibold">«{member.name}»</span> перестанет состоять в группе.
+                        Аккаунт и весь прогресс ученика сохранятся.
+                      </>
+                    }
+                    confirmLabel="Да, убрать"
                     disabled={isPending}
-                    aria-label={`Убрать ${member.name} из группы`}
-                    title="Убрать из группы"
-                    onClick={() => mutate(removeGroupMemberAction, member.id)}
-                    className="text-[18px] leading-none opacity-50 transition hover:opacity-100"
-                    style={{ color: "var(--shbz-danger-text)" }}
-                  >
-                    ×
-                  </button>
+                    onConfirm={() => mutate(removeGroupMemberAction, member.id)}
+                  />
                 </div>
               </div>
               <div className="mt-3.5">

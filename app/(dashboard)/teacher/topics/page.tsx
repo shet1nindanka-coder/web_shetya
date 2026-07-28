@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { UserRole } from "@prisma/client";
-import { DeleteTopicDialog } from "@/components/delete-topic-dialog";
+import { deleteTopicAction } from "@/actions/topic";
+import { DeleteButton } from "@/components/delete-button";
 import { ShbzNavCard } from "@/components/shbz-nav-card";
 import { ShbzNumberSearch } from "@/components/shbz-number-search";
 import { ShbzPageHeader } from "@/components/shbz-page-header";
@@ -129,7 +130,18 @@ export default async function TeacherTopicsPage({ searchParams }: TeacherTopicsP
                       Открыть
                     </Link>
                     {isDeveloper ? (
-                      <DeleteTopicDialog topicId={topic.id} topicTitle={topic.title} triggerClassName="shbz-btn-danger" />
+                      <DeleteButton
+                        label="Удалить"
+                        title="Удалить тему?"
+                        description={
+                          <>
+                            Тема <span className="font-semibold">«{topic.title}»</span> будет удалена вместе с
+                            прикреплёнными файлами и статусами по номерам. Это действие нельзя отменить.
+                          </>
+                        }
+                        action={deleteTopicAction}
+                        fields={{ topicId: topic.id }}
+                      />
                     ) : null}
                   </>
                 }

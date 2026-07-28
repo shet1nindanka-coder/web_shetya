@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { UserRole } from "@prisma/client";
-import { DeleteStudentDialog } from "@/components/delete-student-dialog";
+import { deleteStudentAction } from "@/actions/student";
+import { DeleteButton } from "@/components/delete-button";
 import { StudentCreateForm } from "@/components/student-create-form";
 import { ShbzPageHeader } from "@/components/shbz-page-header";
 import { requireUser } from "@/lib/auth";
@@ -150,7 +151,18 @@ export default async function TeacherStudentsPage({ searchParams }: TeacherStude
                   >
                     Смотреть прогресс
                   </Link>
-                  <DeleteStudentDialog studentId={student.id} studentName={student.name} triggerClassName="shbz-btn-danger" />
+                  <DeleteButton
+                    label="Удалить"
+                    title="Удалить ученика?"
+                    description={
+                      <>
+                        Аккаунт <span className="font-semibold">«{student.name}»</span> будет удалён вместе со
+                        статусами по номерам и назначенными дедлайнами. Это действие нельзя отменить.
+                      </>
+                    }
+                    action={deleteStudentAction}
+                    fields={{ studentId: student.id }}
+                  />
                 </div>
               </div>
             ))}
