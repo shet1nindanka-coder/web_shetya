@@ -15,6 +15,7 @@ type LessonBoardItem = {
   reason: string;
   minutes: number | null;
   comment: string | null;
+  isExtra: boolean;
   topicTitle: string;
   studentStatus: string | null;
 };
@@ -121,7 +122,7 @@ export function TeacherLessonBoard({ prefix, aiAvailable, lesson, bank }: Teache
   }, [pendingCount, lesson.id, router]);
 
   const saveItems = useCallback(
-    async (participantId: string, homeworkNumberIds: string[]) => {
+    async (participantId: string, homeworkNumberIds: string[], extraHomeworkNumberIds: string[]) => {
       setBusyParticipantId(participantId);
       setNotice(null);
 
@@ -129,7 +130,7 @@ export function TeacherLessonBoard({ prefix, aiAvailable, lesson, bank }: Teache
         const response = await fetch(`/api/teacher/lessons/${lesson.id}/participants/${participantId}/items`, {
           method: "PATCH",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ homeworkNumberIds })
+          body: JSON.stringify({ homeworkNumberIds, extraHomeworkNumberIds })
         });
         const result = (await response.json().catch(() => null)) as { error?: string } | null;
 
@@ -266,7 +267,17 @@ export function TeacherLessonBoard({ prefix, aiAvailable, lesson, bank }: Teache
           const pending = isParticipantPending(participant) && !isParticipantStale(participant);
           const stale = isParticipantStale(participant);
           const busy = busyParticipantId === participant.id;
-          const totalMinutes = participant.items.reduce((sum, item) => sum + (item.minutes ?? 0), 0);
+          const mainItems = participant.items.filter((item) => !item.isExtra);
+          const extraItems = participant.items.filter((item) => item.isExtra);
+          const mainIds = mainItems.map((item) => item.homeworkNumberId);
+          const extraIds = extraItems.map((item) => item.homeworkNumberId);
+          const totalMinutes = mainItems.reduce((sum, item) => sum + (item.minutes ?? 0), 0);
+          const removeItem = (target: LessonBoardItem) =>
+            void saveItems(
+              participant.id,
+              mainIds.filter((id) => id !== target.homeworkNumberId),
+              extraIds.filter((id) => id !== target.homeworkNumberId)
+            );
 
           return (
             <article key={participant.id} className="shbz-card p-6">
@@ -276,7 +287,8 @@ export function TeacherLessonBoard({ prefix, aiAvailable, lesson, bank }: Teache
                     {participant.studentName}
                   </h3>
                   <p className="mt-0.5 text-xs" style={{ color: "var(--shbz-text-muted)" }}>
-                    скорость: {participant.speed ?? "не указана"} · задач: {participant.items.length}
+                    скорость: {participant.speed ?? "не указана"} · основных: {mainItems.length}
+                    {extraItems.length > 0 ? ` · доп.: ${extraItems.length}` : ""}
                     {totalMinutes > 0 ? ` · ~${totalMinutes} мин по оценке ИИ (это оценка, не расчёт)` : ""}
                   </p>
                 </div>
@@ -326,9 +338,9 @@ export function TeacherLessonBoard({ prefix, aiAvailable, lesson, bank }: Teache
                 </p>
               ) : null}
 
-              {participant.items.length > 0 ? (
+              {mainItems.length > 0 ? (
                 <ol className="mt-4 space-y-2">
-                  {participant.items.map((item, index) => {
+                  {mainItems.map((item, index) => {
                     const reason = reasonMeta[item.reason] ?? reasonMeta.NEW;
                     const status = item.studentStatus ? statusMeta[item.studentStatus] : null;
 
@@ -369,12 +381,7 @@ export function TeacherLessonBoard({ prefix, aiAvailable, lesson, bank }: Teache
                           type="button"
                           disabled={busy}
                           aria-label={`Убрать № ${item.number}`}
-                          onClick={() =>
-                            void saveItems(
-                              participant.id,
-                              participant.items.filter((entry) => entry.id !== item.id).map((entry) => entry.homeworkNumberId)
-                            )
-                          }
+                          onClick={() => removeItem(item)}
                           className="ml-auto text-[16px] leading-none opacity-60 transition hover:opacity-100"
                           style={{ color: "var(--shbz-danger-text)" }}
                         >
@@ -390,12 +397,73 @@ export function TeacherLessonBoard({ prefix, aiAvailable, lesson, bank }: Teache
                 </p>
               ) : null}
 
+              {extraItems.length > 0 ? (
+                <div className="mt-4">
+                  <p
+                    className="mb-2 text-[11px] font-bold uppercase tracking-[1.2px]"
+                    style={{ color: "var(--shbz-kicker)" }}
+                  >
+                    Дополнительно ⭐ — если основная часть решена
+                  </p>
+                  <ol className="space-y-2">
+                    {extraItems.map((item) => {
+                      const reason = reasonMeta[item.reason] ?? reasonMeta.NEW;
+
+                      return (
+                        <li
+                          key={item.id}
+                          className="flex flex-wrap items-center gap-x-3 gap-y-1.5 rounded-[12px] border border-dashed px-3.5 py-2.5"
+                          style={{ borderColor: "var(--shbz-soft-border)" }}
+                        >
+                          <span className="text-sm font-bold" style={{ color: "var(--shbz-text-strong)" }}>
+                            № {item.number}
+                          </span>
+                          <span className="text-xs" style={{ color: "var(--shbz-text-muted)" }}>
+                            {item.topicTitle}
+                          </span>
+                          {item.difficulty ? (
+                            <span
+                              className="shbz-chip"
+                              style={{ background: "var(--shbz-tab-hover)", color: "var(--shbz-kicker)", padding: "3px 9px" }}
+                            >
+                              сложн. {item.difficulty}
+                            </span>
+                          ) : null}
+                          <span className="shbz-chip" style={{ background: reason.background, color: reason.color, padding: "3px 9px" }}>
+                            {reason.label}
+                          </span>
+                          {item.comment ? (
+                            <span className="min-w-0 flex-1 truncate text-xs" style={{ color: "var(--shbz-text-muted)" }}>
+                              {item.comment}
+                            </span>
+                          ) : null}
+                          <button
+                            type="button"
+                            disabled={busy}
+                            aria-label={`Убрать № ${item.number}`}
+                            onClick={() => removeItem(item)}
+                            className="ml-auto text-[16px] leading-none opacity-60 transition hover:opacity-100"
+                            style={{ color: "var(--shbz-danger-text)" }}
+                          >
+                            ×
+                          </button>
+                        </li>
+                      );
+                    })}
+                  </ol>
+                </div>
+              ) : null}
+
               <ManualAdd
                 bank={bank}
                 busy={busy}
                 existingIds={participant.items.map((item) => item.homeworkNumberId)}
-                onAdd={(homeworkNumberId) =>
-                  void saveItems(participant.id, [...participant.items.map((item) => item.homeworkNumberId), homeworkNumberId])
+                onAdd={(homeworkNumberId, toExtra) =>
+                  void saveItems(
+                    participant.id,
+                    toExtra ? mainIds : [...mainIds, homeworkNumberId],
+                    toExtra ? [...extraIds, homeworkNumberId] : extraIds
+                  )
                 }
               />
             </article>
@@ -415,7 +483,7 @@ function ManualAdd({
   bank: TeacherLessonBoardProps["bank"];
   busy: boolean;
   existingIds: string[];
-  onAdd: (homeworkNumberId: string) => void;
+  onAdd: (homeworkNumberId: string, toExtra: boolean) => void;
 }) {
   const [topicId, setTopicId] = useState(bank[0]?.topicId ?? "");
   const [numberId, setNumberId] = useState("");
@@ -461,13 +529,26 @@ function ManualAdd({
         disabled={busy || !numberId}
         onClick={() => {
           if (numberId) {
-            onAdd(numberId);
+            onAdd(numberId, false);
             setNumberId("");
           }
         }}
         className="shbz-btn-outline disabled:cursor-not-allowed disabled:opacity-50"
       >
-        Добавить
+        В основную
+      </button>
+      <button
+        type="button"
+        disabled={busy || !numberId}
+        onClick={() => {
+          if (numberId) {
+            onAdd(numberId, true);
+            setNumberId("");
+          }
+        }}
+        className="shbz-btn-outline disabled:cursor-not-allowed disabled:opacity-50"
+      >
+        В доп. ⭐
       </button>
     </div>
   );

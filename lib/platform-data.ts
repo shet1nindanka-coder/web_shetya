@@ -1793,14 +1793,14 @@ export async function getTeacherLessons() {
 export async function getLessonPlanContext(studentId: string, topicIds?: string[]) {
   const now = new Date();
 
-  const [student, profile, topics, lessonItems, activeAssignments] = await Promise.all([
+  const [student, profile, topics, lessonItems, activeAssignments, allStatuses, numberTotals] = await Promise.all([
     prisma.user.findFirst({
       where: { id: studentId, role: UserRole.STUDENT },
       select: { id: true, name: true }
     }),
     prisma.studentProfile.findUnique({
       where: { userId: studentId },
-      select: { speed: true, aiNote: true }
+      select: { speed: true, aiNote: true, aiPortrait: true }
     }),
     prisma.topic.findMany({
       where: topicIds && topicIds.length > 0 ? { id: { in: topicIds } } : undefined,
@@ -1836,12 +1836,61 @@ export async function getLessonPlanContext(studentId: string, topicIds?: string[
         OR: [{ deadlineAt: null }, { deadlineAt: { gte: now } }]
       },
       select: { numbers: { select: { homeworkNumberId: true } } }
-    })
+    }),
+    // Карта тем целиком (без фильтра topicIds): модель должна видеть общий уровень.
+    prisma.studentTopicNumberStatus.findMany({
+      where: { studentId, status: { not: null } },
+      select: {
+        status: true,
+        statusChangedAt: true,
+        homeworkNumber: { select: { topic: { select: { id: true, title: true } } } }
+      }
+    }),
+    prisma.topicHomeworkNumber.groupBy({ by: ["topicId"], _count: { _all: true } })
   ]);
 
   if (!student) {
     return null;
   }
+
+  const totalsByTopic = new Map(numberTotals.map((row) => [row.topicId, row._count._all]));
+  const overviewByTopic = new Map<
+    string,
+    { topic: string; total: number; green: number; yellow: number; red: number; lastActivityAt: Date | null }
+  >();
+
+  for (const row of allStatuses) {
+    const topic = row.homeworkNumber.topic;
+    const entry = overviewByTopic.get(topic.id) ?? {
+      topic: topic.title,
+      total: totalsByTopic.get(topic.id) ?? 0,
+      green: 0,
+      yellow: 0,
+      red: 0,
+      lastActivityAt: null
+    };
+
+    if (row.status === HomeworkNumberStatus.GREEN) entry.green += 1;
+    if (row.status === HomeworkNumberStatus.YELLOW) entry.yellow += 1;
+    if (row.status === HomeworkNumberStatus.RED) entry.red += 1;
+
+    if (row.statusChangedAt && (!entry.lastActivityAt || row.statusChangedAt > entry.lastActivityAt)) {
+      entry.lastActivityAt = row.statusChangedAt;
+    }
+
+    overviewByTopic.set(topic.id, entry);
+  }
+
+  const topicsOverview = Array.from(overviewByTopic.values()).map((entry) => ({
+    topic: entry.topic,
+    total: entry.total,
+    green: entry.green,
+    yellow: entry.yellow,
+    red: entry.red,
+    daysSinceActivity: entry.lastActivityAt
+      ? Math.max(0, Math.floor((now.getTime() - entry.lastActivityAt.getTime()) / 86_400_000))
+      : null
+  }));
 
   const excludedNumberIds = new Set<string>();
 
@@ -1890,8 +1939,10 @@ export async function getLessonPlanContext(studentId: string, topicIds?: string[
       id: student.id,
       name: student.name,
       speed: profile?.speed ?? null,
-      aiNote: profile?.aiNote ?? null
+      aiNote: profile?.aiNote ?? null,
+      aiPortrait: profile?.aiPortrait ?? null
     },
+    topicsOverview,
     topics: mappedTopics,
     excludedNumberIds: Array.from(excludedNumberIds),
     stats: { greenCount, yellowCount, redCount }
@@ -1929,6 +1980,7 @@ export async function getLessonDetail(lessonId: string) {
                 reason: true,
                 minutes: true,
                 comment: true,
+                isExtra: true,
                 homeworkNumber: {
                   select: {
                     id: true,
@@ -1973,6 +2025,7 @@ export async function getLessonDetail(lessonId: string) {
           reason: item.reason,
           minutes: item.minutes,
           comment: item.comment,
+          isExtra: item.isExtra,
           homeworkNumberId: item.homeworkNumber.id,
           number: item.homeworkNumber.number,
           difficulty: item.homeworkNumber.difficulty,

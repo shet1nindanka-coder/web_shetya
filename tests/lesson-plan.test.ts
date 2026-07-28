@@ -123,8 +123,29 @@ test("parseLessonPlanResponse caps items and never throws on garbage", () => {
   });
 
   assert.equal(parseLessonPlanResponse(many, 100).items.length, MAX_PLAN_ITEMS);
-  assert.deepEqual(parseLessonPlanResponse("модель упала", 5), { items: [], summary: "" });
-  assert.deepEqual(parseLessonPlanResponse('{"summary":"без items"}', 5), { items: [], summary: "" });
+  assert.deepEqual(parseLessonPlanResponse("модель упала", 5), { items: [], extraItems: [], summary: "" });
+  assert.deepEqual(parseLessonPlanResponse('{"summary":"без items"}', 5), { items: [], extraItems: [], summary: "" });
+});
+
+test("parseLessonPlanResponse splits main and extra parts without duplicates", () => {
+  const content = JSON.stringify({
+    items: [
+      { index: 0, reason: "GAP" },
+      { index: 1, reason: "NEW" }
+    ],
+    extraItems: [
+      { index: 1, reason: "NEW" },
+      { index: 2, reason: "REVIEW", minutes: 6 },
+      { index: 99, reason: "NEW" }
+    ],
+    summary: "основная + запас"
+  });
+
+  const plan = parseLessonPlanResponse(content, 5);
+
+  assert.deepEqual(plan.items.map((item) => item.index), [0, 1]);
+  assert.deepEqual(plan.extraItems.map((item) => item.index), [2]);
+  assert.equal(plan.extraItems[0].reason, "REVIEW");
 });
 
 test("normalizePlanParams clamps every field", () => {

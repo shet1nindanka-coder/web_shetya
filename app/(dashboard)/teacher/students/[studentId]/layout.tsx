@@ -4,8 +4,11 @@ import type { ReactNode } from "react";
 import { DeleteStudentDialog } from "@/components/delete-student-dialog";
 import { PageHeader } from "@/components/page-header";
 import { TeacherStudentTabs } from "@/components/teacher-student-tabs";
+import { StudentPortraitPanel } from "@/components/student-portrait-panel";
 import { requireUser } from "@/lib/auth";
 import { getTeacherStudentDetail } from "@/lib/platform-data";
+import { prisma } from "@/lib/prisma";
+import { formatDateTime } from "@/lib/utils";
 
 type TeacherStudentLayoutProps = {
   children: ReactNode;
@@ -28,6 +31,13 @@ export default async function TeacherStudentLayout({ children, params }: Teacher
 
     throw error;
   }
+
+  const portraitProfile = await prisma.studentProfile
+    .findUnique({
+      where: { userId: studentId },
+      select: { aiPortrait: true, portraitUpdatedAt: true }
+    })
+    .catch(() => null);
 
   return (
     <div className="space-y-6">
@@ -55,6 +65,12 @@ export default async function TeacherStudentLayout({ children, params }: Teacher
       />
 
       <TeacherStudentTabs studentId={data.student.id} />
+
+      <StudentPortraitPanel
+        studentId={data.student.id}
+        portrait={portraitProfile?.aiPortrait ?? null}
+        updatedAtLabel={portraitProfile?.portraitUpdatedAt ? formatDateTime(portraitProfile.portraitUpdatedAt) : null}
+      />
 
       {children}
     </div>

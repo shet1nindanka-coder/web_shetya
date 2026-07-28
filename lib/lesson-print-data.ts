@@ -23,7 +23,8 @@ export async function buildLessonPrintPayload(lessonId: string, studentId: strin
       items: participant.items.map((item) => ({
         number: item.number,
         topicTitle: item.topicTitle,
-        conditionLatex: item.conditionLatex
+        conditionLatex: item.conditionLatex,
+        isExtra: item.isExtra
       }))
     }))
   };

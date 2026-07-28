@@ -71,6 +71,7 @@ export default async function LessonDetailPage({ params }: LessonDetailPageProps
               reason: item.reason,
               minutes: item.minutes,
               comment: item.comment,
+              isExtra: item.isExtra,
               topicTitle: item.topicTitle,
               studentStatus: item.studentStatus
             }))

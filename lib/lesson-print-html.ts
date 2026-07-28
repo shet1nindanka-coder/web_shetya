@@ -13,6 +13,7 @@ export type LessonPrintItem = {
   number: number;
   topicTitle: string;
   conditionLatex: string | null;
+  isExtra?: boolean;
 };
 
 export type LessonPrintParticipant = {
@@ -162,21 +163,28 @@ export function renderLessonPrintHtml(lesson: LessonPrintData): string {
 
   const sections = lesson.participants
     .map((participant, participantIndex) => {
-      const tasks = participant.items
-        .map((item, index) => {
-          const conditionHtml = item.conditionLatex
-            ? renderConditionHtml(item.conditionLatex)
-            : `<em>см. файл ДЗ по теме «${escapeHtml(item.topicTitle)}», № ${item.number}</em>`;
+      const renderTask = (item: LessonPrintItem, index: number, extra: boolean) => {
+        const conditionHtml = item.conditionLatex
+          ? renderConditionHtml(item.conditionLatex)
+          : `<em>см. файл ДЗ по теме «${escapeHtml(item.topicTitle)}», № ${item.number}</em>`;
 
-          return `<div class="task">
-  <div class="task-num">${index + 1}</div>
+        return `<div class="task">
+  <div class="task-num${extra ? " task-num--extra" : ""}">${index + 1}</div>
   <div class="task-body">
     <div class="task-ref">№ ${item.number} · <b>${escapeHtml(item.topicTitle)}</b></div>
     <div class="task-cond">${conditionHtml}</div>
   </div>
 </div>`;
-        })
-        .join("\n");
+      };
+
+      const mainItems = participant.items.filter((item) => !item.isExtra);
+      const extraItems = participant.items.filter((item) => item.isExtra);
+      let tasks = mainItems.map((item, index) => renderTask(item, index, false)).join("\n");
+
+      if (extraItems.length > 0) {
+        tasks += `\n<div class="extra-divider"><span>Дополнительные задания ⭐ — если основная часть решена</span></div>\n`;
+        tasks += extraItems.map((item, index) => renderTask(item, mainItems.length + index, true)).join("\n");
+      }
 
       return `<section class="student"${participantIndex > 0 ? ' style="break-before: page;"' : ""}>
   <div class="doc-head">
@@ -265,6 +273,12 @@ ${KATEX_CSS_MARKER}
   .math-display .katex-display { margin: 0; text-align: left; }
   .math-display .katex-display > .katex { text-align: left; }
   .empty { font-style: italic; color: #6a6e75; }
+  .task-num--extra { border-style: dashed; color: #6a6e75; border-color: #6a6e75; }
+  .extra-divider {
+    display: flex; align-items: center; gap: 8pt; margin: 12pt 0 2pt;
+    font-size: 8pt; font-weight: 800; letter-spacing: 1.2px; text-transform: uppercase; color: #6a6e75;
+  }
+  .extra-divider::before, .extra-divider::after { content: ""; height: 0.75pt; background: #c7cad0; flex: 1; }
   .math-error { color: #c23d4b; }
 </style>
 </head>

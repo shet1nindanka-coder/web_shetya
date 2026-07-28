@@ -202,6 +202,8 @@ model StudentProfile {
   placedAt   DateTime?
   speed      Int? // 1..10, «скорость» ученика — подсказка для ИИ, задаётся учителем
   aiNote     String? // свободная заметка учителя об ученике, уходит в промпт подбора
+  aiPortrait String? // ИИ-портрет: сильное/слабое/типичные ошибки, генерируется из проверок
+  portraitUpdatedAt DateTime?
   groupId    String?
   createdAt  DateTime      @default(now())
   updatedAt  DateTime      @updatedAt
@@ -284,6 +286,7 @@ model LessonAssignmentItem {
   forReview        Boolean             @default(false)
   minutes          Int? // оценка времени ОТ МОДЕЛИ, справочная, ни на что не влияет
   comment          String? // короткое пояснение от ИИ, зачем эта задача
+  isExtra          Boolean             @default(false) // дополнительная часть: если основная решена раньше времени
   createdAt        DateTime            @default(now())
   participant      LessonParticipant   @relation(fields: [participantId], references: [id], onDelete: Cascade)
   homeworkNumber   TopicHomeworkNumber @relation(fields: [homeworkNumberId], references: [id], onDelete: Cascade)

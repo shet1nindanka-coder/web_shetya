@@ -82,7 +82,8 @@ export type ParsedPlanItem = {
 };
 
 export type ParsedPlan = {
-  items: ParsedPlanItem[];
+  items: ParsedPlanItem[]; // основная часть — на всю длительность занятия
+  extraItems: ParsedPlanItem[]; // дополнительная — если основная решена раньше времени
   summary: string;
 };
 
@@ -192,11 +193,11 @@ export function parseShortlistResponse(content: string, candidateCount: number):
 
 /** Разбор второго этапа: порядок элементов от модели сохраняется — это порядок решения на уроке. */
 export function parseLessonPlanResponse(content: string, candidateCount: number): ParsedPlan {
-  const empty: ParsedPlan = { items: [], summary: "" };
-  let payload: { items?: unknown; summary?: unknown };
+  const empty: ParsedPlan = { items: [], extraItems: [], summary: "" };
+  let payload: { items?: unknown; extraItems?: unknown; summary?: unknown };
 
   try {
-    payload = extractJsonObject(content) as { items?: unknown; summary?: unknown };
+    payload = extractJsonObject(content) as { items?: unknown; extraItems?: unknown; summary?: unknown };
   } catch {
     return empty;
   }
@@ -205,40 +206,52 @@ export function parseLessonPlanResponse(content: string, candidateCount: number)
     return empty;
   }
 
+  // Общий набор индексов: номер не может быть одновременно в основной и дополнительной части.
   const seen = new Set<number>();
-  const items: ParsedPlanItem[] = [];
 
-  for (const raw of payload.items) {
-    if (!raw || typeof raw !== "object") {
-      continue;
+  const collect = (rawList: unknown, limit: number): ParsedPlanItem[] => {
+    if (!Array.isArray(rawList)) {
+      return [];
     }
 
-    const record = raw as Record<string, unknown>;
-    const index = toFiniteInteger(record.index);
+    const collected: ParsedPlanItem[] = [];
 
-    if (index === null || index < 0 || index >= candidateCount || seen.has(index)) {
-      continue;
+    for (const raw of rawList) {
+      if (!raw || typeof raw !== "object") {
+        continue;
+      }
+
+      const record = raw as Record<string, unknown>;
+      const index = toFiniteInteger(record.index);
+
+      if (index === null || index < 0 || index >= candidateCount || seen.has(index)) {
+        continue;
+      }
+
+      const reasonRaw = typeof record.reason === "string" ? record.reason.toUpperCase() : "";
+      const reason = (PLAN_REASONS as string[]).includes(reasonRaw) ? (reasonRaw as PlanReason) : "NEW";
+
+      const minutesRaw = toFiniteInteger(record.minutes);
+      const minutes = minutesRaw === null || minutesRaw < 1 ? null : Math.min(MAX_MODEL_MINUTES, minutesRaw);
+
+      const comment = typeof record.comment === "string" ? record.comment.trim().slice(0, MAX_COMMENT_LENGTH) : "";
+
+      seen.add(index);
+      collected.push({ index, reason, minutes, comment });
+
+      if (collected.length >= limit) {
+        break;
+      }
     }
 
-    const reasonRaw = typeof record.reason === "string" ? record.reason.toUpperCase() : "";
-    const reason = (PLAN_REASONS as string[]).includes(reasonRaw) ? (reasonRaw as PlanReason) : "NEW";
+    return collected;
+  };
 
-    const minutesRaw = toFiniteInteger(record.minutes);
-    const minutes = minutesRaw === null || minutesRaw < 1 ? null : Math.min(MAX_MODEL_MINUTES, minutesRaw);
-
-    const comment = typeof record.comment === "string" ? record.comment.trim().slice(0, MAX_COMMENT_LENGTH) : "";
-
-    seen.add(index);
-    items.push({ index, reason, minutes, comment });
-
-    if (items.length >= MAX_PLAN_ITEMS) {
-      break;
-    }
-  }
-
+  const items = collect(payload.items, MAX_PLAN_ITEMS);
+  const extraItems = collect(payload.extraItems, MAX_PLAN_ITEMS);
   const summary = typeof payload.summary === "string" ? payload.summary.trim().slice(0, MAX_SUMMARY_LENGTH) : "";
 
-  return { items, summary };
+  return { items, extraItems, summary };
 }
 
 /** Скорость ученика: целое 1..10 либо null («не указана»). */
