@@ -18,7 +18,7 @@ progress for different students. Never attach a `Topic` to a single student.
 
 - Next.js 15 (App Router + Server Actions) · React 19 · TypeScript (strict) · Node 20
 - Tailwind CSS 3 · PostgreSQL · Prisma 5
-- Custom cookie-session auth (no NextAuth) · pino structured logging · @react-pdf/renderer (PDF-отчёты) · KaTeX (math)
+- Custom cookie-session auth (no NextAuth) · pino structured logging · @react-pdf/renderer (недельные PDF-отчёты) · KaTeX (math) · puppeteer-core + системный Chromium (печатные PDF-раздатки уроков)
 
 Path alias: `@/*` → repo root (e.g. `import { requireUser } from "@/lib/auth"`).
 
@@ -86,14 +86,18 @@ Postgres service.
 - **Domain helpers** — `lib/utils.ts`: `homeworkStatusMeta` (GREEN/YELLOW/RED labels + CSS classes),
   `roleHome`, `parseNumbersInput` (accepts lists and ranges like `"1-5, 7, 10"`), text
   normalizers, date/size formatters, MIME helpers, allowed-upload lists.
-- **Site settings** — панель разработчика `/developer/panel` (роль DEVELOPER, файлы в `app/(dashboard)/teacher/panel/`): настройки автопроверки
-  (модель, effort, порог, лимиты) и файлов (ретеншен, макс. фото, глубина истории) в таблице `SiteSetting`.
-  Чтение/запись через raw SQL в `lib/site-settings.ts` (кэш 15с в памяти); значение из БД переопределяет env.
-  Новые крутилки добавлять туда, а не в env.
-- **Background jobs** — `instrumentation.ts` (Next register hook, единственный инстанс): ежедневный
-  ретеншен фото ДЗ `lib/homework-photo-retention.ts` (env `HOMEWORK_PHOTO_RETENTION_DAYS`, дефолт 365,
-  0 = выключен; чистит `HomeworkSubmissionPhoto`+`HomeworkCheckPhoto` и файлы через `deleteStoredFileRecordIfUnused`).
-- **Rate limiting** — `lib/rate-limit.ts`, in-memory token bucket (login and student creation).
+- **Rate limiting** — `lib/rate-limit.ts`, in-memory token bucket (login and student creation);
+  `lib/persistent-rate-limit.ts` — durable buckets in Postgres (AI budgets).
+- **AI lesson planner** — «ИИ-подбор заданий на урок»: группы (`actions/group.ts`,
+  `/teacher/groups`), уроки (`/teacher/lessons`, API `app/api/teacher/lessons/**`). Подбор целиком
+  на модели (никаких эвристических формул в коде): `lib/lesson-plan.ts` — факты и валидация,
+  `lib/lesson-plan-generate.ts` — двухэтапный вызов (отсев → план) через ту же инфраструктуру, что
+  автопроверка, `lib/lesson-plan-queue.ts` — in-memory очередь (конкурентность из настроек).
+  Печатная раздатка: `lib/lesson-print-html.ts` (KaTeX → MathML, чистая функция) →
+  `lib/pdf-renderer.ts` (headless Chromium, фолбэк — HTML для печати) → роуты
+  `/teacher/lessons/[id]/pdf|print`.
+- **Runtime settings** — `lib/site-settings.ts`: ключ-значение в таблице `SiteSetting` (raw SQL),
+  15s in-memory cache, дефолты из env. Управляются из дев-панели (`/developer/panel`).
 - **Logging** — `lib/logger.ts` (pino). Use `logInfoEvent` / `logWarnEvent` / `logErrorEvent(event,
   context, error?, message?)` with dotted event names, e.g. `topic.create.succeeded`,
   `auth.login.rate_limited`.
@@ -103,7 +107,7 @@ Postgres service.
 - `User` — `role: TEACHER | STUDENT | DEVELOPER`, `email` (used as login), `passwordHash`.
   DEVELOPER manages content (topic CRUD, numbers, files, LaTeX conditions/answers, reorder,
   uploads) and sees statistics; TEACHER has read-only topics plus students/homework/statistics.
-  Developer видит свои URL `/developer/*`: это те же страницы `/teacher/*` через rewrite (next.config) + middleware-редирект по несекретной куке `tutor_role` (ставится при логине); права проверяет только `requireUser` (accepts a role array). Create a
+  Developer shares the `/teacher/*` route group; `requireUser` accepts a role array. Create a
   developer via seed (`dev@example.com` / `dev123`) or `npx tsx scripts/create-developer.ts`.
 - `Session` — server sessions for cookie auth (`tokenHash`, `expiresAt`).
 - `StoredFile` — file metadata (`originalName`, `storageKey`, `mimeType`, `size`); reused across
@@ -111,7 +115,9 @@ Postgres service.
 - `Topic` — shared topic: `title`, `description`, `displayOrder`, optional `theoryFile` /
   `homeworkFile`.
 - `TopicHomeworkNumber` — a problem inside a topic: `number`, `displayOrder`, optional
-  `conditionLatex`, `answerLatex`, `answerFile`. Unique on `(topicId, number)`.
+  `conditionLatex`, `answerLatex`, `answerFile`, `difficulty` (1–10) + `estimatedMinutes` +
+  `difficultySource` (`ai` размечается батчем из дев-панели, `manual` не перезаписывается ИИ).
+  Unique on `(topicId, number)`.
 - `StudentTopicNumberStatus` — per-student state: `status: GREEN | YELLOW | RED | null`, `note`,
   `deadlineAt`. Unique on `(studentId, homeworkNumberId)`.
 - `HomeworkAssignment` + `HomeworkAssignmentNumber` — a homework set issued to one student for one
@@ -125,13 +131,24 @@ Postgres service.
   review tab. Files are served through `/files/[fileId]` with an ownership check for students.
 - `HomeworkCheck` + `HomeworkCheckResult` — AI auto-check of a homework: the student triggers
   `POST /api/student/homework-checks`, an in-process queue (`lib/solution-check-queue.ts`) sends the
-  photos + `conditionLatex`/`answerLatex` to a vision model via OpenRouter (`lib/solution-check.ts`,
+  photos + `conditionLatex`/`answerLatex` to a vision model via ProxyAPI (OpenAI-compatible) (`lib/solution-check.ts`,
   env `AI_CHECK_API_KEY` / `AI_CHECK_MODEL` / `AI_CHECK_BASE_URL`), verdicts auto-set number statuses
   (CORRECT→GREEN, INCORRECT→RED, UNCERTAIN→untouched, flagged for the teacher). The client polls
   `GET /api/student/homework-checks?consume=1`, which also revalidates caches after completion.
 
+- `StudentGroup` + `StudentProfile` — группы учеников (ученик максимум в одной группе,
+  `groupId` → SetNull при удалении группы); профиль хранит `speed` (1–10) и `aiNote` — подсказки
+  для ИИ-подбора, задаёт учитель.
+- `Lesson` + `LessonParticipant` + `LessonAssignmentItem` — урок с ИИ-подбором: общие
+  `durationMinutes`/`planParams`, у участника индивидуальные `speed`/`planSummary`/`planError`/
+  `planGeneratedAt`, элементы набора хранят `order`/`reason`/`minutes`/`comment` от модели.
+- `TopicMastery`, `Test*` — таблицы созданы миграцией для соответствия схеме; код под тесты ещё
+  не написан.
+- `SiteSetting` — key-value рантайм-настройки (см. `lib/site-settings.ts`).
+
 `prisma/migrations/` reflects the feature history: init → shared topics/files → answer files →
-LaTeX answers → student notes → student deadlines → LaTeX conditions.
+LaTeX answers → student notes → student deadlines → LaTeX conditions → homework assignments →
+submission photos → AI checks → site settings → number difficulty → lessons & groups.
 
 ## Conventions
 

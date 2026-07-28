@@ -200,6 +200,8 @@ model StudentProfile {
   grade      Int?
   levelScore Int?
   placedAt   DateTime?
+  speed      Int? // 1..10, «скорость» ученика — подсказка для ИИ, задаётся учителем
+  aiNote     String? // свободная заметка учителя об ученике, уходит в промпт подбора
   groupId    String?
   createdAt  DateTime      @default(now())
   updatedAt  DateTime      @updatedAt
@@ -232,6 +234,8 @@ model Lesson {
   groupId      String?
   topicId      String?
   status       LessonStatus        @default(PLANNED)
+  durationMinutes Int              @default(60)
+  planParams   Json? // сырые параметры подбора — чтобы пересобрать с теми же настройками
   startsAt     DateTime?
   startedAt    DateTime?
   finishedAt   DateTime?
@@ -253,6 +257,10 @@ model LessonParticipant {
   lessonId   String
   studentId  String
   attendance AttendanceStatus       @default(UNKNOWN)
+  speed      Int? // переопределение скорости на конкретном занятии
+  planSummary String? // пояснение от ИИ, почему набор такой
+  planGeneratedAt DateTime?
+  planError  String?
   joinedAt   DateTime?
   queueOrder Int?
   helpedAt   DateTime?
@@ -274,6 +282,8 @@ model LessonAssignmentItem {
   order            Int                 @default(0)
   reason           AssignmentReason    @default(NEW)
   forReview        Boolean             @default(false)
+  minutes          Int? // оценка времени ОТ МОДЕЛИ, справочная, ни на что не влияет
+  comment          String? // короткое пояснение от ИИ, зачем эта задача
   createdAt        DateTime            @default(now())
   participant      LessonParticipant   @relation(fields: [participantId], references: [id], onDelete: Cascade)
   homeworkNumber   TopicHomeworkNumber @relation(fields: [homeworkNumberId], references: [id], onDelete: Cascade)

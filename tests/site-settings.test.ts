@@ -60,3 +60,36 @@ test("parseSiteSettingsForm reads checkbox and round-trips through serialize", (
   const roundTripped = applySettingRows(getSiteSettingsDefaults(), serializeSiteSettings(parsed));
   assert.deepEqual(roundTripped, parsed);
 });
+
+test("applySettingRows handles lesson plan keys with clamps", () => {
+  const defaults = getSiteSettingsDefaults();
+  const result = applySettingRows(defaults, [
+    { key: "lessonPlanEnabled", value: "true" },
+    { key: "lessonPlanShortlistSize", value: "500" },
+    { key: "lessonPlanMaxItems", value: "1" },
+    { key: "lessonPlanConcurrency", value: "0" }
+  ]);
+
+  assert.equal(result.lessonPlanEnabled, true);
+  assert.equal(result.lessonPlanShortlistSize, 150);
+  assert.equal(result.lessonPlanMaxItems, 5);
+  assert.equal(result.lessonPlanConcurrency, 1);
+});
+
+test("lesson plan keys survive the serialize round-trip", () => {
+  const defaults = getSiteSettingsDefaults();
+  const custom = {
+    ...defaults,
+    lessonPlanEnabled: true,
+    lessonPlanShortlistSize: 80,
+    lessonPlanMaxItems: 25,
+    lessonPlanConcurrency: 5
+  };
+
+  const restored = applySettingRows(getSiteSettingsDefaults(), serializeSiteSettings(custom));
+
+  assert.equal(restored.lessonPlanEnabled, true);
+  assert.equal(restored.lessonPlanShortlistSize, 80);
+  assert.equal(restored.lessonPlanMaxItems, 25);
+  assert.equal(restored.lessonPlanConcurrency, 5);
+});

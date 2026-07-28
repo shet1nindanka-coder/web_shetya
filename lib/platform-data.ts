@@ -1593,3 +1593,402 @@ export async function findTopicIdByNumber(targetNumber: number) {
 
   return homeworkNumber?.topicId ?? null;
 }
+
+/* ───────────────────────────────────────────────────────────────────────────
+   Группы учеников и уроки (ИИ-подбор заданий на занятие)
+   ─────────────────────────────────────────────────────────────────────────── */
+
+async function getTeacherGroupsUncached() {
+  try {
+    const groups = await prisma.studentGroup.findMany({
+      orderBy: [{ createdAt: "asc" }],
+      select: {
+        id: true,
+        name: true,
+        subject: true,
+        grade: true,
+        createdAt: true,
+        members: {
+          orderBy: { user: { name: "asc" } },
+          select: {
+            speed: true,
+            aiNote: true,
+            user: { select: { id: true, name: true, email: true } }
+          }
+        }
+      }
+    });
+
+    return groups.map((group) => ({
+      id: group.id,
+      name: group.name,
+      subject: group.subject,
+      grade: group.grade,
+      createdAt: group.createdAt,
+      membersCount: group.members.length,
+      members: group.members.map((member) => ({
+        id: member.user.id,
+        name: member.user.name,
+        email: member.user.email,
+        speed: member.speed,
+        aiNote: member.aiNote
+      }))
+    }));
+  } catch (error) {
+    if (isRecoverablePlatformDataError(error)) {
+      logWarnEvent(
+        "platform.teacher_groups.degraded",
+        {},
+        error,
+        "Student groups tables are not migrated yet; returning empty list."
+      );
+      return [];
+    }
+
+    throw error;
+  }
+}
+
+const getTeacherGroupsCached = unstable_cache(getTeacherGroupsUncached, ["teacher-groups"], {
+  tags: [PLATFORM_DATA_TAGS.teacherStudents]
+});
+
+export async function getTeacherGroups(): Promise<Awaited<ReturnType<typeof getTeacherGroupsUncached>>> {
+  return getTeacherGroupsCached();
+}
+
+export async function getGroupDetail(groupId: string) {
+  try {
+    const group = await prisma.studentGroup.findUnique({
+      where: { id: groupId },
+      select: {
+        id: true,
+        name: true,
+        subject: true,
+        grade: true,
+        createdAt: true,
+        members: {
+          orderBy: { user: { name: "asc" } },
+          select: {
+            speed: true,
+            aiNote: true,
+            user: { select: { id: true, name: true, email: true } }
+          }
+        }
+      }
+    });
+
+    if (!group) {
+      return null;
+    }
+
+    const memberIds = group.members.map((member) => member.user.id);
+
+    const [allStudents, statusGroups, totalNumbers] = await Promise.all([
+      prisma.user.findMany({
+        where: { role: UserRole.STUDENT },
+        orderBy: { name: "asc" },
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          studentProfile: { select: { groupId: true } }
+        }
+      }),
+      memberIds.length
+        ? prisma.studentTopicNumberStatus.groupBy({
+            by: ["studentId", "status"],
+            where: { studentId: { in: memberIds }, status: { not: null } },
+            _count: { _all: true }
+          })
+        : Promise.resolve([]),
+      prisma.topicHomeworkNumber.count()
+    ]);
+
+    const progressByStudent = new Map<string, { greenCount: number; yellowCount: number; redCount: number }>();
+
+    for (const row of statusGroups) {
+      const entry = progressByStudent.get(row.studentId) ?? { greenCount: 0, yellowCount: 0, redCount: 0 };
+
+      if (row.status === HomeworkNumberStatus.GREEN) entry.greenCount += row._count._all;
+      if (row.status === HomeworkNumberStatus.YELLOW) entry.yellowCount += row._count._all;
+      if (row.status === HomeworkNumberStatus.RED) entry.redCount += row._count._all;
+
+      progressByStudent.set(row.studentId, entry);
+    }
+
+    return {
+      id: group.id,
+      name: group.name,
+      subject: group.subject,
+      grade: group.grade,
+      createdAt: group.createdAt,
+      totalNumbers,
+      members: group.members.map((member) => ({
+        id: member.user.id,
+        name: member.user.name,
+        email: member.user.email,
+        speed: member.speed,
+        aiNote: member.aiNote,
+        progress: progressByStudent.get(member.user.id) ?? { greenCount: 0, yellowCount: 0, redCount: 0 }
+      })),
+      allStudents: allStudents.map((student) => ({
+        id: student.id,
+        name: student.name,
+        email: student.email,
+        groupId: student.studentProfile?.groupId ?? null
+      }))
+    };
+  } catch (error) {
+    if (isRecoverablePlatformDataError(error)) {
+      return null;
+    }
+
+    throw error;
+  }
+}
+
+export async function getTeacherLessons() {
+  try {
+    const lessons = await prisma.lesson.findMany({
+      orderBy: { createdAt: "desc" },
+      select: {
+        id: true,
+        title: true,
+        status: true,
+        durationMinutes: true,
+        createdAt: true,
+        group: { select: { id: true, name: true } },
+        participants: {
+          select: { id: true, planGeneratedAt: true, planError: true }
+        }
+      }
+    });
+
+    return lessons.map((lesson) => ({
+      id: lesson.id,
+      title: lesson.title,
+      status: lesson.status,
+      durationMinutes: lesson.durationMinutes,
+      createdAt: lesson.createdAt,
+      groupName: lesson.group?.name ?? null,
+      participantsCount: lesson.participants.length,
+      readyCount: lesson.participants.filter((participant) => participant.planGeneratedAt).length,
+      failedCount: lesson.participants.filter((participant) => participant.planError).length
+    }));
+  } catch (error) {
+    if (isRecoverablePlatformDataError(error)) {
+      return [];
+    }
+
+    throw error;
+  }
+}
+
+/**
+ * Контекст ИИ-подбора для одного ученика: банк номеров с его статусами,
+ * исключения (прошлые уроки + активные ДЗ) и агрегаты прогресса.
+ * Некэшированная — вызывается из очереди генерации.
+ */
+export async function getLessonPlanContext(studentId: string, topicIds?: string[]) {
+  const now = new Date();
+
+  const [student, profile, topics, lessonItems, activeAssignments] = await Promise.all([
+    prisma.user.findFirst({
+      where: { id: studentId, role: UserRole.STUDENT },
+      select: { id: true, name: true }
+    }),
+    prisma.studentProfile.findUnique({
+      where: { userId: studentId },
+      select: { speed: true, aiNote: true }
+    }),
+    prisma.topic.findMany({
+      where: topicIds && topicIds.length > 0 ? { id: { in: topicIds } } : undefined,
+      orderBy: [{ displayOrder: "asc" }, { createdAt: "asc" }],
+      select: {
+        id: true,
+        title: true,
+        displayOrder: true,
+        homeworkNumbers: {
+          orderBy: { displayOrder: "asc" },
+          select: {
+            id: true,
+            number: true,
+            displayOrder: true,
+            difficulty: true,
+            estimatedMinutes: true,
+            conditionLatex: true,
+            statuses: {
+              where: { studentId },
+              select: { status: true, note: true, deadlineAt: true, statusChangedAt: true }
+            }
+          }
+        }
+      }
+    }),
+    prisma.lessonAssignmentItem.findMany({
+      where: { participant: { studentId } },
+      select: { homeworkNumberId: true }
+    }),
+    prisma.homeworkAssignment.findMany({
+      where: {
+        studentId,
+        OR: [{ deadlineAt: null }, { deadlineAt: { gte: now } }]
+      },
+      select: { numbers: { select: { homeworkNumberId: true } } }
+    })
+  ]);
+
+  if (!student) {
+    return null;
+  }
+
+  const excludedNumberIds = new Set<string>();
+
+  for (const item of lessonItems) {
+    excludedNumberIds.add(item.homeworkNumberId);
+  }
+
+  for (const assignment of activeAssignments) {
+    for (const entry of assignment.numbers) {
+      excludedNumberIds.add(entry.homeworkNumberId);
+    }
+  }
+
+  let greenCount = 0;
+  let yellowCount = 0;
+  let redCount = 0;
+
+  const mappedTopics = topics.map((topic) => ({
+    id: topic.id,
+    title: topic.title,
+    displayOrder: topic.displayOrder,
+    numbers: topic.homeworkNumbers.map((number) => {
+      const status = number.statuses[0] ?? null;
+
+      if (status?.status === HomeworkNumberStatus.GREEN) greenCount += 1;
+      if (status?.status === HomeworkNumberStatus.YELLOW) yellowCount += 1;
+      if (status?.status === HomeworkNumberStatus.RED) redCount += 1;
+
+      return {
+        id: number.id,
+        number: number.number,
+        displayOrder: number.displayOrder,
+        difficulty: number.difficulty,
+        estimatedMinutes: number.estimatedMinutes,
+        conditionLatex: number.conditionLatex,
+        status: status?.status ?? null,
+        note: status?.note ?? null,
+        deadlineAt: status?.deadlineAt ?? null,
+        statusChangedAt: status?.statusChangedAt ?? null
+      };
+    })
+  }));
+
+  return {
+    student: {
+      id: student.id,
+      name: student.name,
+      speed: profile?.speed ?? null,
+      aiNote: profile?.aiNote ?? null
+    },
+    topics: mappedTopics,
+    excludedNumberIds: Array.from(excludedNumberIds),
+    stats: { greenCount, yellowCount, redCount }
+  };
+}
+
+export async function getLessonDetail(lessonId: string) {
+  try {
+    const lesson = await prisma.lesson.findUnique({
+      where: { id: lessonId },
+      select: {
+        id: true,
+        title: true,
+        status: true,
+        durationMinutes: true,
+        planParams: true,
+        createdAt: true,
+        group: { select: { id: true, name: true } },
+        participants: {
+          orderBy: { student: { name: "asc" } },
+          select: {
+            id: true,
+            studentId: true,
+            speed: true,
+            planSummary: true,
+            planGeneratedAt: true,
+            planError: true,
+            createdAt: true,
+            student: { select: { id: true, name: true } },
+            items: {
+              orderBy: { order: "asc" },
+              select: {
+                id: true,
+                order: true,
+                reason: true,
+                minutes: true,
+                comment: true,
+                homeworkNumber: {
+                  select: {
+                    id: true,
+                    number: true,
+                    difficulty: true,
+                    conditionLatex: true,
+                    topic: { select: { id: true, title: true } },
+                    statuses: { select: { studentId: true, status: true } }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    });
+
+    if (!lesson) {
+      return null;
+    }
+
+    return {
+      id: lesson.id,
+      title: lesson.title,
+      status: lesson.status,
+      durationMinutes: lesson.durationMinutes,
+      planParams: lesson.planParams,
+      createdAt: lesson.createdAt,
+      group: lesson.group,
+      participants: lesson.participants.map((participant) => ({
+        id: participant.id,
+        studentId: participant.studentId,
+        studentName: participant.student.name,
+        speed: participant.speed,
+        planSummary: participant.planSummary,
+        planGeneratedAt: participant.planGeneratedAt,
+        planError: participant.planError,
+        createdAt: participant.createdAt,
+        items: participant.items.map((item) => ({
+          id: item.id,
+          order: item.order,
+          reason: item.reason,
+          minutes: item.minutes,
+          comment: item.comment,
+          homeworkNumberId: item.homeworkNumber.id,
+          number: item.homeworkNumber.number,
+          difficulty: item.homeworkNumber.difficulty,
+          conditionLatex: item.homeworkNumber.conditionLatex,
+          topicId: item.homeworkNumber.topic.id,
+          topicTitle: item.homeworkNumber.topic.title,
+          studentStatus:
+            item.homeworkNumber.statuses.find((status) => status.studentId === participant.studentId)?.status ?? null
+        }))
+      }))
+    };
+  } catch (error) {
+    if (isRecoverablePlatformDataError(error)) {
+      return null;
+    }
+
+    throw error;
+  }
+}

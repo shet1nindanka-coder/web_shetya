@@ -28,6 +28,7 @@ export type DeveloperPanelStats = {
   lastRetentionLabel: string;
   taggedNumbersCount: number;
   totalNumbersCount: number;
+  lessonQueueLength: number;
 };
 
 type ActionResult = { ok: boolean; message: string };
@@ -307,6 +308,55 @@ function SettingsForm({ settings }: { settings: SiteSettings }) {
         </label>
       </div>
 
+      <p className="shbz-kicker mb-4 mt-8">ИИ-подбор уроков</p>
+      <label className="flex items-center gap-2.5 text-[14px] font-semibold" style={{ color: "var(--shbz-text-strong)" }}>
+        <input
+          type="checkbox"
+          name="lessonPlanEnabled"
+          defaultChecked={settings.lessonPlanEnabled}
+          className="h-4 w-4"
+        />
+        Подбор заданий на урок включён
+      </label>
+      <div className="mt-[18px] grid gap-5" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))" }}>
+        <label className="flex flex-col">
+          <FieldLabel hint="Сколько кандидатов уходит во второй этап с полными условиями">Шорт-лист, номеров</FieldLabel>
+          <input
+            type="number"
+            name="lessonPlanShortlistSize"
+            defaultValue={settings.lessonPlanShortlistSize}
+            min={20}
+            max={150}
+            step={1}
+            className="shbz-input mt-auto"
+          />
+        </label>
+        <label className="flex flex-col">
+          <FieldLabel hint="Потолок задач в наборе одного ученика">Максимум задач в плане</FieldLabel>
+          <input
+            type="number"
+            name="lessonPlanMaxItems"
+            defaultValue={settings.lessonPlanMaxItems}
+            min={5}
+            max={60}
+            step={1}
+            className="shbz-input mt-auto"
+          />
+        </label>
+        <label className="flex flex-col">
+          <FieldLabel hint="Сколько учеников генерируются одновременно">Параллельных генераций</FieldLabel>
+          <input
+            type="number"
+            name="lessonPlanConcurrency"
+            defaultValue={settings.lessonPlanConcurrency}
+            min={1}
+            max={10}
+            step={1}
+            className="shbz-input mt-auto"
+          />
+        </label>
+      </div>
+
       <p className="shbz-kicker mb-4 mt-8">Файлы и хранение</p>
       <div className="grid gap-5" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))" }}>
         <label className="flex flex-col">
@@ -420,6 +470,11 @@ export function DeveloperPanel({ stats, settings, students }: DeveloperPanelProp
                   />
                 </div>
               </StatBlock>
+              <StatBlock
+                label="Очередь подбора уроков"
+                value={String(stats.lessonQueueLength)}
+                hint="персональных наборов ждут генерации"
+              />
               <StatBlock label="Файлы в хранилище" value={String(stats.filesCount)} hint={stats.filesSizeLabel} />
               <StatBlock label="Учеников" value={String(stats.studentsCount)} />
               <StatBlock label="Тем" value={String(stats.topicsCount)} />

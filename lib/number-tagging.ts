@@ -47,6 +47,11 @@ export type TaggingRunResult = {
 };
 
 function toFiniteInteger(value: unknown): number | null {
+  // Number(null) === 0 и Number("") === 0 — считаем это отсутствием значения.
+  if (value === null || value === undefined || (typeof value === "string" && value.trim() === "")) {
+    return null;
+  }
+
   const parsed = typeof value === "number" ? value : Number(value);
 
   if (!Number.isFinite(parsed)) {

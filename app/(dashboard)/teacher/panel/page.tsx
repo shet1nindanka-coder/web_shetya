@@ -3,6 +3,7 @@ import { DeveloperPanel } from "@/components/developer-panel";
 import { ShbzPageHeader } from "@/components/shbz-page-header";
 import { requireUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import { getLessonPlanQueueLength } from "@/lib/lesson-plan-queue";
 import { getInternalSettingValue, getSiteSettingsUncached } from "@/lib/site-settings";
 import { getHomeworkCheckQueueLength } from "@/lib/solution-check-queue";
 import { formatDateTime, formatFileSize } from "@/lib/utils";
@@ -41,6 +42,7 @@ export default async function DeveloperPage() {
   ]);
 
   const queueLength = getHomeworkCheckQueueLength();
+  const lessonQueueLength = getLessonPlanQueueLength();
   const filesSizeBytes = filesAggregate._sum.size ?? 0;
   const filesSizeLabel = formatFileSize(filesSizeBytes);
   const lastRetentionLabel = (lastRetentionRaw ? formatDateTime(lastRetentionRaw) : null) ?? "ещё не выполнялся";
@@ -81,7 +83,8 @@ export default async function DeveloperPage() {
           filesSizeLabel,
           lastRetentionLabel,
           taggedNumbersCount,
-          totalNumbersCount
+          totalNumbersCount,
+          lessonQueueLength
         }}
         settings={settings}
         students={students}

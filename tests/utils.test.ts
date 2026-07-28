@@ -30,7 +30,7 @@ test("cx joins only truthy class name fragments", () => {
 test("roleHome routes users to the correct dashboard root", () => {
   assert.equal(roleHome(UserRole.TEACHER), "/teacher");
   assert.equal(roleHome(UserRole.STUDENT), "/student");
-  assert.equal(roleHome(UserRole.DEVELOPER), "/teacher/topics");
+  assert.equal(roleHome(UserRole.DEVELOPER), "/developer/topics");
 });
 
 test("normalizeSingleLineText trims, collapses whitespace, and strips control chars", () => {

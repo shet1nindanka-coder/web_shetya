@@ -24,15 +24,17 @@
     "@react-pdf/renderer": "^4.3.0",
     "@vercel/blob": "^2.3.2",
     "katex": "^0.16.44",
-    "next": "^15.5.18",
+    "next": "^15.0.0",
     "pdfjs-dist": "^4.10.38",
     "pino": "^10.3.1",
+    "puppeteer-core": "^25.4.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-katex": "^3.1.0",
     "sharp": "^0.33.5"
   },
   "devDependencies": {
+    "@types/katex": "^0.16.8",
     "@types/node": "^22.10.0",
     "@types/react": "^19.0.2",
     "@types/react-dom": "^19.0.2",

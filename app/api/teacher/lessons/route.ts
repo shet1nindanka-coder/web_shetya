@@ -1,0 +1,175 @@
+import { UserRole } from "@prisma/client";
+import { revalidatePath } from "next/cache";
+import { NextResponse } from "next/server";
+import { enforceApiRateLimit } from "@/lib/api-rate-limit";
+import { tryGetCurrentUser } from "@/lib/auth";
+import { MAX_GROUP_SIZE, normalizePlanParams, normalizeSpeed } from "@/lib/lesson-plan";
+import { LessonPlanUnavailableError } from "@/lib/lesson-plan-generate";
+import { enqueueLessonPlan } from "@/lib/lesson-plan-queue";
+import { getRequestLogContext, logErrorEvent, logInfoEvent } from "@/lib/logger";
+import { revalidateTeacherStudentsData } from "@/lib/platform-data-cache";
+import { prisma } from "@/lib/prisma";
+import { getSiteSettingsUncached } from "@/lib/site-settings";
+import { getAiCheckConfig } from "@/lib/solution-check";
+import { formatDate } from "@/lib/utils";
+
+export const runtime = "nodejs";
+
+function revalidateLessonRoutes(lessonId?: string) {
+  revalidateTeacherStudentsData();
+  revalidatePath("/teacher/groups");
+  revalidatePath("/teacher/lessons");
+
+  if (lessonId) {
+    revalidatePath(`/teacher/lessons/${lessonId}`);
+  }
+}
+
+export async function POST(request: Request) {
+  const requestContext = getRequestLogContext(request);
+  const user = await tryGetCurrentUser();
+
+  if (!user || (user.role !== UserRole.TEACHER && user.role !== UserRole.DEVELOPER)) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const rateLimitResponse = await enforceApiRateLimit("api:lesson-plan", user.id, 10, 60_000);
+
+  if (rateLimitResponse) {
+    return rateLimitResponse;
+  }
+
+  const body = (await request.json().catch(() => null)) as
+    | {
+        groupId?: string;
+        studentIds?: string[];
+        title?: string;
+        durationMinutes?: number;
+        topicIds?: string[];
+        targetDifficulty?: number | null;
+        teacherNote?: string;
+      }
+    | null;
+
+  const groupId = String(body?.groupId ?? "").trim();
+
+  if (!groupId) {
+    return NextResponse.json({ error: "Выберите группу." }, { status: 400 });
+  }
+
+  const group = await prisma.studentGroup.findFirst({
+    where: {
+      id: groupId,
+      ...(user.role === UserRole.DEVELOPER ? {} : { teacherId: user.id })
+    },
+    select: {
+      id: true,
+      name: true,
+      subject: true,
+      members: { select: { userId: true } }
+    }
+  });
+
+  if (!group) {
+    return NextResponse.json({ error: "Группа не найдена." }, { status: 404 });
+  }
+
+  const memberIds = new Set(group.members.map((member) => member.userId));
+  const requestedIds = Array.isArray(body?.studentIds)
+    ? body.studentIds.map((value) => String(value).trim()).filter(Boolean)
+    : [];
+  const studentIds = requestedIds.length > 0 ? requestedIds.filter((id) => memberIds.has(id)) : Array.from(memberIds);
+
+  if (studentIds.length === 0) {
+    return NextResponse.json({ error: "В уроке должен быть хотя бы один ученик из группы." }, { status: 400 });
+  }
+
+  if (studentIds.length > MAX_GROUP_SIZE) {
+    return NextResponse.json({ error: `Не больше ${MAX_GROUP_SIZE} учеников за один урок.` }, { status: 400 });
+  }
+
+  const params = normalizePlanParams({
+    title: body?.title,
+    durationMinutes: body?.durationMinutes,
+    topicIds: body?.topicIds,
+    targetDifficulty: body?.targetDifficulty,
+    teacherNote: body?.teacherNote
+  });
+  const title = params.title || `Занятие от ${formatDate(new Date())}`;
+
+  // Индивидуальные переопределения скорости приходят вместе со studentIds.
+  const speedOverrides = new Map<string, number | null>();
+
+  if (body && typeof body === "object" && "speeds" in body && body.speeds && typeof body.speeds === "object") {
+    for (const [studentId, rawSpeed] of Object.entries(body.speeds as Record<string, unknown>)) {
+      speedOverrides.set(studentId, normalizeSpeed(rawSpeed));
+    }
+  }
+
+  let lessonId: string;
+
+  try {
+    const lesson = await prisma.lesson.create({
+      data: {
+        title,
+        subject: group.subject,
+        teacherId: user.id,
+        groupId: group.id,
+        durationMinutes: params.durationMinutes,
+        planParams: {
+          title,
+          durationMinutes: params.durationMinutes,
+          topicIds: params.topicIds,
+          targetDifficulty: params.targetDifficulty,
+          teacherNote: params.teacherNote
+        },
+        participants: {
+          create: studentIds.map((studentId) => ({
+            studentId,
+            speed: speedOverrides.get(studentId) ?? null
+          }))
+        }
+      },
+      select: { id: true, participants: { select: { id: true } } }
+    });
+
+    lessonId = lesson.id;
+    logInfoEvent("lesson_plan.lesson_created", {
+      ...requestContext,
+      userId: user.id,
+      lessonId,
+      participants: lesson.participants.length
+    });
+
+    revalidateLessonRoutes(lessonId);
+
+    // ИИ выключен или не настроен: урок уже создан, честно сообщаем 503 — учитель соберёт вручную.
+    const settings = await getSiteSettingsUncached();
+
+    if (!settings.aiEnabled || !settings.lessonPlanEnabled || !getAiCheckConfig(settings)) {
+      return NextResponse.json(
+        { error: new LessonPlanUnavailableError().message, lessonId },
+        { status: 503 }
+      );
+    }
+
+    enqueueLessonPlan(
+      lessonId,
+      lesson.participants.map((participant) => participant.id)
+    );
+
+    return NextResponse.json({ ok: true, lessonId });
+  } catch (error) {
+    logErrorEvent(
+      "lesson_plan.lesson_create_failed",
+      { ...requestContext, userId: user.id },
+      error instanceof Error ? error : undefined,
+      "Failed to create lesson."
+    );
+
+    return NextResponse.json(
+      { error: "Не удалось создать урок. Применена ли миграция уроков и групп?" },
+      { status: 500 }
+    );
+  }
+}

@@ -14,6 +14,10 @@ export type SiteSettings = {
   photoRetentionDays: number; // 0 = автоудаление выключено
   maxPhotosPerAssignment: number;
   completedChecksKept: number;
+  lessonPlanEnabled: boolean;
+  lessonPlanShortlistSize: number;
+  lessonPlanMaxItems: number;
+  lessonPlanConcurrency: number;
 };
 
 const REASONING_EFFORTS: ReasoningEffort[] = ["low", "medium", "high"];
@@ -67,7 +71,12 @@ export function getSiteSettingsDefaults(): SiteSettings {
     aiPerStudentHourlyLimit: 10,
     photoRetentionDays: getHomeworkPhotoRetentionDays() ?? 0,
     maxPhotosPerAssignment: 10,
-    completedChecksKept: MAX_COMPLETED_CHECKS_PER_STUDENT
+    completedChecksKept: MAX_COMPLETED_CHECKS_PER_STUDENT,
+    // ИИ-подбор заданий на урок включён, если настроена автопроверка.
+    lessonPlanEnabled: Boolean(process.env.AI_CHECK_API_KEY?.trim() && process.env.AI_CHECK_MODEL?.trim()),
+    lessonPlanShortlistSize: 60,
+    lessonPlanMaxItems: 40,
+    lessonPlanConcurrency: 3
   };
 }
 
@@ -111,6 +120,18 @@ export function applySettingRows(
       case "completedChecksKept":
         result.completedChecksKept = clampInt(value, 1, 500, defaults.completedChecksKept);
         break;
+      case "lessonPlanEnabled":
+        result.lessonPlanEnabled = value === "true";
+        break;
+      case "lessonPlanShortlistSize":
+        result.lessonPlanShortlistSize = clampInt(value, 20, 150, defaults.lessonPlanShortlistSize);
+        break;
+      case "lessonPlanMaxItems":
+        result.lessonPlanMaxItems = clampInt(value, 5, 60, defaults.lessonPlanMaxItems);
+        break;
+      case "lessonPlanConcurrency":
+        result.lessonPlanConcurrency = clampInt(value, 1, 10, defaults.lessonPlanConcurrency);
+        break;
       default:
         break;
     }
@@ -129,7 +150,11 @@ export function serializeSiteSettings(values: SiteSettings): Array<{ key: string
     { key: "aiPerStudentHourlyLimit", value: String(values.aiPerStudentHourlyLimit) },
     { key: "photoRetentionDays", value: String(values.photoRetentionDays) },
     { key: "maxPhotosPerAssignment", value: String(values.maxPhotosPerAssignment) },
-    { key: "completedChecksKept", value: String(values.completedChecksKept) }
+    { key: "completedChecksKept", value: String(values.completedChecksKept) },
+    { key: "lessonPlanEnabled", value: String(values.lessonPlanEnabled) },
+    { key: "lessonPlanShortlistSize", value: String(values.lessonPlanShortlistSize) },
+    { key: "lessonPlanMaxItems", value: String(values.lessonPlanMaxItems) },
+    { key: "lessonPlanConcurrency", value: String(values.lessonPlanConcurrency) }
   ];
 }
 
@@ -143,7 +168,11 @@ export function parseSiteSettingsForm(formData: FormData): SiteSettings {
     { key: "aiPerStudentHourlyLimit", value: String(formData.get("aiPerStudentHourlyLimit") ?? "") },
     { key: "photoRetentionDays", value: String(formData.get("photoRetentionDays") ?? "") },
     { key: "maxPhotosPerAssignment", value: String(formData.get("maxPhotosPerAssignment") ?? "") },
-    { key: "completedChecksKept", value: String(formData.get("completedChecksKept") ?? "") }
+    { key: "completedChecksKept", value: String(formData.get("completedChecksKept") ?? "") },
+    { key: "lessonPlanEnabled", value: formData.get("lessonPlanEnabled") === "on" ? "true" : "false" },
+    { key: "lessonPlanShortlistSize", value: String(formData.get("lessonPlanShortlistSize") ?? "") },
+    { key: "lessonPlanMaxItems", value: String(formData.get("lessonPlanMaxItems") ?? "") },
+    { key: "lessonPlanConcurrency", value: String(formData.get("lessonPlanConcurrency") ?? "") }
   ];
 
   return applySettingRows(getSiteSettingsDefaults(), rows);

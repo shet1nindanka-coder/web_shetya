@@ -29,6 +29,8 @@ const securityHeaders = [
 
 const nextConfig: NextConfig = {
   poweredByHeader: false,
+  // Не бандлим puppeteer-core: он ставится только на сервере, грузится динамически.
+  serverExternalPackages: ["puppeteer-core"],
   experimental: {
     serverActions: {
       bodySizeLimit: "15mb"
