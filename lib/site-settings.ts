@@ -81,7 +81,7 @@ export function getSiteSettingsDefaults(): SiteSettings {
     lessonPlanMaxItems: 40,
     lessonPlanConcurrency: 3,
     homeworkPlanEnabled: Boolean(process.env.AI_CHECK_API_KEY?.trim() && process.env.AI_CHECK_MODEL?.trim()),
-    homeworkPlanMaxItems: 30,
+    homeworkPlanMaxItems: 20,
     homeworkPlanShortlistSize: 60
   };
 }
