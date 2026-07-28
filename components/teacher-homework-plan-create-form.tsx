@@ -180,7 +180,7 @@ export function TeacherHomeworkPlanCreateForm({
                   type="checkbox"
                   checked={selected}
                   onChange={() => toggleStudent(member.id)}
-                  className="h-4 w-4 shrink-0"
+                  className="shbz-checkbox"
                 />
                 <span className="truncate">{member.name}</span>
               </label>

@@ -309,14 +309,13 @@ function SettingsForm({ settings }: { settings: SiteSettings }) {
       </div>
 
       <p className="shbz-kicker mb-4 mt-8">ИИ-подбор уроков</p>
-      <label className="flex items-center gap-2.5 text-[14px] font-semibold" style={{ color: "var(--shbz-text-strong)" }}>
-        <input
-          type="checkbox"
-          name="lessonPlanEnabled"
-          defaultChecked={settings.lessonPlanEnabled}
-          className="h-4 w-4"
-        />
-        Подбор заданий на урок включён
+      <label className="shbz-switch">
+        <input type="checkbox" name="lessonPlanEnabled" defaultChecked={settings.lessonPlanEnabled} />
+        <span className="shbz-switch-track" />
+        <span className="shbz-switch-knob" />
+        <span className="text-[14px] font-semibold" style={{ color: "var(--shbz-text-strong)" }}>
+          Подбор заданий на урок включён
+        </span>
       </label>
       <div className="mt-[18px] grid gap-5" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))" }}>
         <label className="flex flex-col">
@@ -358,14 +357,13 @@ function SettingsForm({ settings }: { settings: SiteSettings }) {
       </div>
 
       <p className="shbz-kicker mb-4 mt-8">ИИ-выдача ДЗ</p>
-      <label className="flex items-center gap-2.5 text-[14px] font-semibold" style={{ color: "var(--shbz-text-strong)" }}>
-        <input
-          type="checkbox"
-          name="homeworkPlanEnabled"
-          defaultChecked={settings.homeworkPlanEnabled}
-          className="h-4 w-4"
-        />
-        Подбор домашних заданий включён
+      <label className="shbz-switch">
+        <input type="checkbox" name="homeworkPlanEnabled" defaultChecked={settings.homeworkPlanEnabled} />
+        <span className="shbz-switch-track" />
+        <span className="shbz-switch-knob" />
+        <span className="text-[14px] font-semibold" style={{ color: "var(--shbz-text-strong)" }}>
+          Подбор домашних заданий включён
+        </span>
       </label>
       <div className="mt-[18px] grid gap-5" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))" }}>
         <label className="flex flex-col">
