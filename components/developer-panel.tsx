@@ -375,7 +375,7 @@ function SettingsForm({ settings }: { settings: SiteSettings }) {
             name="homeworkPlanMaxItems"
             defaultValue={settings.homeworkPlanMaxItems}
             min={3}
-            max={40}
+            max={60}
             step={1}
             className="shbz-input mt-auto"
           />

@@ -1,5 +1,5 @@
 import { unstable_cache } from "next/cache";
-import { HomeworkNumberStatus, Prisma, UserRole } from "@prisma/client";
+import { HomeworkNumberStatus, Prisma, SolutionCheckStatus, SolutionVerdict, UserRole } from "@prisma/client";
 import { logWarnEvent } from "@/lib/logger";
 import { PLATFORM_DATA_TAGS } from "@/lib/platform-data-cache";
 import { prisma } from "@/lib/prisma";
@@ -1840,7 +1840,7 @@ export async function getLessonPlanContext(studentId: string, topicIds?: string[
     }),
     prisma.studentProfile.findUnique({
       where: { userId: studentId },
-      select: { speed: true, aiNote: true, aiPortrait: true }
+      select: { speed: true, aiNote: true }
     }),
     prisma.topic.findMany({
       where: topicIds && topicIds.length > 0 ? { id: { in: topicIds } } : undefined,
@@ -1893,6 +1893,24 @@ export async function getLessonPlanContext(studentId: string, topicIds?: string[
     return null;
   }
 
+  // Последние ошибки с комментариями ИИ-проверки: причины («перепутал знак», «не учёл ОДЗ»)
+  // собираются кодом, без отдельного запроса к модели.
+  const recentMistakeRows = await prisma.homeworkCheckResult
+    .findMany({
+      where: {
+        verdict: { in: [SolutionVerdict.INCORRECT, SolutionVerdict.UNCERTAIN] },
+        check: { status: SolutionCheckStatus.DONE, assignment: { studentId } }
+      },
+      orderBy: { check: { checkedAt: "desc" } },
+      take: 12,
+      select: {
+        verdict: true,
+        comment: true,
+        homeworkNumber: { select: { number: true, topic: { select: { title: true } } } }
+      }
+    })
+    .catch(() => []);
+
   const totalsByTopic = new Map(numberTotals.map((row) => [row.topicId, row._count._all]));
   const overviewByTopic = new Map<
     string,
@@ -1919,6 +1937,20 @@ export async function getLessonPlanContext(studentId: string, topicIds?: string[
     }
 
     overviewByTopic.set(topic.id, entry);
+  }
+
+  let solvedLast7Days = 0;
+  let solvedLast30Days = 0;
+
+  for (const row of allStatuses) {
+    if (row.status !== HomeworkNumberStatus.GREEN || !row.statusChangedAt) {
+      continue;
+    }
+
+    const ageDays = (now.getTime() - row.statusChangedAt.getTime()) / 86_400_000;
+
+    if (ageDays <= 7) solvedLast7Days += 1;
+    if (ageDays <= 30) solvedLast30Days += 1;
   }
 
   const topicsOverview = Array.from(overviewByTopic.values()).map((entry) => ({
@@ -1979,9 +2011,15 @@ export async function getLessonPlanContext(studentId: string, topicIds?: string[
       id: student.id,
       name: student.name,
       speed: profile?.speed ?? null,
-      aiNote: profile?.aiNote ?? null,
-      aiPortrait: profile?.aiPortrait ?? null
+      aiNote: profile?.aiNote ?? null
     },
+    recentMistakes: recentMistakeRows.map((row) => ({
+      topic: row.homeworkNumber?.topic.title ?? null,
+      number: row.homeworkNumber?.number ?? null,
+      verdict: row.verdict,
+      comment: row.comment ? row.comment.slice(0, 200) : null
+    })),
+    activity: { solvedLast7Days, solvedLast30Days },
     topicsOverview,
     topics: mappedTopics,
     excludedNumberIds: Array.from(excludedNumberIds),

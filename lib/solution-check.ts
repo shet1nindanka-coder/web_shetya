@@ -740,10 +740,6 @@ export async function runHomeworkCheck(checkId: string) {
     const appliedStatusCount = await applyVerdictsToProgress(assignment, results);
     await pruneCompletedHomeworkChecksSafely(assignment.studentId);
 
-    // Портрет ученика: fire-and-forget, накопилось достаточно новых проверок — обновится сам.
-    void import("@/lib/student-portrait")
-      .then(({ maybeRefreshStudentPortrait }) => maybeRefreshStudentPortrait(assignment.studentId))
-      .catch(() => undefined);
 
     const correctCount = results.filter((result) => result.verdict === "CORRECT").length;
     const incorrectCount = results.filter((result) => result.verdict === "INCORRECT").length;

@@ -81,7 +81,7 @@ export function getSiteSettingsDefaults(): SiteSettings {
     lessonPlanMaxItems: 40,
     lessonPlanConcurrency: 3,
     homeworkPlanEnabled: Boolean(process.env.AI_CHECK_API_KEY?.trim() && process.env.AI_CHECK_MODEL?.trim()),
-    homeworkPlanMaxItems: 12,
+    homeworkPlanMaxItems: 30,
     homeworkPlanShortlistSize: 60
   };
 }
@@ -142,7 +142,7 @@ export function applySettingRows(
         result.homeworkPlanEnabled = value === "true";
         break;
       case "homeworkPlanMaxItems":
-        result.homeworkPlanMaxItems = clampInt(value, 3, 40, defaults.homeworkPlanMaxItems);
+        result.homeworkPlanMaxItems = clampInt(value, 3, 60, defaults.homeworkPlanMaxItems);
         break;
       case "homeworkPlanShortlistSize":
         result.homeworkPlanShortlistSize = clampInt(value, 20, 150, defaults.homeworkPlanShortlistSize);
