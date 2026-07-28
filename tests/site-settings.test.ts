@@ -93,3 +93,16 @@ test("lesson plan keys survive the serialize round-trip", () => {
   assert.equal(restored.lessonPlanMaxItems, 25);
   assert.equal(restored.lessonPlanConcurrency, 5);
 });
+
+test("applySettingRows handles homework plan keys with clamps", () => {
+  const defaults = getSiteSettingsDefaults();
+  const result = applySettingRows(defaults, [
+    { key: "homeworkPlanEnabled", value: "true" },
+    { key: "homeworkPlanMaxItems", value: "1" },
+    { key: "homeworkPlanShortlistSize", value: "999" }
+  ]);
+
+  assert.equal(result.homeworkPlanEnabled, true);
+  assert.equal(result.homeworkPlanMaxItems, 3);
+  assert.equal(result.homeworkPlanShortlistSize, 150);
+});

@@ -1748,9 +1748,49 @@ export async function getGroupDetail(groupId: string) {
   }
 }
 
+export async function getHomeworkPlans() {
+  try {
+    const plans = await prisma.lesson.findMany({
+      where: { kind: "HOMEWORK" },
+      orderBy: { createdAt: "desc" },
+      select: {
+        id: true,
+        title: true,
+        deadlineAt: true,
+        createdAt: true,
+        topic: { select: { id: true, title: true } },
+        group: { select: { id: true, name: true } },
+        participants: {
+          select: { id: true, planGeneratedAt: true, planError: true, issuedAssignmentId: true }
+        }
+      }
+    });
+
+    return plans.map((plan) => ({
+      id: plan.id,
+      title: plan.title,
+      deadlineAt: plan.deadlineAt,
+      createdAt: plan.createdAt,
+      topicTitle: plan.topic?.title ?? null,
+      groupName: plan.group?.name ?? null,
+      participantsCount: plan.participants.length,
+      readyCount: plan.participants.filter((participant) => participant.planGeneratedAt).length,
+      failedCount: plan.participants.filter((participant) => participant.planError).length,
+      issuedCount: plan.participants.filter((participant) => participant.issuedAssignmentId).length
+    }));
+  } catch (error) {
+    if (isRecoverablePlatformDataError(error)) {
+      return [];
+    }
+
+    throw error;
+  }
+}
+
 export async function getTeacherLessons() {
   try {
     const lessons = await prisma.lesson.findMany({
+      where: { kind: "LESSON" },
       orderBy: { createdAt: "desc" },
       select: {
         id: true,
@@ -1957,6 +1997,9 @@ export async function getLessonDetail(lessonId: string) {
         id: true,
         title: true,
         status: true,
+        kind: true,
+        topicId: true,
+        deadlineAt: true,
         durationMinutes: true,
         planParams: true,
         createdAt: true,
@@ -1970,6 +2013,8 @@ export async function getLessonDetail(lessonId: string) {
             planSummary: true,
             planGeneratedAt: true,
             planError: true,
+            issuedAssignmentId: true,
+            issuedAt: true,
             createdAt: true,
             student: { select: { id: true, name: true } },
             items: {
@@ -2002,10 +2047,26 @@ export async function getLessonDetail(lessonId: string) {
       return null;
     }
 
+    // issuedAssignmentId хранится без FK: проверяем, что ДЗ ещё существует
+    // (его могли отменить через DELETE /api/teacher/homeworks).
+    const issuedIds = lesson.participants
+      .map((participant) => participant.issuedAssignmentId)
+      .filter((value): value is string => Boolean(value));
+    const existingAssignments = issuedIds.length
+      ? await prisma.homeworkAssignment.findMany({
+          where: { id: { in: issuedIds } },
+          select: { id: true }
+        })
+      : [];
+    const existingAssignmentIds = new Set(existingAssignments.map((assignment) => assignment.id));
+
     return {
       id: lesson.id,
       title: lesson.title,
       status: lesson.status,
+      kind: lesson.kind,
+      topicId: lesson.topicId,
+      deadlineAt: lesson.deadlineAt,
       durationMinutes: lesson.durationMinutes,
       planParams: lesson.planParams,
       createdAt: lesson.createdAt,
@@ -2018,6 +2079,14 @@ export async function getLessonDetail(lessonId: string) {
         planSummary: participant.planSummary,
         planGeneratedAt: participant.planGeneratedAt,
         planError: participant.planError,
+        issuedAssignmentId:
+          participant.issuedAssignmentId && existingAssignmentIds.has(participant.issuedAssignmentId)
+            ? participant.issuedAssignmentId
+            : null,
+        issuedAt:
+          participant.issuedAssignmentId && existingAssignmentIds.has(participant.issuedAssignmentId)
+            ? participant.issuedAt
+            : null,
         createdAt: participant.createdAt,
         items: participant.items.map((item) => ({
           id: item.id,

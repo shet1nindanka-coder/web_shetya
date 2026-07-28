@@ -357,6 +357,43 @@ function SettingsForm({ settings }: { settings: SiteSettings }) {
         </label>
       </div>
 
+      <p className="shbz-kicker mb-4 mt-8">ИИ-выдача ДЗ</p>
+      <label className="flex items-center gap-2.5 text-[14px] font-semibold" style={{ color: "var(--shbz-text-strong)" }}>
+        <input
+          type="checkbox"
+          name="homeworkPlanEnabled"
+          defaultChecked={settings.homeworkPlanEnabled}
+          className="h-4 w-4"
+        />
+        Подбор домашних заданий включён
+      </label>
+      <div className="mt-[18px] grid gap-5" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))" }}>
+        <label className="flex flex-col">
+          <FieldLabel hint="Домашка заметно меньше урочного набора">Максимум задач в ДЗ</FieldLabel>
+          <input
+            type="number"
+            name="homeworkPlanMaxItems"
+            defaultValue={settings.homeworkPlanMaxItems}
+            min={3}
+            max={40}
+            step={1}
+            className="shbz-input mt-auto"
+          />
+        </label>
+        <label className="flex flex-col">
+          <FieldLabel hint="Сколько кандидатов уходит во второй этап">Шорт-лист ДЗ, номеров</FieldLabel>
+          <input
+            type="number"
+            name="homeworkPlanShortlistSize"
+            defaultValue={settings.homeworkPlanShortlistSize}
+            min={20}
+            max={150}
+            step={1}
+            className="shbz-input mt-auto"
+          />
+        </label>
+      </div>
+
       <p className="shbz-kicker mb-4 mt-8">Файлы и хранение</p>
       <div className="grid gap-5" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))" }}>
         <label className="flex flex-col">

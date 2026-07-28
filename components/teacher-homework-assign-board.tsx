@@ -2,7 +2,7 @@
 
 import { HomeworkNumberStatus } from "@prisma/client";
 import { useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { HomeworkStatusBadge } from "@/components/homework-status-badge";
 import { ShbzDateTimePicker } from "@/components/shbz-datetime-picker";
 import { ShbzSelect } from "@/components/shbz-select";
@@ -40,6 +40,8 @@ function inputToIso(value: string) {
 }
 
 export function TeacherHomeworkAssignBoard({ studentId, topics }: TeacherHomeworkAssignBoardProps) {
+  const pathname = usePathname();
+  const routePrefix = pathname.startsWith("/developer") ? "/developer" : "/teacher";
   const router = useRouter();
   const [selectedTopicId, setSelectedTopicId] = useState<string>(topics[0]?.id ?? "");
   const [selectedNumberIds, setSelectedNumberIds] = useState<ReadonlySet<string>>(new Set());
@@ -190,6 +192,12 @@ export function TeacherHomeworkAssignBoard({ studentId, topics }: TeacherHomewor
           >
             {isSaving ? "Выдаем..." : "Выдать ДЗ"}
           </button>
+          <a
+            href={`${routePrefix}/homework-plans/new?studentId=${studentId}`}
+            className="ui-pressable ui-button-secondary rounded-[12px] px-5 py-3 text-sm font-semibold no-underline transition"
+          >
+            Подобрать ИИ
+          </a>
           {selectedCount > 0 ? (
             <button
               type="button"

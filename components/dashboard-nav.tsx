@@ -34,7 +34,7 @@ const studentItems = [
 
 const developerItems = [
   { href: "/developer/topics", label: "темы", match: (p: string) => p.startsWith("/developer/topics") },
-  { href: "/developer/groups", label: "группы", match: (p: string) => p.startsWith("/developer/groups") || p.startsWith("/developer/lessons") },
+  { href: "/developer/groups", label: "группы", match: (p: string) => p.startsWith("/developer/groups") || p.startsWith("/developer/lessons") || p.startsWith("/developer/homework-plans") },
   { href: "/developer/statistics", label: "статистика", match: (p: string) => p.startsWith("/developer/statistics") },
   { href: "/developer/panel", label: "дев-панель", match: (p: string) => p.startsWith("/developer/panel") },
   {
@@ -48,7 +48,7 @@ const teacherItems = [
   { href: "/teacher", label: "обзор", match: (p: string) => p === "/teacher" },
   { href: "/teacher/topics", label: "темы", match: (p: string) => p.startsWith("/teacher/topics") },
   { href: "/teacher/students", label: "ученики", match: (p: string) => p.startsWith("/teacher/students") },
-  { href: "/teacher/groups", label: "группы", match: (p: string) => p.startsWith("/teacher/groups") || p.startsWith("/teacher/lessons") },
+  { href: "/teacher/groups", label: "группы", match: (p: string) => p.startsWith("/teacher/groups") || p.startsWith("/teacher/lessons") || p.startsWith("/teacher/homework-plans") },
   {
     href: "/teacher/settings",
     label: "настройки",

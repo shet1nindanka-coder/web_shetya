@@ -38,12 +38,17 @@ export async function PATCH(
     select: {
       id: true,
       lessonId: true,
+      issuedAssignmentId: true,
       items: { select: { homeworkNumberId: true, reason: true, minutes: true, comment: true, isExtra: true } }
     }
   });
 
   if (!participant) {
     return NextResponse.json({ error: "Участник урока не найден." }, { status: 404 });
+  }
+
+  if (participant.issuedAssignmentId) {
+    return NextResponse.json({ error: "ДЗ уже выдано. Сначала отмените его." }, { status: 409 });
   }
 
   const body = (await request.json().catch(() => null)) as

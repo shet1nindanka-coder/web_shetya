@@ -18,6 +18,9 @@ export type SiteSettings = {
   lessonPlanShortlistSize: number;
   lessonPlanMaxItems: number;
   lessonPlanConcurrency: number;
+  homeworkPlanEnabled: boolean;
+  homeworkPlanMaxItems: number;
+  homeworkPlanShortlistSize: number;
 };
 
 const REASONING_EFFORTS: ReasoningEffort[] = ["low", "medium", "high"];
@@ -76,7 +79,10 @@ export function getSiteSettingsDefaults(): SiteSettings {
     lessonPlanEnabled: Boolean(process.env.AI_CHECK_API_KEY?.trim() && process.env.AI_CHECK_MODEL?.trim()),
     lessonPlanShortlistSize: 60,
     lessonPlanMaxItems: 40,
-    lessonPlanConcurrency: 3
+    lessonPlanConcurrency: 3,
+    homeworkPlanEnabled: Boolean(process.env.AI_CHECK_API_KEY?.trim() && process.env.AI_CHECK_MODEL?.trim()),
+    homeworkPlanMaxItems: 12,
+    homeworkPlanShortlistSize: 60
   };
 }
 
@@ -132,6 +138,15 @@ export function applySettingRows(
       case "lessonPlanConcurrency":
         result.lessonPlanConcurrency = clampInt(value, 1, 10, defaults.lessonPlanConcurrency);
         break;
+      case "homeworkPlanEnabled":
+        result.homeworkPlanEnabled = value === "true";
+        break;
+      case "homeworkPlanMaxItems":
+        result.homeworkPlanMaxItems = clampInt(value, 3, 40, defaults.homeworkPlanMaxItems);
+        break;
+      case "homeworkPlanShortlistSize":
+        result.homeworkPlanShortlistSize = clampInt(value, 20, 150, defaults.homeworkPlanShortlistSize);
+        break;
       default:
         break;
     }
@@ -154,7 +169,10 @@ export function serializeSiteSettings(values: SiteSettings): Array<{ key: string
     { key: "lessonPlanEnabled", value: String(values.lessonPlanEnabled) },
     { key: "lessonPlanShortlistSize", value: String(values.lessonPlanShortlistSize) },
     { key: "lessonPlanMaxItems", value: String(values.lessonPlanMaxItems) },
-    { key: "lessonPlanConcurrency", value: String(values.lessonPlanConcurrency) }
+    { key: "lessonPlanConcurrency", value: String(values.lessonPlanConcurrency) },
+    { key: "homeworkPlanEnabled", value: String(values.homeworkPlanEnabled) },
+    { key: "homeworkPlanMaxItems", value: String(values.homeworkPlanMaxItems) },
+    { key: "homeworkPlanShortlistSize", value: String(values.homeworkPlanShortlistSize) }
   ];
 }
 
@@ -172,7 +190,10 @@ export function parseSiteSettingsForm(formData: FormData): SiteSettings {
     { key: "lessonPlanEnabled", value: formData.get("lessonPlanEnabled") === "on" ? "true" : "false" },
     { key: "lessonPlanShortlistSize", value: String(formData.get("lessonPlanShortlistSize") ?? "") },
     { key: "lessonPlanMaxItems", value: String(formData.get("lessonPlanMaxItems") ?? "") },
-    { key: "lessonPlanConcurrency", value: String(formData.get("lessonPlanConcurrency") ?? "") }
+    { key: "lessonPlanConcurrency", value: String(formData.get("lessonPlanConcurrency") ?? "") },
+    { key: "homeworkPlanEnabled", value: formData.get("homeworkPlanEnabled") === "on" ? "true" : "false" },
+    { key: "homeworkPlanMaxItems", value: String(formData.get("homeworkPlanMaxItems") ?? "") },
+    { key: "homeworkPlanShortlistSize", value: String(formData.get("homeworkPlanShortlistSize") ?? "") }
   ];
 
   return applySettingRows(getSiteSettingsDefaults(), rows);

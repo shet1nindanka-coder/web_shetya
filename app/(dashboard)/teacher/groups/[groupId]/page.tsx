@@ -48,12 +48,20 @@ export default async function GroupDetailPage({ params, searchParams }: GroupDet
         kicker="Группа"
         title={group.name}
         aside={
-          <Link
-            href={`${prefix}/lessons/new?groupId=${group.id}`}
-            className="shbz-btn-primary inline-block px-[26px] py-[13px] text-[15px] no-underline"
-          >
-            Составить урок
-          </Link>
+          <div className="flex flex-wrap gap-2.5">
+            <Link
+              href={`${prefix}/homework-plans/new?groupId=${group.id}`}
+              className="shbz-btn-outline inline-block no-underline"
+            >
+              Выдать ДЗ группе
+            </Link>
+            <Link
+              href={`${prefix}/lessons/new?groupId=${group.id}`}
+              className="shbz-btn-primary inline-block px-[26px] py-[13px] text-[15px] no-underline"
+            >
+              Составить урок
+            </Link>
+          </div>
         }
       />
 

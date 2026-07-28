@@ -1,3 +1,4 @@
+import { generateHomeworkPlanForParticipant } from "@/lib/homework-plan-generate";
 import { generateLessonPlanForParticipant } from "@/lib/lesson-plan-generate";
 import { logErrorEvent } from "@/lib/logger";
 import { getSiteSettingsUncached } from "@/lib/site-settings";
@@ -8,9 +9,12 @@ import { getSiteSettingsUncached } from "@/lib/site-settings";
  * planError дольше 15 минут считается зависшим — UI предлагает «Повторить».
  */
 
+export type PlanKind = "LESSON" | "HOMEWORK";
+
 type LessonPlanTask = {
   lessonId: string;
   participantId: string;
+  kind: PlanKind;
 };
 
 declare global {
@@ -45,7 +49,11 @@ async function drainQueue() {
 
     void (async () => {
       try {
-        await generateLessonPlanForParticipant(task.lessonId, task.participantId);
+        if (task.kind === "HOMEWORK") {
+          await generateHomeworkPlanForParticipant(task.lessonId, task.participantId);
+        } else {
+          await generateLessonPlanForParticipant(task.lessonId, task.participantId);
+        }
       } catch (error) {
         // generateLessonPlanForParticipant сам пишет planError; это страховка.
         logErrorEvent(
@@ -66,9 +74,9 @@ export function getLessonPlanQueueLength() {
   return queue.length + getActiveCount();
 }
 
-export function enqueueLessonPlan(lessonId: string, participantIds: string[]) {
+export function enqueueLessonPlan(lessonId: string, participantIds: string[], kind: PlanKind = "LESSON") {
   for (const participantId of participantIds) {
-    queue.push({ lessonId, participantId });
+    queue.push({ lessonId, participantId, kind });
   }
 
   void drainQueue();

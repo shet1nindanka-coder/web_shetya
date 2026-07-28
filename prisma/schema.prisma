@@ -49,6 +49,11 @@ enum AttemptStatus {
   GRADED
 }
 
+enum LessonKind {
+  LESSON
+  HOMEWORK
+}
+
 enum AssignmentReason {
   NEW
   REVIEW
@@ -236,6 +241,8 @@ model Lesson {
   groupId      String?
   topicId      String?
   status       LessonStatus        @default(PLANNED)
+  kind         LessonKind          @default(LESSON) // план занятия или план ДЗ
+  deadlineAt   DateTime? // для kind=HOMEWORK: дата следующего занятия = дедлайн ДЗ
   durationMinutes Int              @default(60)
   planParams   Json? // сырые параметры подбора — чтобы пересобрать с теми же настройками
   startsAt     DateTime?
@@ -252,6 +259,7 @@ model Lesson {
   @@index([teacherId])
   @@index([groupId])
   @@index([status])
+  @@index([kind])
 }
 
 model LessonParticipant {
@@ -260,6 +268,8 @@ model LessonParticipant {
   studentId  String
   attendance AttendanceStatus       @default(UNKNOWN)
   speed      Int? // переопределение скорости на конкретном занятии
+  issuedAssignmentId String? // для планов ДЗ: созданный HomeworkAssignment (без FK — отмена ДЗ не трогает черновик)
+  issuedAt   DateTime?
   planSummary String? // пояснение от ИИ, почему набор такой
   planGeneratedAt DateTime?
   planError  String?

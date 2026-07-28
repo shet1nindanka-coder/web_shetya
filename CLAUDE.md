@@ -92,10 +92,20 @@ Postgres service.
   `/teacher/groups`), уроки (`/teacher/lessons`, API `app/api/teacher/lessons/**`). Подбор целиком
   на модели (никаких эвристических формул в коде): `lib/lesson-plan.ts` — факты и валидация,
   `lib/lesson-plan-generate.ts` — двухэтапный вызов (отсев → план) через ту же инфраструктуру, что
-  автопроверка, `lib/lesson-plan-queue.ts` — in-memory очередь (конкурентность из настроек).
-  Печатная раздатка: `lib/lesson-print-html.ts` (KaTeX → MathML, чистая функция) →
-  `lib/pdf-renderer.ts` (headless Chromium, фолбэк — HTML для печати) → роуты
-  `/teacher/lessons/[id]/pdf|print`.
+  автопроверка, `lib/lesson-plan-queue.ts` — in-memory очередь (общая для уроков и ДЗ, задача несёт
+  `kind`). В промпт уходит досье ученика: скорость, заметка учителя, ИИ-портрет
+  (`lib/student-portrait.ts`, авто-обновление после 3 проверок + кнопка на странице ученика), карта
+  тем. План урока = основная часть + дополнительная (`LessonAssignmentItem.isExtra`).
+  Печатная раздатка (только уроки): `lib/lesson-print-html.ts` (KaTeX HTML, чистая функция; CSS и
+  woff2-шрифты KaTeX инлайнятся `lib/print-theme.ts`) → `lib/pdf-renderer.ts` (headless Chromium,
+  фолбэк — HTML для печати) → роуты `/teacher/lessons/[id]/pdf|print`.
+- **AI homework planner** — «ИИ-выдача ДЗ»: переиспользует модель урока (`Lesson.kind = HOMEWORK`),
+  черновики `/teacher/homework-plans`, API `app/api/teacher/homework-plans/**`. Специфика ДЗ в
+  `lib/homework-plan.ts` (одна тема, объём задаётся сроком `deadlineAt`) и
+  `lib/homework-plan-generate.ts` (промпт «дом, а не урок»; блок закрепления занятия при
+  `sourceLessonId`; extraItems отбрасываются). Выдача превращает набор участника в обычный
+  `HomeworkAssignment` через `lib/homework-issue.ts` — единую точку создания ДЗ, которую использует
+  и ручной роут `/api/teacher/homeworks`. Никакого PDF у домашки: ученик работает в кабинете.
 - **Runtime settings** — `lib/site-settings.ts`: ключ-значение в таблице `SiteSetting` (raw SQL),
   15s in-memory cache, дефолты из env. Управляются из дев-панели (`/developer/panel`).
 - **Logging** — `lib/logger.ts` (pino). Use `logInfoEvent` / `logWarnEvent` / `logErrorEvent(event,
@@ -139,16 +149,18 @@ Postgres service.
 - `StudentGroup` + `StudentProfile` — группы учеников (ученик максимум в одной группе,
   `groupId` → SetNull при удалении группы); профиль хранит `speed` (1–10) и `aiNote` — подсказки
   для ИИ-подбора, задаёт учитель.
-- `Lesson` + `LessonParticipant` + `LessonAssignmentItem` — урок с ИИ-подбором: общие
-  `durationMinutes`/`planParams`, у участника индивидуальные `speed`/`planSummary`/`planError`/
-  `planGeneratedAt`, элементы набора хранят `order`/`reason`/`minutes`/`comment` от модели.
+- `Lesson` + `LessonParticipant` + `LessonAssignmentItem` — план занятия **или** план ДЗ,
+  различаются `kind: LESSON | HOMEWORK`. Общие `durationMinutes`/`planParams` (у ДЗ — `deadlineAt`
+  и ровно одна `topicId`), у участника `speed`/`planSummary`/`planError`/`planGeneratedAt`, для ДЗ —
+  `issuedAssignmentId` (строка без FK: отмена ДЗ не трогает черновик; при чтении существование
+  назначения проверяется) и `issuedAt`. Элементы набора: `order`/`reason`/`minutes`/`comment`/`isExtra`.
 - `TopicMastery`, `Test*` — таблицы созданы миграцией для соответствия схеме; код под тесты ещё
   не написан.
 - `SiteSetting` — key-value рантайм-настройки (см. `lib/site-settings.ts`).
 
 `prisma/migrations/` reflects the feature history: init → shared topics/files → answer files →
 LaTeX answers → student notes → student deadlines → LaTeX conditions → homework assignments →
-submission photos → AI checks → site settings → number difficulty → lessons & groups.
+submission photos → AI checks → site settings → number difficulty → lessons & groups → portrait & extra items → homework plans.
 
 ## Conventions
 

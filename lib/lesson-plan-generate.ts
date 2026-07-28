@@ -142,7 +142,7 @@ async function callPlannerModelOnce(
   }
 }
 
-async function callPlannerModel(
+export async function callPlannerModel(
   config: PlannerConfig,
   systemPrompt: string,
   userText: string,
@@ -216,8 +216,8 @@ async function writeParticipantError(participantId: string, message: string) {
   }
 }
 
-function resolvePlannerGate(settings: SiteSettings) {
-  if (!settings.aiEnabled || !settings.lessonPlanEnabled) {
+export function resolvePlannerGate(settings: SiteSettings) {
+  if (!settings.aiEnabled) {
     return null;
   }
 
@@ -248,7 +248,7 @@ export async function generateLessonPlanForParticipant(lessonId: string, partici
     }
 
     const settings = await getSiteSettingsUncached();
-    const config = resolvePlannerGate(settings);
+    const config = settings.lessonPlanEnabled ? resolvePlannerGate(settings) : null;
 
     if (!config) {
       await writeParticipantError(participant.id, new LessonPlanUnavailableError().message);

@@ -3,6 +3,7 @@ import { revalidatePath } from "next/cache";
 import { NextResponse } from "next/server";
 import { enforceApiRateLimit } from "@/lib/api-rate-limit";
 import { tryGetCurrentUser } from "@/lib/auth";
+import { issueHomework } from "@/lib/homework-issue";
 import { publishDashboardRealtimeEvent } from "@/lib/dashboard-realtime";
 import { logInfoEvent } from "@/lib/logger";
 import { createNotification } from "@/lib/notifications";
@@ -52,7 +53,7 @@ function revalidateHomeworkRoutes(studentId: string, topicId: string) {
 export async function POST(request: Request) {
   const user = await tryGetCurrentUser();
 
-  if (!user || user.role !== UserRole.TEACHER) {
+  if (!user || (user.role !== UserRole.TEACHER && user.role !== UserRole.DEVELOPER)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
@@ -72,193 +73,46 @@ export async function POST(request: Request) {
       }
     | null;
 
-  const studentId = String(body?.studentId ?? "").trim();
-  const topicId = String(body?.topicId ?? "").trim();
-  const homeworkNumberIds = Array.from(
-    new Set(
-      (Array.isArray(body?.homeworkNumberIds) ? body.homeworkNumberIds : [])
-        .map((value) => String(value ?? "").trim())
-        .filter(Boolean)
-    )
-  );
-  const title = typeof body?.title === "string" ? body.title.trim().slice(0, 200) : "";
   const deadlineAt =
     typeof body?.deadlineAt === "string" && body.deadlineAt.trim() ? new Date(body.deadlineAt) : null;
 
-  if (!studentId || !topicId || !homeworkNumberIds.length || !deadlineAt || Number.isNaN(deadlineAt.getTime())) {
+  if (!deadlineAt) {
     return NextResponse.json({ error: "Некорректные данные для ДЗ." }, { status: 400 });
   }
 
-  const [student, foundNumbers] = await Promise.all([
-    prisma.user.findFirst({
-      where: {
-        id: studentId,
-        role: UserRole.STUDENT
-      },
-      select: { id: true }
-    }),
-    prisma.topicHomeworkNumber.findMany({
-      where: {
-        id: {
-          in: homeworkNumberIds
-        },
-        topicId
-      },
-      select: {
-        id: true,
-        number: true
-      }
-    })
-  ]);
+  const result = await issueHomework({
+    studentId: String(body?.studentId ?? ""),
+    topicId: String(body?.topicId ?? ""),
+    homeworkNumberIds: Array.isArray(body?.homeworkNumberIds) ? body.homeworkNumberIds : [],
+    deadlineAt,
+    title: typeof body?.title === "string" ? body.title : null
+  });
 
-  if (!student || foundNumbers.length !== homeworkNumberIds.length) {
-    return NextResponse.json({ error: "Ученик или номер задания не найден." }, { status: 404 });
-  }
-
-  // Запрещаем выдавать один и тот же номер этому ученику в двух активных ДЗ:
-  // дедлайн зеркалируется в одно поле StudentTopicNumberStatus на пару (ученик, номер),
-  // поэтому пересечение номеров рассинхронизирует дедлайны. Проще не допускать дубль.
-  let conflictingNumbers: number[] = [];
-
-  try {
-    const alreadyAssigned = await prisma.homeworkAssignmentNumber.findMany({
-      where: {
-        homeworkNumberId: { in: homeworkNumberIds },
-        assignment: { studentId }
-      },
-      select: { homeworkNumber: { select: { number: true } } }
-    });
-    conflictingNumbers = Array.from(
-      new Set(alreadyAssigned.map((entry) => entry.homeworkNumber.number))
-    ).sort((left, right) => left - right);
-  } catch (error) {
-    if (isMissingHomeworkAssignmentTableError(error)) {
-      return NextResponse.json(
-        { error: "Таблица ДЗ ещё не создана в PostgreSQL. Сначала примените миграцию." },
-        { status: 503 }
-      );
-    }
-
-    throw error;
-  }
-
-  if (conflictingNumbers.length > 0) {
-    const plural = conflictingNumbers.length > 1;
+  if (!result.ok) {
+    const status =
+      result.code === "invalid" ? 400 : result.code === "not_found" ? 404 : result.code === "conflict" ? 409 : 503;
 
     return NextResponse.json(
       {
-        error: `${plural ? "Номера" : "Номер"} ${conflictingNumbers.join(", ")} уже ${
-          plural ? "выданы" : "выдан"
-        } этому ученику в другом ДЗ. Уберите ${plural ? "их" : "его"} или сначала отмените то ДЗ.`
+        error: result.message,
+        ...(result.reason === "deadlineColumn" ? { deadlinesEnabled: false } : {})
       },
-      { status: 409 }
+      { status }
     );
   }
 
-  let assignmentId: string;
-
-  try {
-    const [assignment] = await prisma.$transaction([
-      prisma.homeworkAssignment.create({
-        data: {
-          studentId,
-          topicId,
-          title: title || null,
-          deadlineAt,
-          numbers: {
-            create: homeworkNumberIds.map((homeworkNumberId) => ({ homeworkNumberId }))
-          }
-        },
-        select: { id: true }
-      }),
-      ...homeworkNumberIds.map((homeworkNumberId) =>
-        prisma.studentTopicNumberStatus.upsert({
-          where: {
-            studentId_homeworkNumberId: {
-              studentId,
-              homeworkNumberId
-            }
-          },
-          update: {
-            deadlineAt
-          },
-          create: {
-            studentId,
-            homeworkNumberId,
-            status: null,
-            deadlineAt
-          }
-        })
-      )
-    ]);
-
-    assignmentId = assignment.id;
-  } catch (error) {
-    if (isMissingHomeworkAssignmentTableError(error)) {
-      return NextResponse.json(
-        { error: "Таблица ДЗ ещё не создана в PostgreSQL. Сначала примените миграцию." },
-        { status: 503 }
-      );
-    }
-
-    if (isMissingStudentDeadlineColumnError(error)) {
-      return NextResponse.json(
-        {
-          error: "Колонка deadlineAt ещё не добавлена в PostgreSQL. Сначала примените миграцию.",
-          deadlinesEnabled: false
-        },
-        { status: 503 }
-      );
-    }
-
-    throw error;
-  }
-
-  const topic = await prisma.topic.findUnique({ where: { id: topicId }, select: { title: true } });
-  const numbersLabel = foundNumbers
-    .map((entry) => entry.number)
-    .sort((left, right) => left - right)
-    .join(", ");
-  const deadlineLabel = new Intl.DateTimeFormat("ru-RU", {
-    day: "numeric",
-    month: "long",
-    hour: "2-digit",
-    minute: "2-digit"
-  }).format(deadlineAt);
-
-  await createNotification({
-    userId: studentId,
-    type: "homework-assigned",
-    title: `Учитель выдал ДЗ по теме «${topic?.title ?? "Тема"}»`,
-    body: `${homeworkNumberIds.length > 1 ? "Номера" : "Номер"} ${numbersLabel} · дедлайн ${deadlineLabel}`,
-    href: "/student/homeworks"
-  });
-
-  revalidateHomeworkRoutes(studentId, topicId);
-  publishDashboardRealtimeEvent({
-    kind: "student-deadlines-changed",
-    studentId,
-    topicId
-  });
-  logInfoEvent("homework.assign.succeeded", {
-    studentId,
-    topicId,
-    assignmentId,
-    numbersCount: homeworkNumberIds.length
-  });
-
   return NextResponse.json({
     ok: true,
-    assignmentId,
+    assignmentId: result.assignmentId,
     deadlineAt: deadlineAt.toISOString(),
-    homeworkNumberIds
+    homeworkNumberIds: result.homeworkNumberIds
   });
 }
 
 export async function DELETE(request: Request) {
   const user = await tryGetCurrentUser();
 
-  if (!user || user.role !== UserRole.TEACHER) {
+  if (!user || (user.role !== UserRole.TEACHER && user.role !== UserRole.DEVELOPER)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
 
