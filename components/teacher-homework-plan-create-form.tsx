@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
+import { ShbzDateTimePicker } from "@/components/shbz-datetime-picker";
 import { ShbzSelect } from "@/components/shbz-select";
 
 type TeacherHomeworkPlanCreateFormProps = {
@@ -114,21 +115,20 @@ export function TeacherHomeworkPlanCreateForm({
             onChange={setTopicId}
           />
         </div>
-        <label className="block">
+        <div className="block">
           <span className="mb-[9px] block text-[13px] font-semibold" style={{ color: "var(--shbz-label)" }}>
             Дата следующего занятия
             <span className="ml-2 font-normal" style={{ color: "var(--shbz-text-muted)" }}>
               станет дедлайном
             </span>
           </span>
-          <input
-            type="datetime-local"
+          <ShbzDateTimePicker
             value={deadlineAt}
-            onChange={(event) => setDeadlineAt(event.target.value)}
-            required
-            className="shbz-input"
+            onChange={setDeadlineAt}
+            disabled={isPending}
+            placeholder="Дата и время"
           />
-        </label>
+        </div>
         <label className="block">
           <span className="mb-[9px] block text-[13px] font-semibold" style={{ color: "var(--shbz-label)" }}>
             Название
