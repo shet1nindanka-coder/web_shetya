@@ -144,61 +144,85 @@ export async function deleteGroupAction(formData: FormData) {
   redirect(`${base}?groupDeleted=1`);
 }
 
-export async function setGroupMembersAction(formData: FormData) {
+/** Мгновенное добавление в группу — вызывается с клиента, возвращает результат. */
+export async function addGroupMemberAction(formData: FormData): Promise<{ ok: boolean; message: string }> {
   const user = await requireUser([UserRole.TEACHER, UserRole.DEVELOPER]);
-  const base = groupsBasePath(user.role);
   const groupId = String(formData.get("groupId") ?? "").trim();
-  const requestedIds = formData
-    .getAll("memberIds")
-    .map((value) => String(value).trim())
-    .filter(Boolean);
+  const studentId = String(formData.get("studentId") ?? "").trim();
 
-  if (!groupId) {
-    redirect(`${base}?groupError=invalid`);
+  if (!groupId || !studentId) {
+    return { ok: false, message: "Проверьте данные." };
   }
 
   const group = await findAccessibleGroup(groupId, user);
 
   if (!group) {
-    redirect(`${base}?groupError=missing`);
+    return { ok: false, message: "Группа не найдена." };
   }
 
-  // Только реальные ученики: выбранные id перепроверяются по роли.
-  const students = await prisma.user.findMany({
-    where: { role: UserRole.STUDENT, id: { in: requestedIds } },
+  const student = await prisma.user.findFirst({
+    where: { id: studentId, role: UserRole.STUDENT },
     select: { id: true }
   });
-  const studentIds = students.map((student) => student.id);
 
-  try {
-    await prisma.$transaction([
-      // Убрать из группы тех, кого не отметили.
-      prisma.studentProfile.updateMany({
-        where: { groupId: group.id, userId: { notIn: studentIds } },
-        data: { groupId: null }
-      }),
-      // Добавить отмеченных (профиль создаётся при необходимости).
-      ...studentIds.map((studentId) =>
-        prisma.studentProfile.upsert({
-          where: { userId: studentId },
-          create: { userId: studentId, groupId: group.id },
-          update: { groupId: group.id }
-        })
-      )
-    ]);
-    logInfoEvent("group.members_updated", { userId: user.id, groupId: group.id, members: studentIds.length });
-  } catch (error) {
-    logErrorEvent(
-      "group.members.failed",
-      { userId: user.id, groupId: group.id },
-      error instanceof Error ? error : undefined,
-      "Failed to update group members."
-    );
-    redirect(`${base}/${group.id}?groupError=save`);
+  if (!student) {
+    return { ok: false, message: "Ученик не найден." };
   }
 
-  revalidateGroupRoutes(group.id);
-  redirect(`${base}/${group.id}?membersSaved=1`);
+  try {
+    // Ученик состоит максимум в одной группе: upsert просто переводит его сюда.
+    await prisma.studentProfile.upsert({
+      where: { userId: student.id },
+      create: { userId: student.id, groupId: group.id },
+      update: { groupId: group.id }
+    });
+    logInfoEvent("group.member_added", { userId: user.id, groupId: group.id, studentId: student.id });
+    revalidateGroupRoutes(group.id);
+    return { ok: true, message: "Сохранено" };
+  } catch (error) {
+    logErrorEvent(
+      "group.member_add.failed",
+      { userId: user.id, groupId: group.id, studentId: student.id },
+      error instanceof Error ? error : undefined,
+      "Failed to add group member."
+    );
+    return { ok: false, message: "Не удалось добавить." };
+  }
+}
+
+/** Мгновенное удаление из группы. Ученик и его прогресс не удаляются. */
+export async function removeGroupMemberAction(formData: FormData): Promise<{ ok: boolean; message: string }> {
+  const user = await requireUser([UserRole.TEACHER, UserRole.DEVELOPER]);
+  const groupId = String(formData.get("groupId") ?? "").trim();
+  const studentId = String(formData.get("studentId") ?? "").trim();
+
+  if (!groupId || !studentId) {
+    return { ok: false, message: "Проверьте данные." };
+  }
+
+  const group = await findAccessibleGroup(groupId, user);
+
+  if (!group) {
+    return { ok: false, message: "Группа не найдена." };
+  }
+
+  try {
+    await prisma.studentProfile.updateMany({
+      where: { userId: studentId, groupId: group.id },
+      data: { groupId: null }
+    });
+    logInfoEvent("group.member_removed", { userId: user.id, groupId: group.id, studentId });
+    revalidateGroupRoutes(group.id);
+    return { ok: true, message: "Сохранено" };
+  } catch (error) {
+    logErrorEvent(
+      "group.member_remove.failed",
+      { userId: user.id, groupId: group.id, studentId },
+      error instanceof Error ? error : undefined,
+      "Failed to remove group member."
+    );
+    return { ok: false, message: "Не удалось убрать." };
+  }
 }
 
 /**
