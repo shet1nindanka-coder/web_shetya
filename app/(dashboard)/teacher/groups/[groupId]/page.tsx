@@ -49,10 +49,10 @@ export default async function GroupDetailPage({ params, searchParams }: GroupDet
         kicker="Группа"
         title={group.name}
         aside={
-          <div className="flex flex-wrap gap-2.5">
+          <div className="flex flex-wrap items-center gap-2.5">
             <Link
               href={`${prefix}/homework-plans/new?groupId=${group.id}`}
-              className="shbz-btn-outline inline-block no-underline"
+              className="shbz-btn-outline shbz-btn-outline--lg inline-block no-underline"
             >
               Выдать ДЗ группе
             </Link>

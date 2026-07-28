@@ -1896,6 +1896,12 @@ html[data-theme="dark"] {
   transition: border-color 0.15s;
 }
 .shbz-btn-outline:hover { border-color: var(--shbz-outline-hover); }
+
+/* Парная кнопка к .shbz-btn-primary px-[26px] py-[13px] text-[15px]: совпадает по высоте */
+.shbz-btn-outline--lg {
+  padding: 11.5px 24px;
+  font-size: 15px;
+}
 .shbz-btn-outline:disabled {
   opacity: 0.6;
   cursor: default;
