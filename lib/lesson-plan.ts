@@ -43,6 +43,8 @@ export type AvailableNumber = {
   note: string | null;
   deadlineAt: Date | null;
   statusChangedAt: Date | null;
+  /** Номер уже выдавался в ДЗ, но так и не решён — повторная выдача уместна. */
+  assignedBefore: boolean;
 };
 
 export type LessonPlanContextTopics = {
@@ -61,6 +63,7 @@ export type LessonPlanContextTopics = {
       note: string | null;
       deadlineAt: Date | null;
       statusChangedAt: Date | null;
+      assignedBefore: boolean;
     }>;
   }>;
   excludedNumberIds: string[];
@@ -108,8 +111,8 @@ function clampInteger(value: number, min: number, max: number) {
 
 /**
  * Только фактические исключения, без ранжирования: уже выданное на уроках,
- * активные ДЗ и темы вне фильтра. Порядок нейтральный и стабильный —
- * для воспроизводимости, а не для приоритета.
+ * активные ДЗ, решённые (GREEN) номера и темы вне фильтра. Порядок нейтральный
+ * и стабильный — для воспроизводимости, а не для приоритета.
  */
 export function collectAvailableNumbers(
   context: LessonPlanContextTopics,
@@ -143,7 +146,8 @@ export function collectAvailableNumbers(
         status: number.status,
         note: number.note,
         deadlineAt: number.deadlineAt,
-        statusChangedAt: number.statusChangedAt
+        statusChangedAt: number.statusChangedAt,
+        assignedBefore: number.assignedBefore
       });
     }
   }

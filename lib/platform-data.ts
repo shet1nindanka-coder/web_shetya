@@ -1827,13 +1827,13 @@ export async function getTeacherLessons() {
 
 /**
  * Контекст ИИ-подбора для одного ученика: банк номеров с его статусами,
- * исключения (прошлые уроки + активные ДЗ) и агрегаты прогресса.
- * Некэшированная — вызывается из очереди генерации.
+ * исключения (прошлые уроки + активные ДЗ + уже решённые номера), история
+ * выданных ДЗ и агрегаты прогресса. Некэшированная — вызывается из очереди генерации.
  */
 export async function getLessonPlanContext(studentId: string, topicIds?: string[]) {
   const now = new Date();
 
-  const [student, profile, topics, lessonItems, activeAssignments, allStatuses, numberTotals] = await Promise.all([
+  const [student, profile, topics, lessonItems, allAssignments, allStatuses, numberTotals] = await Promise.all([
     prisma.user.findFirst({
       where: { id: studentId, role: UserRole.STUDENT },
       select: { id: true, name: true }
@@ -1870,17 +1870,24 @@ export async function getLessonPlanContext(studentId: string, topicIds?: string[
       where: { participant: { studentId } },
       select: { homeworkNumberId: true }
     }),
+    // Все ДЗ ученика (не только активные): активные дают исключения,
+    // вся история идёт модели как homeworkHistory + флаг assignedBefore.
     prisma.homeworkAssignment.findMany({
-      where: {
-        studentId,
-        OR: [{ deadlineAt: null }, { deadlineAt: { gte: now } }]
-      },
-      select: { numbers: { select: { homeworkNumberId: true } } }
+      where: { studentId },
+      orderBy: { createdAt: "desc" },
+      select: {
+        id: true,
+        deadlineAt: true,
+        createdAt: true,
+        topic: { select: { title: true } },
+        numbers: { select: { homeworkNumberId: true } }
+      }
     }),
     // Карта тем целиком (без фильтра topicIds): модель должна видеть общий уровень.
     prisma.studentTopicNumberStatus.findMany({
       where: { studentId, status: { not: null } },
       select: {
+        homeworkNumberId: true,
         status: true,
         statusChangedAt: true,
         homeworkNumber: { select: { topic: { select: { id: true, title: true } } } }
@@ -1964,17 +1971,69 @@ export async function getLessonPlanContext(studentId: string, topicIds?: string[
       : null
   }));
 
+  const statusByNumberId = new Map<string, HomeworkNumberStatus>();
+
+  for (const row of allStatuses) {
+    if (row.status) {
+      statusByNumberId.set(row.homeworkNumberId, row.status);
+    }
+  }
+
   const excludedNumberIds = new Set<string>();
 
   for (const item of lessonItems) {
     excludedNumberIds.add(item.homeworkNumberId);
   }
 
-  for (const assignment of activeAssignments) {
+  const assignedNumberIds = new Set<string>();
+
+  for (const assignment of allAssignments) {
+    const isActive = !assignment.deadlineAt || assignment.deadlineAt >= now;
+
     for (const entry of assignment.numbers) {
-      excludedNumberIds.add(entry.homeworkNumberId);
+      assignedNumberIds.add(entry.homeworkNumberId);
+
+      if (isActive) {
+        excludedNumberIds.add(entry.homeworkNumberId);
+      }
     }
   }
+
+  // Решённые (GREEN) номера никогда не повторяются — ни в уроке, ни в ДЗ.
+  // Жёлтые могут вернуться: тему ещё нужно добить.
+  for (const [numberId, status] of statusByNumberId) {
+    if (status === HomeworkNumberStatus.GREEN) {
+      excludedNumberIds.add(numberId);
+    }
+  }
+
+  // История выданных ДЗ (последние 8): модель видит, что уже выдавалось и с каким итогом.
+  const homeworkHistory = allAssignments.slice(0, 8).map((assignment) => {
+    let green = 0;
+    let yellow = 0;
+    let red = 0;
+    let untouched = 0;
+
+    for (const entry of assignment.numbers) {
+      const status = statusByNumberId.get(entry.homeworkNumberId) ?? null;
+
+      if (status === HomeworkNumberStatus.GREEN) green += 1;
+      else if (status === HomeworkNumberStatus.YELLOW) yellow += 1;
+      else if (status === HomeworkNumberStatus.RED) red += 1;
+      else untouched += 1;
+    }
+
+    return {
+      topic: assignment.topic?.title ?? null,
+      issuedAt: assignment.createdAt,
+      deadlineAt: assignment.deadlineAt,
+      total: assignment.numbers.length,
+      green,
+      yellow,
+      red,
+      untouched
+    };
+  });
 
   let greenCount = 0;
   let yellowCount = 0;
@@ -2001,7 +2060,8 @@ export async function getLessonPlanContext(studentId: string, topicIds?: string[
         status: status?.status ?? null,
         note: status?.note ?? null,
         deadlineAt: status?.deadlineAt ?? null,
-        statusChangedAt: status?.statusChangedAt ?? null
+        statusChangedAt: status?.statusChangedAt ?? null,
+        assignedBefore: assignedNumberIds.has(number.id)
       };
     })
   }));
@@ -2021,6 +2081,7 @@ export async function getLessonPlanContext(studentId: string, topicIds?: string[
     })),
     activity: { solvedLast7Days, solvedLast30Days },
     topicsOverview,
+    homeworkHistory,
     topics: mappedTopics,
     excludedNumberIds: Array.from(excludedNumberIds),
     stats: { greenCount, yellowCount, redCount }

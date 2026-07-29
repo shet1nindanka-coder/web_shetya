@@ -1,6 +1,7 @@
 import { generateHomeworkPlanForParticipant } from "@/lib/homework-plan-generate";
 import { generateLessonPlanForParticipant } from "@/lib/lesson-plan-generate";
-import { logErrorEvent } from "@/lib/logger";
+import { logErrorEvent, logInfoEvent } from "@/lib/logger";
+import { prisma } from "@/lib/prisma";
 import { getSiteSettingsUncached } from "@/lib/site-settings";
 
 /*
@@ -20,6 +21,7 @@ type LessonPlanTask = {
 declare global {
   var __lessonPlanQueue__: LessonPlanTask[] | undefined;
   var __lessonPlanQueueActive__: number | undefined;
+  var __lessonPlanResumeDone__: boolean | undefined;
 }
 
 const queue = global.__lessonPlanQueue__ ?? [];
@@ -80,4 +82,67 @@ export function enqueueLessonPlan(lessonId: string, participantIds: string[], ki
   }
 
   void drainQueue();
+}
+
+// Окно поиска зависших: свежее двух минут ещё может обрабатываться живым
+// процессом, старше суток — сознательно не трогаем (там кнопка «Повторить»).
+const RESUME_MIN_AGE_MS = 2 * 60_000;
+const RESUME_MAX_AGE_MS = 24 * 60 * 60_000;
+
+/**
+ * Авто-возобновление после рестарта: участники, чья генерация оборвалась вместе
+ * с процессом (нет ни плана, ни ошибки, ДЗ не выдано), снова ставятся в очередь.
+ * Выполняется РОВНО один раз за жизнь инстанса — лимит одной повторной попытки,
+ * потому что генерация дорогая: если и вторая попытка упадёт, planError покажет
+ * учителю кнопку «Повторить», дальше решает человек.
+ */
+export async function resumeStaleLessonPlans() {
+  if (global.__lessonPlanResumeDone__) {
+    return;
+  }
+
+  global.__lessonPlanResumeDone__ = true;
+
+  try {
+    const now = Date.now();
+    const stale = await prisma.lessonParticipant.findMany({
+      where: {
+        planGeneratedAt: null,
+        planError: null,
+        issuedAssignmentId: null,
+        updatedAt: {
+          gte: new Date(now - RESUME_MAX_AGE_MS),
+          lte: new Date(now - RESUME_MIN_AGE_MS)
+        }
+      },
+      select: { id: true, lessonId: true, lesson: { select: { kind: true } } }
+    });
+
+    if (stale.length === 0) {
+      return;
+    }
+
+    logInfoEvent(
+      "lesson_plan.resume.enqueued",
+      { count: stale.length },
+      "Resuming lesson plan generations interrupted by a restart."
+    );
+
+    for (const participant of stale) {
+      queue.push({
+        lessonId: participant.lessonId,
+        participantId: participant.id,
+        kind: participant.lesson.kind === "HOMEWORK" ? "HOMEWORK" : "LESSON"
+      });
+    }
+
+    void drainQueue();
+  } catch (error) {
+    logErrorEvent(
+      "lesson_plan.resume.failed",
+      {},
+      error instanceof Error ? error : undefined,
+      "Failed to resume stale lesson plan generations."
+    );
+  }
 }

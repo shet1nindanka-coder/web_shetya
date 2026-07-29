@@ -22,6 +22,7 @@ function buildNumber(id: string, number: number, displayOrder: number, extra: Re
     note: null,
     deadlineAt: null,
     statusChangedAt: null,
+    assignedBefore: false,
     ...extra
   } as never;
 }
@@ -65,10 +66,40 @@ test("collectAvailableNumbers excludes lesson/homework numbers and filters topic
   );
 });
 
-test("collectAvailableNumbers keeps fresh green numbers — that call belongs to the model", () => {
+test("collectAvailableNumbers is neutral: green exclusion is the context builder's job (excludedNumberIds)", () => {
+  // Сама чистая функция GREEN не фильтрует — getLessonPlanContext кладёт решённые
+  // номера в excludedNumberIds, и они отсеиваются как любые другие исключения.
   const available = collectAvailableNumbers(context, {});
 
   assert.ok(available.some((entry) => entry.id === "n1" && entry.status === "GREEN"));
+
+  const withGreenExcluded = { ...context, excludedNumberIds: ["n1"] };
+
+  assert.ok(!collectAvailableNumbers(withGreenExcluded, {}).some((entry) => entry.id === "n1"));
+});
+
+test("collectAvailableNumbers passes assignedBefore through", () => {
+  const withFlag = {
+    ...context,
+    topics: [
+      {
+        id: "topic-c",
+        title: "Тема В",
+        displayOrder: 3,
+        numbers: [buildNumber("n5", 50, 1, { assignedBefore: true }), buildNumber("n6", 60, 2)]
+      }
+    ]
+  };
+
+  const available = collectAvailableNumbers(withFlag, { topicIds: ["topic-c"] });
+
+  assert.deepEqual(
+    available.map((entry) => [entry.id, entry.assignedBefore]),
+    [
+      ["n5", true],
+      ["n6", false]
+    ]
+  );
 });
 
 test("collectAvailableNumbers has stable neutral order: topic order, then number order", () => {

@@ -93,6 +93,7 @@ export default async function HomeworkPlanDetailPage({ params }: HomeworkPlanDet
                 homeworkNumberId: item.homeworkNumberId,
                 number: item.number,
                 difficulty: item.difficulty,
+                conditionLatex: item.conditionLatex,
                 reason: item.reason,
                 minutes: item.minutes,
                 comment: item.comment,

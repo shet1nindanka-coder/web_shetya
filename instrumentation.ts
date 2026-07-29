@@ -5,5 +5,9 @@ export async function register() {
   if (process.env.NEXT_RUNTIME === "nodejs") {
     const { startHomeworkPhotoRetentionJob } = await import("./lib/homework-photo-retention-job");
     startHomeworkPhotoRetentionJob();
+
+    // Авто-возобновление генераций планов, оборванных рестартом (одна попытка на бут).
+    const { resumeStaleLessonPlans } = await import("./lib/lesson-plan-queue");
+    void resumeStaleLessonPlans();
   }
 }

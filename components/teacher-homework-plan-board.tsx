@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { DeleteButton } from "@/components/delete-button";
+import { LatexAnswerPreview } from "@/components/latex-answer-preview";
 import { ShbzSelect } from "@/components/shbz-select";
 
 const STALE_PLAN_MS = 15 * 60_000;
@@ -13,6 +14,7 @@ type PlanItem = {
   homeworkNumberId: string;
   number: number;
   difficulty: number | null;
+  conditionLatex: string | null;
   reason: string;
   minutes: number | null;
   comment: string | null;
@@ -437,6 +439,11 @@ export function TeacherHomeworkPlanBoard({ prefix, aiAvailable, plan, topicNumbe
                           >
                             ×
                           </button>
+                        ) : null}
+                        {item.conditionLatex ? (
+                          <div className="min-w-0 basis-full">
+                            <LatexAnswerPreview value={item.conditionLatex} />
+                          </div>
                         ) : null}
                       </li>
                     );
