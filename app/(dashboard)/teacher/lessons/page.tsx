@@ -28,7 +28,7 @@ export default async function TeacherLessonsPage() {
             Уроков пока нет.
           </p>
           <p className="mt-1.5 text-sm" style={{ color: "var(--shbz-text-muted)" }}>
-            Откройте группу и нажмите «Составить урок» — ИИ соберёт персональный набор задач каждому ученику.
+            Откройте группу и нажмите «Составить урок» — ИИ соберёт персональный набор задач каждому ученику. Урок для одного ученика создаётся с его страницы.
           </p>
           <Link href={`${prefix}/groups`} className="shbz-btn-primary mt-5 inline-block px-[26px] py-[13px] text-[15px] no-underline">
             К группам
@@ -44,7 +44,7 @@ export default async function TeacherLessonsPage() {
                 </h3>
                 <p className="mt-1 text-xs" style={{ color: "var(--shbz-text-muted)" }}>
                   {formatDateTime(lesson.createdAt)}
-                  {lesson.groupName ? ` · ${lesson.groupName}` : ""} · {lesson.durationMinutes} мин ·{" "}
+                  {lesson.groupName ? ` · ${lesson.groupName}` : lesson.soloStudentName ? ` · ${lesson.soloStudentName}` : ""} · {lesson.durationMinutes} мин ·{" "}
                   {lesson.participantsCount}{" "}
                   {lesson.participantsCount === 1 ? "ученик" : lesson.participantsCount < 5 ? "ученика" : "учеников"}
                 </p>

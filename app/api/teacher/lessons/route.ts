@@ -1,4 +1,4 @@
-import { UserRole } from "@prisma/client";
+import { type Subject, UserRole } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { NextResponse } from "next/server";
 import { enforceApiRateLimit } from "@/lib/api-rate-limit";
@@ -52,36 +52,45 @@ export async function POST(request: Request) {
     | null;
 
   const groupId = String(body?.groupId ?? "").trim();
-
-  if (!groupId) {
-    return NextResponse.json({ error: "Выберите группу." }, { status: 400 });
-  }
-
-  const group = await prisma.studentGroup.findFirst({
-    where: {
-      id: groupId,
-      ...(user.role === UserRole.DEVELOPER ? {} : { teacherId: user.id })
-    },
-    select: {
-      id: true,
-      name: true,
-      subject: true,
-      members: { select: { userId: true } }
-    }
-  });
-
-  if (!group) {
-    return NextResponse.json({ error: "Группа не найдена." }, { status: 404 });
-  }
-
-  const memberIds = new Set(group.members.map((member) => member.userId));
   const requestedIds = Array.isArray(body?.studentIds)
     ? body.studentIds.map((value) => String(value).trim()).filter(Boolean)
     : [];
-  const studentIds = requestedIds.length > 0 ? requestedIds.filter((id) => memberIds.has(id)) : Array.from(memberIds);
+  let studentIds: string[] = [];
+  let resolvedGroup: { id: string; subject: Subject } | null = null;
+
+  if (groupId) {
+    const group = await prisma.studentGroup.findFirst({
+      where: {
+        id: groupId,
+        ...(user.role === UserRole.DEVELOPER ? {} : { teacherId: user.id })
+      },
+      select: {
+        id: true,
+        subject: true,
+        members: { select: { userId: true } }
+      }
+    });
+
+    if (!group) {
+      return NextResponse.json({ error: "Группа не найдена." }, { status: 404 });
+    }
+
+    const memberIds = new Set(group.members.map((member) => member.userId));
+
+    studentIds = requestedIds.length > 0 ? requestedIds.filter((id) => memberIds.has(id)) : Array.from(memberIds);
+    resolvedGroup = { id: group.id, subject: group.subject };
+  } else {
+    // Индивидуальный урок без группы: как в планах ДЗ — проверяем только, что это ученики.
+    const students = await prisma.user.findMany({
+      where: { role: UserRole.STUDENT, id: { in: requestedIds } },
+      select: { id: true }
+    });
+
+    studentIds = students.map((student) => student.id);
+  }
 
   if (studentIds.length === 0) {
-    return NextResponse.json({ error: "В уроке должен быть хотя бы один ученик из группы." }, { status: 400 });
+    return NextResponse.json({ error: "Выберите хотя бы одного ученика." }, { status: 400 });
   }
 
   if (studentIds.length > MAX_GROUP_SIZE) {
@@ -112,9 +121,9 @@ export async function POST(request: Request) {
     const lesson = await prisma.lesson.create({
       data: {
         title,
-        subject: group.subject,
+        ...(resolvedGroup ? { subject: resolvedGroup.subject } : {}),
         teacherId: user.id,
-        groupId: group.id,
+        groupId: resolvedGroup?.id ?? null,
         durationMinutes: params.durationMinutes,
         planParams: {
           title,

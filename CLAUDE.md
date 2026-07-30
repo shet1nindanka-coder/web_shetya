@@ -89,7 +89,7 @@ Postgres service.
 - **Rate limiting** — `lib/rate-limit.ts`, in-memory token bucket (login and student creation);
   `lib/persistent-rate-limit.ts` — durable buckets in Postgres (AI budgets).
 - **AI lesson planner** — «ИИ-подбор заданий на урок»: группы (`actions/group.ts`,
-  `/teacher/groups`), уроки (`/teacher/lessons`, API `app/api/teacher/lessons/**`). Подбор целиком
+  `/teacher/groups`), уроки (`/teacher/lessons`, API `app/api/teacher/lessons/**`; `Lesson.groupId` необязателен — урок бывает групповым или индивидуальным, вход со страницы группы или ученика через `/teacher/lessons/new?groupId=|studentId=`). Подбор целиком
   на модели (никаких эвристических формул в коде): `lib/lesson-plan.ts` — факты и валидация,
   `lib/lesson-plan-generate.ts` — двухэтапный вызов (отсев → план) через ту же инфраструктуру, что
   автопроверка, `lib/lesson-plan-queue.ts` — in-memory очередь (общая для уроков и ДЗ, задача несёт

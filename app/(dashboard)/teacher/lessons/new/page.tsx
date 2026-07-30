@@ -19,10 +19,36 @@ export default async function LessonNewPage({ searchParams }: LessonNewPageProps
   const prefix = user.role === UserRole.DEVELOPER ? "/developer" : "/teacher";
   const params = (await searchParams) ?? {};
   const groupId = typeof params.groupId === "string" ? params.groupId : "";
+  const studentIdParam = typeof params.studentId === "string" ? params.studentId : "";
 
-  const group = groupId ? await getGroupDetail(groupId) : null;
+  let kicker = "";
+  let members: Array<{ id: string; name: string; speed: number | null }> = [];
+  let formGroupId: string | undefined;
 
-  if (!group) {
+  if (groupId) {
+    const group = await getGroupDetail(groupId);
+
+    if (!group) {
+      notFound();
+    }
+
+    kicker = group.name;
+    members = group.members.map((member) => ({ id: member.id, name: member.name, speed: member.speed }));
+    formGroupId = group.id;
+  } else if (studentIdParam) {
+    // Индивидуальный урок: один ученик, без группы.
+    const student = await prisma.user.findFirst({
+      where: { id: studentIdParam, role: UserRole.STUDENT },
+      select: { id: true, name: true, studentProfile: { select: { speed: true } } }
+    });
+
+    if (!student) {
+      notFound();
+    }
+
+    kicker = student.name;
+    members = [{ id: student.id, name: student.name, speed: student.studentProfile?.speed ?? null }];
+  } else {
     notFound();
   }
 
@@ -38,7 +64,7 @@ export default async function LessonNewPage({ searchParams }: LessonNewPageProps
 
   return (
     <div>
-      <ShbzPageHeader kicker={group.name} title="Новый урок" />
+      <ShbzPageHeader kicker={kicker} title="Новый урок" />
 
       {!aiAvailable ? (
         <div
@@ -55,12 +81,7 @@ export default async function LessonNewPage({ searchParams }: LessonNewPageProps
       ) : null}
 
       <div className="shbz-card shbz-section-pad">
-        <TeacherLessonCreateForm
-          prefix={prefix}
-          groupId={group.id}
-          members={group.members.map((member) => ({ id: member.id, name: member.name, speed: member.speed }))}
-          topics={topics}
-        />
+        <TeacherLessonCreateForm prefix={prefix} groupId={formGroupId} members={members} topics={topics} />
       </div>
     </div>
   );

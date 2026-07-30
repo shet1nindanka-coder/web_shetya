@@ -6,7 +6,8 @@ import { ShbzSelect } from "@/components/shbz-select";
 
 type TeacherLessonCreateFormProps = {
   prefix: string;
-  groupId: string;
+  /** Не задан — индивидуальный урок без группы. */
+  groupId?: string;
   members: Array<{ id: string; name: string; speed: number | null }>;
   topics: Array<{ id: string; title: string }>;
 };
@@ -58,7 +59,7 @@ export function TeacherLessonCreateForm({ prefix, groupId, members, topics }: Te
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
-            groupId,
+            groupId: groupId || undefined,
             studentIds: selectedStudentIds,
             title: title.trim() || undefined,
             durationMinutes: Number(duration) || 60,

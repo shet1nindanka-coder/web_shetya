@@ -1808,7 +1808,7 @@ export async function getTeacherLessons() {
         createdAt: true,
         group: { select: { id: true, name: true } },
         participants: {
-          select: { id: true, planGeneratedAt: true, planError: true }
+          select: { id: true, planGeneratedAt: true, planError: true, student: { select: { name: true } } }
         }
       }
     });
@@ -1820,6 +1820,9 @@ export async function getTeacherLessons() {
       durationMinutes: lesson.durationMinutes,
       createdAt: lesson.createdAt,
       groupName: lesson.group?.name ?? null,
+      // Для индивидуального урока в списке вместо группы показывается имя ученика.
+      soloStudentName:
+        !lesson.group && lesson.participants.length === 1 ? lesson.participants[0].student.name : null,
       participantsCount: lesson.participants.length,
       readyCount: lesson.participants.filter((participant) => participant.planGeneratedAt).length,
       failedCount: lesson.participants.filter((participant) => participant.planError).length
