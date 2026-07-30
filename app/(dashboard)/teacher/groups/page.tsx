@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { UserRole } from "@prisma/client";
-import { createGroupAction } from "@/actions/group";
+import { GroupCreateForm } from "@/components/group-create-form";
 import { ShbzPageHeader } from "@/components/shbz-page-header";
 import { requireUser } from "@/lib/auth";
 import { getTeacherGroups } from "@/lib/platform-data";
@@ -53,30 +53,7 @@ export default async function TeacherGroupsPage({ searchParams }: GroupsPageProp
       <section>
         <h2 className="shbz-section-title">Создать группу</h2>
         <div className="shbz-card shbz-section-pad">
-          <form action={createGroupAction} className="flex flex-wrap items-end gap-4">
-            <label className="block min-w-[240px] flex-1">
-              <span className="mb-[9px] block text-[13px] font-semibold" style={{ color: "var(--shbz-label)" }}>
-                Название
-              </span>
-              <input
-                type="text"
-                name="name"
-                required
-                maxLength={120}
-                placeholder="Например: 9 класс, ОГЭ по субботам"
-                className="shbz-input"
-              />
-            </label>
-            <label className="block w-[130px]">
-              <span className="mb-[9px] block text-[13px] font-semibold" style={{ color: "var(--shbz-label)" }}>
-                Класс
-              </span>
-              <input type="number" name="grade" min={1} max={11} step={1} placeholder="—" className="shbz-input" />
-            </label>
-            <button type="submit" className="shbz-btn-primary px-[26px] py-[13px] text-[15px]">
-              Создать группу
-            </button>
-          </form>
+          <GroupCreateForm />
         </div>
       </section>
 

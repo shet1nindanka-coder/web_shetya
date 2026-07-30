@@ -14,7 +14,8 @@ export function TeacherStudentTabs({ studentId }: TeacherStudentTabsProps) {
 
   const items = [
     { href: base, label: "Проверка ДЗ", isActive: pathname === base },
-    { href: `${base}/assign`, label: "Выдать ДЗ", isActive: pathname.startsWith(`${base}/assign`) }
+    { href: `${base}/assign`, label: "Выдать ДЗ", isActive: pathname.startsWith(`${base}/assign`) },
+    { href: `${base}/lessons`, label: "Занятия", isActive: pathname.startsWith(`${base}/lessons`) }
   ];
 
   return (

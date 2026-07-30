@@ -1808,7 +1808,13 @@ export async function getTeacherLessons() {
         createdAt: true,
         group: { select: { id: true, name: true } },
         participants: {
-          select: { id: true, planGeneratedAt: true, planError: true, student: { select: { name: true } } }
+          select: {
+            id: true,
+            planGeneratedAt: true,
+            planError: true,
+            student: { select: { name: true } },
+            items: { select: { result: true } }
+          }
         }
       }
     });
@@ -1823,9 +1829,72 @@ export async function getTeacherLessons() {
       // Для индивидуального урока в списке вместо группы показывается имя ученика.
       soloStudentName:
         !lesson.group && lesson.participants.length === 1 ? lesson.participants[0].student.name : null,
+      resultsTotal: lesson.participants.reduce((sum, participant) => sum + participant.items.length, 0),
+      resultsMarked: lesson.participants.reduce(
+        (sum, participant) => sum + participant.items.filter((item) => item.result !== null).length,
+        0
+      ),
       participantsCount: lesson.participants.length,
       readyCount: lesson.participants.filter((participant) => participant.planGeneratedAt).length,
       failedCount: lesson.participants.filter((participant) => participant.planError).length
+    }));
+  } catch (error) {
+    if (isRecoverablePlatformDataError(error)) {
+      return [];
+    }
+
+    throw error;
+  }
+}
+
+/** Занятия одного ученика с наборами и итогами — вкладка «Занятия» в кабинете учителя. */
+export async function getTeacherStudentLessons(studentId: string) {
+  try {
+    const participants = await prisma.lessonParticipant.findMany({
+      where: { studentId, lesson: { kind: "LESSON" } },
+      orderBy: { lesson: { createdAt: "desc" } },
+      select: {
+        id: true,
+        lesson: {
+          select: {
+            id: true,
+            title: true,
+            status: true,
+            durationMinutes: true,
+            createdAt: true,
+            group: { select: { name: true } }
+          }
+        },
+        items: {
+          orderBy: { order: "asc" },
+          select: {
+            id: true,
+            isExtra: true,
+            result: true,
+            homeworkNumber: {
+              select: { number: true, difficulty: true, topic: { select: { title: true } } }
+            }
+          }
+        }
+      }
+    });
+
+    return participants.map((participant) => ({
+      id: participant.lesson.id,
+      participantId: participant.id,
+      title: participant.lesson.title,
+      status: participant.lesson.status,
+      durationMinutes: participant.lesson.durationMinutes,
+      createdAt: participant.lesson.createdAt,
+      groupName: participant.lesson.group?.name ?? null,
+      items: participant.items.map((item) => ({
+        id: item.id,
+        number: item.homeworkNumber.number,
+        difficulty: item.homeworkNumber.difficulty,
+        topicTitle: item.homeworkNumber.topic.title,
+        isExtra: item.isExtra,
+        result: item.result
+      }))
     }));
   } catch (error) {
     if (isRecoverablePlatformDataError(error)) {

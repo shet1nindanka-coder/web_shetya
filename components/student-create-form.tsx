@@ -95,9 +95,15 @@ export function StudentCreateForm() {
           ) : null}
         </label>
 
-        <button type="submit" disabled={isSubmitDisabled} className="shbz-btn-primary mt-[31px] h-[54px] shrink-0 px-[26px] text-[15px]">
-          Добавить ученика
-        </button>
+        <div className="shrink-0">
+          {/* Невидимая метка повторяет структуру колонок — кнопка встаёт вровень с полями. */}
+          <span className="mb-[9px] block text-[13px] font-semibold opacity-0" aria-hidden="true">
+            {"\u00A0"}
+          </span>
+          <button type="submit" disabled={isSubmitDisabled} className="shbz-btn-primary h-[52px] px-[26px] text-[15px]">
+            Добавить ученика
+          </button>
+        </div>
       </div>
     </form>
   );

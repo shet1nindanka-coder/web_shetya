@@ -95,7 +95,7 @@ Postgres service.
   автопроверка, `lib/lesson-plan-queue.ts` — in-memory очередь (общая для уроков и ДЗ, задача несёт
   `kind`). В промпт уходит досье ученика: скорость, заметка учителя, ИИ-портрет
   (`lib/student-portrait.ts`, авто-обновление после 3 проверок + кнопка на странице ученика), карта
-  тем. План урока = основная часть + дополнительная (`LessonAssignmentItem.isExtra`). Итоги урока: учитель отмечает каждый номер светофором прямо на доске урока (`LessonAssignmentItem.result`: SOLVED/PARTIAL/NOT_SOLVED, API `/items/[itemId]/result`), итог зеркалится в `StudentTopicNumberStatus` (GREEN/YELLOW/RED); «не решил» возвращает номер в кандидаты подбора (`attemptedInLesson`), история занятий уходит в досье как `lessonHistory`.
+  тем. План урока = основная часть + дополнительная (`LessonAssignmentItem.isExtra`). Итоги урока: учитель отмечает каждый номер светофором на доске урока или во вкладке «Занятия» на странице ученика (`LessonAssignmentItem.result`: SOLVED/PARTIAL/NOT_SOLVED, API `/items/[itemId]/result`), итог зеркалится в `StudentTopicNumberStatus` (GREEN/YELLOW/RED); «не решил» возвращает номер в кандидаты подбора (`attemptedInLesson`), история занятий уходит в досье как `lessonHistory`.
   Печатная раздатка (только уроки): `lib/lesson-print-html.ts` (KaTeX HTML, чистая функция; CSS и
   woff2-шрифты KaTeX инлайнятся `lib/print-theme.ts`) → `lib/pdf-renderer.ts` (headless Chromium,
   фолбэк — HTML для печати) → роуты `/teacher/lessons/[id]/pdf|print`.

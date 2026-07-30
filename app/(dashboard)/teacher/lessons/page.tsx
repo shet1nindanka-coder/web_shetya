@@ -56,6 +56,13 @@ export default async function TeacherLessonsPage() {
                     ошибок: {lesson.failedCount}
                   </span>
                 ) : null}
+                {lesson.resultsTotal > 0 ? (
+                  <span
+                    className={`shbz-chip ${lesson.resultsMarked === lesson.resultsTotal ? "shbz-chip-green" : "shbz-chip-yellow"}`}
+                  >
+                    итоги {lesson.resultsMarked} / {lesson.resultsTotal}
+                  </span>
+                ) : null}
                 <span
                   className={`shbz-chip ${lesson.readyCount === lesson.participantsCount ? "shbz-chip-green" : "shbz-chip-yellow"}`}
                 >
