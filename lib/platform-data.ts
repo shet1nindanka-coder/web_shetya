@@ -1999,10 +1999,11 @@ export async function getLessonPlanContext(studentId: string, topicIds?: string[
     }
   }
 
-  // Решённые (GREEN) номера никогда не повторяются — ни в уроке, ни в ДЗ.
-  // Жёлтые могут вернуться: тему ещё нужно добить.
+  // Прорешанные номера никогда не повторяются — ни в уроке, ни в ДЗ:
+  // GREEN (решено) и YELLOW (решено с ошибками). Один и тот же номер не решают
+  // по несколько раз. RED (не решено) остаётся в кандидатах.
   for (const [numberId, status] of statusByNumberId) {
-    if (status === HomeworkNumberStatus.GREEN) {
+    if (status === HomeworkNumberStatus.GREEN || status === HomeworkNumberStatus.YELLOW) {
       excludedNumberIds.add(numberId);
     }
   }

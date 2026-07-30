@@ -66,9 +66,10 @@ test("collectAvailableNumbers excludes lesson/homework numbers and filters topic
   );
 });
 
-test("collectAvailableNumbers is neutral: green exclusion is the context builder's job (excludedNumberIds)", () => {
-  // Сама чистая функция GREEN не фильтрует — getLessonPlanContext кладёт решённые
-  // номера в excludedNumberIds, и они отсеиваются как любые другие исключения.
+test("collectAvailableNumbers is neutral: solved-number exclusion is the context builder's job (excludedNumberIds)", () => {
+  // Сама чистая функция статусы не фильтрует — getLessonPlanContext кладёт
+  // прорешанные (GREEN/YELLOW) номера в excludedNumberIds, и они отсеиваются
+  // как любые другие исключения.
   const available = collectAvailableNumbers(context, {});
 
   assert.ok(available.some((entry) => entry.id === "n1" && entry.status === "GREEN"));
