@@ -72,6 +72,7 @@ export default async function LessonDetailPage({ params }: LessonDetailPageProps
               minutes: item.minutes,
               comment: item.comment,
               isExtra: item.isExtra,
+              result: item.result,
               topicTitle: item.topicTitle,
               studentStatus: item.studentStatus
             }))

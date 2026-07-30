@@ -1,5 +1,13 @@
 import { unstable_cache } from "next/cache";
-import { HomeworkNumberStatus, Prisma, SolutionCheckStatus, SolutionVerdict, UserRole } from "@prisma/client";
+import {
+  HomeworkNumberStatus,
+  LessonItemResult,
+  LessonKind,
+  Prisma,
+  SolutionCheckStatus,
+  SolutionVerdict,
+  UserRole
+} from "@prisma/client";
 import { logWarnEvent } from "@/lib/logger";
 import { PLATFORM_DATA_TAGS } from "@/lib/platform-data-cache";
 import { prisma } from "@/lib/prisma";
@@ -1868,7 +1876,14 @@ export async function getLessonPlanContext(studentId: string, topicIds?: string[
     }),
     prisma.lessonAssignmentItem.findMany({
       where: { participant: { studentId } },
-      select: { homeworkNumberId: true }
+      select: {
+        homeworkNumberId: true,
+        result: true,
+        homeworkNumber: { select: { topic: { select: { title: true } } } },
+        participant: {
+          select: { lesson: { select: { id: true, kind: true, title: true, createdAt: true } } }
+        }
+      }
     }),
     // Все ДЗ ученика (не только активные): активные дают исключения,
     // вся история идёт модели как homeworkHistory + флаг assignedBefore.
@@ -1980,9 +1995,23 @@ export async function getLessonPlanContext(studentId: string, topicIds?: string[
   }
 
   const excludedNumberIds = new Set<string>();
+  // Итог урока «не решил» (NOT_SOLVED) возвращает номер в кандидаты подбора;
+  // остальные выданные на уроках номера исключаются, как раньше.
+  const attemptedInLessonIds = new Set<string>();
 
   for (const item of lessonItems) {
-    excludedNumberIds.add(item.homeworkNumberId);
+    if (item.result === LessonItemResult.NOT_SOLVED) {
+      attemptedInLessonIds.add(item.homeworkNumberId);
+    } else {
+      excludedNumberIds.add(item.homeworkNumberId);
+    }
+  }
+
+  // Номер мог попасть в несколько уроков с разными итогами — исключение сильнее возврата.
+  for (const id of attemptedInLessonIds) {
+    if (excludedNumberIds.has(id)) {
+      attemptedInLessonIds.delete(id);
+    }
   }
 
   const assignedNumberIds = new Set<string>();
@@ -2036,6 +2065,64 @@ export async function getLessonPlanContext(studentId: string, topicIds?: string[
     };
   });
 
+  // История занятий (последние 8): модель видит, как прошли уроки — что решено, что нет.
+  const lessonHistoryMap = new Map<
+    string,
+    {
+      title: string | null;
+      date: Date;
+      topics: Set<string>;
+      total: number;
+      solved: number;
+      partial: number;
+      notSolved: number;
+      unmarked: number;
+    }
+  >();
+
+  for (const item of lessonItems) {
+    const lesson = item.participant.lesson;
+
+    if (lesson.kind !== LessonKind.LESSON) {
+      continue;
+    }
+
+    const entry = lessonHistoryMap.get(lesson.id) ?? {
+      title: lesson.title || null,
+      date: lesson.createdAt,
+      topics: new Set<string>(),
+      total: 0,
+      solved: 0,
+      partial: 0,
+      notSolved: 0,
+      unmarked: 0
+    };
+
+    entry.total += 1;
+    entry.topics.add(item.homeworkNumber.topic.title);
+
+    if (item.result === LessonItemResult.SOLVED) entry.solved += 1;
+    else if (item.result === LessonItemResult.PARTIAL) entry.partial += 1;
+    else if (item.result === LessonItemResult.NOT_SOLVED) entry.notSolved += 1;
+    else entry.unmarked += 1;
+
+    lessonHistoryMap.set(lesson.id, entry);
+  }
+
+  const lessonHistory = Array.from(lessonHistoryMap.values())
+    .sort((a, b) => b.date.getTime() - a.date.getTime())
+    .slice(0, 8)
+    .map((entry) => ({
+      title: entry.title,
+      date: entry.date,
+      topics: Array.from(entry.topics),
+      total: entry.total,
+      solved: entry.solved,
+      partial: entry.partial,
+      notSolved: entry.notSolved,
+      unmarked: entry.unmarked
+    }));
+
   let greenCount = 0;
   let yellowCount = 0;
   let redCount = 0;
@@ -2062,7 +2149,8 @@ export async function getLessonPlanContext(studentId: string, topicIds?: string[
         note: status?.note ?? null,
         deadlineAt: status?.deadlineAt ?? null,
         statusChangedAt: status?.statusChangedAt ?? null,
-        assignedBefore: assignedNumberIds.has(number.id)
+        assignedBefore: assignedNumberIds.has(number.id),
+        attemptedInLesson: attemptedInLessonIds.has(number.id)
       };
     })
   }));
@@ -2083,6 +2171,7 @@ export async function getLessonPlanContext(studentId: string, topicIds?: string[
     activity: { solvedLast7Days, solvedLast30Days },
     topicsOverview,
     homeworkHistory,
+    lessonHistory,
     topics: mappedTopics,
     excludedNumberIds: Array.from(excludedNumberIds),
     stats: { greenCount, yellowCount, redCount }
@@ -2126,6 +2215,7 @@ export async function getLessonDetail(lessonId: string) {
                 minutes: true,
                 comment: true,
                 isExtra: true,
+                result: true,
                 homeworkNumber: {
                   select: {
                     id: true,
@@ -2195,6 +2285,7 @@ export async function getLessonDetail(lessonId: string) {
           minutes: item.minutes,
           comment: item.comment,
           isExtra: item.isExtra,
+          result: item.result,
           homeworkNumberId: item.homeworkNumber.id,
           number: item.homeworkNumber.number,
           difficulty: item.homeworkNumber.difficulty,

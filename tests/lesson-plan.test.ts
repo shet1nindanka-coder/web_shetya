@@ -23,6 +23,7 @@ function buildNumber(id: string, number: number, displayOrder: number, extra: Re
     deadlineAt: null,
     statusChangedAt: null,
     assignedBefore: false,
+    attemptedInLesson: false,
     ...extra
   } as never;
 }
@@ -99,6 +100,35 @@ test("collectAvailableNumbers passes assignedBefore through", () => {
     [
       ["n5", true],
       ["n6", false]
+    ]
+  );
+});
+
+test("collectAvailableNumbers passes attemptedInLesson through", () => {
+  // «Не решил» на уроке: контекст-строитель не кладёт номер в excludedNumberIds
+  // и помечает его attemptedInLesson — чистая функция просто пробрасывает флаг.
+  const withFlag = {
+    ...context,
+    topics: [
+      {
+        id: "topic-d",
+        title: "Тема Г",
+        displayOrder: 4,
+        numbers: [
+          buildNumber("n7", 70, 1, { attemptedInLesson: true, status: "RED" }),
+          buildNumber("n8", 80, 2)
+        ]
+      }
+    ]
+  };
+
+  const available = collectAvailableNumbers(withFlag, { topicIds: ["topic-d"] });
+
+  assert.deepEqual(
+    available.map((entry) => [entry.id, entry.attemptedInLesson]),
+    [
+      ["n7", true],
+      ["n8", false]
     ]
   );
 });

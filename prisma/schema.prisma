@@ -61,6 +61,13 @@ enum AssignmentReason {
   DIAGNOSTIC
 }
 
+// Итог урока по номеру: отмечает учитель после занятия, зеркалится в статус ученика.
+enum LessonItemResult {
+  SOLVED // решил → GREEN
+  PARTIAL // решил с ошибками → YELLOW
+  NOT_SOLVED // не решил / не успели → RED, номер возвращается в кандидаты подбора
+}
+
 model User {
   id                   String                     @id @default(cuid())
   name                 String
@@ -297,6 +304,7 @@ model LessonAssignmentItem {
   minutes          Int? // оценка времени ОТ МОДЕЛИ, справочная, ни на что не влияет
   comment          String? // короткое пояснение от ИИ, зачем эта задача
   isExtra          Boolean             @default(false) // дополнительная часть: если основная решена раньше времени
+  result           LessonItemResult? // итог урока (только kind=LESSON); null — не размечено
   createdAt        DateTime            @default(now())
   participant      LessonParticipant   @relation(fields: [participantId], references: [id], onDelete: Cascade)
   homeworkNumber   TopicHomeworkNumber @relation(fields: [homeworkNumberId], references: [id], onDelete: Cascade)

@@ -95,7 +95,7 @@ Postgres service.
   автопроверка, `lib/lesson-plan-queue.ts` — in-memory очередь (общая для уроков и ДЗ, задача несёт
   `kind`). В промпт уходит досье ученика: скорость, заметка учителя, ИИ-портрет
   (`lib/student-portrait.ts`, авто-обновление после 3 проверок + кнопка на странице ученика), карта
-  тем. План урока = основная часть + дополнительная (`LessonAssignmentItem.isExtra`).
+  тем. План урока = основная часть + дополнительная (`LessonAssignmentItem.isExtra`). Итоги урока: учитель отмечает каждый номер светофором прямо на доске урока (`LessonAssignmentItem.result`: SOLVED/PARTIAL/NOT_SOLVED, API `/items/[itemId]/result`), итог зеркалится в `StudentTopicNumberStatus` (GREEN/YELLOW/RED); «не решил» возвращает номер в кандидаты подбора (`attemptedInLesson`), история занятий уходит в досье как `lessonHistory`.
   Печатная раздатка (только уроки): `lib/lesson-print-html.ts` (KaTeX HTML, чистая функция; CSS и
   woff2-шрифты KaTeX инлайнятся `lib/print-theme.ts`) → `lib/pdf-renderer.ts` (headless Chromium,
   фолбэк — HTML для печати) → роуты `/teacher/lessons/[id]/pdf|print`.
@@ -151,7 +151,7 @@ Postgres service.
   для ИИ-подбора, задаёт учитель.
 - `Lesson` + `LessonParticipant` + `LessonAssignmentItem` — план занятия **или** план ДЗ,
   различаются `kind: LESSON | HOMEWORK`. Общие `durationMinutes`/`planParams` (у ДЗ — `deadlineAt`
-  и ровно одна `topicId`), у участника `speed`/`planSummary`/`planError`/`planGeneratedAt`, для ДЗ —
+  и ровно одна `topicId`), у участника `speed`/`planSummary`/`planError`/`planGeneratedAt`, у элемента набора — `result` (итог урока, nullable), для ДЗ —
   `issuedAssignmentId` (строка без FK: отмена ДЗ не трогает черновик; при чтении существование
   назначения проверяется) и `issuedAt`. Элементы набора: `order`/`reason`/`minutes`/`comment`/`isExtra`.
 - `TopicMastery`, `Test*` — таблицы созданы миграцией для соответствия схеме; код под тесты ещё

@@ -45,6 +45,8 @@ export type AvailableNumber = {
   statusChangedAt: Date | null;
   /** Номер уже выдавался в ДЗ, но так и не решён — повторная выдача уместна. */
   assignedBefore: boolean;
+  /** Задачу разбирали на уроке, но ученик её не решил (итог NOT_SOLVED) — вернуть уместно. */
+  attemptedInLesson: boolean;
 };
 
 export type LessonPlanContextTopics = {
@@ -64,6 +66,7 @@ export type LessonPlanContextTopics = {
       deadlineAt: Date | null;
       statusChangedAt: Date | null;
       assignedBefore: boolean;
+      attemptedInLesson: boolean;
     }>;
   }>;
   excludedNumberIds: string[];
@@ -147,7 +150,8 @@ export function collectAvailableNumbers(
         note: number.note,
         deadlineAt: number.deadlineAt,
         statusChangedAt: number.statusChangedAt,
-        assignedBefore: number.assignedBefore
+        assignedBefore: number.assignedBefore,
+        attemptedInLesson: number.attemptedInLesson
       });
     }
   }

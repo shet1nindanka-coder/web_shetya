@@ -39,7 +39,7 @@ export async function PATCH(
       id: true,
       lessonId: true,
       issuedAssignmentId: true,
-      items: { select: { homeworkNumberId: true, reason: true, minutes: true, comment: true, isExtra: true } }
+      items: { select: { homeworkNumberId: true, reason: true, minutes: true, comment: true, isExtra: true, result: true } }
     }
   });
 
@@ -95,6 +95,7 @@ export async function PATCH(
           reason: previous?.reason ?? ("NEW" as const),
           minutes: previous?.minutes ?? null,
           comment: previous?.comment ?? null,
+          result: previous?.result ?? null,
           isExtra: false
         };
       }),
@@ -108,6 +109,7 @@ export async function PATCH(
           reason: previous?.reason ?? ("NEW" as const),
           minutes: previous?.minutes ?? null,
           comment: previous?.comment ?? null,
+          result: previous?.result ?? null,
           isExtra: true
         };
       })
