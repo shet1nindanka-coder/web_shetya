@@ -46,6 +46,50 @@ test("normalizeHomeworkParams requires a topic and a future deadline", () => {
   assert.equal(params?.sourceLessonId, "lesson-1");
 });
 
+test("normalizeHomeworkParams clamps dailyMinutes and studyDays with sane defaults", () => {
+  const now = new Date("2026-07-28T10:00:00+03:00");
+
+  const clamped = normalizeHomeworkParams(
+    { topicId: "t1", deadlineAt: "2026-08-07T10:00:00+03:00", dailyMinutes: 999, studyDays: 99 },
+    now
+  );
+
+  assert.equal(clamped?.dailyMinutes, 240);
+  assert.equal(clamped?.studyDays, 14);
+
+  const low = normalizeHomeworkParams(
+    { topicId: "t1", deadlineAt: "2026-08-07T10:00:00+03:00", dailyMinutes: 1, studyDays: 0 },
+    now
+  );
+
+  assert.equal(low?.dailyMinutes, 15);
+  // studyDays: 0 — не «не задано», а значение → кламп к минимуму 1.
+  assert.equal(low?.studyDays, 1);
+});
+
+test("normalizeHomeworkParams defaults studyDays to min(deadline days, 3)", () => {
+  const now = new Date("2026-07-28T10:00:00+03:00");
+
+  // Срок 1 день → 1; срок 3 дня → 3; срок 10 дней → всё равно 3.
+  assert.equal(
+    normalizeHomeworkParams({ topicId: "t1", deadlineAt: "2026-07-29T09:00:00+03:00" }, now)?.studyDays,
+    1
+  );
+  assert.equal(
+    normalizeHomeworkParams({ topicId: "t1", deadlineAt: "2026-07-31T10:00:00+03:00" }, now)?.studyDays,
+    3
+  );
+  assert.equal(
+    normalizeHomeworkParams({ topicId: "t1", deadlineAt: "2026-08-07T10:00:00+03:00" }, now)?.studyDays,
+    3
+  );
+  // Дефолт минут в день.
+  assert.equal(
+    normalizeHomeworkParams({ topicId: "t1", deadlineAt: "2026-08-07T10:00:00+03:00" }, now)?.dailyMinutes,
+    60
+  );
+});
+
 test("pickDominantTopicId picks the majority with a deterministic tie-break", () => {
   assert.equal(pickDominantTopicId([]), null);
   assert.equal(

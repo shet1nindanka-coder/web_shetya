@@ -46,6 +46,8 @@ export async function POST(request: Request) {
         title?: string;
         teacherNote?: string;
         sourceLessonId?: string;
+        dailyMinutes?: number;
+        studyDays?: number;
         groupId?: string;
         studentIds?: string[];
       }
@@ -125,7 +127,9 @@ export async function POST(request: Request) {
           topicId: topic.id,
           deadlineAt: params.deadlineAt.toISOString(),
           teacherNote: params.teacherNote,
-          sourceLessonId: params.sourceLessonId
+          sourceLessonId: params.sourceLessonId,
+          dailyMinutes: params.dailyMinutes,
+          studyDays: params.studyDays
         },
         participants: {
           create: studentIds.map((studentId) => ({ studentId }))

@@ -156,7 +156,7 @@ test("parseLessonPlanResponse parses payload and keeps the model's order", () =>
   const content = `Вот план:\n\`\`\`json\n${JSON.stringify({
     items: [
       { index: 3, reason: "gap", minutes: 12, comment: "закрываем красный номер" },
-      { index: 0, reason: "REVIEW", minutes: 0, comment: "" },
+      { index: 0, reason: "GAP", minutes: 0, comment: "" },
       { index: 3, reason: "NEW" },
       { index: 7, reason: "NEW" },
       { index: 1, reason: "что-то", minutes: 9999, comment: "x".repeat(500) }
@@ -171,12 +171,19 @@ test("parseLessonPlanResponse parses payload and keeps the model's order", () =>
     [3, 0, 1]
   );
   assert.equal(plan.items[0].reason, "GAP");
-  assert.equal(plan.items[1].reason, "REVIEW");
+  assert.equal(plan.items[1].reason, "GAP");
   assert.equal(plan.items[1].minutes, null);
   assert.equal(plan.items[2].reason, "NEW");
   assert.equal(plan.items[2].minutes, 240);
   assert.equal(plan.items[2].comment.length, 200);
   assert.equal(plan.summary.length, 400);
+});
+
+test("parseLessonPlanResponse maps the removed REVIEW reason to NEW", () => {
+  // REVIEW убран из подбора: старые ответы модели не должны ломать парсер.
+  const plan = parseLessonPlanResponse(JSON.stringify({ items: [{ index: 0, reason: "REVIEW" }] }), 3);
+
+  assert.equal(plan.items[0].reason, "NEW");
 });
 
 test("parseLessonPlanResponse caps items and never throws on garbage", () => {
@@ -197,7 +204,7 @@ test("parseLessonPlanResponse splits main and extra parts without duplicates", (
     ],
     extraItems: [
       { index: 1, reason: "NEW" },
-      { index: 2, reason: "REVIEW", minutes: 6 },
+      { index: 2, reason: "GAP", minutes: 6 },
       { index: 99, reason: "NEW" }
     ],
     summary: "основная + запас"
@@ -207,7 +214,7 @@ test("parseLessonPlanResponse splits main and extra parts without duplicates", (
 
   assert.deepEqual(plan.items.map((item) => item.index), [0, 1]);
   assert.deepEqual(plan.extraItems.map((item) => item.index), [2]);
-  assert.equal(plan.extraItems[0].reason, "REVIEW");
+  assert.equal(plan.extraItems[0].reason, "GAP");
 });
 
 test("normalizePlanParams clamps every field", () => {

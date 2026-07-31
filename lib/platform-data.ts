@@ -9,6 +9,7 @@ import {
   UserRole
 } from "@prisma/client";
 import { logWarnEvent } from "@/lib/logger";
+import { ERROR_KIND_GROUP, type ErrorKind } from "@/lib/solution-check-parse";
 import { PLATFORM_DATA_TAGS } from "@/lib/platform-data-cache";
 import { prisma } from "@/lib/prisma";
 import type { TimelineEntry } from "@/lib/progress-timeline";
@@ -1229,7 +1230,9 @@ function queryTeacherStudentHomeworks(studentId: string, notesEnabled: boolean) 
               recognizedAnswer: true,
               comment: true,
               copySuspected: true,
-              copyReason: true
+              copyReason: true,
+              injectionSuspected: true,
+              injectionNote: true
             }
           },
           photos: {
@@ -1314,7 +1317,9 @@ async function getTeacherStudentHomeworksUncached(studentId: string) {
           recognizedAnswer: result.recognizedAnswer,
           comment: result.comment,
           copySuspected: result.copySuspected,
-          copyReason: result.copyReason
+          copyReason: result.copyReason,
+          injectionSuspected: result.injectionSuspected,
+          injectionNote: result.injectionNote
         }))
         .filter((result) => result.number > 0)
         .sort((left, right) => left.number - right.number)
@@ -1999,17 +2004,90 @@ export async function getLessonPlanContext(studentId: string, topicIds?: string[
     .findMany({
       where: {
         verdict: { in: [SolutionVerdict.INCORRECT, SolutionVerdict.UNCERTAIN] },
+        // Без диагностического сигнала строка бесполезна: UNCERTAIN «не нашёл на фото»
+        // вытеснял бы настоящие ошибки из take: 12.
+        errorKind: { notIn: ["UNREADABLE", "NOT_FOUND", "NONE"] },
         check: { status: SolutionCheckStatus.DONE, assignment: { studentId } }
       },
       orderBy: { check: { checkedAt: "desc" } },
       take: 12,
       select: {
         verdict: true,
-        comment: true,
+        errorKind: true,
+        errorNote: true,
         homeworkNumber: { select: { number: true, topic: { select: { title: true } } } }
       }
     })
     .catch(() => []);
+
+  // 5.2 Свёртка ошибок по темам за 30 дней: сигнал «готов ли идти дальше» для подбора.
+  const errorProfileRows = await prisma.homeworkCheckResult
+    .findMany({
+      where: {
+        errorKind: { not: null },
+        check: {
+          status: SolutionCheckStatus.DONE,
+          checkedAt: { gte: new Date(now.getTime() - 30 * 86_400_000) },
+          assignment: { studentId }
+        }
+      },
+      select: {
+        errorKind: true,
+        checkId: true,
+        check: { select: { checkedAt: true } },
+        homeworkNumber: { select: { topic: { select: { id: true, title: true } } } }
+      }
+    })
+    .catch(() => []);
+
+  const errorProfileByTopic = new Map<
+    string,
+    { topic: string; conceptual: number; technical: number; incomplete: number; checkIds: Set<string>; lastAt: number }
+  >();
+
+  for (const row of errorProfileRows) {
+    const topic = row.homeworkNumber?.topic;
+    const group = row.errorKind ? ERROR_KIND_GROUP[row.errorKind as ErrorKind] : undefined;
+
+    if (!topic || !group) {
+      continue;
+    }
+
+    const entry = errorProfileByTopic.get(topic.id) ?? {
+      topic: topic.title,
+      conceptual: 0,
+      technical: 0,
+      incomplete: 0,
+      checkIds: new Set<string>(),
+      lastAt: 0
+    };
+
+    if (group === "conceptual") entry.conceptual += 1;
+    else if (group === "technical") entry.technical += 1;
+    else if (group === "incomplete") entry.incomplete += 1;
+
+    entry.checkIds.add(row.checkId);
+
+    const checkedAt = row.check.checkedAt?.getTime() ?? 0;
+
+    if (checkedAt > entry.lastAt) {
+      entry.lastAt = checkedAt;
+    }
+
+    errorProfileByTopic.set(topic.id, entry);
+  }
+
+  const errorProfile = Array.from(errorProfileByTopic.values())
+    .filter((entry) => entry.conceptual + entry.technical + entry.incomplete > 0)
+    .sort((a, b) => b.lastAt - a.lastAt)
+    .slice(0, 8)
+    .map((entry) => ({
+      topic: entry.topic,
+      conceptual: entry.conceptual,
+      technical: entry.technical,
+      incomplete: entry.incomplete,
+      checks: entry.checkIds.size
+    }));
 
   const totalsByTopic = new Map(numberTotals.map((row) => [row.topicId, row._count._all]));
   const overviewByTopic = new Map<
@@ -2244,8 +2322,10 @@ export async function getLessonPlanContext(studentId: string, topicIds?: string[
       topic: row.homeworkNumber?.topic.title ?? null,
       number: row.homeworkNumber?.number ?? null,
       verdict: row.verdict,
-      comment: row.comment ? row.comment.slice(0, 200) : null
+      errorKind: row.errorKind,
+      note: row.errorNote ? row.errorNote.slice(0, 200) : null
     })),
+    errorProfile,
     activity: { solvedLast7Days, solvedLast30Days },
     topicsOverview,
     homeworkHistory,

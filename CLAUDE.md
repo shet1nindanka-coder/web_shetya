@@ -93,7 +93,7 @@ Postgres service.
   на модели (никаких эвристических формул в коде): `lib/lesson-plan.ts` — факты и валидация,
   `lib/lesson-plan-generate.ts` — двухэтапный вызов (отсев → план) через ту же инфраструктуру, что
   автопроверка, `lib/lesson-plan-queue.ts` — in-memory очередь (общая для уроков и ДЗ, задача несёт
-  `kind`). В промпт уходит досье ученика: скорость, заметка учителя, ИИ-портрет
+  `kind`). В промпт уходит досье ученика: скорость, заметка учителя, диагностика ошибок (recentMistakes на `errorKind`/`errorNote` + свёртка `errorProfile` по темам за 30 дней), ИИ-портрет
   (`lib/student-portrait.ts`, авто-обновление после 3 проверок + кнопка на странице ученика), карта
   тем. План урока = основная часть + дополнительная (`LessonAssignmentItem.isExtra`). Итоги урока: учитель отмечает каждый номер светофором на доске урока или во вкладке «Занятия» на странице ученика (`LessonAssignmentItem.result`: SOLVED/PARTIAL/NOT_SOLVED, API `/items/[itemId]/result`), итог зеркалится в `StudentTopicNumberStatus` (GREEN/YELLOW/RED); «не решил» возвращает номер в кандидаты подбора (`attemptedInLesson`), история занятий уходит в досье как `lessonHistory`.
   Печатная раздатка (только уроки): `lib/lesson-print-html.ts` (KaTeX HTML, чистая функция; CSS и
@@ -101,7 +101,7 @@ Postgres service.
   фолбэк — HTML для печати) → роуты `/teacher/lessons/[id]/pdf|print`.
 - **AI homework planner** — «ИИ-выдача ДЗ»: переиспользует модель урока (`Lesson.kind = HOMEWORK`),
   черновики `/teacher/homework-plans`, API `app/api/teacher/homework-plans/**`. Специфика ДЗ в
-  `lib/homework-plan.ts` (одна тема, объём задаётся сроком `deadlineAt`) и
+  `lib/homework-plan.ts` (одна тема; объём задаётся бюджетом `dailyMinutes × studyDays`, срок `deadlineAt` — контекст) и
   `lib/homework-plan-generate.ts` (промпт «дом, а не урок»; блок закрепления занятия при
   `sourceLessonId`; extraItems отбрасываются). Выдача превращает набор участника в обычный
   `HomeworkAssignment` через `lib/homework-issue.ts` — единую точку создания ДЗ, которую использует
@@ -143,7 +143,11 @@ Postgres service.
   `POST /api/student/homework-checks`, an in-process queue (`lib/solution-check-queue.ts`) sends the
   photos + `conditionLatex`/`answerLatex` to a vision model via ProxyAPI (OpenAI-compatible) (`lib/solution-check.ts`,
   env `AI_CHECK_API_KEY` / `AI_CHECK_MODEL` / `AI_CHECK_BASE_URL`), verdicts auto-set number statuses
-  (CORRECT→GREEN, INCORRECT→RED, UNCERTAIN→untouched, flagged for the teacher). The client polls
+  (CORRECT→GREEN, INCORRECT→RED, UNCERTAIN→untouched, flagged for the teacher). Помимо публичного
+  `comment` (обезличен, читает ученик) проверка пишет служебную диагностику для ИИ-подбора:
+  `errorKind` (словарь `ERROR_KINDS` в `lib/solution-check-parse.ts`), `errorNote`, а также
+  `injectionSuspected`/`injectionNote` (надпись-инструкция на фото; вердикт не меняет, ученик не видит,
+  учителю показывается в ревью). Эти поля ученику не передаются никогда. The client polls
   `GET /api/student/homework-checks?consume=1`, which also revalidates caches after completion.
 
 - `StudentGroup` + `StudentProfile` — группы учеников (ученик максимум в одной группе,

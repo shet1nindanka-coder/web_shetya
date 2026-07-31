@@ -25,9 +25,9 @@ const MAX_COMMENT_LENGTH = 200;
 const MAX_SUMMARY_LENGTH = 400;
 const MAX_MODEL_MINUTES = 240;
 
-export type PlanReason = "NEW" | "REVIEW" | "GAP";
+export type PlanReason = "NEW" | "GAP";
 
-const PLAN_REASONS: PlanReason[] = ["NEW", "REVIEW", "GAP"];
+const PLAN_REASONS: PlanReason[] = ["NEW", "GAP"];
 
 export type AvailableNumber = {
   id: string;
@@ -93,7 +93,7 @@ export type ParsedPlan = {
   summary: string;
 };
 
-function toFiniteInteger(value: unknown): number | null {
+export function toFiniteInteger(value: unknown): number | null {
   // Number(null) === 0 и Number("") === 0 — считаем это отсутствием значения.
   if (value === null || value === undefined || (typeof value === "string" && value.trim() === "")) {
     return null;

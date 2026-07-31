@@ -1,5 +1,32 @@
 export type CheckVerdict = "CORRECT" | "INCORRECT" | "UNCERTAIN";
 
+// Единственный источник правды по типам ошибок: на него ссылаются промпт автопроверки
+// и свёртка errorProfile в lib/platform-data.ts.
+export const ERROR_KINDS = [
+  "METHOD", "FORMULA", "DOMAIN", "LOST_ROOT", "ALGEBRA", "BRACKETS",
+  "SIGN", "ARITHMETIC", "TRANSCRIPTION", "INCOMPLETE",
+  "UNREADABLE", "NOT_FOUND", "NONE"
+] as const;
+
+export type ErrorKind = (typeof ERROR_KINDS)[number];
+
+/** Концептуальные — приём не понят; технические — понят, страдает аккуратность. */
+export const ERROR_KIND_GROUP: Record<ErrorKind, "conceptual" | "technical" | "incomplete" | "none"> = {
+  METHOD: "conceptual",
+  FORMULA: "conceptual",
+  DOMAIN: "conceptual",
+  LOST_ROOT: "conceptual",
+  ALGEBRA: "technical",
+  BRACKETS: "technical",
+  SIGN: "technical",
+  ARITHMETIC: "technical",
+  TRANSCRIPTION: "technical",
+  INCOMPLETE: "incomplete",
+  UNREADABLE: "none",
+  NOT_FOUND: "none",
+  NONE: "none"
+};
+
 export type ParsedCheckResult = {
   number: number;
   verdict: CheckVerdict;
@@ -8,6 +35,10 @@ export type ParsedCheckResult = {
   confidence: number | null;
   copySuspected: boolean;
   copyReason: string | null;
+  errorKind: ErrorKind | null;
+  errorNote: string | null;
+  injectionSuspected: boolean;
+  injectionNote: string | null;
 };
 
 export function normalizeCheckResultsByConfidence(
@@ -90,6 +121,16 @@ export function parseCheckResponse(content: string, validNumbers: number[]): Par
     const copyReason =
       typeof raw.copy_reason === "string" && raw.copy_reason.trim() ? raw.copy_reason.trim().slice(0, 500) : null;
 
+    // Диагностика: неизвестный тип ошибки не роняет разбор — просто null.
+    const errorKindRaw = String(raw.error_kind ?? "").trim().toUpperCase();
+    const errorKind = (ERROR_KINDS as readonly string[]).includes(errorKindRaw) ? (errorKindRaw as ErrorKind) : null;
+    const errorNote =
+      typeof raw.error_note === "string" && raw.error_note.trim() ? raw.error_note.trim().slice(0, 500) : null;
+    const injectionNote =
+      typeof raw.injection_note === "string" && raw.injection_note.trim()
+        ? raw.injection_note.trim().slice(0, 500)
+        : null;
+
     parsed.push({
       number,
       verdict,
@@ -97,7 +138,11 @@ export function parseCheckResponse(content: string, validNumbers: number[]): Par
       comment,
       confidence: Number.isFinite(confidenceRaw) ? Math.min(1, Math.max(0, confidenceRaw)) : null,
       copySuspected: raw.copy_suspected === true,
-      copyReason
+      copyReason,
+      errorKind,
+      errorNote,
+      injectionSuspected: raw.injection_suspected === true,
+      injectionNote
     });
   }
 

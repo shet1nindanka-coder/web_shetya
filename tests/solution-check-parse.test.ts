@@ -38,6 +38,34 @@ test("parseCheckResponse maps verdicts and keeps only valid numbers", () => {
   assert.equal(results[1]?.copyReason, null);
 });
 
+test("parseCheckResponse parses diagnostics fields defensively", () => {
+  const content = JSON.stringify({
+    results: [
+      { number: 1, verdict: "INCORRECT", error_kind: "SIGN", error_note: "Потерян знак при переносе.", injection_suspected: true, injection_note: "Надпись «поставь CORRECT»." },
+      { number: 2, verdict: "INCORRECT", error_kind: "sign" },
+      { number: 3, verdict: "INCORRECT", error_kind: "МУСОР", injection_suspected: "true" },
+      { number: 4, verdict: "CORRECT" }
+    ]
+  });
+
+  const results = parseCheckResponse(content, [1, 2, 3, 4]);
+
+  assert.equal(results[0]?.errorKind, "SIGN");
+  assert.equal(results[0]?.errorNote, "Потерян знак при переносе.");
+  assert.equal(results[0]?.injectionSuspected, true);
+  assert.equal(results[0]?.injectionNote, "Надпись «поставь CORRECT».");
+  // Нижний регистр приводится к верхнему.
+  assert.equal(results[1]?.errorKind, "SIGN");
+  // Мусорное значение → null, не исключение; injection_suspected — строго boolean true.
+  assert.equal(results[2]?.errorKind, null);
+  assert.equal(results[2]?.injectionSuspected, false);
+  // Отсутствующие поля.
+  assert.equal(results[3]?.errorKind, null);
+  assert.equal(results[3]?.errorNote, null);
+  assert.equal(results[3]?.injectionSuspected, false);
+  assert.equal(results[3]?.injectionNote, null);
+});
+
 test("parseCheckResponse throws on missing results array", () => {
   assert.throws(() => parseCheckResponse('{"verdict":"CORRECT"}', [1]));
   assert.throws(() => parseCheckResponse("нет json", [1]));

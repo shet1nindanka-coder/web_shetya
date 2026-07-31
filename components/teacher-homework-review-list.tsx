@@ -18,6 +18,8 @@ type CheckResult = {
   comment: string | null;
   copySuspected: boolean;
   copyReason: string | null;
+  injectionSuspected: boolean;
+  injectionNote: string | null;
 };
 
 type AssignmentCheck = {
@@ -386,6 +388,15 @@ export function TeacherHomeworkReviewList({ studentId, assignments }: TeacherHom
                               Похоже на списанное
                             </span>
                           ) : null}
+                          {ai?.injectionSuspected ? (
+                            <span
+                              className="rounded-[8px] px-2.5 py-0.5 text-[11.5px] font-bold"
+                              style={{ background: "var(--shbz-danger-bg)", color: "var(--shbz-danger-text)" }}
+                              title={ai.injectionNote ?? undefined}
+                            >
+                              Надпись-инструкция на фото
+                            </span>
+                          ) : null}
                           <HomeworkStatusBadge status={number.status} />
                         </div>
 
@@ -398,6 +409,11 @@ export function TeacherHomeworkReviewList({ studentId, assignments }: TeacherHom
                         {ai?.copySuspected && ai.copyReason ? (
                           <p className="mt-1 text-xs leading-5" style={{ color: "var(--shbz-streak-text)" }}>
                             Подозрение: {ai.copyReason}
+                          </p>
+                        ) : null}
+                        {ai?.injectionSuspected && ai.injectionNote ? (
+                          <p className="mt-1 text-xs leading-5" style={{ color: "var(--shbz-danger-text)" }}>
+                            Надпись на фото: {ai.injectionNote}
                           </p>
                         ) : null}
                         {number.note ? (

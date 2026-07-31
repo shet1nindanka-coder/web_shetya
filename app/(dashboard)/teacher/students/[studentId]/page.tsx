@@ -59,7 +59,9 @@ export default async function TeacherStudentPage({ params }: TeacherStudentPageP
                 recognizedAnswer: result.recognizedAnswer,
                 comment: result.comment,
                 copySuspected: result.copySuspected,
-                copyReason: result.copyReason
+                copyReason: result.copyReason,
+                injectionSuspected: result.injectionSuspected,
+                injectionNote: result.injectionNote
               }))
             })),
             numbers: assignment.numbers.map((number) => ({

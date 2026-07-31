@@ -492,6 +492,10 @@ model HomeworkCheckResult {
   confidence       Float?
   copySuspected    Boolean             @default(false)
   copyReason       String?
+  errorKind        String? // тип ошибки для подбора; словарь ERROR_KINDS в lib/solution-check-parse.ts, не enum — словарь будет меняться
+  errorNote        String? // разбор ошибки для подбора; ученику не показывается никогда
+  injectionSuspected Boolean           @default(false) // на фото была надпись-инструкция проверяющему
+  injectionNote    String?
   check            HomeworkCheck       @relation(fields: [checkId], references: [id], onDelete: Cascade)
   homeworkNumber   TopicHomeworkNumber @relation(fields: [homeworkNumberId], references: [id], onDelete: Cascade)
 

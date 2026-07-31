@@ -29,6 +29,8 @@ export function TeacherHomeworkPlanCreateForm({
   const router = useRouter();
   const [topicId, setTopicId] = useState(defaultTopicId ?? topics[0]?.id ?? "");
   const [deadlineAt, setDeadlineAt] = useState("");
+  const [dailyMinutes, setDailyMinutes] = useState("60");
+  const [studyDays, setStudyDays] = useState("");
   const [title, setTitle] = useState(defaultTitle);
   const [teacherNote, setTeacherNote] = useState("");
   const [selectedStudentIds, setSelectedStudentIds] = useState<string[]>(members.map((member) => member.id));
@@ -64,6 +66,8 @@ export function TeacherHomeworkPlanCreateForm({
             deadlineAt: new Date(deadlineAt).toISOString(),
             title: title.trim() || undefined,
             teacherNote: teacherNote.trim(),
+            dailyMinutes: Number(dailyMinutes) || undefined,
+            studyDays: studyDays === "" ? undefined : Number(studyDays),
             sourceLessonId: sourceLessonId ?? undefined,
             groupId: groupId ?? undefined,
             studentIds: selectedStudentIds
@@ -129,6 +133,41 @@ export function TeacherHomeworkPlanCreateForm({
             placeholder="Дата и время"
           />
         </div>
+        <label className="block">
+          <span className="mb-[9px] block text-[13px] font-semibold" style={{ color: "var(--shbz-label)" }}>
+            Минут в день
+            <span className="ml-2 font-normal" style={{ color: "var(--shbz-text-muted)" }}>
+              объём ДЗ = минуты × дни
+            </span>
+          </span>
+          <input
+            type="number"
+            value={dailyMinutes}
+            min={15}
+            max={240}
+            step={5}
+            onChange={(event) => setDailyMinutes(event.target.value)}
+            className="shbz-input"
+          />
+        </label>
+        <label className="block">
+          <span className="mb-[9px] block text-[13px] font-semibold" style={{ color: "var(--shbz-label)" }}>
+            Дней занятий
+            <span className="ml-2 font-normal" style={{ color: "var(--shbz-text-muted)" }}>
+              сколько раз сядет за ДЗ
+            </span>
+          </span>
+          <input
+            type="number"
+            value={studyDays}
+            min={1}
+            max={14}
+            step={1}
+            placeholder="авто: до 3, не больше срока"
+            onChange={(event) => setStudyDays(event.target.value)}
+            className="shbz-input"
+          />
+        </label>
         <label className="block">
           <span className="mb-[9px] block text-[13px] font-semibold" style={{ color: "var(--shbz-label)" }}>
             Название
