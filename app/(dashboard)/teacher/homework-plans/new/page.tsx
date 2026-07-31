@@ -61,6 +61,15 @@ export default async function HomeworkPlanNewPage({ searchParams }: HomeworkPlan
       id: participant.studentId,
       name: participant.student.name
     }));
+
+    // Вход со страницы ученика: ДЗ по итогам занятия только ему, не всей группе.
+    if (studentIdParam) {
+      members = members.filter((member) => member.id === studentIdParam);
+
+      if (members.length === 0) {
+        notFound();
+      }
+    }
     defaultTopicId = pickDominantTopicId(
       lesson.participants.flatMap((participant) =>
         participant.items.map((item) => ({ topicId: item.homeworkNumber.topicId }))

@@ -72,7 +72,15 @@ function TrashIcon() {
  * Занятия ученика в кабинете учителя: итоги, правки набора и пересборка —
  * всё прямо здесь; страница урока нужна только для групповых занятий.
  */
-export function TeacherStudentLessons({ lessons, bank }: { lessons: StudentLesson[]; bank: LessonBankTopic[] }) {
+export function TeacherStudentLessons({
+  studentId,
+  lessons,
+  bank
+}: {
+  studentId: string;
+  lessons: StudentLesson[];
+  bank: LessonBankTopic[];
+}) {
   const router = useRouter();
   const [localLessons, setLocalLessons] = useState(lessons);
   const [error, setError] = useState<string | null>(null);
@@ -422,7 +430,7 @@ export function TeacherStudentLessons({ lessons, bank }: { lessons: StudentLesso
                   style={{ borderColor: "var(--shbz-soft-border)" }}
                 >
                   <Link
-                    href={`/teacher/homework-plans/new?lessonId=${lesson.id}`}
+                    href={`/teacher/homework-plans/new?lessonId=${lesson.id}&studentId=${studentId}`}
                     className="shbz-btn-outline inline-block no-underline"
                   >
                     Выдать ДЗ по итогам

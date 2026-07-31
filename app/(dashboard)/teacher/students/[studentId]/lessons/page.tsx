@@ -37,6 +37,7 @@ export default async function TeacherStudentLessonsPage({ params }: TeacherStude
       description="Наборы задач с уроков этого ученика. Отмечайте итоги светофором, правьте набор и пересобирайте подбор прямо здесь."
     >
       <TeacherStudentLessons
+        studentId={studentId}
         lessons={lessons.map((lesson) => ({
           id: lesson.id,
           participantId: lesson.participantId,
