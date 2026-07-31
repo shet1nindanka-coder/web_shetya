@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useState, useCallback, useEffect } from "react";
-import { usePathname } from "next/navigation";
+import { usePathname, useSearchParams } from "next/navigation";
 import { UserRole } from "@prisma/client";
 import { logoutAction } from "@/actions/auth";
 import { StudentNotificationsBell } from "@/components/student-notifications-bell";
@@ -20,39 +20,55 @@ type DashboardNavProps = {
   } | null;
 };
 
+// Уроки и ДЗ-черновики — общие для «учеников» и «групп»: вкладку выбирает контекст.
+// Создание/страницы с ?studentId= остаются в «учениках», остальное живёт в «группах».
+function isPlannerPath(pathname: string, prefix: string) {
+  return pathname.startsWith(`${prefix}/lessons`) || pathname.startsWith(`${prefix}/homework-plans`);
+}
+
 const studentItems = [
-  { href: "/student", label: "обзор", match: (p: string) => p === "/student" },
-  { href: "/student/homeworks", label: "дз", match: (p: string) => p.startsWith("/student/homeworks") },
-  { href: "/student/deadlines", label: "дедлайны", match: (p: string) => p.startsWith("/student/deadlines") },
-  { href: "/student/info", label: "общая инфа", match: (p: string) => p.startsWith("/student/info") },
+  { href: "/student", label: "обзор", match: (p: string, _sp: URLSearchParams) => p === "/student" },
+  { href: "/student/homeworks", label: "дз", match: (p: string, _sp: URLSearchParams) => p.startsWith("/student/homeworks") },
+  { href: "/student/deadlines", label: "дедлайны", match: (p: string, _sp: URLSearchParams) => p.startsWith("/student/deadlines") },
+  { href: "/student/info", label: "общая инфа", match: (p: string, _sp: URLSearchParams) => p.startsWith("/student/info") },
   {
     href: "/student/settings",
     label: "настройки",
-    match: (p: string) => p.startsWith("/student/settings") || p.startsWith("/student/account")
+    match: (p: string, _sp: URLSearchParams) => p.startsWith("/student/settings") || p.startsWith("/student/account")
   }
 ];
 
 const developerItems = [
-  { href: "/developer/topics", label: "темы", match: (p: string) => p.startsWith("/developer/topics") },
-  { href: "/developer/groups", label: "группы", match: (p: string) => p.startsWith("/developer/groups") || p.startsWith("/developer/lessons") || p.startsWith("/developer/homework-plans") },
-  { href: "/developer/statistics", label: "статистика", match: (p: string) => p.startsWith("/developer/statistics") },
-  { href: "/developer/panel", label: "дев-панель", match: (p: string) => p.startsWith("/developer/panel") },
+  { href: "/developer/topics", label: "темы", match: (p: string, _sp: URLSearchParams) => p.startsWith("/developer/topics") },
+  { href: "/developer/groups", label: "группы", match: (p: string, _sp: URLSearchParams) => p.startsWith("/developer/groups") || p.startsWith("/developer/lessons") || p.startsWith("/developer/homework-plans") },
+  { href: "/developer/statistics", label: "статистика", match: (p: string, _sp: URLSearchParams) => p.startsWith("/developer/statistics") },
+  { href: "/developer/panel", label: "дев-панель", match: (p: string, _sp: URLSearchParams) => p.startsWith("/developer/panel") },
   {
     href: "/developer/settings",
     label: "настройки",
-    match: (p: string) => p.startsWith("/developer/settings") || p.startsWith("/developer/account")
+    match: (p: string, _sp: URLSearchParams) => p.startsWith("/developer/settings") || p.startsWith("/developer/account")
   }
 ];
 
 const teacherItems = [
-  { href: "/teacher", label: "обзор", match: (p: string) => p === "/teacher" },
-  { href: "/teacher/topics", label: "темы", match: (p: string) => p.startsWith("/teacher/topics") },
-  { href: "/teacher/students", label: "ученики", match: (p: string) => p.startsWith("/teacher/students") },
-  { href: "/teacher/groups", label: "группы", match: (p: string) => p.startsWith("/teacher/groups") || p.startsWith("/teacher/lessons") || p.startsWith("/teacher/homework-plans") },
+  { href: "/teacher", label: "обзор", match: (p: string, _sp: URLSearchParams) => p === "/teacher" },
+  { href: "/teacher/topics", label: "темы", match: (p: string, _sp: URLSearchParams) => p.startsWith("/teacher/topics") },
+  {
+    href: "/teacher/students",
+    label: "ученики",
+    match: (p: string, sp: URLSearchParams) =>
+      p.startsWith("/teacher/students") || (isPlannerPath(p, "/teacher") && sp.has("studentId"))
+  },
+  {
+    href: "/teacher/groups",
+    label: "группы",
+    match: (p: string, sp: URLSearchParams) =>
+      p.startsWith("/teacher/groups") || (isPlannerPath(p, "/teacher") && !sp.has("studentId"))
+  },
   {
     href: "/teacher/settings",
     label: "настройки",
-    match: (p: string) => p.startsWith("/teacher/settings") || p.startsWith("/teacher/account")
+    match: (p: string, _sp: URLSearchParams) => p.startsWith("/teacher/settings") || p.startsWith("/teacher/account")
   }
 ];
 
@@ -85,6 +101,7 @@ function StreakFlame({ days }: { days: number }) {
 export function DashboardNav({ user, studentStreak }: DashboardNavProps) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const pathname = usePathname();
+  const searchParams = useSearchParams();
   const isStudent = user.role === UserRole.STUDENT;
   const roleLabel = isStudent ? "Ученик" : user.role === UserRole.DEVELOPER ? "Разработчик" : "Преподаватель";
   const liveStreak = useStudentStreak();
@@ -124,7 +141,7 @@ export function DashboardNav({ user, studentStreak }: DashboardNavProps) {
         {items.length > 0 ? (
           <nav className="shbz-tabbar order-3 mx-auto hidden w-auto md:inline-flex xl:order-none xl:mx-0" aria-label="Разделы">
             {items.map((item) => (
-              <Link key={item.href} href={item.href} prefetch data-active={item.match(pathname)} className="shbz-tab">
+              <Link key={item.href} href={item.href} prefetch data-active={item.match(pathname, searchParams)} className="shbz-tab">
                 {item.label}
               </Link>
             ))}
@@ -198,7 +215,7 @@ export function DashboardNav({ user, studentStreak }: DashboardNavProps) {
                   <Link
                     key={item.href}
                     href={item.href}
-                    data-active={item.match(pathname)}
+                    data-active={item.match(pathname, searchParams)}
                     className="shbz-tab"
                   >
                     {item.label}

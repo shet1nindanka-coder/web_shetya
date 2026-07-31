@@ -79,7 +79,10 @@ export function TeacherHomeworkPlanCreateForm({
 
         // 503 «ИИ недоступен» тоже возвращает planId — черновик создан, собираем вручную.
         if (result?.planId) {
-          router.push(`${prefix}/homework-plans/${result.planId}`);
+          // ДЗ одному ученику: остаёмся в контексте вкладки «ученики» (подсветка шапки).
+          const context = selectedStudentIds.length === 1 ? `?studentId=${selectedStudentIds[0]}` : "";
+
+          router.push(`${prefix}/homework-plans/${result.planId}${context}`);
           return;
         }
 

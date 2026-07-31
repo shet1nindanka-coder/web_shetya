@@ -77,7 +77,10 @@ export function TeacherLessonCreateForm({ prefix, groupId, members, topics }: Te
 
         // 503 «ИИ недоступен» тоже возвращает lessonId — урок создан, собираем вручную.
         if (result?.lessonId) {
-          router.push(`${prefix}/lessons/${result.lessonId}`);
+          // Индивидуальный урок: остаёмся в контексте вкладки «ученики» (подсветка шапки).
+          const context = !groupId && selectedStudentIds.length === 1 ? `?studentId=${selectedStudentIds[0]}` : "";
+
+          router.push(`${prefix}/lessons/${result.lessonId}${context}`);
           return;
         }
 
