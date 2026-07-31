@@ -3,8 +3,8 @@
 import { useRouter } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { DeleteButton } from "@/components/delete-button";
+import { LessonManualAdd } from "@/components/lesson-manual-add";
 import { ResultToggle } from "@/components/lesson-result-toggle";
-import { ShbzSelect } from "@/components/shbz-select";
 
 const STALE_PLAN_MS = 15 * 60_000;
 const POLL_INTERVAL_MS = 2000;
@@ -495,7 +495,7 @@ export function TeacherLessonBoard({ prefix, aiAvailable, lesson, bank }: Teache
                 </div>
               ) : null}
 
-              <ManualAdd
+              <LessonManualAdd
                 bank={bank}
                 busy={busy}
                 existingIds={participant.items.map((item) => item.homeworkNumberId)}
@@ -515,82 +515,3 @@ export function TeacherLessonBoard({ prefix, aiAvailable, lesson, bank }: Teache
   );
 }
 
-function ManualAdd({
-  bank,
-  busy,
-  existingIds,
-  onAdd
-}: {
-  bank: TeacherLessonBoardProps["bank"];
-  busy: boolean;
-  existingIds: string[];
-  onAdd: (homeworkNumberId: string, toExtra: boolean) => void;
-}) {
-  const [topicId, setTopicId] = useState(bank[0]?.topicId ?? "");
-  const [numberId, setNumberId] = useState("");
-
-  const topic = bank.find((entry) => entry.topicId === topicId) ?? null;
-  const existing = new Set(existingIds);
-  const numberOptions = (topic?.numbers ?? [])
-    .filter((number) => !existing.has(number.id))
-    .map((number) => ({
-      value: number.id,
-      label: number.difficulty ? `№ ${number.number} · сложн. ${number.difficulty}` : `№ ${number.number}`
-    }));
-
-  return (
-    <div className="mt-4 flex flex-wrap items-center gap-2.5">
-      <span className="text-[13px] font-semibold" style={{ color: "var(--shbz-label)" }}>
-        Добавить номер
-      </span>
-      <div style={{ width: 220 }}>
-        <ShbzSelect
-          size="xs"
-          ariaLabel="Тема"
-          value={topicId}
-          options={bank.map((entry) => ({ value: entry.topicId, label: entry.topicTitle }))}
-          onChange={(nextValue) => {
-            setTopicId(nextValue);
-            setNumberId("");
-          }}
-        />
-      </div>
-      <div style={{ width: 190 }}>
-        <ShbzSelect
-          size="xs"
-          ariaLabel="Номер"
-          value={numberId}
-          placeholder="Выберите номер"
-          options={numberOptions}
-          onChange={setNumberId}
-        />
-      </div>
-      <button
-        type="button"
-        disabled={busy || !numberId}
-        onClick={() => {
-          if (numberId) {
-            onAdd(numberId, false);
-            setNumberId("");
-          }
-        }}
-        className="shbz-btn-outline disabled:cursor-not-allowed disabled:opacity-50"
-      >
-        В основную
-      </button>
-      <button
-        type="button"
-        disabled={busy || !numberId}
-        onClick={() => {
-          if (numberId) {
-            onAdd(numberId, true);
-            setNumberId("");
-          }
-        }}
-        className="shbz-btn-outline disabled:cursor-not-allowed disabled:opacity-50"
-      >
-        В доп. ⭐
-      </button>
-    </div>
-  );
-}

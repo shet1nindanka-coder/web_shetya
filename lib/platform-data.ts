@@ -1855,6 +1855,8 @@ export async function getTeacherStudentLessons(studentId: string) {
       orderBy: { lesson: { createdAt: "desc" } },
       select: {
         id: true,
+        planGeneratedAt: true,
+        planError: true,
         lesson: {
           select: {
             id: true,
@@ -1869,6 +1871,7 @@ export async function getTeacherStudentLessons(studentId: string) {
           orderBy: { order: "asc" },
           select: {
             id: true,
+            homeworkNumberId: true,
             isExtra: true,
             result: true,
             homeworkNumber: {
@@ -1887,8 +1890,11 @@ export async function getTeacherStudentLessons(studentId: string) {
       durationMinutes: participant.lesson.durationMinutes,
       createdAt: participant.lesson.createdAt,
       groupName: participant.lesson.group?.name ?? null,
+      planPending: !participant.planGeneratedAt && !participant.planError,
+      planError: participant.planError,
       items: participant.items.map((item) => ({
         id: item.id,
+        homeworkNumberId: item.homeworkNumberId,
         number: item.homeworkNumber.number,
         difficulty: item.homeworkNumber.difficulty,
         topicTitle: item.homeworkNumber.topic.title,

@@ -3,6 +3,7 @@ import { SectionCard } from "@/components/section-card";
 import { TeacherStudentLessons } from "@/components/teacher-student-lessons";
 import { requireUser } from "@/lib/auth";
 import { getTeacherStudentLessons } from "@/lib/platform-data";
+import { prisma } from "@/lib/prisma";
 import { formatDateTime } from "@/lib/utils";
 
 type TeacherStudentLessonsPageProps = {
@@ -14,12 +15,26 @@ type TeacherStudentLessonsPageProps = {
 export default async function TeacherStudentLessonsPage({ params }: TeacherStudentLessonsPageProps) {
   await requireUser(UserRole.TEACHER);
   const { studentId } = await params;
-  const lessons = await getTeacherStudentLessons(studentId);
+
+  const [lessons, bankTopics] = await Promise.all([
+    getTeacherStudentLessons(studentId),
+    prisma.topic.findMany({
+      orderBy: [{ displayOrder: "asc" }, { createdAt: "asc" }],
+      select: {
+        id: true,
+        title: true,
+        homeworkNumbers: {
+          orderBy: { displayOrder: "asc" },
+          select: { id: true, number: true, difficulty: true }
+        }
+      }
+    })
+  ]);
 
   return (
     <SectionCard
       title="Занятия и итоги"
-      description="Наборы задач с уроков этого ученика. Отмечайте итоги светофором прямо здесь: решил — зелёный, с ошибками — жёлтый, не решил — красный (номер вернётся в подбор)."
+      description="Наборы задач с уроков этого ученика. Отмечайте итоги светофором, правьте набор и пересобирайте подбор прямо здесь."
     >
       <TeacherStudentLessons
         lessons={lessons.map((lesson) => ({
@@ -30,7 +45,14 @@ export default async function TeacherStudentLessonsPage({ params }: TeacherStude
           createdAtLabel: formatDateTime(lesson.createdAt),
           durationMinutes: lesson.durationMinutes,
           groupName: lesson.groupName,
+          planPending: lesson.planPending,
+          planError: lesson.planError,
           items: lesson.items
+        }))}
+        bank={bankTopics.map((topic) => ({
+          topicId: topic.id,
+          topicTitle: topic.title,
+          numbers: topic.homeworkNumbers
         }))}
       />
     </SectionCard>
