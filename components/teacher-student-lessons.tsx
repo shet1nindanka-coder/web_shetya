@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useCallback, useState, useTransition } from "react";
+import { useCallback, useEffect, useState, useTransition } from "react";
 import { ResultToggle } from "@/components/lesson-result-toggle";
 
 type StudentLessonItem = {
@@ -36,7 +36,34 @@ export function TeacherStudentLessons({ lessons }: { lessons: StudentLesson[] })
   const router = useRouter();
   const [localLessons, setLocalLessons] = useState(lessons);
   const [error, setError] = useState<string | null>(null);
+  // По умолчанию развёрнуты уроки с неразмеченными итогами, полностью размеченные свёрнуты.
+  const [expandedIds, setExpandedIds] = useState<Set<string>>(
+    () =>
+      new Set(
+        lessons
+          .filter((lesson) => lesson.items.length > 0 && lesson.items.some((item) => item.result === null))
+          .map((lesson) => lesson.id)
+      )
+  );
   const [, startTransition] = useTransition();
+
+  useEffect(() => {
+    setLocalLessons(lessons);
+  }, [lessons]);
+
+  const toggleExpanded = useCallback((lessonId: string) => {
+    setExpandedIds((current) => {
+      const next = new Set(current);
+
+      if (next.has(lessonId)) {
+        next.delete(lessonId);
+      } else {
+        next.add(lessonId);
+      }
+
+      return next;
+    });
+  }, []);
 
   const setResult = useCallback(
     async (lessonId: string, participantId: string, itemId: string, result: string | null) => {
@@ -95,6 +122,7 @@ export function TeacherStudentLessons({ lessons }: { lessons: StudentLesson[] })
 
       {localLessons.map((lesson) => {
         const marked = lesson.items.filter((item) => item.result !== null).length;
+        const expanded = expandedIds.has(lesson.id);
 
         return (
           <article
@@ -102,7 +130,19 @@ export function TeacherStudentLessons({ lessons }: { lessons: StudentLesson[] })
             className="rounded-[16px] border px-5 py-4"
             style={{ borderColor: "var(--shbz-soft-border)" }}
           >
-            <div className="flex flex-wrap items-center justify-between gap-3">
+            <div
+              role="button"
+              tabIndex={0}
+              aria-expanded={expanded}
+              onClick={() => toggleExpanded(lesson.id)}
+              onKeyDown={(event) => {
+                if (event.key === "Enter" || event.key === " ") {
+                  event.preventDefault();
+                  toggleExpanded(lesson.id);
+                }
+              }}
+              className="flex cursor-pointer select-none flex-wrap items-center justify-between gap-3"
+            >
               <div className="min-w-0">
                 <h3 className="truncate text-[15px] font-bold" style={{ color: "var(--shbz-text-strong)" }}>
                   {lesson.title}
@@ -113,7 +153,7 @@ export function TeacherStudentLessons({ lessons }: { lessons: StudentLesson[] })
                   {statusLabels[lesson.status] ?? lesson.status}
                 </p>
               </div>
-              <div className="flex items-center gap-2.5">
+              <div className="flex items-center gap-2.5" onClick={(event) => event.stopPropagation()}>
                 {lesson.items.length > 0 ? (
                   <span
                     className={`shbz-chip ${marked === lesson.items.length ? "shbz-chip-green" : "shbz-chip-yellow"}`}
@@ -124,10 +164,13 @@ export function TeacherStudentLessons({ lessons }: { lessons: StudentLesson[] })
                 <Link href={`/teacher/lessons/${lesson.id}`} className="shbz-btn-outline inline-block no-underline">
                   Открыть урок
                 </Link>
+                <button type="button" onClick={() => toggleExpanded(lesson.id)} className="shbz-btn-outline">
+                  {expanded ? "Свернуть" : "Развернуть"}
+                </button>
               </div>
             </div>
 
-            {lesson.items.length > 0 ? (
+            {!expanded ? null : lesson.items.length > 0 ? (
               <ol className="mt-3.5 space-y-2">
                 {lesson.items.map((item) => (
                   <li

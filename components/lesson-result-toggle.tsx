@@ -1,18 +1,15 @@
 "use client";
 
-const resultOptions = [
-  { value: "SOLVED", label: "✓", title: "Решил на уроке", background: "var(--shbz-green-soft)", color: "var(--shbz-green-text)" },
-  { value: "PARTIAL", label: "±", title: "Решил с ошибками", background: "var(--shbz-yellow-soft)", color: "var(--shbz-yellow-text)" },
-  {
-    value: "NOT_SOLVED",
-    label: "✕",
-    title: "Не решил — номер вернётся в подбор",
-    background: "var(--shbz-danger-bg)",
-    color: "var(--shbz-danger-text)"
-  }
+import { cx, homeworkStatusMeta } from "@/lib/utils";
+
+// Итог урока → цвет светофора; подписи и стили кнопок — те же, что у статусов в проверке ДЗ.
+const options = [
+  { value: "SOLVED", status: "GREEN" },
+  { value: "PARTIAL", status: "YELLOW" },
+  { value: "NOT_SOLVED", status: "RED" }
 ] as const;
 
-/** Светофор итога урока на карточке номера: повторный клик снимает отметку. */
+/** Кнопки итога урока «Зеленый/Желтый/Красный»: повторный клик по активной снимает отметку. */
 export function ResultToggle({
   value,
   disabled,
@@ -25,31 +22,24 @@ export function ResultToggle({
   className?: string;
 }) {
   return (
-    <span className={`inline-flex items-center gap-1 ${className ?? ""}`} role="group" aria-label="Итог урока">
-      {resultOptions.map((option) => {
+    <span className={cx("inline-flex items-center gap-1.5", className)} role="group" aria-label="Итог урока">
+      {options.map((option) => {
         const active = value === option.value;
+        const meta = homeworkStatusMeta[option.status];
 
         return (
           <button
             key={option.value}
             type="button"
             disabled={disabled}
-            title={option.title}
             aria-pressed={active}
             onClick={() => onChange(active ? null : option.value)}
-            className="flex h-[26px] w-[26px] items-center justify-center rounded-[8px] border text-[13px] font-bold transition disabled:cursor-not-allowed disabled:opacity-40"
-            style={
-              active
-                ? { background: option.background, color: option.color, borderColor: "currentColor" }
-                : {
-                    background: "transparent",
-                    color: "var(--shbz-text-muted)",
-                    borderColor: "var(--shbz-soft-border)",
-                    opacity: 0.7
-                  }
-            }
+            className={cx(
+              "ui-pressable rounded-[12px] px-3 py-1.5 text-[12.5px] font-semibold transition disabled:cursor-not-allowed disabled:opacity-60",
+              active ? meta.buttonClassName : "ui-status-button"
+            )}
           >
-            {option.label}
+            {meta.shortLabel}
           </button>
         );
       })}
