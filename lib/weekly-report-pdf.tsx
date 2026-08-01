@@ -42,8 +42,18 @@ export type WeeklyPdfAssignment = {
   label: string;
   deadlineLabel: string;
   doneLabel: string;
+  /** Итог последней автопроверки ИИ, например «4 верно · 1 с ошибками»; «—» если проверок не было. */
+  checkLabel: string;
   stateLabel: string;
   stateKind: "done" | "progress" | "attention" | "muted";
+};
+
+export type WeeklyPdfLesson = {
+  dateLabel: string;
+  title: string;
+  topicsLabel: string;
+  totalLabel: string;
+  resultsLabel: string;
 };
 
 export type WeeklyPdfRow = {
@@ -68,6 +78,7 @@ export type WeeklyPdfInput = {
   totalSolved: number;
   totalNumbers: number;
   days: WeeklyPdfDay[];
+  lessons: WeeklyPdfLesson[];
   assignments: WeeklyPdfAssignment[];
   rows: WeeklyPdfRow[];
 };
@@ -211,7 +222,8 @@ function KpiCard({ label, value, bg, labelColor, valueColor }: {
 function WeeklyReportDocument({ input }: { input: WeeklyPdfInput }) {
   const maxDayValue = Math.max(1, ...input.days.map((day) => Math.max(day.closedCount, day.redCount)));
   const totalPercent = input.totalNumbers > 0 ? Math.round((input.totalSolved / input.totalNumbers) * 100) : 0;
-  const assignmentColumns = [0.3, 0.12, 0.18, 0.16, 0.24];
+  const assignmentColumns = [0.22, 0.18, 0.14, 0.12, 0.16, 0.18];
+  const lessonColumns = [0.15, 0.27, 0.24, 0.08, 0.26];
   const rowColumns = [0.17, 0.27, 0.08, 0.24, 0.24];
 
   return (
@@ -289,10 +301,38 @@ function WeeklyReportDocument({ input }: { input: WeeklyPdfInput }) {
           })}
         </View>
 
+        <Text style={styles.sectionTitle}>Занятия</Text>
+        <View style={styles.table}>
+          <View style={styles.tableHeader}>
+            {["Когда", "Занятие", "Темы", "Задач", "Итоги"].map((label, index) => (
+              <Text key={label} style={[styles.th, { flexBasis: 0, flexGrow: lessonColumns[index]! * 100 }]}>
+                {label}
+              </Text>
+            ))}
+          </View>
+          {input.lessons.length === 0 ? (
+            <Text style={styles.empty}>Занятий за эту неделю не было.</Text>
+          ) : (
+            input.lessons.map((lesson, index) => (
+              <View
+                key={`${lesson.title}-${lesson.dateLabel}-${index}`}
+                style={[styles.tr, index % 2 === 1 ? { backgroundColor: colors.zebra } : {}]}
+                wrap={false}
+              >
+                <Text style={[styles.td, { flexBasis: 0, flexGrow: 15, color: colors.muted }]}>{lesson.dateLabel}</Text>
+                <Text style={[styles.td, { flexBasis: 0, flexGrow: 27 }]}>{lesson.title}</Text>
+                <Text style={[styles.td, { flexBasis: 0, flexGrow: 24, color: colors.muted }]}>{lesson.topicsLabel}</Text>
+                <Text style={[styles.td, { flexBasis: 0, flexGrow: 8 }]}>{lesson.totalLabel}</Text>
+                <Text style={[styles.td, { flexBasis: 0, flexGrow: 26 }]}>{lesson.resultsLabel}</Text>
+              </View>
+            ))
+          )}
+        </View>
+
         <Text style={styles.sectionTitle}>Домашние задания</Text>
         <View style={styles.table}>
           <View style={styles.tableHeader}>
-            {["Тема", "ДЗ", "Дедлайн", "Выполнено", "Итог"].map((label, index) => (
+            {["Тема", "ДЗ", "Дедлайн", "Выполнено", "Проверка ИИ", "Итог"].map((label, index) => (
               <Text key={label} style={[styles.th, { flexBasis: 0, flexGrow: assignmentColumns[index]! * 100 }]}>
                 {label}
               </Text>
@@ -307,11 +347,12 @@ function WeeklyReportDocument({ input }: { input: WeeklyPdfInput }) {
                 style={[styles.tr, index % 2 === 1 ? { backgroundColor: colors.zebra } : {}]}
                 wrap={false}
               >
-                <Text style={[styles.td, { flexBasis: 0, flexGrow: 30 }]}>{assignment.topicTitle}</Text>
-                <Text style={[styles.td, { flexBasis: 0, flexGrow: 12 }]}>{assignment.label}</Text>
-                <Text style={[styles.td, { flexBasis: 0, flexGrow: 18, color: colors.muted }]}>{assignment.deadlineLabel}</Text>
-                <Text style={[styles.td, { flexBasis: 0, flexGrow: 16 }]}>{assignment.doneLabel}</Text>
-                <View style={[styles.td, { flexBasis: 0, flexGrow: 24 }]}>
+                <Text style={[styles.td, { flexBasis: 0, flexGrow: 22 }]}>{assignment.topicTitle}</Text>
+                <Text style={[styles.td, { flexBasis: 0, flexGrow: 18 }]}>{assignment.label}</Text>
+                <Text style={[styles.td, { flexBasis: 0, flexGrow: 14, color: colors.muted }]}>{assignment.deadlineLabel}</Text>
+                <Text style={[styles.td, { flexBasis: 0, flexGrow: 12 }]}>{assignment.doneLabel}</Text>
+                <Text style={[styles.td, { flexBasis: 0, flexGrow: 16, color: colors.muted }]}>{assignment.checkLabel}</Text>
+                <View style={[styles.td, { flexBasis: 0, flexGrow: 18 }]}>
                   <Text
                     style={[
                       styles.chip,

@@ -38,6 +38,7 @@ export async function loadExportData(studentId: string) {
         homeworkNumbers: {
           orderBy: { displayOrder: "asc" },
           select: {
+            id: true,
             number: true,
             statuses: {
               where: { studentId },

@@ -1,14 +1,16 @@
-import { UserRole } from "@prisma/client";
+import { LessonItemResult, LessonKind, SolutionCheckStatus, UserRole } from "@prisma/client";
 import { NextResponse } from "next/server";
 import { enforceApiRateLimit } from "@/lib/api-rate-limit";
 import { tryGetCurrentUser } from "@/lib/auth";
 import { getRequestLogContext, logErrorEvent, logInfoEvent } from "@/lib/logger";
 import { getProgressTimeline } from "@/lib/platform-data";
+import { prisma } from "@/lib/prisma";
 import { loadExportData, statusLabels } from "@/lib/student-export-data";
 import { computeStudentStreak } from "@/lib/student-streak";
 import {
   renderWeeklyReportPdf,
   type WeeklyPdfAssignment,
+  type WeeklyPdfLesson,
   type WeeklyPdfRow
 } from "@/lib/weekly-report-pdf";
 import { formatDateTime } from "@/lib/utils";
@@ -93,11 +95,51 @@ async function handleGet(
     const exportDate = new Date();
     const since = new Date(exportDate.getTime() - 7 * 24 * 60 * 60 * 1000);
 
+    // Реальные ДЗ ученика (выданные за неделю или с дедлайном в окне) и занятия
+    // с итогами — вместо прежней реконструкции «ДЗ» по зеркалированным дедлайнам.
+    const [assignmentsRaw, lessonParticipants] = await Promise.all([
+      prisma.homeworkAssignment
+        .findMany({
+          where: { studentId, OR: [{ createdAt: { gte: since } }, { deadlineAt: { gte: since } }] },
+          orderBy: { createdAt: "desc" },
+          take: 20,
+          select: {
+            id: true,
+            title: true,
+            createdAt: true,
+            deadlineAt: true,
+            topic: { select: { title: true } },
+            numbers: { select: { homeworkNumberId: true } },
+            checks: {
+              where: { status: SolutionCheckStatus.DONE },
+              orderBy: { checkedAt: "desc" },
+              take: 1,
+              select: { results: { select: { verdict: true } } }
+            }
+          }
+        })
+        .catch(() => []),
+      prisma.lessonParticipant
+        .findMany({
+          where: { studentId, lesson: { kind: LessonKind.LESSON, createdAt: { gte: since } } },
+          orderBy: { lesson: { createdAt: "desc" } },
+          take: 20,
+          select: {
+            lesson: { select: { title: true, createdAt: true } },
+            items: {
+              select: {
+                result: true,
+                homeworkNumber: { select: { topic: { select: { title: true } } } }
+              }
+            }
+          }
+        })
+        .catch(() => [])
+    ]);
+
+    const statusByNumberId = new Map<string, string>();
     const weeklyRawRows: Array<WeeklyPdfRow & { updatedAt: Date }> = [];
-    const assignmentGroups = new Map<
-      string,
-      { topicTitle: string; deadlineAt: Date; total: number; solved: number; red: number; marked: number }
-    >();
+
     for (const topic of data.topics) {
       for (const numberEntry of topic.homeworkNumbers) {
         const statusEntry = numberEntry.statuses[0] ?? null;
@@ -109,34 +151,8 @@ async function handleGet(
           statusEntry?.updatedAt ??
           null;
 
-        const deadlineAt =
-          data.deadlinesEnabled && (statusEntry as { deadlineAt?: Date | null })?.deadlineAt
-            ? ((statusEntry as { deadlineAt?: Date | null }).deadlineAt ?? null)
-            : null;
-
-        if (deadlineAt && deadlineAt >= since) {
-          const key = `${topic.title}::${deadlineAt.toISOString()}`;
-          const group = assignmentGroups.get(key) ?? {
-            topicTitle: topic.title,
-            deadlineAt,
-            total: 0,
-            solved: 0,
-            red: 0,
-            marked: 0
-          };
-          group.total += 1;
-
-          if (statusKey) {
-            group.marked += 1;
-          }
-
-          if (statusKey === "GREEN" || statusKey === "YELLOW") {
-            group.solved += 1;
-          } else if (statusKey === "RED") {
-            group.red += 1;
-          }
-
-          assignmentGroups.set(key, group);
+        if (statusKey) {
+          statusByNumberId.set(numberEntry.id, statusKey);
         }
 
         if (statusKey && solvedAt && solvedAt >= since) {
@@ -160,40 +176,81 @@ async function handleGet(
 
     weeklyRawRows.sort((left, right) => right.updatedAt.getTime() - left.updatedAt.getTime());
 
-    const assignmentsByTopic = new Map<string, Array<(typeof assignmentGroups extends Map<string, infer V> ? V : never)>>();
+    let homeworkTotal = 0;
+    let homeworkSolved = 0;
 
-    for (const group of assignmentGroups.values()) {
-      const list = assignmentsByTopic.get(group.topicTitle) ?? [];
-      list.push(group);
-      assignmentsByTopic.set(group.topicTitle, list);
-    }
+    const assignments: WeeklyPdfAssignment[] = assignmentsRaw.map((assignment) => {
+      let solved = 0;
+      let red = 0;
+      let marked = 0;
 
-    const assignments: WeeklyPdfAssignment[] = [];
+      for (const entry of assignment.numbers) {
+        const status = statusByNumberId.get(entry.homeworkNumberId);
 
-    for (const [topicTitle, groups] of assignmentsByTopic.entries()) {
-      groups
-        .sort((left, right) => left.deadlineAt.getTime() - right.deadlineAt.getTime())
-        .forEach((group, index) => {
-          const state = buildAssignmentState(group);
-          assignments.push({
-            topicTitle,
-            label: `ДЗ ${index + 1}`,
-            deadlineLabel: shortDeadline.format(group.deadlineAt),
-            doneLabel: `${group.solved} из ${group.total}`,
-            stateLabel: state.label,
-            stateKind: state.kind
-          });
-        });
-    }
+        if (status) {
+          marked += 1;
+        }
+
+        if (status === "GREEN" || status === "YELLOW") {
+          solved += 1;
+        } else if (status === "RED") {
+          red += 1;
+        }
+      }
+
+      const total = assignment.numbers.length;
+
+      homeworkTotal += total;
+      homeworkSolved += solved;
+
+      const state = buildAssignmentState({ total, solved, red, marked });
+      const checkResults = assignment.checks[0]?.results ?? [];
+      const correct = checkResults.filter((result) => result.verdict === "CORRECT").length;
+      const incorrect = checkResults.filter((result) => result.verdict === "INCORRECT").length;
+      const checkLabel = checkResults.length > 0 ? `${correct} верно · ${incorrect} с ошибками` : "—";
+
+      return {
+        topicTitle: assignment.topic?.title ?? "—",
+        label: assignment.title?.trim().slice(0, 60) || `ДЗ от ${shortDate.format(assignment.createdAt)}`,
+        deadlineLabel: assignment.deadlineAt ? shortDeadline.format(assignment.deadlineAt) : "без дедлайна",
+        doneLabel: `${solved} из ${total}`,
+        checkLabel,
+        stateLabel: state.label,
+        stateKind: state.kind
+      };
+    });
+
+    // Занятия недели с итогами светофора; «без отметки» — учитель ещё не подвёл итог.
+    const lessons: WeeklyPdfLesson[] = lessonParticipants.map((participant) => {
+      const topicTitles = Array.from(
+        new Set(participant.items.map((item) => item.homeworkNumber.topic.title))
+      );
+      const total = participant.items.length;
+      const solved = participant.items.filter((item) => item.result === LessonItemResult.SOLVED).length;
+      const partial = participant.items.filter((item) => item.result === LessonItemResult.PARTIAL).length;
+      const notSolved = participant.items.filter((item) => item.result === LessonItemResult.NOT_SOLVED).length;
+      const unmarked = total - solved - partial - notSolved;
+
+      const parts: string[] = [];
+
+      if (solved > 0) parts.push(`${solved} решил`);
+      if (partial > 0) parts.push(`${partial} с ошибками`);
+      if (notSolved > 0) parts.push(`${notSolved} не решил`);
+      if (unmarked > 0) parts.push(`${unmarked} без отметки`);
+
+      return {
+        dateLabel: shortDeadline.format(participant.lesson.createdAt),
+        title: participant.lesson.title,
+        topicsLabel: topicTitles.join(", ") || "—",
+        totalLabel: String(total),
+        resultsLabel: total === 0 ? "набор пуст" : parts.join(" · ")
+      };
+    });
 
     const [timeline, streak] = await Promise.all([
       getProgressTimeline(studentId, 7),
       computeStudentStreak(studentId).catch(() => null)
     ]);
-
-    const homeworkGroupList = Array.from(assignmentGroups.values());
-    const homeworkTotal = homeworkGroupList.reduce((sum, group) => sum + group.total, 0);
-    const homeworkSolved = homeworkGroupList.reduce((sum, group) => sum + group.solved, 0);
 
     const greenCount = weeklyRawRows.filter((row) => row.statusKey === "GREEN").length;
     const yellowCount = weeklyRawRows.filter((row) => row.statusKey === "YELLOW").length;
@@ -216,6 +273,7 @@ async function handleGet(
         closedCount: entry.closedCount,
         redCount: entry.redCount
       })),
+      lessons,
       assignments,
       rows: weeklyRawRows.map(({ updatedAt: _updatedAt, ...row }) => row)
     });
