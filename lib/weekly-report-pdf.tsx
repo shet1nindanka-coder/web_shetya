@@ -48,6 +48,15 @@ export type WeeklyPdfAssignment = {
   stateKind: "done" | "progress" | "attention" | "muted";
 };
 
+export type WeeklyPdfTopicSummary = {
+  topicTitle: string;
+  periodDone: string; // разобрано за период
+  green: string;
+  yellow: string;
+  red: string;
+  progressLabel: string; // текущий прогресс темы, например «34 из 60»
+};
+
 export type WeeklyPdfLesson = {
   dateLabel: string;
   title: string;
@@ -68,6 +77,8 @@ export type WeeklyPdfRow = {
 export type WeeklyPdfInput = {
   studentName: string;
   studentEmail: string;
+  reportTitle: string; // например «ОТЧЁТ ЗА 30 ДНЕЙ»
+  activityTitle: string; // «Активность по дням/неделям/месяцам»
   periodLabel: string;
   generatedLabel: string;
   closedCount: number;
@@ -79,7 +90,11 @@ export type WeeklyPdfInput = {
   totalNumbers: number;
   days: WeeklyPdfDay[];
   lessons: WeeklyPdfLesson[];
+  lessonsFootnote: string | null;
   assignments: WeeklyPdfAssignment[];
+  assignmentsFootnote: string | null;
+  // null — понедельный режим со списком номеров (rows); иначе сводка по темам.
+  topicSummaries: WeeklyPdfTopicSummary[] | null;
   rows: WeeklyPdfRow[];
 };
 
@@ -225,9 +240,10 @@ function WeeklyReportDocument({ input }: { input: WeeklyPdfInput }) {
   const assignmentColumns = [0.22, 0.18, 0.14, 0.12, 0.16, 0.18];
   const lessonColumns = [0.15, 0.27, 0.24, 0.08, 0.26];
   const rowColumns = [0.17, 0.27, 0.08, 0.24, 0.24];
+  const topicColumns = [0.32, 0.14, 0.12, 0.12, 0.12, 0.18];
 
   return (
-    <Document title={`Активность за 7 дней — ${input.studentName}`} author="ШБЗ · Школа Базовых Знаний">
+    <Document title={`${input.reportTitle} — ${input.studentName}`} author="ШБЗ · Школа Базовых Знаний">
       <Page size="A4" style={styles.page}>
         <View style={styles.headerRow}>
           <View style={styles.brandRow}>
@@ -240,7 +256,7 @@ function WeeklyReportDocument({ input }: { input: WeeklyPdfInput }) {
             </View>
           </View>
           <View>
-            <Text style={styles.kicker}>ОТЧЁТ ЗА 7 ДНЕЙ</Text>
+            <Text style={styles.kicker}>{input.reportTitle}</Text>
             <View style={styles.kickerAccent} />
             <Text style={styles.generated}>сформирован {input.generatedLabel}</Text>
           </View>
@@ -277,7 +293,7 @@ function WeeklyReportDocument({ input }: { input: WeeklyPdfInput }) {
           </>
         ) : null}
 
-        <Text style={styles.sectionTitle}>Активность по дням</Text>
+        <Text style={styles.sectionTitle}>{input.activityTitle}</Text>
         <View style={styles.daysRow}>
           {input.days.map((day) => {
             const value = Math.max(day.closedCount, day.redCount);
@@ -327,6 +343,7 @@ function WeeklyReportDocument({ input }: { input: WeeklyPdfInput }) {
               </View>
             ))
           )}
+          {input.lessonsFootnote ? <Text style={styles.empty}>{input.lessonsFootnote}</Text> : null}
         </View>
 
         <Text style={styles.sectionTitle}>Домашние задания</Text>
@@ -368,8 +385,42 @@ function WeeklyReportDocument({ input }: { input: WeeklyPdfInput }) {
               </View>
             ))
           )}
+          {input.assignmentsFootnote ? <Text style={styles.empty}>{input.assignmentsFootnote}</Text> : null}
         </View>
 
+        {input.topicSummaries ? (
+          <>
+            <Text style={styles.sectionTitle}>Темы за период</Text>
+            <View style={styles.table}>
+              <View style={styles.tableHeader}>
+                {["Тема", "Разобрано", "Зелёные", "Жёлтые", "Красные", "Прогресс темы"].map((label, index) => (
+                  <Text key={label} style={[styles.th, { flexBasis: 0, flexGrow: topicColumns[index]! * 100 }]}>
+                    {label}
+                  </Text>
+                ))}
+              </View>
+              {input.topicSummaries.length === 0 ? (
+                <Text style={styles.empty}>За этот период активности по темам не было.</Text>
+              ) : (
+                input.topicSummaries.map((topic, index) => (
+                  <View
+                    key={`${topic.topicTitle}-${index}`}
+                    style={[styles.tr, index % 2 === 1 ? { backgroundColor: colors.zebra } : {}]}
+                    wrap={false}
+                  >
+                    <Text style={[styles.td, { flexBasis: 0, flexGrow: 32 }]}>{topic.topicTitle}</Text>
+                    <Text style={[styles.td, { flexBasis: 0, flexGrow: 14, fontWeight: 700 }]}>{topic.periodDone}</Text>
+                    <Text style={[styles.td, { flexBasis: 0, flexGrow: 12, color: colors.green }]}>{topic.green}</Text>
+                    <Text style={[styles.td, { flexBasis: 0, flexGrow: 12, color: colors.yellow }]}>{topic.yellow}</Text>
+                    <Text style={[styles.td, { flexBasis: 0, flexGrow: 12, color: colors.red }]}>{topic.red}</Text>
+                    <Text style={[styles.td, { flexBasis: 0, flexGrow: 18, color: colors.muted }]}>{topic.progressLabel}</Text>
+                  </View>
+                ))
+              )}
+            </View>
+          </>
+        ) : (
+          <>
         <Text style={styles.sectionTitle}>Разобранные номера</Text>
         <View style={styles.table}>
           <View style={styles.tableHeader}>
@@ -399,6 +450,8 @@ function WeeklyReportDocument({ input }: { input: WeeklyPdfInput }) {
             ))
           )}
         </View>
+          </>
+        )}
 
         <View style={styles.footer} fixed>
           <Text style={styles.footerText}>ШБЗ · Школа Базовых Знаний</Text>

@@ -25,6 +25,23 @@ const shortDeadline = new Intl.DateTimeFormat("ru-RU", {
   minute: "2-digit"
 });
 const weekday = new Intl.DateTimeFormat("ru-RU", { weekday: "short" });
+const shortDayMonth = new Intl.DateTimeFormat("ru-RU", { day: "2-digit", month: "2-digit" });
+const monthShort = new Intl.DateTimeFormat("ru-RU", { month: "short" });
+
+type ReportPeriod = "7d" | "30d" | "year";
+
+const periodMeta: Record<ReportPeriod, { reportTitle: string; fileLabel: string }> = {
+  "7d": { reportTitle: "ОТЧЁТ ЗА 7 ДНЕЙ", fileLabel: "Неделя" },
+  "30d": { reportTitle: "ОТЧЁТ ЗА 30 ДНЕЙ", fileLabel: "30 дней" },
+  year: { reportTitle: "ОТЧЁТ ЗА УЧЕБНЫЙ ГОД", fileLabel: "Учебный год" }
+};
+
+/** Начало учебного года: 1 сентября текущего года, а до сентября — прошлого. */
+function academicYearStart(now: Date) {
+  const year = now.getMonth() >= 8 ? now.getFullYear() : now.getFullYear() - 1;
+
+  return new Date(year, 8, 1);
+}
 
 function buildAssignmentState(input: { total: number; solved: number; red: number; marked: number }) {
   if (input.red > 0) {
@@ -86,6 +103,10 @@ async function handleGet(
     }
 
     ({ studentId } = await params);
+
+    const periodParam = new URL(request.url).searchParams.get("period");
+    const period: ReportPeriod = periodParam === "30d" || periodParam === "year" ? periodParam : "7d";
+
     const data = await loadExportData(studentId);
 
     if (!data) {
@@ -93,7 +114,11 @@ async function handleGet(
     }
 
     const exportDate = new Date();
-    const since = new Date(exportDate.getTime() - 7 * 24 * 60 * 60 * 1000);
+    const since =
+      period === "year"
+        ? academicYearStart(exportDate)
+        : new Date(exportDate.getTime() - (period === "30d" ? 30 : 7) * 24 * 60 * 60 * 1000);
+    const periodDays = Math.max(1, Math.ceil((exportDate.getTime() - since.getTime()) / 86_400_000));
 
     // Реальные ДЗ ученика (выданные за неделю или с дедлайном в окне) и занятия
     // с итогами — вместо прежней реконструкции «ДЗ» по зеркалированным дедлайнам.
@@ -102,7 +127,7 @@ async function handleGet(
         .findMany({
           where: { studentId, OR: [{ createdAt: { gte: since } }, { deadlineAt: { gte: since } }] },
           orderBy: { createdAt: "desc" },
-          take: 20,
+          take: 26,
           select: {
             id: true,
             title: true,
@@ -123,7 +148,7 @@ async function handleGet(
         .findMany({
           where: { studentId, lesson: { kind: LessonKind.LESSON, createdAt: { gte: since } } },
           orderBy: { lesson: { createdAt: "desc" } },
-          take: 20,
+          take: 26,
           select: {
             lesson: { select: { title: true, createdAt: true } },
             items: {
@@ -248,9 +273,111 @@ async function handleGet(
     });
 
     const [timeline, streak] = await Promise.all([
-      getProgressTimeline(studentId, 7),
+      getProgressTimeline(studentId, periodDays),
       computeStudentStreak(studentId).catch(() => null)
     ]);
+
+    // Активность: 7 дней — по дням, 30 — по неделям, учебный год — по месяцам,
+    // иначе столбики не помещаются на страницу.
+    let days: Array<{ label: string; closedCount: number; redCount: number }>;
+    let activityTitle: string;
+
+    if (period === "7d") {
+      activityTitle = "Активность по дням";
+      days = timeline.map((entry) => ({
+        label: weekday.format(new Date(`${entry.date}T12:00:00`)),
+        closedCount: entry.closedCount,
+        redCount: entry.redCount
+      }));
+    } else if (period === "30d") {
+      activityTitle = "Активность по неделям";
+      days = [];
+
+      for (let index = 0; index < timeline.length; index += 7) {
+        const chunk = timeline.slice(index, index + 7);
+        const first = chunk[0]!;
+
+        days.push({
+          label: `с ${shortDayMonth.format(new Date(`${first.date}T12:00:00`))}`,
+          closedCount: chunk.reduce((sum, entry) => sum + entry.closedCount, 0),
+          redCount: chunk.reduce((sum, entry) => sum + entry.redCount, 0)
+        });
+      }
+    } else {
+      activityTitle = "Активность по месяцам";
+
+      const byMonth = new Map<string, { label: string; closedCount: number; redCount: number }>();
+
+      for (const entry of timeline) {
+        const date = new Date(`${entry.date}T12:00:00`);
+        const key = `${date.getFullYear()}-${date.getMonth()}`;
+        const bucket = byMonth.get(key) ?? { label: monthShort.format(date), closedCount: 0, redCount: 0 };
+
+        bucket.closedCount += entry.closedCount;
+        bucket.redCount += entry.redCount;
+        byMonth.set(key, bucket);
+      }
+
+      days = Array.from(byMonth.values());
+    }
+
+    // Для длинных периодов пономерная таблица разрастается на десятки страниц —
+    // вместо неё сводка по темам, где была активность за период.
+    let topicSummaries: Array<{
+      topicTitle: string;
+      periodDone: string;
+      green: string;
+      yellow: string;
+      red: string;
+      progressLabel: string;
+    }> | null = null;
+
+    if (period !== "7d") {
+      topicSummaries = [];
+
+      for (const topic of data.topics) {
+        let periodGreen = 0;
+        let periodYellow = 0;
+        let periodRed = 0;
+        let solvedTotal = 0;
+
+        for (const numberEntry of topic.homeworkNumbers) {
+          const statusEntry = numberEntry.statuses[0] ?? null;
+          const statusKey = statusEntry?.status ?? null;
+          const changedAt =
+            (statusEntry as { statusChangedAt?: Date | null } | null)?.statusChangedAt ??
+            statusEntry?.updatedAt ??
+            null;
+
+          if (statusKey === "GREEN" || statusKey === "YELLOW") {
+            solvedTotal += 1;
+          }
+
+          if (!statusKey || !changedAt || changedAt < since) {
+            continue;
+          }
+
+          if (statusKey === "GREEN") periodGreen += 1;
+          else if (statusKey === "YELLOW") periodYellow += 1;
+          else if (statusKey === "RED") periodRed += 1;
+        }
+
+        const periodTotal = periodGreen + periodYellow + periodRed;
+
+        if (periodTotal === 0) {
+          continue;
+        }
+
+        topicSummaries.push({
+          topicTitle: topic.title,
+          periodDone: String(periodTotal),
+          green: String(periodGreen),
+          yellow: String(periodYellow),
+          red: String(periodRed),
+          progressLabel: `${solvedTotal} из ${topic.homeworkNumbers.length}`
+        });
+      }
+    }
 
     const greenCount = weeklyRawRows.filter((row) => row.statusKey === "GREEN").length;
     const yellowCount = weeklyRawRows.filter((row) => row.statusKey === "YELLOW").length;
@@ -259,6 +386,8 @@ async function handleGet(
     const buffer = await renderWeeklyReportPdf({
       studentName: data.student.name,
       studentEmail: data.student.email,
+      reportTitle: periodMeta[period].reportTitle,
+      activityTitle,
       periodLabel: `${shortDate.format(since)} — ${shortDate.format(exportDate)}`,
       generatedLabel: formatDateTime(exportDate),
       closedCount: greenCount + yellowCount,
@@ -268,20 +397,19 @@ async function handleGet(
       streakDays: streak?.currentStreak ?? 0,
       totalSolved: homeworkSolved,
       totalNumbers: homeworkTotal,
-      days: timeline.map((entry) => ({
-        label: weekday.format(new Date(`${entry.date}T12:00:00`)),
-        closedCount: entry.closedCount,
-        redCount: entry.redCount
-      })),
-      lessons,
-      assignments,
-      rows: weeklyRawRows.map(({ updatedAt: _updatedAt, ...row }) => row)
+      days,
+      lessons: lessons.slice(0, 25),
+      lessonsFootnote: lessons.length > 25 ? "Показаны последние 25 занятий периода." : null,
+      assignments: assignments.slice(0, 25),
+      assignmentsFootnote: assignments.length > 25 ? "Показаны последние 25 ДЗ периода." : null,
+      topicSummaries,
+      rows: topicSummaries ? [] : weeklyRawRows.map(({ updatedAt: _updatedAt, ...row }) => row)
     });
 
     const datePart = exportDate.toISOString().slice(0, 10);
     const asciiName = data.student.name.replace(/[^a-zA-Z0-9_-]+/g, "").slice(0, 30);
-    const asciiFileName = `week-report-${asciiName ? `${asciiName}-` : ""}${datePart}.pdf`;
-    const utfFileName = encodeURIComponent(`Неделя — ${data.student.name} — ${datePart}.pdf`);
+    const asciiFileName = `report-${period}-${asciiName ? `${asciiName}-` : ""}${datePart}.pdf`;
+    const utfFileName = encodeURIComponent(`${periodMeta[period].fileLabel} — ${data.student.name} — ${datePart}.pdf`);
 
     logInfoEvent(
       "student.export.pdf_succeeded",

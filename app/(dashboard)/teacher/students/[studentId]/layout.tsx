@@ -51,7 +51,19 @@ export default async function TeacherStudentLayout({ children, params }: Teacher
               href={`/teacher/students/${data.student.id}/export/pdf`}
               className="ui-pressable ui-button-secondary inline-flex justify-center rounded-[8px] px-4 py-2.5 text-sm font-semibold transition"
             >
-              Что сделано за 7 дней (PDF)
+              Отчёт: 7 дней
+            </a>
+            <a
+              href={`/teacher/students/${data.student.id}/export/pdf?period=30d`}
+              className="ui-pressable ui-button-secondary inline-flex justify-center rounded-[8px] px-4 py-2.5 text-sm font-semibold transition"
+            >
+              30 дней
+            </a>
+            <a
+              href={`/teacher/students/${data.student.id}/export/pdf?period=year`}
+              className="ui-pressable ui-button-secondary inline-flex justify-center rounded-[8px] px-4 py-2.5 text-sm font-semibold transition"
+            >
+              Учебный год
             </a>
             <DeleteButton
               label="Удалить ученика"
