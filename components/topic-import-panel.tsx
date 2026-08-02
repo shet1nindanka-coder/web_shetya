@@ -65,6 +65,8 @@ export function TopicImportPanel({ topicId }: TopicImportPanelProps) {
   const [promptOpen, setPromptOpen] = useState(false);
   const [copied, setCopied] = useState(false);
   const [rawJson, setRawJson] = useState("");
+  const [fileName, setFileName] = useState<string | null>(null);
+  const [isDragging, setIsDragging] = useState(false);
   const [overwriteFilled, setOverwriteFilled] = useState(false);
   const [preview, setPreview] = useState<PreviewResponse | null>(null);
   const [applied, setApplied] = useState<ApplyResponse | null>(null);
@@ -92,6 +94,7 @@ export function TopicImportPanel({ topicId }: TopicImportPanelProps) {
 
     try {
       setRawJson(await file.text());
+      setFileName(file.name);
     } catch {
       setError("Не удалось прочитать файл.");
     }
@@ -134,6 +137,7 @@ export function TopicImportPanel({ topicId }: TopicImportPanelProps) {
       setApplied(data as unknown as ApplyResponse);
       setPreview(null);
       setRawJson("");
+      setFileName(null);
       setOverwriteFilled(false);
 
       if (fileInputRef.current) {
@@ -167,7 +171,7 @@ export function TopicImportPanel({ topicId }: TopicImportPanelProps) {
           ) : null}
         </div>
 
-        <p className="ui-hint">
+        <p className="text-sm leading-6" style={{ color: "var(--theme-text-muted)" }}>
           Откройте любой чат с ИИ, который умеет читать файлы, приложите задачник и отправьте промпт. Ответ
           модели сохраните как файл <code>.json</code> или вставьте текстом ниже.
         </p>
@@ -180,22 +184,60 @@ export function TopicImportPanel({ topicId }: TopicImportPanelProps) {
       </div>
 
       <div className="ui-panel-soft space-y-3 rounded-[16px] p-3.5 sm:space-y-4 sm:p-4">
-        <label className="block space-y-1.5">
+        <div className="space-y-1.5">
           <span className="ui-form-label">Файл импорта</span>
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept="application/json,.json,.txt"
-            className="ui-input w-full rounded-[8px] px-3.5 py-2.5"
-            onChange={(event) => {
-              const file = event.target.files?.[0];
+          <label
+            onDragOver={(event) => {
+              event.preventDefault();
+              setIsDragging(true);
+            }}
+            onDragLeave={() => setIsDragging(false)}
+            onDrop={(event) => {
+              event.preventDefault();
+              setIsDragging(false);
+              const dropped = event.dataTransfer.files?.[0];
 
-              if (file) {
-                void readFile(file);
+              if (dropped) {
+                void readFile(dropped);
               }
             }}
-          />
-        </label>
+            className="flex cursor-pointer flex-col items-center gap-2 rounded-[16px] border-[1.5px] border-dashed px-6 py-7 text-center transition"
+            style={{
+              borderColor: isDragging ? "var(--shbz-green-text)" : "var(--shbz-input-border)",
+              background: isDragging ? "var(--shbz-green-soft)" : "var(--shbz-dropzone-bg)"
+            }}
+          >
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept="application/json,.json,.txt"
+              className="hidden"
+              onChange={(event) => {
+                const file = event.target.files?.[0];
+
+                if (file) {
+                  void readFile(file);
+                }
+              }}
+            />
+            <span
+              className="inline-flex h-11 w-11 items-center justify-center rounded-[12px]"
+              style={{ background: "var(--shbz-green-soft)", color: "var(--shbz-green-text)" }}
+              aria-hidden="true"
+            >
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M12 16V4m0 0L7 9m5-5l5 5" strokeLinecap="round" strokeLinejoin="round" />
+                <path d="M4 17v2a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-2" strokeLinecap="round" />
+              </svg>
+            </span>
+            <span className="text-[14.5px] font-bold" style={{ color: "var(--shbz-text-strong)" }}>
+              {fileName ?? "Перетащите файл сюда или нажмите"}
+            </span>
+            <span className="text-[12.5px]" style={{ color: "var(--shbz-kicker)" }}>
+              {fileName ? "Файл прочитан — нажмите «Проверить файл»" : "Один файл JSON от ИИ"}
+            </span>
+          </label>
+        </div>
 
         <label className="block space-y-1.5">
           <span className="ui-form-label">…или вставьте JSON текстом</span>
@@ -206,6 +248,7 @@ export function TopicImportPanel({ topicId }: TopicImportPanelProps) {
             className="ui-input w-full rounded-[8px] px-3.5 py-2.5 font-mono text-xs"
             onChange={(event) => {
               setRawJson(event.target.value);
+              setFileName(null);
               resetResults();
             }}
           />
