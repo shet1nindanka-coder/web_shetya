@@ -14,9 +14,10 @@ import {
 } from "@/actions/developer";
 import { DeveloperBroadcastRecipients } from "@/components/developer-broadcast-recipients";
 import { ShbzSelect } from "@/components/shbz-select";
+import { TopicImportPanel } from "@/components/topic-import-panel";
 import type { ReasoningEffort, SiteSettings } from "@/lib/site-settings";
 
-export type DeveloperPanelTab = "status" | "actions" | "broadcast" | "settings";
+export type DeveloperPanelTab = "status" | "actions" | "import" | "broadcast" | "settings";
 
 export type DeveloperPanelStats = {
   queueLength: number;
@@ -37,6 +38,7 @@ type DeveloperPanelProps = {
   stats: DeveloperPanelStats;
   settings: SiteSettings;
   students: Array<{ id: string; name: string }>;
+  topics: Array<{ id: string; title: string }>;
 };
 
 const EFFORT_OPTIONS = [
@@ -48,6 +50,7 @@ const EFFORT_OPTIONS = [
 const TABS: Array<{ key: DeveloperPanelTab; label: string }> = [
   { key: "status", label: "Статус" },
   { key: "actions", label: "Действия" },
+  { key: "import", label: "Импорт темы" },
   { key: "broadcast", label: "Рассылка" },
   { key: "settings", label: "Настройки" }
 ];
@@ -455,7 +458,7 @@ function SettingsForm({ settings }: { settings: SiteSettings }) {
   );
 }
 
-export function DeveloperPanel({ stats, settings, students }: DeveloperPanelProps) {
+export function DeveloperPanel({ stats, settings, students, topics }: DeveloperPanelProps) {
   const [tab, setTab] = useState<DeveloperPanelTab>("status");
 
   const budgetPercent = Math.min(100, Math.round((stats.checksLastDay / Math.max(1, settings.aiDailyLimit)) * 100));
@@ -565,6 +568,19 @@ export function DeveloperPanel({ stats, settings, students }: DeveloperPanelProp
                 hint="Принудительно обновить данные на всех страницах."
               />
             </div>
+          </div>
+        ) : null}
+
+        {tab === "import" ? (
+          <div className="shbz-card shbz-section-pad ui-fade-slide">
+            <div className="mb-4">
+              <h2 className="shbz-section-title">Импорт темы из задачника</h2>
+              <p className="mt-1 text-sm leading-6" style={{ color: "var(--shbz-text-muted)" }}>
+                Отдайте PDF с задачами любой ИИ вместе с промптом ниже, полученный JSON загрузите сюда.
+                Условия и ответы попадут в тему без ручного набора LaTeX.
+              </p>
+            </div>
+            <TopicImportPanel topics={topics} />
           </div>
         ) : null}
 

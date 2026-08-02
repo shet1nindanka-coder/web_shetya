@@ -63,7 +63,8 @@ Postgres service.
     status from the query string; never throw an error to the user.
   - **API route handlers** (`app/api/**/route.ts`) for interactive client `fetch`/JSON:
     student status+note, teacher deadlines, homework assignments (`/api/teacher/homeworks`,
-  POST/DELETE), LaTeX conditions, LaTeX answers, topic reorder,
+  POST/DELETE), LaTeX conditions, LaTeX answers, topic reorder, импорт темы из JSON
+  (`/api/teacher/topic-import`, режимы preview/apply),
     streak, number search, and pre-uploads. `app/files/[fileId]/route.ts` serves files;
     `app/(dashboard)/teacher/students/[studentId]/export/pdf/route.ts` builds the weekly PDF report.
 - **Cache invalidation** — after every mutation call the helpers in `lib/platform-data-cache.ts`
@@ -106,6 +107,14 @@ Postgres service.
   `sourceLessonId`; extraItems отбрасываются). Выдача превращает набор участника в обычный
   `HomeworkAssignment` через `lib/homework-issue.ts` — единую точку создания ДЗ, которую использует
   и ручной роут `/api/teacher/homeworks`. Никакого PDF у домашки: ученик работает в кабинете.
+- **Импорт темы** — «Импорт темы» в дев-панели: учитель отдаёт задачник внешней ИИ вместе с
+  промптом из `lib/topic-import-prompt.ts`, полученный JSON грузит на страницу. Разбор и
+  сопоставление с темой — `lib/topic-import.ts` (чистые `parseTopicImport` + `buildImportPlan`,
+  покрыты тестами), запись — `app/api/teacher/topic-import/route.ts`. Режим `preview` не пишет
+  в базу: показывает, сколько номеров добавится, сколько заполнится и сколько перезапишется.
+  Заполненные условия и ответы затираются только при `overwriteFilled`. `difficulty`,
+  `estimatedMinutes` и `answerFile` импорт не трогает — сложность ставит батч из дев-панели.
+
 - **Runtime settings** — `lib/site-settings.ts`: ключ-значение в таблице `SiteSetting` (raw SQL),
   15s in-memory cache, дефолты из env. Управляются из дев-панели (`/developer/panel`).
 - **Logging** — `lib/logger.ts` (pino). Use `logInfoEvent` / `logWarnEvent` / `logErrorEvent(event,

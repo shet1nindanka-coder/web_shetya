@@ -1,0 +1,254 @@
+import { UserRole } from "@prisma/client";
+import { revalidatePath } from "next/cache";
+import { NextResponse } from "next/server";
+import { enforceApiRateLimit } from "@/lib/api-rate-limit";
+import { tryGetCurrentUser } from "@/lib/auth";
+import { publishDashboardRealtimeEvent } from "@/lib/dashboard-realtime";
+import { getRequestLogContext, logErrorEvent, logInfoEvent, logWarnEvent } from "@/lib/logger";
+import { revalidateAllPlatformData } from "@/lib/platform-data-cache";
+import { prisma } from "@/lib/prisma";
+import { buildImportPlan, parseTopicImport, type ImportNumber } from "@/lib/topic-import";
+
+export const runtime = "nodejs";
+
+const MAX_BODY_BYTES = 2 * 1024 * 1024;
+const CREATE_BATCH_SIZE = 200;
+const SAMPLE_SIZE = 5;
+
+type ImportTarget = { kind: "existing"; topicId?: unknown } | { kind: "new" };
+
+type RequestBody = {
+  mode?: unknown;
+  payload?: unknown;
+  target?: unknown;
+  overwriteFilled?: unknown;
+};
+
+function revalidateTopicRoutes(topicId: string) {
+  revalidateAllPlatformData();
+  publishDashboardRealtimeEvent({ kind: "topic-content-changed", topicId });
+  revalidatePath("/dashboard");
+  revalidatePath("/student");
+  revalidatePath("/teacher");
+  revalidatePath("/teacher/topics");
+  revalidatePath("/student/homeworks");
+  revalidatePath(`/teacher/topics/${topicId}`);
+  revalidatePath(`/teacher/topics/${topicId}/edit`);
+}
+
+function readTarget(raw: unknown): ImportTarget | null {
+  if (!raw || typeof raw !== "object") {
+    return null;
+  }
+
+  const record = raw as Record<string, unknown>;
+
+  if (record.kind === "new") {
+    return { kind: "new" };
+  }
+
+  if (record.kind === "existing" && typeof record.topicId === "string" && record.topicId.trim()) {
+    return { kind: "existing", topicId: record.topicId.trim() };
+  }
+
+  return null;
+}
+
+async function createNumbersInBatches(
+  tx: Parameters<Parameters<typeof prisma.$transaction>[0]>[0],
+  topicId: string,
+  rows: Array<ImportNumber & { displayOrder: number }>
+) {
+  for (let start = 0; start < rows.length; start += CREATE_BATCH_SIZE) {
+    const batch = rows.slice(start, start + CREATE_BATCH_SIZE);
+
+    await tx.topicHomeworkNumber.createMany({
+      data: batch.map((row) => ({
+        topicId,
+        number: row.number,
+        displayOrder: row.displayOrder,
+        conditionLatex: row.conditionLatex,
+        answerLatex: row.answerLatex
+      }))
+    });
+  }
+}
+
+export async function POST(request: Request) {
+  const requestContext = getRequestLogContext(request);
+  const user = await tryGetCurrentUser();
+
+  if (!user || user.role !== UserRole.DEVELOPER) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
+  const rateLimitResponse = await enforceApiRateLimit("api:topic-import", user.id, 10, 60_000);
+
+  if (rateLimitResponse) {
+    return rateLimitResponse;
+  }
+
+  const contentLength = Number(request.headers.get("content-length") ?? 0);
+
+  if (Number.isFinite(contentLength) && contentLength > MAX_BODY_BYTES) {
+    return NextResponse.json(
+      { error: "Файл слишком большой. Разбейте задачник на части по 200–300 задач." },
+      { status: 413 }
+    );
+  }
+
+  const body = (await request.json().catch(() => null)) as RequestBody | null;
+  const mode = body?.mode === "apply" ? "apply" : "preview";
+  const target = readTarget(body?.target);
+  const overwriteFilled = body?.overwriteFilled === true;
+
+  if (!target) {
+    return NextResponse.json({ error: "Не выбрана тема для импорта." }, { status: 400 });
+  }
+
+  const parsed = parseTopicImport(body?.payload);
+
+  if (!parsed.ok) {
+    logWarnEvent(
+      "topic.import.rejected",
+      { ...requestContext, userId: user.id, reason: parsed.error },
+      undefined,
+      "Topic import payload did not pass validation."
+    );
+
+    return NextResponse.json({ error: parsed.error }, { status: 400 });
+  }
+
+  const { title, description, numbers, warnings, issues } = parsed.data;
+
+  let existingTopic: { id: string; title: string } | null = null;
+  let existingNumbers: Array<{ number: number; conditionLatex: string | null; answerLatex: string | null }> = [];
+
+  if (target.kind === "existing") {
+    const topicId = String(target.topicId);
+    const topic = await prisma.topic.findUnique({ where: { id: topicId }, select: { id: true, title: true } });
+
+    if (!topic) {
+      return NextResponse.json({ error: "Тема не найдена — возможно, её удалили." }, { status: 404 });
+    }
+
+    existingTopic = topic;
+    existingNumbers = await prisma.topicHomeworkNumber.findMany({
+      where: { topicId: topic.id },
+      select: { number: true, conditionLatex: true, answerLatex: true }
+    });
+  }
+
+  const plan = buildImportPlan(numbers, existingNumbers);
+
+  if (mode === "preview") {
+    return NextResponse.json({
+      title,
+      description,
+      targetTitle: existingTopic?.title ?? null,
+      willCreateTopic: target.kind === "new",
+      totalInFile: numbers.length,
+      willAddNumbers: plan.toCreate.length,
+      willFillEmpty: plan.toFill.length,
+      willOverwrite: plan.toOverwrite.length,
+      untouched: plan.untouched,
+      sample: numbers.slice(0, SAMPLE_SIZE),
+      warnings,
+      issues
+    });
+  }
+
+  if (target.kind === "new" && !description) {
+    return NextResponse.json(
+      { error: "Для новой темы нужно описание: добавьте topic.description в файл." },
+      { status: 400 }
+    );
+  }
+
+  const toWrite = overwriteFilled ? [...plan.toFill, ...plan.toOverwrite] : plan.toFill;
+
+  try {
+    const result = await prisma.$transaction(async (tx) => {
+      let topicId = existingTopic?.id ?? "";
+      let nextDisplayOrder = 1;
+
+      if (target.kind === "new") {
+        const lastTopic = await tx.topic.findFirst({
+          orderBy: { displayOrder: "desc" },
+          select: { displayOrder: true }
+        });
+
+        const createdTopic = await tx.topic.create({
+          data: {
+            title,
+            description,
+            displayOrder: (lastTopic?.displayOrder ?? 0) + 1
+          },
+          select: { id: true }
+        });
+
+        topicId = createdTopic.id;
+      } else {
+        const lastNumber = await tx.topicHomeworkNumber.findFirst({
+          where: { topicId },
+          orderBy: { displayOrder: "desc" },
+          select: { displayOrder: true }
+        });
+
+        nextDisplayOrder = (lastNumber?.displayOrder ?? 0) + 1;
+      }
+
+      await createNumbersInBatches(
+        tx,
+        topicId,
+        plan.toCreate.map((item, index) => ({ ...item, displayOrder: nextDisplayOrder + index }))
+      );
+
+      for (const item of toWrite) {
+        await tx.topicHomeworkNumber.update({
+          where: { topicId_number: { topicId, number: item.number } },
+          // difficulty, estimatedMinutes и answerFile живут своей жизнью — импорт их не трогает.
+          data: { conditionLatex: item.conditionLatex, answerLatex: item.answerLatex }
+        });
+      }
+
+      return { topicId };
+    });
+
+    revalidateTopicRoutes(result.topicId);
+
+    logInfoEvent(
+      "topic.import.succeeded",
+      {
+        ...requestContext,
+        userId: user.id,
+        topicId: result.topicId,
+        createdTopic: target.kind === "new",
+        created: plan.toCreate.length,
+        filled: plan.toFill.length,
+        overwritten: overwriteFilled ? plan.toOverwrite.length : 0
+      },
+      "Topic content was imported from a JSON file."
+    );
+
+    return NextResponse.json({
+      topicId: result.topicId,
+      created: plan.toCreate.length,
+      filled: plan.toFill.length,
+      overwritten: overwriteFilled ? plan.toOverwrite.length : 0,
+      skipped: overwriteFilled ? 0 : plan.toOverwrite.length
+    });
+  } catch (error) {
+    logErrorEvent(
+      "topic.import.failed",
+      { ...requestContext, userId: user.id, title, numberCount: numbers.length },
+      error,
+      "Failed to import topic content."
+    );
+
+    return NextResponse.json(
+      { error: "Не удалось записать тему в базу данных. Проверьте подключение к PostgreSQL." },
+      { status: 500 }
+    );
+  }
+}

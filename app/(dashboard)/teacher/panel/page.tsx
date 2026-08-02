@@ -25,7 +25,8 @@ export default async function DeveloperPage() {
     lastRetentionRaw,
     students,
     totalNumbersCount,
-    taggedNumbersCount
+    taggedNumbersCount,
+    topics
   ] = await Promise.all([
     prisma.homeworkCheck.count({ where: { createdAt: { gte: dayAgo } } }).catch(() => 0),
     prisma.user.count({ where: { role: UserRole.STUDENT } }),
@@ -38,7 +39,11 @@ export default async function DeveloperPage() {
       orderBy: { name: "asc" }
     }),
     prisma.topicHomeworkNumber.count(),
-    prisma.topicHomeworkNumber.count({ where: { difficulty: { not: null } } }).catch(() => 0)
+    prisma.topicHomeworkNumber.count({ where: { difficulty: { not: null } } }).catch(() => 0),
+    prisma.topic.findMany({
+      select: { id: true, title: true },
+      orderBy: { displayOrder: "asc" }
+    })
   ]);
 
   const queueLength = getHomeworkCheckQueueLength();
@@ -88,6 +93,7 @@ export default async function DeveloperPage() {
         }}
         settings={settings}
         students={students}
+        topics={topics}
       />
     </div>
   );
