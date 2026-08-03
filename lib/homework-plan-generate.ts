@@ -51,7 +51,7 @@ const HOMEWORK_PLAN_SYSTEM_PROMPT = `Ты — опытный репетитор 
 - у каждого кандидата есть bankMinutes — заранее посчитанная по условию оценка времени на задачу для СРЕДНЕГО ученика. Переведи в темп этого ученика: speed 1–3 → ×1.7; 4–5 → ×1.3; 6–7 → ×1.0; 8–10 → ×0.8; speed не указан → ×1.15. Округли до целого — это minutes.
 - если bankMinutes = null, оцени время сам по условию.
 - бюджет работы задан полем budgetMinutes: набирай задачи, пока сумма minutes не дойдёт до него, и не превышай больше чем на 10%.
-- не выдавай тему целиком: не больше половины номеров темы (поле totalInTopic) — материал нужен на следующие ДЗ и уроки.
+- нижняя граница так же обязательна, как верхняя: не останавливайся, пока сумма minutes не дошла до 90% бюджета, — кроме случая, когда кандидаты закончились. Ограничений на долю темы нет: бери столько номеров подряд, сколько нужно, чтобы заполнить бюджет.
 - если кандидатов не хватает на бюджет, набери сколько есть и скажи об этом первой фразой summary.
 - лучше средний объём, решённый до конца, чем гора и брошенное.
 
@@ -259,7 +259,6 @@ export async function generateHomeworkPlanForParticipant(lessonId: string, parti
         homework: {
           daysUntilDeadline,
           budgetMinutes: params.dailyMinutes * params.studyDays,
-          totalInTopic: available.length,
           teacherNote: params.teacherNote,
           shortlistLimit: shortlistSize
         },
@@ -297,7 +296,6 @@ export async function generateHomeworkPlanForParticipant(lessonId: string, parti
         daysUntilDeadline,
         deadlineAt: params.deadlineAt.toISOString(),
         budgetMinutes: params.dailyMinutes * params.studyDays,
-        totalInTopic: available.length,
         teacherNote: params.teacherNote
       },
       student: studentPayload,
