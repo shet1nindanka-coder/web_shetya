@@ -48,6 +48,8 @@ export async function POST(request: Request) {
         topicIds?: string[];
         targetDifficulty?: number | null;
         teacherNote?: string;
+        /** Собрать урок вручную: создать пустым и не звать ИИ-подбор. */
+        skipPlan?: boolean;
       }
     | null;
 
@@ -151,6 +153,11 @@ export async function POST(request: Request) {
     });
 
     revalidateLessonRoutes(lessonId);
+
+    // Учитель выбрал «собрать вручную» — урок создан пустым, подбор не запускаем.
+    if (body?.skipPlan === true) {
+      return NextResponse.json({ ok: true, lessonId, skippedPlan: true });
+    }
 
     // ИИ выключен или не настроен: урок уже создан, честно сообщаем 503 — учитель соберёт вручную.
     const settings = await getSiteSettingsUncached();

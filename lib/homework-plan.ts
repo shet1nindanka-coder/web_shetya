@@ -11,10 +11,7 @@ export const MAX_HOMEWORK_DAYS = 60;
 export const MIN_DAILY_MINUTES = 15;
 export const MAX_DAILY_MINUTES = 240;
 export const DEFAULT_DAILY_MINUTES = 60;
-export const MIN_STUDY_DAYS = 1;
-export const MAX_STUDY_DAYS = 14;
 // Срок в неделю не означает семь дней домашки: по умолчанию считаем максимум три захода.
-export const DEFAULT_STUDY_DAYS_CAP = 3;
 
 export type HomeworkPlanParams = {
   title: string;
@@ -23,7 +20,6 @@ export type HomeworkPlanParams = {
   teacherNote: string;
   sourceLessonId: string | null;
   dailyMinutes: number; // минут домашней работы в день, 15..240, дефолт 60
-  studyDays: number; // сколько дней ученик реально сядет за домашку, 1..14
 };
 
 /** Целое число дней до дедлайна, минимум 1, максимум MAX_HOMEWORK_DAYS. */
@@ -63,13 +59,7 @@ export function normalizeHomeworkParams(raw: unknown, now: Date): HomeworkPlanPa
   const dailyMinutes =
     dailyRaw === null ? DEFAULT_DAILY_MINUTES : Math.min(MAX_DAILY_MINUTES, Math.max(MIN_DAILY_MINUTES, dailyRaw));
 
-  const studyRaw = toFiniteInteger(record.studyDays);
-  const studyDays =
-    studyRaw === null
-      ? Math.min(daysUntil(deadlineAt, now), DEFAULT_STUDY_DAYS_CAP)
-      : Math.min(MAX_STUDY_DAYS, Math.max(MIN_STUDY_DAYS, studyRaw));
-
-  return { title, topicId, deadlineAt, teacherNote, sourceLessonId, dailyMinutes, studyDays };
+  return { title, topicId, deadlineAt, teacherNote, sourceLessonId, dailyMinutes };
 }
 
 /** Доминирующая тема занятия: большинство номеров; при равенстве — первая по порядку появления. */
