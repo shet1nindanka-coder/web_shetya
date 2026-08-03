@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState, useTransition } from "react";
+import { useMemo, useState, useTransition } from "react";
 import { ShbzSelect } from "@/components/shbz-select";
 
 type TeacherLessonCreateFormProps = {
@@ -13,6 +13,7 @@ type TeacherLessonCreateFormProps = {
 };
 
 const MAX_TEACHER_NOTE = 500;
+const VISIBLE_TOPICS_LIMIT = 40;
 
 const DIFFICULTY_OPTIONS = [
   { value: "", label: "Авто" },
@@ -29,6 +30,7 @@ export function TeacherLessonCreateForm({ prefix, groupId, members, topics }: Te
   const [title, setTitle] = useState("");
   const [duration, setDuration] = useState("60");
   const [selectedTopicIds, setSelectedTopicIds] = useState<string[]>([]);
+  const [topicQuery, setTopicQuery] = useState("");
   const [targetDifficulty, setTargetDifficulty] = useState("");
   const [teacherNote, setTeacherNote] = useState("");
   const [selectedStudentIds, setSelectedStudentIds] = useState<string[]>(members.map((member) => member.id));
@@ -49,6 +51,27 @@ export function TeacherLessonCreateForm({ prefix, groupId, members, topics }: Te
       current.includes(studentId) ? current.filter((id) => id !== studentId) : [...current, studentId]
     );
   };
+
+  const selectedTopics = useMemo(
+    () => topics.filter((topic) => selectedTopicIds.includes(topic.id)),
+    [topics, selectedTopicIds]
+  );
+
+  // Тем может быть много, поэтому в списке показываем только невыбранные и только
+  // подходящие под запрос: выбранные всегда видны отдельной строкой выше.
+  const matchedTopics = useMemo(() => {
+    const query = topicQuery.trim().toLocaleLowerCase("ru-RU");
+    const rest = topics.filter((topic) => !selectedTopicIds.includes(topic.id));
+
+    if (!query) {
+      return rest;
+    }
+
+    return rest.filter((topic) => topic.title.toLocaleLowerCase("ru-RU").includes(query));
+  }, [topics, selectedTopicIds, topicQuery]);
+
+  const visibleTopics = matchedTopics.slice(0, VISIBLE_TOPICS_LIMIT);
+  const hiddenTopicsCount = matchedTopics.length - visibleTopics.length;
 
   const submit = () => {
     setError(null);
@@ -150,30 +173,71 @@ export function TeacherLessonCreateForm({ prefix, groupId, members, topics }: Te
         <span className="mb-[9px] block text-[13px] font-semibold" style={{ color: "var(--shbz-label)" }}>
           Темы занятия
           <span className="ml-2 font-normal" style={{ color: "var(--shbz-text-muted)" }}>
-            ничего не отмечено — ИИ выберет сам
+            {selectedTopicIds.length > 0
+              ? `выбрано: ${selectedTopicIds.length}`
+              : "ничего не отмечено — ИИ выберет сам"}
           </span>
         </span>
-        <div className="flex flex-wrap gap-2">
-          {topics.map((topic) => {
-            const active = selectedTopicIds.includes(topic.id);
 
-            return (
+        <input
+          type="search"
+          value={topicQuery}
+          onChange={(event) => setTopicQuery(event.target.value)}
+          placeholder="Поиск темы по названию"
+          aria-label="Поиск темы"
+          className="shbz-input mb-3"
+        />
+
+        {selectedTopics.length > 0 ? (
+          <div className="mb-3 flex flex-wrap items-center gap-2">
+            {selectedTopics.map((topic) => (
+              <button
+                key={topic.id}
+                type="button"
+                onClick={() => toggleTopic(topic.id)}
+                title="Убрать тему"
+                className="rounded-[8px] px-3 py-1.5 text-[13px] font-semibold transition"
+                style={{ background: "var(--shbz-green-soft)", color: "var(--shbz-green-text)" }}
+              >
+                {topic.title} ×
+              </button>
+            ))}
+            <button
+              type="button"
+              onClick={() => setSelectedTopicIds([])}
+              className="rounded-[8px] px-3 py-1.5 text-[13px] font-semibold transition"
+              style={{ background: "var(--shbz-tab-hover)", color: "var(--shbz-kicker)" }}
+            >
+              Очистить
+            </button>
+          </div>
+        ) : null}
+
+        {visibleTopics.length > 0 ? (
+          <div className="flex flex-wrap gap-2">
+            {visibleTopics.map((topic) => (
               <button
                 key={topic.id}
                 type="button"
                 onClick={() => toggleTopic(topic.id)}
                 className="rounded-[8px] px-3 py-1.5 text-[13px] font-semibold transition"
-                style={
-                  active
-                    ? { background: "var(--shbz-green-soft)", color: "var(--shbz-green-text)" }
-                    : { background: "var(--shbz-tab-hover)", color: "var(--shbz-tab-text)" }
-                }
+                style={{ background: "var(--shbz-tab-hover)", color: "var(--shbz-tab-text)" }}
               >
                 {topic.title}
               </button>
-            );
-          })}
-        </div>
+            ))}
+          </div>
+        ) : (
+          <p className="text-[13px]" style={{ color: "var(--shbz-text-muted)" }}>
+            {topicQuery.trim() ? "Ничего не найдено — попробуйте другое слово." : "Все темы уже выбраны."}
+          </p>
+        )}
+
+        {hiddenTopicsCount > 0 ? (
+          <p className="mt-2 text-[13px]" style={{ color: "var(--shbz-text-muted)" }}>
+            Показаны первые {VISIBLE_TOPICS_LIMIT} — уточните запрос, ещё {hiddenTopicsCount}.
+          </p>
+        ) : null}
       </div>
 
       <label className="block">
