@@ -30,6 +30,7 @@ jobs:
       DATABASE_URL: postgresql://postgres:postgres@127.0.0.1:5432/tutor_mvp?schema=public
       SESSION_TTL_DAYS: 30
       STORAGE_DIR: ./storage/uploads
+      TZ: Europe/Moscow
 
     steps:
       - name: Checkout repository
@@ -44,6 +45,11 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      # Ловит расхождение «модель есть в схеме, миграции нет» (ARCH-001).
+      # Стоит до генерации клиента: клиент строится из схемы и такое расхождение прячет.
+      - name: Check migrations cover the schema
+        run: npm run check:schema
+
       - name: Generate Prisma client
         run: npm run db:generate
 
@@ -52,6 +58,11 @@ jobs:
 
       - name: Run linter
         run: npm run lint
+
+      # Раньше этого шага не было вовсе: 25 тестовых файлов можно было сломать,
+      # и CI оставался зелёным (ARCH-002).
+      - name: Run tests
+        run: npm run test
 
       - name: Build application
         run: npm run build
