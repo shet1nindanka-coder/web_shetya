@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useMemo, useState, useTransition } from "react";
+import { useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { ShbzSelect } from "@/components/shbz-select";
 
 type TeacherLessonCreateFormProps = {
@@ -13,7 +13,7 @@ type TeacherLessonCreateFormProps = {
 };
 
 const MAX_TEACHER_NOTE = 500;
-const VISIBLE_TOPICS_LIMIT = 40;
+const MAX_TOPIC_SUGGESTIONS = 8;
 
 const DIFFICULTY_OPTIONS = [
   { value: "", label: "Авто" },
@@ -31,6 +31,8 @@ export function TeacherLessonCreateForm({ prefix, groupId, members, topics }: Te
   const [duration, setDuration] = useState("60");
   const [selectedTopicIds, setSelectedTopicIds] = useState<string[]>([]);
   const [topicQuery, setTopicQuery] = useState("");
+  const [isTopicDropdownOpen, setIsTopicDropdownOpen] = useState(false);
+  const topicBoxRef = useRef<HTMLDivElement | null>(null);
   const [targetDifficulty, setTargetDifficulty] = useState("");
   const [teacherNote, setTeacherNote] = useState("");
   const [selectedStudentIds, setSelectedStudentIds] = useState<string[]>(members.map((member) => member.id));
@@ -57,21 +59,39 @@ export function TeacherLessonCreateForm({ prefix, groupId, members, topics }: Te
     [topics, selectedTopicIds]
   );
 
-  // Тем может быть много, поэтому в списке показываем только невыбранные и только
-  // подходящие под запрос: выбранные всегда видны отдельной строкой выше.
-  const matchedTopics = useMemo(() => {
+  // Тем бывает несколько десятков, поэтому список не показываем вовсе: подсказки
+  // всплывают под полем по мере ввода, выбранные копятся строкой ниже.
+  const topicSuggestions = useMemo(() => {
     const query = topicQuery.trim().toLocaleLowerCase("ru-RU");
-    const rest = topics.filter((topic) => !selectedTopicIds.includes(topic.id));
 
     if (!query) {
-      return rest;
+      return [];
     }
 
-    return rest.filter((topic) => topic.title.toLocaleLowerCase("ru-RU").includes(query));
+    return topics
+      .filter(
+        (topic) =>
+          !selectedTopicIds.includes(topic.id) && topic.title.toLocaleLowerCase("ru-RU").includes(query)
+      )
+      .slice(0, MAX_TOPIC_SUGGESTIONS);
   }, [topics, selectedTopicIds, topicQuery]);
 
-  const visibleTopics = matchedTopics.slice(0, VISIBLE_TOPICS_LIMIT);
-  const hiddenTopicsCount = matchedTopics.length - visibleTopics.length;
+  const pickTopic = (topicId: string) => {
+    setSelectedTopicIds((current) => (current.includes(topicId) ? current : [...current, topicId]));
+    setTopicQuery("");
+    setIsTopicDropdownOpen(false);
+  };
+
+  useEffect(() => {
+    const onOutsideClick = (event: MouseEvent) => {
+      if (topicBoxRef.current && !topicBoxRef.current.contains(event.target as Node)) {
+        setIsTopicDropdownOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", onOutsideClick);
+    return () => document.removeEventListener("mousedown", onOutsideClick);
+  }, []);
 
   const submit = () => {
     setError(null);
@@ -169,75 +189,75 @@ export function TeacherLessonCreateForm({ prefix, groupId, members, topics }: Te
         </div>
       </div>
 
-      <div>
+      <div ref={topicBoxRef} className="relative">
         <span className="mb-[9px] block text-[13px] font-semibold" style={{ color: "var(--shbz-label)" }}>
           Темы занятия
           <span className="ml-2 font-normal" style={{ color: "var(--shbz-text-muted)" }}>
-            {selectedTopicIds.length > 0
-              ? `выбрано: ${selectedTopicIds.length}`
-              : "ничего не отмечено — ИИ выберет сам"}
+            ничего не выбрано — ИИ решит сам
           </span>
         </span>
 
         <input
-          type="search"
+          type="text"
           value={topicQuery}
-          onChange={(event) => setTopicQuery(event.target.value)}
-          placeholder="Поиск темы по названию"
+          onChange={(event) => {
+            setTopicQuery(event.target.value);
+            setIsTopicDropdownOpen(true);
+          }}
+          onFocus={() => setIsTopicDropdownOpen(true)}
+          placeholder="Начните вводить название темы…"
           aria-label="Поиск темы"
-          className="shbz-input mb-3"
+          className="shbz-input"
         />
 
+        {isTopicDropdownOpen && topicQuery.trim() ? (
+          <div className="absolute left-0 right-0 top-[calc(100%+6px)] z-10 max-h-52 overflow-y-auto rounded-[12px] border border-[var(--shbz-card-border)] bg-[var(--shbz-card-bg)] py-1 shadow-lg">
+            {topicSuggestions.length > 0 ? (
+              topicSuggestions.map((topic) => (
+                <button
+                  key={topic.id}
+                  type="button"
+                  onClick={() => pickTopic(topic.id)}
+                  className="block w-full px-3.5 py-2 text-left text-sm text-[var(--theme-text-default)] transition hover:bg-[var(--shbz-tab-hover)]"
+                >
+                  {topic.title}
+                </button>
+              ))
+            ) : (
+              <p className="px-3.5 py-2 text-sm" style={{ color: "var(--shbz-text-muted)" }}>
+                Ничего не нашлось
+              </p>
+            )}
+          </div>
+        ) : null}
+
         {selectedTopics.length > 0 ? (
-          <div className="mb-3 flex flex-wrap items-center gap-2">
+          <div className="mt-2.5 flex flex-wrap gap-1.5">
             {selectedTopics.map((topic) => (
-              <button
+              <span
                 key={topic.id}
-                type="button"
-                onClick={() => toggleTopic(topic.id)}
-                title="Убрать тему"
-                className="rounded-[8px] px-3 py-1.5 text-[13px] font-semibold transition"
+                className="inline-flex items-center gap-1.5 rounded-[8px] px-2.5 py-1 text-[13px] font-semibold"
                 style={{ background: "var(--shbz-green-soft)", color: "var(--shbz-green-text)" }}
               >
-                {topic.title} ×
-              </button>
-            ))}
-            <button
-              type="button"
-              onClick={() => setSelectedTopicIds([])}
-              className="rounded-[8px] px-3 py-1.5 text-[13px] font-semibold transition"
-              style={{ background: "var(--shbz-tab-hover)", color: "var(--shbz-kicker)" }}
-            >
-              Очистить
-            </button>
-          </div>
-        ) : null}
-
-        {visibleTopics.length > 0 ? (
-          <div className="flex flex-wrap gap-2">
-            {visibleTopics.map((topic) => (
-              <button
-                key={topic.id}
-                type="button"
-                onClick={() => toggleTopic(topic.id)}
-                className="rounded-[8px] px-3 py-1.5 text-[13px] font-semibold transition"
-                style={{ background: "var(--shbz-tab-hover)", color: "var(--shbz-tab-text)" }}
-              >
                 {topic.title}
-              </button>
+                <button
+                  type="button"
+                  onClick={() => toggleTopic(topic.id)}
+                  aria-label={`Убрать тему «${topic.title}»`}
+                  className="text-[15px] leading-none opacity-70 transition hover:opacity-100"
+                >
+                  ×
+                </button>
+              </span>
             ))}
           </div>
-        ) : (
-          <p className="text-[13px]" style={{ color: "var(--shbz-text-muted)" }}>
-            {topicQuery.trim() ? "Ничего не найдено — попробуйте другое слово." : "Все темы уже выбраны."}
-          </p>
-        )}
-
-        {hiddenTopicsCount > 0 ? (
-          <p className="mt-2 text-[13px]" style={{ color: "var(--shbz-text-muted)" }}>
-            Показаны первые {VISIBLE_TOPICS_LIMIT} — уточните запрос, ещё {hiddenTopicsCount}.
-          </p>
         ) : null}
+
+        <p className="mt-2 text-xs" style={{ color: "var(--shbz-text-muted)" }}>
+          {selectedTopics.length > 0
+            ? `Выбрано тем: ${selectedTopics.length}`
+            : "Можно не выбирать ничего — тогда ИИ сам определит, где ученик остановился."}
+        </p>
       </div>
 
       <label className="block">
