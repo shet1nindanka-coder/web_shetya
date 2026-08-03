@@ -1,12 +1,9 @@
 import { UserRole } from "@prisma/client";
 import { SectionCard } from "@/components/section-card";
-import { TeacherStudentLessonCreate } from "@/components/teacher-student-lesson-create";
 import { TeacherStudentLessons } from "@/components/teacher-student-lessons";
 import { requireUser } from "@/lib/auth";
 import { getTeacherStudentLessons } from "@/lib/platform-data";
 import { prisma } from "@/lib/prisma";
-import { getSiteSettingsUncached } from "@/lib/site-settings";
-import { getAiCheckConfig } from "@/lib/solution-check";
 import { formatDateTime } from "@/lib/utils";
 
 type TeacherStudentLessonsPageProps = {
@@ -19,7 +16,7 @@ export default async function TeacherStudentLessonsPage({ params }: TeacherStude
   await requireUser(UserRole.TEACHER);
   const { studentId } = await params;
 
-  const [lessons, bankTopics, settings] = await Promise.all([
+  const [lessons, bankTopics] = await Promise.all([
     getTeacherStudentLessons(studentId),
     prisma.topic.findMany({
       orderBy: [{ displayOrder: "asc" }, { createdAt: "asc" }],
@@ -31,21 +28,14 @@ export default async function TeacherStudentLessonsPage({ params }: TeacherStude
           select: { id: true, number: true, difficulty: true }
         }
       }
-    }),
-    getSiteSettingsUncached()
+    })
   ]);
-
-  const aiAvailable = Boolean(settings.aiEnabled && settings.lessonPlanEnabled && getAiCheckConfig(settings));
 
   return (
     <SectionCard
       title="Занятия и итоги"
-      description="Соберите новое занятие ИИ или вручную, отмечайте итоги светофором и правьте наборы прошлых уроков."
+      description="Проведённые и запланированные занятия ученика. Отмечайте итоги светофором, правьте наборы и пересобирайте подбор."
     >
-      <div className="mb-5">
-        <TeacherStudentLessonCreate studentId={studentId} prefix="/teacher" aiAvailable={aiAvailable} />
-      </div>
-
       <TeacherStudentLessons
         studentId={studentId}
         lessons={lessons.map((lesson) => ({

@@ -1,4 +1,4 @@
-import { type Subject, UserRole } from "@prisma/client";
+import { AssignmentReason, type Subject, UserRole } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { NextResponse } from "next/server";
 import { enforceApiRateLimit } from "@/lib/api-rate-limit";
@@ -48,8 +48,10 @@ export async function POST(request: Request) {
         topicIds?: string[];
         targetDifficulty?: number | null;
         teacherNote?: string;
-        /** Собрать урок вручную: создать пустым и не звать ИИ-подбор. */
+        /** Собрать урок вручную: не звать ИИ-подбор. */
         skipPlan?: boolean;
+        /** Номера, выбранные учителем руками (только вместе со skipPlan). */
+        numberIds?: string[];
       }
     | null;
 
@@ -145,6 +147,35 @@ export async function POST(request: Request) {
     });
 
     lessonId = lesson.id;
+
+    // Ручная сборка: номера выбраны на доске, раскладываем их всем участникам
+    // в порядке выбора. Существование номеров проверяем — id приходят от клиента.
+    const manualNumberIds = Array.isArray(body?.numberIds)
+      ? body.numberIds.map((value) => String(value).trim()).filter(Boolean)
+      : [];
+
+    if (body?.skipPlan === true && manualNumberIds.length > 0) {
+      const existingNumbers = await prisma.topicHomeworkNumber.findMany({
+        where: { id: { in: manualNumberIds } },
+        select: { id: true }
+      });
+      const existingIds = new Set(existingNumbers.map((row) => row.id));
+      const orderedIds = manualNumberIds.filter((id) => existingIds.has(id));
+
+      if (orderedIds.length > 0) {
+        await prisma.lessonAssignmentItem.createMany({
+          data: lesson.participants.flatMap((participant) =>
+            orderedIds.map((homeworkNumberId, order) => ({
+              participantId: participant.id,
+              homeworkNumberId,
+              order,
+              reason: AssignmentReason.NEW,
+              isExtra: false
+            }))
+          )
+        });
+      }
+    }
     logInfoEvent("lesson_plan.lesson_created", {
       ...requestContext,
       userId: user.id,

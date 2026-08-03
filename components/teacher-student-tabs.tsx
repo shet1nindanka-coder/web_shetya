@@ -15,7 +15,18 @@ export function TeacherStudentTabs({ studentId }: TeacherStudentTabsProps) {
   const items = [
     { href: base, label: "Проверка ДЗ", isActive: pathname === base },
     { href: `${base}/assign`, label: "Выдать ДЗ", isActive: pathname.startsWith(`${base}/assign`) },
-    { href: `${base}/lessons`, label: "Занятия", isActive: pathname.startsWith(`${base}/lessons`) }
+    // «Занятия» — список проведённых, «Составить занятие» — сборка нового.
+    // Порядок проверок важен: /lessons/new не должен подсвечивать список.
+    {
+      href: `${base}/lessons`,
+      label: "Занятия",
+      isActive: pathname === `${base}/lessons`
+    },
+    {
+      href: `${base}/lessons/new`,
+      label: "Составить занятие",
+      isActive: pathname.startsWith(`${base}/lessons/new`)
+    }
   ];
 
   return (
