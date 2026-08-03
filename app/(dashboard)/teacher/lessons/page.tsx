@@ -28,7 +28,7 @@ export default async function TeacherLessonsPage() {
             Уроков пока нет.
           </p>
           <p className="mt-1.5 text-sm" style={{ color: "var(--shbz-text-muted)" }}>
-            Откройте группу и нажмите «Составить урок» — ИИ соберёт персональный набор задач каждому ученику. Урок для одного ученика создаётся с его страницы.
+            Откройте группу и нажмите «Составить урок» — ИИ соберёт персональный набор задач каждому ученику. Урок для одного ученика собирается во вкладке «Составить занятие» на его странице.
           </p>
           <Link href={`${prefix}/groups`} className="shbz-btn-primary mt-5 inline-block px-[26px] py-[13px] text-[15px] no-underline">
             К группам

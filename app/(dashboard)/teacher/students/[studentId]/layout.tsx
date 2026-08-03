@@ -42,12 +42,6 @@ export default async function TeacherStudentLayout({ children, params }: Teacher
         actions={
           <>
             <a
-              href={`/teacher/lessons/new?studentId=${data.student.id}`}
-              className="ui-pressable ui-button-secondary inline-flex justify-center rounded-[8px] px-4 py-2.5 text-sm font-semibold transition"
-            >
-              Составить урок (ИИ)
-            </a>
-            <a
               href={`/teacher/students/${data.student.id}/export/pdf`}
               className="ui-pressable ui-button-secondary inline-flex justify-center rounded-[8px] px-4 py-2.5 text-sm font-semibold transition"
             >

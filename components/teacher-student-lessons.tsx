@@ -255,7 +255,7 @@ export function TeacherStudentLessons({
       <div className="ui-panel-soft rounded-[16px] border-dashed px-5 py-10 text-center">
         <p className="font-display text-2xl font-semibold text-[var(--theme-text-strong)]">Занятий пока не было</p>
         <p className="ui-copy-muted mt-2 text-sm">
-          Составьте урок кнопкой «Составить урок (ИИ)» — его набор и итоги появятся здесь.
+          Соберите занятие во вкладке «Составить занятие» — его набор и итоги появятся здесь.
         </p>
       </div>
     );
