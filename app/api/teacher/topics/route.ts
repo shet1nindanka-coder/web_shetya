@@ -58,10 +58,11 @@ export async function POST(request: Request) {
   const theoryFileId = String(body?.theoryFileId ?? "").trim();
   const homeworkFileId = String(body?.homeworkFileId ?? "").trim();
 
-  if (!title || !description || !numbers.length || !theoryFileId || !homeworkFileId) {
+  // Описание необязательное: тема живёт и без него.
+  if (!title || !numbers.length || !theoryFileId || !homeworkFileId) {
     return NextResponse.json(
       {
-        error: "Проверьте форму: название, описание, оба файла и список номеров обязательны."
+        error: "Проверьте форму: название, оба файла и список номеров обязательны."
       },
       { status: 400 }
     );

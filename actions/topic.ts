@@ -93,9 +93,9 @@ export async function createTopicAction(formData: FormData) {
   const homeworkFile = formData.get("homeworkFile");
   const usePreUploadedFiles = Boolean(theoryFileId && homeworkFileId);
 
+  // Описание необязательное: тема живёт и без него.
   if (
     !title ||
-    !description ||
     !numbers.length ||
     (!usePreUploadedFiles &&
       (!(theoryFile instanceof File) ||
@@ -246,7 +246,7 @@ export async function updateTopicAction(formData: FormData) {
   const theoryFile = formData.get("theoryFile");
   const homeworkFile = formData.get("homeworkFile");
 
-  if (!topicId || !title || !description || !numbers.length) {
+  if (!topicId || !title || !numbers.length) {
     if (topicId) {
       redirectTeacherTopicWithStatus(topicId, new URLSearchParams({ error: "invalid" }));
     }

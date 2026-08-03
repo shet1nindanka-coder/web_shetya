@@ -137,13 +137,12 @@ export default async function TeacherTopicPage({ params, searchParams }: Teacher
               </label>
 
               <label className="block space-y-1.5">
-                <span className="ui-form-label">Описание</span>
+                <span className="ui-form-label">Описание — необязательно</span>
                 <textarea
                   name="description"
                   rows={3}
                   defaultValue={data.topic.description}
                   className="ui-input w-full rounded-[8px] px-3.5 py-2.5"
-                  required
                 />
               </label>
             </div>

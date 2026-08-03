@@ -324,7 +324,7 @@ export function TopicCreateForm({
     homeworkUpload.status === "uploaded" &&
     Boolean(theoryUpload.file?.id) &&
     Boolean(homeworkUpload.file?.id);
-  const hasRequiredFields = Boolean(title.trim() && description.trim() && numbers.trim());
+  const hasRequiredFields = Boolean(title.trim() && numbers.trim());
   const isSubmitDisabled = !isReadyToCreate || isUploading || isSubmitting || !hasRequiredFields;
 
   const handleTheoryFileSelect = useCallback(
@@ -397,7 +397,7 @@ export function TopicCreateForm({
 
       <label className="block">
         <span className="mb-[9px] block text-[13px] font-semibold" style={{ color: "var(--shbz-label)" }}>
-          Описание
+          Описание <span style={{ fontWeight: 400, color: "var(--shbz-text-muted)" }}>— необязательно</span>
         </span>
         <textarea
           value={description}
@@ -405,7 +405,6 @@ export function TopicCreateForm({
           placeholder="Что нужно изучить в теории и на что обратить внимание в заданиях по теме."
           className="shbz-textarea"
           style={{ minHeight: 128 }}
-          required
         />
       </label>
 
