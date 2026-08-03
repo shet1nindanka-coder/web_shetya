@@ -249,3 +249,33 @@ test("parseTopicImportText принимает реальный ответ мод
   assert.match(result.data.numbers[0].conditionLatex, /\\dfrac/);
   assert.deepEqual(result.data.issues, []);
 });
+
+test("repairJsonBackslashes не пропускает подряд идущие команды", () => {
+  assert.equal(repairJsonBackslashes(String.raw`$x^2\,\sin x$`), String.raw`$x^2\\,\\sin x$`);
+  assert.equal(repairJsonBackslashes(String.raw`\{a\}`), String.raw`\\{a\\}`);
+});
+
+test("repairJsonBackslashes бережёт перенос строки и чинит команды на n", () => {
+  assert.equal(repairJsonBackslashes("первая\\nвторая"), "первая\\nвторая");
+  assert.equal(repairJsonBackslashes(String.raw`$a\ne b$`), String.raw`$a\\ne b$`);
+  assert.equal(repairJsonBackslashes(String.raw`$\nabla f$`), String.raw`$\\nabla f$`);
+});
+
+test("починка битого файла не съедает переносы строк", () => {
+  const raw =
+    '{"formatVersion":1,"topic":{"title":"Т"},"numbers":[{"number":5,"conditionLatex":"Решите систему:\\nа) $\\sin x=0$\\nб) $\\cos x=1$","answerLatex":null}]}';
+  const result = parseTopicImportText(raw);
+
+  assert.ok(result.ok);
+  assert.equal(result.data.numbers[0].conditionLatex.split("\n").length, 3);
+  assert.match(result.data.numbers[0].conditionLatex, /\\sin/);
+});
+
+test("тема без описания импортируется", () => {
+  const result = parseTopicImportText(
+    '{"formatVersion":1,"topic":{"title":"Уравнения"},"numbers":[{"number":1,"conditionLatex":"условие","answerLatex":null}]}'
+  );
+
+  assert.ok(result.ok);
+  assert.equal(result.data.description, "");
+});
