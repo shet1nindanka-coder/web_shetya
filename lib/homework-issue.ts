@@ -1,6 +1,7 @@
-import { Prisma, UserRole } from "@prisma/client";
+import { HomeworkNumberStatus, Prisma, UserRole } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { publishDashboardRealtimeEvent } from "@/lib/dashboard-realtime";
+import { recomputeMirroredDeadlines } from "@/lib/homework-deadline-mirror";
 import { logInfoEvent } from "@/lib/logger";
 import { createNotification } from "@/lib/notifications";
 import { revalidateAllPlatformData } from "@/lib/platform-data-cache";
@@ -8,9 +9,9 @@ import { prisma } from "@/lib/prisma";
 
 /*
  * Единая точка создания HomeworkAssignment: вызывается ручным роутом
- * /api/teacher/homeworks и выдачей ИИ-черновиков. Поведение перенесено из
- * роута без изменений: проверка темы, конфликт по уже выданным номерам,
- * транзакция с зеркалированием дедлайна, уведомление, ревалидация, realtime.
+ * /api/teacher/homeworks и выдачей ИИ-черновиков. Проверка темы, отсев уже
+ * решённых номеров, транзакция с пересчётом зеркала дедлайнов, уведомление,
+ * ревалидация, realtime.
  */
 
 export type IssueHomeworkInput = {
@@ -87,20 +88,25 @@ export async function issueHomework(input: IssueHomeworkInput): Promise<IssueHom
     return { ok: false, code: "not_found", message: "Ученик или номер задания не найден." };
   }
 
-  // Запрещаем выдавать один и тот же номер этому ученику в двух активных ДЗ:
-  // дедлайн зеркалируется в одно поле StudentTopicNumberStatus на пару (ученик, номер),
-  // поэтому пересечение номеров рассинхронизирует дедлайны. Проще не допускать дубль.
-  let conflictingNumbers: number[] = [];
+  // Повторно не выдаём только уже решённые номера: GREEN — решил сразу,
+  // YELLOW — решил после самопроверки. Нерешённый (RED) и неотмеченный номер
+  // выдать снова можно и нужно — это основной сценарий «дай перерешать».
+  //
+  // Раньше блокировался любой когда-либо выданный номер, из-за чего перевыдача
+  // была невозможна без отмены старого ДЗ. Дедлайн при пересечении номеров
+  // больше не теряется: его пересчитывает recomputeMirroredDeadlines.
+  let solvedNumbers: number[] = [];
 
   try {
-    const alreadyAssigned = await prisma.homeworkAssignmentNumber.findMany({
+    const solvedStatuses = await prisma.studentTopicNumberStatus.findMany({
       where: {
+        studentId,
         homeworkNumberId: { in: homeworkNumberIds },
-        assignment: { studentId }
+        status: { in: [HomeworkNumberStatus.GREEN, HomeworkNumberStatus.YELLOW] }
       },
       select: { homeworkNumber: { select: { number: true } } }
     });
-    conflictingNumbers = Array.from(new Set(alreadyAssigned.map((entry) => entry.homeworkNumber.number))).sort(
+    solvedNumbers = Array.from(new Set(solvedStatuses.map((entry) => entry.homeworkNumber.number))).sort(
       (left, right) => left - right
     );
   } catch (error) {
@@ -116,24 +122,26 @@ export async function issueHomework(input: IssueHomeworkInput): Promise<IssueHom
     throw error;
   }
 
-  if (conflictingNumbers.length > 0) {
-    const plural = conflictingNumbers.length > 1;
+  if (solvedNumbers.length > 0) {
+    const plural = solvedNumbers.length > 1;
 
     return {
       ok: false,
       code: "conflict",
-      conflictNumbers: conflictingNumbers,
-      message: `${plural ? "Номера" : "Номер"} ${conflictingNumbers.join(", ")} уже ${
-        plural ? "выданы" : "выдан"
-      } этому ученику в другом ДЗ. Уберите ${plural ? "их" : "его"} или сначала отмените то ДЗ.`
+      conflictNumbers: solvedNumbers,
+      message: `${plural ? "Номера" : "Номер"} ${solvedNumbers.join(", ")} ученик уже ${
+        plural ? "решил" : "решил"
+      } — повторно ${plural ? "их" : "его"} не выдаём. Уберите ${
+        plural ? "их" : "его"
+      } из набора или сбросьте статус на карточке ученика.`
     };
   }
 
   let assignmentId: string;
 
   try {
-    const [assignment] = await prisma.$transaction([
-      prisma.homeworkAssignment.create({
+    assignmentId = await prisma.$transaction(async (tx) => {
+      const assignment = await tx.homeworkAssignment.create({
         data: {
           studentId,
           topicId,
@@ -144,19 +152,24 @@ export async function issueHomework(input: IssueHomeworkInput): Promise<IssueHom
           }
         },
         select: { id: true }
-      }),
-      ...homeworkNumberIds.map((homeworkNumberId) =>
-        prisma.studentTopicNumberStatus.upsert({
-          where: {
-            studentId_homeworkNumberId: { studentId, homeworkNumberId }
-          },
-          update: { deadlineAt },
-          create: { studentId, homeworkNumberId, status: null, deadlineAt }
-        })
-      )
-    ]);
+      });
 
-    assignmentId = assignment.id;
+      // Строки статуса должны существовать до пересчёта зеркала: сам пересчёт
+      // ничего не создаёт, он только приводит deadlineAt к правильному значению.
+      await tx.studentTopicNumberStatus.createMany({
+        data: homeworkNumberIds.map((homeworkNumberId) => ({
+          studentId,
+          homeworkNumberId,
+          status: null,
+          deadlineAt
+        })),
+        skipDuplicates: true
+      });
+
+      await recomputeMirroredDeadlines(tx, studentId, homeworkNumberIds);
+
+      return assignment.id;
+    });
   } catch (error) {
     if (isMissingHomeworkAssignmentTableError(error)) {
       return {

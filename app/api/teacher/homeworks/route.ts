@@ -3,6 +3,7 @@ import { revalidatePath } from "next/cache";
 import { NextResponse } from "next/server";
 import { enforceApiRateLimit } from "@/lib/api-rate-limit";
 import { tryGetCurrentUser } from "@/lib/auth";
+import { recomputeMirroredDeadlines } from "@/lib/homework-deadline-mirror";
 import { issueHomework } from "@/lib/homework-issue";
 import { publishDashboardRealtimeEvent } from "@/lib/dashboard-realtime";
 import { logInfoEvent } from "@/lib/logger";
@@ -177,37 +178,32 @@ export async function DELETE(request: Request) {
     return NextResponse.json({ error: "ДЗ не найдено." }, { status: 404 });
   }
 
-  const numberIds = assignment.numbers.map((entry) => entry.homeworkNumberId);
+  const target = assignment;
+  const numberIds = target.numbers.map((entry) => entry.homeworkNumberId);
 
   try {
-    await prisma.$transaction([
-      prisma.homeworkAssignment.delete({ where: { id: assignment.id } }),
-      ...(assignment.deadlineAt && numberIds.length
-        ? [
-            prisma.studentTopicNumberStatus.updateMany({
-              where: {
-                studentId: assignment.studentId,
-                homeworkNumberId: { in: numberIds },
-                deadlineAt: assignment.deadlineAt
-              },
-              data: { deadlineAt: null }
-            })
-          ]
-        : []),
-      ...(numberIds.length
-        ? [
-            prisma.studentTopicNumberStatus.deleteMany({
-              where: {
-                studentId: assignment.studentId,
-                homeworkNumberId: { in: numberIds },
-                status: null,
-                note: null,
-                deadlineAt: null
-              }
-            })
-          ]
-        : [])
-    ]);
+    await prisma.$transaction(async (tx) => {
+      await tx.homeworkAssignment.delete({ where: { id: target.id } });
+
+      if (numberIds.length === 0) {
+        return;
+      }
+
+      // Дедлайн пересчитываем по оставшимся ДЗ, а не гасим по совпадению значения:
+      // один и тот же номер может лежать в нескольких ДЗ, и раньше отмена одного
+      // снимала срок у второго (ARCH-011).
+      await recomputeMirroredDeadlines(tx, target.studentId, numberIds);
+
+      await tx.studentTopicNumberStatus.deleteMany({
+        where: {
+          studentId: target.studentId,
+          homeworkNumberId: { in: numberIds },
+          status: null,
+          note: null,
+          deadlineAt: null
+        }
+      });
+    });
   } catch (error) {
     if (isMissingHomeworkAssignmentTableError(error)) {
       return NextResponse.json(
@@ -219,30 +215,32 @@ export async function DELETE(request: Request) {
     // На неотмигрированной БД колонок note/deadlineAt может не быть — зеркало
     // статусов не почистить, но само ДЗ удаляем, чтобы отмена не падала 500.
     if (isMissingStudentDeadlineColumnError(error) || isMissingStudentNoteColumnError(error)) {
-      await prisma.homeworkAssignment.delete({ where: { id: assignment.id } }).catch(() => undefined);
+      await prisma.homeworkAssignment.delete({ where: { id: target.id } }).catch(() => undefined);
     } else {
       throw error;
     }
   }
 
   const referencedFileIds = new Set([
-    ...assignment.photos.map((photo) => photo.fileId),
-    ...assignment.checks.flatMap((check) => check.photos.map((photo) => photo.fileId))
+    ...target.photos.map((photo) => photo.fileId),
+    ...target.checks.flatMap((check) => check.photos.map((photo) => photo.fileId))
   ]);
 
   for (const fileId of referencedFileIds) {
     await deleteStoredFileRecordIfUnused(fileId);
   }
 
-  revalidateHomeworkRoutes(assignment.studentId, assignment.topicId);
+  revalidateHomeworkRoutes(target.studentId, target.topicId);
   publishDashboardRealtimeEvent({
     kind: "student-deadlines-changed",
-    studentId: assignment.studentId,
-    topicId: assignment.topicId
+    studentId: target.studentId,
+    topicId: target.topicId
   });
   logInfoEvent("homework.cancel.succeeded", {
-    assignmentId: assignment.id,
-    studentId: assignment.studentId
+    assignmentId: target.id,
+    studentId: target.studentId,
+    deletedPhotos: target.photos.length,
+    deletedChecks: target.checks.length
   });
 
   return NextResponse.json({ ok: true });

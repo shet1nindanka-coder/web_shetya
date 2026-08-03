@@ -269,7 +269,26 @@ export function TeacherHomeworkReviewList({ studentId, assignments }: TeacherHom
                 <DeleteButton
                   label="Отменить ДЗ"
                   title="Отменить ДЗ?"
-                  description="ДЗ будет удалено, дедлайны будут сняты с его номеров. Это действие нельзя отменить."
+                  description={
+                    <div className="space-y-2">
+                      <p>ДЗ будет удалено, дедлайны сняты с его номеров.</p>
+                      {assignment.photos.length > 0 || assignment.checks.length > 0 ? (
+                        <p>
+                          Вместе с ним{" "}
+                          <span className="font-semibold">безвозвратно удалятся присланные учеником файлы</span>:
+                          {assignment.photos.length > 0
+                            ? ` фото решений — ${assignment.photos.length}`
+                            : ""}
+                          {assignment.photos.length > 0 && assignment.checks.length > 0 ? "," : ""}
+                          {assignment.checks.length > 0
+                            ? ` результаты ИИ-проверок — ${assignment.checks.length}`
+                            : ""}
+                          . Скачать их потом будет неоткуда.
+                        </p>
+                      ) : null}
+                      <p>Выставленные статусы по номерам сохранятся. Это действие нельзя отменить.</p>
+                    </div>
+                  }
                   confirmLabel="Да, отменить"
                   pendingLabel="Отменяем..."
                   onConfirm={() => cancelAssignment(assignment.id)}

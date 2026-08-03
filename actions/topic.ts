@@ -5,12 +5,19 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { requireUser } from "@/lib/auth";
 import { publishDashboardRealtimeEvent } from "@/lib/dashboard-realtime";
-import { logErrorEvent, logInfoEvent } from "@/lib/logger";
+import { logErrorEvent, logInfoEvent, logWarnEvent } from "@/lib/logger";
 import { revalidateAllPlatformData } from "@/lib/platform-data-cache";
 import { prisma } from "@/lib/prisma";
 import { deleteStoredFileRecordIfUnused } from "@/lib/stored-files";
 import { removeStoredFile, saveUploadedFile } from "@/lib/storage";
 import { createTopicHomeworkNumbersInBatches } from "@/lib/topic-homework-numbers";
+import {
+  buildTopicNumbersChangePlan,
+  isRemovalConfirmationValid,
+  loadTopicNumberFacts,
+  parseConfirmedNumbers,
+  summarizeTopicImpact
+} from "@/lib/topic-numbers-change";
 import { normalizeMultilineText, normalizeSingleLineText, parseNumbersInput } from "@/lib/utils";
 
 function revalidateTopicRoutes(topicId?: string) {
@@ -277,6 +284,45 @@ export async function updateTopicAction(formData: FormData) {
 
   const topicToUpdate = existingTopic!;
 
+  // Гейт против «молчаливого» стирания чужой работы (PROD-002). План считается
+  // здесь заново: подтверждение из формы — это ответ на конкретный список
+  // номеров, и если набор с тех пор изменился, подтверждение недействительно.
+  const changePlan = buildTopicNumbersChangePlan(await loadTopicNumberFacts(topicId), numbers);
+
+  if (changePlan.requiresConfirmation) {
+    const confirmedNumbers = parseConfirmedNumbers(String(formData.get("confirmNumbersRemoval") ?? ""));
+    const allowAssignedRemoval = String(formData.get("allowAssignedRemoval") ?? "") === "1";
+
+    if (!isRemovalConfirmationValid(changePlan, confirmedNumbers)) {
+      logWarnEvent(
+        "topic.update.removal_not_confirmed",
+        {
+          teacherId: user.id,
+          topicId,
+          removedNumbers: changePlan.removed.map((entry) => entry.number),
+          confirmedNumbers
+        },
+        undefined,
+        "Destructive topic numbers change was rejected: confirmation missing or stale."
+      );
+      redirectTeacherTopicWithStatus(topicId, new URLSearchParams({ error: "numbersConfirm" }));
+    }
+
+    if (changePlan.requiresAssignedConfirmation && !allowAssignedRemoval) {
+      logWarnEvent(
+        "topic.update.assigned_removal_not_confirmed",
+        {
+          teacherId: user.id,
+          topicId,
+          assignedNumbers: changePlan.removed.filter((entry) => entry.isAssigned).map((entry) => entry.number)
+        },
+        undefined,
+        "Removal of numbers that belong to active homework was rejected without an explicit opt-in."
+      );
+      redirectTeacherTopicWithStatus(topicId, new URLSearchParams({ error: "numbersAssigned" }));
+    }
+  }
+
   let theoryUpload: Awaited<ReturnType<typeof saveUploadedFile>> | null = null;
   let homeworkUpload: Awaited<ReturnType<typeof saveUploadedFile>> | null = null;
 
@@ -436,6 +482,8 @@ export async function updateTopicAction(formData: FormData) {
       topicId,
       title,
       numberCount: numbers.length,
+      removedNumbers: changePlan.removed.map((entry) => entry.number),
+      removedWithWorkCount: changePlan.removed.filter((entry) => entry.hasStudentWork).length,
       cleanedFileCount: fileIdsToCleanup.length
     },
     "Topic was updated successfully."
@@ -538,6 +586,32 @@ export async function deleteTopicAction(formData: FormData) {
   }
 
   const existingTopic = topic!;
+
+  // Удаление темы каскадно уносит прогресс всех учеников, фото решений, вердикты
+  // ИИ и итоги занятий (ARCH-013). Страница показывает эти цифры в диалоге и
+  // присылает их обратно; если с момента загрузки страницы что-то изменилось —
+  // человек видел не те последствия, и удалять нельзя.
+  const impact = summarizeTopicImpact(await loadTopicNumberFacts(topicId));
+
+  if (impact.numbersWithWork > 0) {
+    const acknowledged = Number(String(formData.get("acknowledgedNumbersWithWork") ?? "").trim());
+
+    if (!Number.isInteger(acknowledged) || acknowledged !== impact.numbersWithWork) {
+      logWarnEvent(
+        "topic.delete.impact_not_acknowledged",
+        {
+          teacherId: user.id,
+          topicId,
+          numbersWithWork: impact.numbersWithWork,
+          acknowledged: String(formData.get("acknowledgedNumbersWithWork") ?? "")
+        },
+        undefined,
+        "Topic deletion was rejected: the confirmed impact does not match the current one."
+      );
+      redirectTeacherTopicWithStatus(topicId, new URLSearchParams({ error: "deleteChanged" }));
+    }
+  }
+
   const fileIdsToCleanup = new Set<string>();
 
   if (existingTopic.theoryFileId) {

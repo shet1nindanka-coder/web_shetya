@@ -11,6 +11,10 @@ type ConfirmDialogProps = {
   pendingLabel?: string;
   cancelLabel?: string;
   isPending?: boolean;
+  /** Блокирует «Да»: например, пока не отмечена галочка осознанного согласия. */
+  confirmDisabled?: boolean;
+  /** Широкая модалка — для списков последствий, которые не влезают в max-w-md. */
+  wide?: boolean;
   onConfirm: () => void;
   onCancel: () => void;
 };
@@ -23,6 +27,8 @@ export function ConfirmDialog({
   pendingLabel = "Удаляем...",
   cancelLabel = "Отмена",
   isPending = false,
+  confirmDisabled = false,
+  wide = false,
   onConfirm,
   onCancel
 }: ConfirmDialogProps) {
@@ -63,7 +69,7 @@ export function ConfirmDialog({
         role="dialog"
         aria-modal="true"
         aria-label={title}
-        className="shbz-card w-full max-w-md p-6"
+        className={`shbz-card w-full ${wide ? "max-w-xl" : "max-w-md"} max-h-[85vh] overflow-y-auto p-6`}
         onClick={(event) => event.stopPropagation()}
       >
         <div className="space-y-3">
@@ -89,7 +95,7 @@ export function ConfirmDialog({
           <button
             type="button"
             onClick={onConfirm}
-            disabled={isPending}
+            disabled={isPending || confirmDisabled}
             className="shbz-btn-danger-solid disabled:cursor-not-allowed disabled:opacity-60"
           >
             {isPending ? pendingLabel : confirmLabel}

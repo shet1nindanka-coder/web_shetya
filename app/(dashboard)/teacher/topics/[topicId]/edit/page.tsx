@@ -12,6 +12,7 @@ import { TeacherTopicTabs } from "@/components/teacher-topic-tabs";
 import { TopicNumbersField } from "@/components/topic-numbers-field";
 import { requireUser } from "@/lib/auth";
 import { getTeacherTopicDetail } from "@/lib/platform-data";
+import { describeTopicImpact, loadTopicNumberFacts, summarizeTopicImpact } from "@/lib/topic-numbers-change";
 
 type TeacherTopicPageProps = {
   params: Promise<{
@@ -48,6 +49,21 @@ const topicEditNotices = {
   save: {
     tone: "error",
     message: "Не удалось сохранить изменения. Проверьте подключение к базе данных и повторите попытку."
+  },
+  numbersConfirm: {
+    tone: "error",
+    message:
+      "Изменения не сохранены: удаление номеров с работой учеников нужно подтвердить. Обновите страницу и сохраните ещё раз — список последствий покажется перед сохранением."
+  },
+  numbersAssigned: {
+    tone: "error",
+    message:
+      "Изменения не сохранены: среди удаляемых есть номера из активных ДЗ. Отметьте согласие в окне подтверждения или сначала отмените эти ДЗ."
+  },
+  deleteChanged: {
+    tone: "error",
+    message:
+      "Тема не удалена: с момента открытия страницы у неё изменился объём работы учеников. Обновите страницу — в окне подтверждения будут актуальные последствия."
   }
 } as const;
 
@@ -76,6 +92,11 @@ export default async function TeacherTopicPage({ params, searchParams }: Teacher
   const notice = noticeKey ? topicEditNotices[noticeKey] : null;
   const data = await getTeacherTopicDetail(topicId);
   const numbersInput = data.topic.homeworkNumbers.map((number) => number.number).join(", ");
+  // Диалог удаления темы должен называть последствия цифрами, а не «и статусами
+  // по номерам» (ARCH-013). Эти же цифры уходят в экшен как подтверждение того,
+  // что человек видел именно их.
+  const topicImpact = summarizeTopicImpact(await loadTopicNumberFacts(topicId));
+  const topicImpactLines = describeTopicImpact(topicImpact);
 
   return (
     <div className="space-y-5 sm:space-y-6">
@@ -103,13 +124,34 @@ export default async function TeacherTopicPage({ params, searchParams }: Teacher
               label="Удалить тему"
               title="Удалить тему?"
               description={
-                <>
-                  Тема <span className="font-semibold">«{data.topic.title}»</span> будет удалена вместе с
-                  прикреплёнными файлами и статусами по номерам. Это действие нельзя отменить.
-                </>
+                <div className="space-y-3">
+                  <p>
+                    Тема <span className="font-semibold">«{data.topic.title}»</span> будет удалена вместе с
+                    прикреплёнными файлами и всеми {topicImpact.totalNumbers} номерами. Это действие нельзя отменить.
+                  </p>
+
+                  {topicImpactLines.length > 0 ? (
+                    <>
+                      <p>
+                        Вместе с темой безвозвратно исчезнет работа по{" "}
+                        <span className="font-semibold">{topicImpact.numbersWithWork}</span> номерам:
+                      </p>
+                      <ul className="space-y-1">
+                        {topicImpactLines.map((line) => (
+                          <li key={line}>— {line}</li>
+                        ))}
+                      </ul>
+                    </>
+                  ) : (
+                    <p>По номерам этой темы пока нет ни прогресса учеников, ни условий и ответов.</p>
+                  )}
+                </div>
               }
               action={deleteTopicAction}
-              fields={{ topicId: data.topic.id }}
+              fields={{
+                topicId: data.topic.id,
+                acknowledgedNumbersWithWork: String(topicImpact.numbersWithWork)
+              }}
             />
           </>
         }
@@ -206,7 +248,7 @@ export default async function TeacherTopicPage({ params, searchParams }: Teacher
 
           <div className="ui-card-soft space-y-2.5 rounded-[16px] p-3.5 sm:p-4">
             <h3 className="text-base font-semibold text-[var(--theme-text-strong)] sm:text-lg">Сохранение</h3>
-            <TopicEditSubmitButton />
+            <TopicEditSubmitButton topicId={data.topic.id} />
           </div>
         </form>
       </SectionCard>
