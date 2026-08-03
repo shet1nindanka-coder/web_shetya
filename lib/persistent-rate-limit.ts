@@ -117,6 +117,50 @@ export async function consumePersistentRateLimit({
   throw new Error("Persistent rate limit retry attempts exhausted.");
 }
 
+/**
+ * Возвращает один списанный слот обратно в текущее окно.
+ *
+ * Нужно там, где счётчик — это бюджет на дорогую внешнюю операцию, а не защита
+ * от долбёжки: если запрос не дошёл до модели (нечего проверять, автопроверка
+ * выключена, фото не читаются), деньги не потрачены и слот занимать нечестно.
+ *
+ * Окно проверяется по `windowStart`: если оно уже сменилось, возвращать нечего —
+ * счётчик и так начался заново.
+ */
+export async function releasePersistentRateLimitHit({
+  scope,
+  identifier,
+  windowMs,
+  amount = 1,
+  now = Date.now()
+}: {
+  scope: string;
+  identifier: string;
+  windowMs: number;
+  amount?: number;
+  now?: number;
+}) {
+  if (!Number.isInteger(amount) || amount < 1) {
+    return;
+  }
+
+  const key = buildRateLimitKey(scope, identifier);
+  const windowStart = new Date(Math.floor(now / windowMs) * windowMs);
+
+  // `hits: { gte: amount }` вместо клампа: если вернуть больше, чем занято,
+  // счётчик ушёл бы в минус и окно стало бы бесконечным.
+  await prisma.rateLimitBucket.updateMany({
+    where: {
+      key,
+      windowStart,
+      hits: { gte: amount }
+    },
+    data: {
+      hits: { decrement: amount }
+    }
+  });
+}
+
 export async function resetPersistentRateLimit(scope: string, identifier: string) {
   await prisma.rateLimitBucket.deleteMany({
     where: {

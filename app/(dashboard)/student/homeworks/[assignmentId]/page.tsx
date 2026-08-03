@@ -9,6 +9,7 @@ import { StudentSingleNumberCard } from "@/components/student-single-number-card
 import { requireUser } from "@/lib/auth";
 import { getStudentHomeworks } from "@/lib/platform-data";
 import { getSiteSettings } from "@/lib/site-settings";
+import { toStudentFacingResults } from "@/lib/solution-check-student-view";
 import { formatDateTime, isHomeworkOverdue, toIsoDateTimeString } from "@/lib/utils";
 
 type StudentHomeworkPageProps = {
@@ -82,12 +83,17 @@ export default async function StudentHomeworkPage({ params }: StudentHomeworkPag
                   status: assignment.latestCheck.status,
                   error: assignment.latestCheck.error,
                   checkedAt: toIsoDateTimeString(assignment.latestCheck.checkedAt),
-                  results: assignment.latestCheck.results.map((result) => ({
-                    number: result.number,
-                    verdict: result.verdict,
-                    recognizedAnswer: result.recognizedAnswer,
-                    comment: result.comment
-                  }))
+                  // Тот же урезанный вид, что отдаёт GET /api/student/homework-checks:
+                  // иначе при первой загрузке страницы ученик увидел бы исходный
+                  // комментарий модели, а после первого опроса — уже причёсанный.
+                  results: toStudentFacingResults(
+                    assignment.latestCheck.results.map((result) => ({
+                      number: result.number,
+                      verdict: result.verdict,
+                      recognizedAnswer: result.recognizedAnswer,
+                      comment: result.comment
+                    }))
+                  )
                 }
               : null
           }

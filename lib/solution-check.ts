@@ -4,6 +4,7 @@ import { publishDashboardRealtimeEvent } from "@/lib/dashboard-realtime";
 import { logErrorEvent, logInfoEvent, logWarnEvent } from "@/lib/logger";
 import { createNotification } from "@/lib/notifications";
 import { revalidateAllPlatformData } from "@/lib/platform-data-cache";
+import { releasePersistentRateLimitHit } from "@/lib/persistent-rate-limit";
 import { prisma } from "@/lib/prisma";
 import { selectCompletedCheckIdsToPrune } from "@/lib/solution-check-history";
 import {
@@ -26,6 +27,15 @@ const STALE_CHECK_MS = 15 * 60_000;
 // ретраев модели. Убиваем её значительно позже, чтобы GET ученика не помечал
 // живую проверку FAILED, пока она ещё тратит бюджет API.
 const STALE_RUNNING_CHECK_MS = 45 * 60_000;
+
+/*
+ * Глобальный дневной бюджет запусков автопроверки. Ключ один на всю школу,
+ * поэтому строка живёт здесь, а не в роуте: слот занимает POST перед постановкой
+ * в очередь, а возвращает воркер, если до модели дело так и не дошло.
+ */
+export const AI_CHECK_GLOBAL_BUDGET_SCOPE = "api:homework-checks:global";
+export const AI_CHECK_GLOBAL_BUDGET_IDENTIFIER = "global";
+export const AI_CHECK_GLOBAL_BUDGET_WINDOW_MS = 24 * 60 * 60_000;
 
 function isReasoningModel(model: string) {
   return /(^|\/)(gpt-5|o\d)/i.test(model);
@@ -354,25 +364,48 @@ export async function failStaleHomeworkChecks(assignmentId: string, studentId: s
   const checkingThreshold = new Date(Date.now() - STALE_RUNNING_CHECK_MS);
 
   try {
-    const failedChecks = await prisma.homeworkCheck.updateMany({
-      where: {
-        assignmentId,
-        assignment: {
-          studentId
+    const failData = {
+      status: SolutionCheckStatus.FAILED,
+      activeSlot: null,
+      error: "Проверка прервалась (перезапуск сервера). Запустите её заново.",
+      checkedAt: new Date()
+    };
+
+    // Разделяем PENDING и CHECKING, чтобы вернуть бюджет только за первые:
+    // PENDING-проверку очередь так и не подхватила, значит модель не вызывалась
+    // и деньги не тратились. CHECKING могла успеть отправить запрос — её слот
+    // остаётся занятым.
+    const [stalePending, staleRunning] = await Promise.all([
+      prisma.homeworkCheck.updateMany({
+        where: {
+          assignmentId,
+          assignment: { studentId },
+          status: SolutionCheckStatus.PENDING,
+          createdAt: { lt: pendingThreshold }
         },
-        OR: [
-          { status: SolutionCheckStatus.PENDING, createdAt: { lt: pendingThreshold } },
-          { status: SolutionCheckStatus.CHECKING, createdAt: { lt: checkingThreshold } }
-        ]
-      },
-      data: {
-        status: SolutionCheckStatus.FAILED,
-        activeSlot: null,
-        error: "Проверка прервалась (перезапуск сервера). Запустите её заново.",
-        checkedAt: new Date()
-      }
-    });
-    if (failedChecks.count > 0) {
+        data: failData
+      }),
+      prisma.homeworkCheck.updateMany({
+        where: {
+          assignmentId,
+          assignment: { studentId },
+          status: SolutionCheckStatus.CHECKING,
+          createdAt: { lt: checkingThreshold }
+        },
+        data: failData
+      })
+    ]);
+
+    if (stalePending.count > 0) {
+      await releasePersistentRateLimitHit({
+        scope: AI_CHECK_GLOBAL_BUDGET_SCOPE,
+        identifier: AI_CHECK_GLOBAL_BUDGET_IDENTIFIER,
+        windowMs: AI_CHECK_GLOBAL_BUDGET_WINDOW_MS,
+        amount: stalePending.count
+      }).catch(() => undefined);
+    }
+
+    if (stalePending.count + staleRunning.count > 0) {
       await pruneCompletedHomeworkChecksSafely(studentId);
     }
   } catch (error) {
@@ -625,6 +658,12 @@ export async function runHomeworkCheck(checkId: string) {
     }))
   };
 
+  // Слот дневного бюджета занял POST-роут. Возвращаем его, только если проверка
+  // упала ДО обращения к модели: тогда денег не потрачено и держать слот нечестно
+  // (PROD-010). Если модель уже ответила, токены списаны — слот остаётся занят,
+  // даже когда разобрать ответ не удалось.
+  let modelCallStarted = false;
+
   const failCheck = async (message: string) => {
     // Только PENDING/CHECKING: если проверка уже DONE (например, упала запись
     // прогресса после финализации), не затираем готовые результаты статусом FAILED.
@@ -640,6 +679,22 @@ export async function runHomeworkCheck(checkId: string) {
         checkedAt: new Date()
       }
     });
+
+    if (!modelCallStarted) {
+      await releasePersistentRateLimitHit({
+        scope: AI_CHECK_GLOBAL_BUDGET_SCOPE,
+        identifier: AI_CHECK_GLOBAL_BUDGET_IDENTIFIER,
+        windowMs: AI_CHECK_GLOBAL_BUDGET_WINDOW_MS
+      }).catch((error: unknown) => {
+        logWarnEvent(
+          "solution.check.budget_release_failed",
+          { checkId, assignmentId: assignment.id },
+          error,
+          "Failed to release a daily AI budget slot after a pre-model failure."
+        );
+      });
+    }
+
     await pruneCompletedHomeworkChecksSafely(assignment.studentId);
   };
 
@@ -696,6 +751,9 @@ export async function runHomeworkCheck(checkId: string) {
 
     const userText = buildUserText(assignment);
     const validNumbers = assignment.numbers.map((number) => number.number);
+
+    // С этого момента бюджет считается потраченным: дальше failCheck слот не вернёт.
+    modelCallStarted = true;
 
     let modelResponse = await callModel(config, userText, imageUrls);
     let results: ParsedCheckResult[];

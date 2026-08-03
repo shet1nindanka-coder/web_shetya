@@ -1,13 +1,20 @@
-import { Prisma, SolutionCheckStatus, UserRole } from "@prisma/client";
+import { Prisma, SolutionCheckStatus, SolutionVerdict, UserRole } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { NextResponse } from "next/server";
 import { enforceApiRateLimit } from "@/lib/api-rate-limit";
 import { tryGetCurrentUser } from "@/lib/auth";
-import { logInfoEvent } from "@/lib/logger";
+import { logInfoEvent, logWarnEvent } from "@/lib/logger";
 import { revalidateAllPlatformData } from "@/lib/platform-data-cache";
 import { prisma } from "@/lib/prisma";
-import { failStaleHomeworkChecks, getAiCheckConfig } from "@/lib/solution-check";
+import {
+  AI_CHECK_GLOBAL_BUDGET_IDENTIFIER,
+  AI_CHECK_GLOBAL_BUDGET_SCOPE,
+  AI_CHECK_GLOBAL_BUDGET_WINDOW_MS,
+  failStaleHomeworkChecks,
+  getAiCheckConfig
+} from "@/lib/solution-check";
 import { enqueueHomeworkCheck, getHomeworkCheckQueueLength } from "@/lib/solution-check-queue";
+import { toStudentFacingResults } from "@/lib/solution-check-student-view";
 import { getSiteSettings } from "@/lib/site-settings";
 
 export const runtime = "nodejs";
@@ -40,17 +47,14 @@ export async function POST(request: Request) {
   // Предохранители от неограниченных расходов на модель: глобальный дневной
   // бюджет запусков (на всех учеников) и потолок длины in-memory очереди.
   // Значения управляются панелью разработчика (/developer/panel).
+  //
+  // Дневной бюджет списывается НЕ здесь, а ниже — вплотную к постановке в
+  // очередь, когда уже известно, что проверять реально есть что. Раньше он
+  // списывался первым, и десяток запросов с несуществующим assignmentId сжигал
+  // десяток общих слотов, не потратив на модель ни копейки (SEC-006). Почасовой
+  // лимит на ученика, наоборот, остаётся ранним: он для того и нужен, чтобы
+  // гасить долбёжку до всякой работы.
   const settings = await getSiteSettings();
-  const globalLimitResponse = await enforceApiRateLimit(
-    "api:homework-checks:global",
-    "global",
-    settings.aiDailyLimit,
-    24 * 60 * 60_000
-  );
-
-  if (globalLimitResponse) {
-    return globalLimitResponse;
-  }
 
   if (getHomeworkCheckQueueLength() >= 20) {
     return NextResponse.json(
@@ -179,6 +183,29 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "В этом ДЗ нет номеров для проверки." }, { status: 400 });
   }
 
+  // Проверять есть что — теперь можно занять слот дневного бюджета.
+  const globalLimitResponse = await enforceApiRateLimit(
+    AI_CHECK_GLOBAL_BUDGET_SCOPE,
+    AI_CHECK_GLOBAL_BUDGET_IDENTIFIER,
+    settings.aiDailyLimit,
+    AI_CHECK_GLOBAL_BUDGET_WINDOW_MS
+  );
+
+  if (globalLimitResponse) {
+    // Бюджет кончился уже после создания строки проверки — убираем её, иначе
+    // ученик останется с вечным PENDING, который никто не подхватит.
+    await prisma.homeworkCheck.delete({ where: { id: startResult.checkId } }).catch((error: unknown) => {
+      logWarnEvent(
+        "solution.check.budget_rollback_failed",
+        { checkId: startResult.checkId, studentId: user.id },
+        error,
+        "Failed to remove a check row after the daily AI budget was exhausted."
+      );
+    });
+
+    return globalLimitResponse;
+  }
+
   enqueueHomeworkCheck(startResult.checkId);
   logInfoEvent("solution.check.enqueued", {
     checkId: startResult.checkId,
@@ -225,7 +252,7 @@ export async function GET(request: Request) {
         error: string | null;
         checkedAt: Date | null;
         results: Array<{
-          verdict: string;
+          verdict: SolutionVerdict;
           recognizedAnswer: string | null;
           comment: string | null;
           homeworkNumber: { number: number };
@@ -286,14 +313,17 @@ export async function GET(request: Request) {
       status: check.status,
       error: check.error,
       checkedAt: check.checkedAt ? check.checkedAt.toISOString() : null,
-      results: check.results
-        .map((result) => ({
+      // Ученику отдаём урезанный вид: у неуверенного вердикта комментарий модели
+      // писался под другой вывод и как утверждение больше не годится (PROD-011).
+      // Полный результат с диагностикой остаётся у учителя.
+      results: toStudentFacingResults(
+        check.results.map((result) => ({
           number: result.homeworkNumber.number,
           verdict: result.verdict,
           recognizedAnswer: result.recognizedAnswer,
           comment: result.comment
         }))
-        .sort((left, right) => left.number - right.number)
+      )
     }
   });
 }
