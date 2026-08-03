@@ -18,7 +18,7 @@ export const MAX_IMPORT_ANSWER_LENGTH = 2000;
 export const MAX_IMPORT_WARNINGS = 50;
 export const MAX_IMPORT_WARNING_LENGTH = 300;
 export const MIN_IMPORT_NUMBER = 1;
-export const MAX_IMPORT_NUMBER = 9999;
+export const MAX_IMPORT_NUMBER = 999_999;
 
 export type ImportNumber = {
   number: number;
@@ -36,6 +36,83 @@ export type ParsedImport = {
   /** Что отбраковали мы сами при разборе файла. */
   issues: string[];
 };
+
+/**
+ * Удваивает одиночные обратные слэши. Модели сплошь и рядом отдают LaTeX как есть
+ * (`$\dfrac{1}{2}$` вместо `$\\dfrac{1}{2}$`), и такой JSON не парсится вовсе
+ * либо тихо превращает `\theta` в табуляцию. Экранирование кавычек и `\/`
+ * не трогаем — там обратный слэш стоит по делу.
+ */
+export function repairJsonBackslashes(raw: string): string {
+  return raw.replace(/\\([\s\S])/g, (match, next: string) =>
+    next === "\\" || next === '"' || next === "/" ? match : `\\\\${next}`
+  );
+}
+
+/**
+ * Есть ли в разобранном объекте управляющие символы — след неэкранированного LaTeX
+ * (`\text` превращается в табуляцию, `\frac` — в перевод страницы, `\right` — в возврат
+ * каретки). Перевод строки не считаем подозрительным: он в условиях бывает по делу.
+ */
+function containsControlChars(value: unknown): boolean {
+  if (typeof value === "string") {
+    return /[\u0000-\u0009\u000B-\u001F]/.test(value);
+  }
+
+  if (Array.isArray(value)) {
+    return value.some(containsControlChars);
+  }
+
+  if (value && typeof value === "object") {
+    return Object.values(value).some(containsControlChars);
+  }
+
+  return false;
+}
+
+/**
+ * Разбирает текст файла в объект, вытаскивая его из markdown-обёртки и починив
+ * экранирование, если модель его не сделала.
+ */
+export function parseImportJson(raw: string): { ok: true; value: unknown } | { ok: false; error: string } {
+  const text = raw
+    .trim()
+    .replace(/^```(?:json)?\s*/i, "")
+    .replace(/```\s*$/, "")
+    .trim();
+
+  if (!text) {
+    return { ok: false, error: "Файл пустой." };
+  }
+
+  let direct: unknown = null;
+  let directOk = false;
+
+  try {
+    direct = JSON.parse(text);
+    directOk = true;
+  } catch {
+    directOk = false;
+  }
+
+  if (directOk && !containsControlChars(direct)) {
+    return { ok: true, value: direct };
+  }
+
+  try {
+    return { ok: true, value: JSON.parse(repairJsonBackslashes(text)) };
+  } catch {
+    if (directOk) {
+      return { ok: true, value: direct };
+    }
+
+    return {
+      ok: false,
+      error:
+        "Файл не разбирается как JSON. Чаще всего модель не удвоила обратные слэши в формулах — попросите её прислать файл заново, строго по промпту."
+    };
+  }
+}
 
 export type TopicImportParseResult = { ok: true; data: ParsedImport } | { ok: false; error: string };
 
@@ -216,4 +293,15 @@ export function buildImportPlan(parsed: ImportNumber[], existing: ExistingNumber
   }
 
   return plan;
+}
+
+/** Разбирает содержимое файла целиком: JSON (с починкой экранирования) → валидация. */
+export function parseTopicImportText(raw: string): TopicImportParseResult {
+  const json = parseImportJson(raw);
+
+  if (!json.ok) {
+    return { ok: false, error: json.error };
+  }
+
+  return parseTopicImport(json.value);
 }

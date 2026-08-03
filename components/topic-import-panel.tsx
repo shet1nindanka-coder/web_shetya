@@ -104,21 +104,11 @@ export function TopicImportPanel({ topicId }: TopicImportPanelProps) {
     setError(null);
     setPending(true);
 
-    let payload: unknown;
-
-    try {
-      payload = JSON.parse(rawJson);
-    } catch {
-      setPending(false);
-      setError("Это не похоже на JSON. Скопируйте ответ модели целиком, без пояснений вокруг.");
-      return;
-    }
-
     try {
       const response = await fetch("/api/teacher/topic-import", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ mode, payload, topicId, overwriteFilled })
+        body: JSON.stringify({ mode, text: rawJson, topicId, overwriteFilled })
       });
 
       const data = (await response.json().catch(() => null)) as Record<string, unknown> | null;

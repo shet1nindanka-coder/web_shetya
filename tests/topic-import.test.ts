@@ -4,7 +4,10 @@ import {
   buildImportPlan,
   IMPORT_FORMAT_VERSION,
   MAX_IMPORT_NUMBERS,
-  parseTopicImport
+  parseImportJson,
+  parseTopicImport,
+  parseTopicImportText,
+  repairJsonBackslashes
 } from "@/lib/topic-import";
 import { TOPIC_IMPORT_PROMPT } from "@/lib/topic-import-prompt";
 
@@ -175,4 +178,74 @@ test("TOPIC_IMPORT_PROMPT не потерял обратные слэши при
   assert.ok(TOPIC_IMPORT_PROMPT.includes("\\\\log_2"));
   assert.ok(TOPIC_IMPORT_PROMPT.includes("formatVersion"));
   assert.equal(TOPIC_IMPORT_PROMPT.includes("\t"), false);
+});
+
+// --- разбор текста файла: модели почти всегда забывают удвоить слэши ---
+
+/** Кусок реального ответа модели: LaTeX как есть, JSON.parse на нём падает. */
+const RAW_UNESCAPED = String.raw`{
+  "formatVersion": 1,
+  "topic": { "title": "Уравнения", "description": "Тригонометрия." },
+  "numbers": [
+    { "number": 301001, "conditionLatex": "а) Решите уравнение $\dfrac{1}{2\sin x}-\dfrac{1}{\cos 2x-1}=1$.", "answerLatex": null }
+  ],
+  "warnings": []
+}`;
+
+test("repairJsonBackslashes удваивает одиночные слэши и не трогает уже удвоенные", () => {
+  assert.equal(repairJsonBackslashes(String.raw`$\sin x$`), String.raw`$\\sin x$`);
+  assert.equal(repairJsonBackslashes(String.raw`$\\sin x$`), String.raw`$\\sin x$`);
+});
+
+test("repairJsonBackslashes не ломает экранирование кавычек", () => {
+  assert.equal(repairJsonBackslashes('a \\" b'), 'a \\" b');
+});
+
+test("parseImportJson чинит неэкранированный LaTeX", () => {
+  const result = parseImportJson(RAW_UNESCAPED);
+
+  assert.ok(result.ok);
+  const value = result.value as { numbers: Array<{ conditionLatex: string }> };
+  assert.match(value.numbers[0].conditionLatex, /\\dfrac/);
+});
+
+test("parseImportJson снимает markdown-обёртку", () => {
+  const wrapped = "```json\n" + JSON.stringify({ formatVersion: 1 }) + "\n```";
+
+  assert.ok(parseImportJson(wrapped).ok);
+});
+
+test("parseImportJson спасает LaTeX, который тихо стал табуляцией", () => {
+  // \text — валидный JSON-escape \t, поэтому первый разбор проходит, но с мусором.
+  const raw = '{"formatVersion":1,"topic":{"title":"Т","description":"о"},"numbers":[{"number":1,"conditionLatex":"$S_{\\text{полн}}$","answerLatex":null}]}';
+  const result = parseImportJson(raw);
+
+  assert.ok(result.ok);
+  const value = result.value as { numbers: Array<{ conditionLatex: string }> };
+  assert.equal(value.numbers[0].conditionLatex.includes("\t"), false);
+  assert.match(value.numbers[0].conditionLatex, /\\text\{/);
+});
+
+test("parseImportJson не считает перевод строки поломкой", () => {
+  const raw = '{"formatVersion":1,"topic":{"title":"Т","description":"первая\\nвторая"},"numbers":[]}';
+  const result = parseImportJson(raw);
+
+  assert.ok(result.ok);
+  const value = result.value as { topic: { description: string } };
+  assert.equal(value.topic.description, "первая\nвторая");
+});
+
+test("parseImportJson отвергает пустой файл и мусор", () => {
+  assert.equal(parseImportJson("   ").ok, false);
+  assert.equal(parseImportJson("совсем не json").ok, false);
+});
+
+test("parseTopicImportText принимает реальный ответ модели с шестизначными номерами", () => {
+  const result = parseTopicImportText(RAW_UNESCAPED);
+
+  assert.ok(result.ok);
+  assert.equal(result.data.numbers.length, 1);
+  assert.equal(result.data.numbers[0].number, 301001);
+  assert.match(result.data.numbers[0].conditionLatex, /\\dfrac/);
+  assert.deepEqual(result.data.issues, []);
 });

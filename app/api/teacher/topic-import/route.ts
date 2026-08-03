@@ -7,7 +7,7 @@ import { publishDashboardRealtimeEvent } from "@/lib/dashboard-realtime";
 import { getRequestLogContext, logErrorEvent, logInfoEvent, logWarnEvent } from "@/lib/logger";
 import { revalidateAllPlatformData } from "@/lib/platform-data-cache";
 import { prisma } from "@/lib/prisma";
-import { buildImportPlan, parseTopicImport, type ImportNumber } from "@/lib/topic-import";
+import { buildImportPlan, parseTopicImportText, type ImportNumber } from "@/lib/topic-import";
 
 /*
  * Импорт номеров темы из JSON, который выдаёт внешняя ИИ по промпту из
@@ -25,7 +25,8 @@ const SAMPLE_SIZE = 5;
 
 type RequestBody = {
   mode?: unknown;
-  payload?: unknown;
+  /** Сырой текст файла: разбор и починка экранирования — на сервере. */
+  text?: unknown;
   topicId?: unknown;
   overwriteFilled?: unknown;
 };
@@ -94,7 +95,7 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Не указана тема для импорта." }, { status: 400 });
   }
 
-  const parsed = parseTopicImport(body?.payload);
+  const parsed = parseTopicImportText(typeof body?.text === "string" ? body.text : "");
 
   if (!parsed.ok) {
     logWarnEvent(
