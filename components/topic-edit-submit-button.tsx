@@ -19,7 +19,7 @@ import { ConfirmDialog } from "@/components/confirm-dialog";
  */
 
 type RemovedNumber = {
-  number: number;
+  number: string;
   summary: string;
   hasStudentWork: boolean;
   isAssigned: boolean;
@@ -27,7 +27,7 @@ type RemovedNumber = {
 
 type PreviewResponse = {
   keptCount: number;
-  added: number[];
+  added: string[];
   requiresConfirmation: boolean;
   requiresAssignedConfirmation: boolean;
   removed: RemovedNumber[];
@@ -46,7 +46,7 @@ export function TopicEditSubmitButton({ topicId }: { topicId: string }) {
 
   const isBusy = pending || isChecking;
 
-  const submitForm = (confirmedNumbers: number[], assignedAllowed: boolean) => {
+  const submitForm = (confirmedNumbers: string[], assignedAllowed: boolean) => {
     const form = buttonRef.current?.form;
 
     if (!form) {

@@ -8,7 +8,7 @@ import {
 
 test("неуверенный вердикт больше не показывает ученику «Верно.»", () => {
   const view = toStudentFacingResult({
-    number: 301,
+    number: "301",
     verdict: "UNCERTAIN",
     recognizedAnswer: "x = 5",
     comment: "Верно."
@@ -21,7 +21,7 @@ test("неуверенный вердикт больше не показывае
 
 test("неуверенный вердикт без комментария всё равно получает объяснение", () => {
   const view = toStudentFacingResult({
-    number: 301,
+    number: "301",
     verdict: "UNCERTAIN",
     recognizedAnswer: null,
     comment: null
@@ -31,14 +31,14 @@ test("неуверенный вердикт без комментария всё
 });
 
 test("верный вердикт отдаётся как есть", () => {
-  const source = { number: 302, verdict: "CORRECT" as const, recognizedAnswer: "12", comment: "Верно." };
+  const source = { number: "302", verdict: "CORRECT" as const, recognizedAnswer: "12", comment: "Верно." };
 
   assert.deepEqual(toStudentFacingResult(source), source);
 });
 
 test("ошибочный вердикт сохраняет разбор ошибки", () => {
   const source = {
-    number: 303,
+    number: "303",
     verdict: "INCORRECT" as const,
     recognizedAnswer: "7",
     comment: "Потерян знак при раскрытии скобок."
@@ -49,14 +49,14 @@ test("ошибочный вердикт сохраняет разбор ошиб
 
 test("результаты сортируются по номеру", () => {
   const view = toStudentFacingResults([
-    { number: 310, verdict: "CORRECT", recognizedAnswer: null, comment: null },
-    { number: 4, verdict: "INCORRECT", recognizedAnswer: null, comment: null },
-    { number: 77, verdict: "UNCERTAIN", recognizedAnswer: null, comment: null }
+    { number: "310", verdict: "CORRECT", recognizedAnswer: null, comment: null },
+    { number: "4", verdict: "INCORRECT", recognizedAnswer: null, comment: null },
+    { number: "77", verdict: "UNCERTAIN", recognizedAnswer: null, comment: null }
   ]);
 
   assert.deepEqual(
     view.map((entry) => entry.number),
-    [4, 77, 310]
+    ["4", "77", "310"]
   );
 });
 

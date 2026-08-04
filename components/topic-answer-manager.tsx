@@ -5,13 +5,13 @@ import { Badge } from "@/components/badge";
 import { DeleteButton } from "@/components/delete-button";
 import { ShbzSelect } from "@/components/shbz-select";
 import { LatexAnswerPreview } from "@/components/latex-answer-preview";
-import { cx } from "@/lib/utils";
+import { cx, normalizeHomeworkNumber } from "@/lib/utils";
 
 const ANSWERS_PAGE_SIZE = 10;
 
 type NumberAnswerCard = {
   id: string;
-  number: number;
+  number: string;
   savedConditionLatex: string | null;
   draftConditionLatex: string;
   isSavingCondition: boolean;
@@ -30,10 +30,10 @@ type NumberAnswerCard = {
 
 type TopicAnswerManagerProps = {
   topicId: string;
-  initialNumber?: number | null;
+  initialNumber?: string | null;
   numbers: Array<{
     id: string;
-    number: number;
+    number: string;
     conditionLatex: string | null;
     answerLatex: string | null;
     difficulty: number | null;
@@ -140,7 +140,10 @@ export function TopicAnswerManager({ topicId, initialNumber = null, numbers }: T
       return;
     }
 
-    const matchingIndex = initialState.findIndex((item) => item.number === initialNumber);
+    // Совпадение по нормализованному виду: из поиска могли прийти и «10203», и «010203».
+    const matchingIndex = initialState.findIndex(
+      (item) => normalizeHomeworkNumber(item.number) === normalizeHomeworkNumber(initialNumber)
+    );
 
     if (matchingIndex === -1) {
       return;
@@ -621,7 +624,7 @@ export function TopicAnswerManager({ topicId, initialNumber = null, numbers }: T
               key={item.id}
               className={cx(
                 "topic-answer-card ui-fade-slide ui-panel-soft min-w-0 rounded-[16px] p-4 shadow-[0_10px_24px_rgba(15,23,42,0.05)] sm:p-4.5",
-                item.number === initialNumber
+                initialNumber !== null && normalizeHomeworkNumber(item.number) === normalizeHomeworkNumber(initialNumber)
                   ? "ring-2 ring-[var(--theme-accent-border)] ring-offset-2 ring-offset-transparent"
                   : ""
               )}

@@ -10,7 +10,7 @@ import {
   parseShortlistResponse
 } from "../lib/lesson-plan";
 
-function buildNumber(id: string, number: number, displayOrder: number, extra: Record<string, unknown> = {}) {
+function buildNumber(id: string, number: string, displayOrder: number, extra: Record<string, unknown> = {}) {
   return {
     id,
     number,
@@ -34,15 +34,15 @@ const context = {
       id: "topic-b",
       title: "Тема Б",
       displayOrder: 2,
-      numbers: [buildNumber("n3", 30, 1), buildNumber("n4", 40, 2)]
+      numbers: [buildNumber("n3", "30", 1), buildNumber("n4", "40", 2)]
     },
     {
       id: "topic-a",
       title: "Тема А",
       displayOrder: 1,
       numbers: [
-        buildNumber("n2", 20, 2),
-        buildNumber("n1", 10, 1, { status: "GREEN", statusChangedAt: new Date() })
+        buildNumber("n2", "20", 2),
+        buildNumber("n1", "10", 1, { status: "GREEN", statusChangedAt: new Date() })
       ]
     }
   ],
@@ -88,7 +88,7 @@ test("collectAvailableNumbers passes assignedBefore through", () => {
         id: "topic-c",
         title: "Тема В",
         displayOrder: 3,
-        numbers: [buildNumber("n5", 50, 1, { assignedBefore: true }), buildNumber("n6", 60, 2)]
+        numbers: [buildNumber("n5", "50", 1, { assignedBefore: true }), buildNumber("n6", "60", 2)]
       }
     ]
   };
@@ -115,8 +115,8 @@ test("collectAvailableNumbers passes attemptedInLesson through", () => {
         title: "Тема Г",
         displayOrder: 4,
         numbers: [
-          buildNumber("n7", 70, 1, { attemptedInLesson: true, status: "RED" }),
-          buildNumber("n8", 80, 2)
+          buildNumber("n7", "70", 1, { attemptedInLesson: true, status: "RED" }),
+          buildNumber("n8", "80", 2)
         ]
       }
     ]

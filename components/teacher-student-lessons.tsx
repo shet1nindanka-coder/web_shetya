@@ -12,7 +12,7 @@ const POLL_INTERVAL_MS = 2500;
 type StudentLessonItem = {
   id: string;
   homeworkNumberId: string;
-  number: number;
+  number: string;
   topicTitle: string;
   difficulty: number | null;
   isExtra: boolean;

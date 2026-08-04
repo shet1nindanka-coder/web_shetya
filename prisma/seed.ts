@@ -182,10 +182,10 @@ async function main() {
       homeworkFileId: topicOneHomework.id,
       homeworkNumbers: {
         create: [
-          { number: 112, displayOrder: 1 },
-          { number: 113, displayOrder: 2 },
-          { number: 118, displayOrder: 3 },
-          { number: 120, displayOrder: 4 }
+          { number: "112", displayOrder: 1 },
+          { number: "113", displayOrder: 2 },
+          { number: "118", displayOrder: 3 },
+          { number: "120", displayOrder: 4 }
         ]
       }
     },
@@ -203,10 +203,10 @@ async function main() {
       homeworkFileId: topicTwoHomework.id,
       homeworkNumbers: {
         create: [
-          { number: 204, displayOrder: 1 },
-          { number: 207, displayOrder: 2 },
-          { number: 211, displayOrder: 3 },
-          { number: 215, displayOrder: 4 }
+          { number: "204", displayOrder: 1 },
+          { number: "207", displayOrder: 2 },
+          { number: "211", displayOrder: 3 },
+          { number: "215", displayOrder: 4 }
         ]
       }
     },
@@ -224,9 +224,9 @@ async function main() {
       homeworkFileId: topicThreeHomework.id,
       homeworkNumbers: {
         create: [
-          { number: 301, displayOrder: 1 },
-          { number: 302, displayOrder: 2 },
-          { number: 305, displayOrder: 3 }
+          { number: "301", displayOrder: 1 },
+          { number: "302", displayOrder: 2 },
+          { number: "305", displayOrder: 3 }
         ]
       }
     },
@@ -250,88 +250,88 @@ async function main() {
     data: [
       {
         studentId: ilya.id,
-        homeworkNumberId: topicOneNumbers.get(112)!,
+        homeworkNumberId: topicOneNumbers.get("112")!,
         status: HomeworkNumberStatus.GREEN,
         deadlineAt: atHourWithOffset(-2, 18)
       },
       {
         studentId: ilya.id,
-        homeworkNumberId: topicOneNumbers.get(113)!,
+        homeworkNumberId: topicOneNumbers.get("113")!,
         status: HomeworkNumberStatus.YELLOW,
         deadlineAt: atHourWithOffset(1, 18)
       },
       {
         studentId: ilya.id,
-        homeworkNumberId: topicOneNumbers.get(118)!,
+        homeworkNumberId: topicOneNumbers.get("118")!,
         status: HomeworkNumberStatus.RED,
         deadlineAt: atHourWithOffset(-1, 18)
       },
       {
         studentId: ilya.id,
-        homeworkNumberId: topicOneNumbers.get(120)!,
+        homeworkNumberId: topicOneNumbers.get("120")!,
         status: null,
         deadlineAt: atHourWithOffset(2, 19)
       },
       {
         studentId: ilya.id,
-        homeworkNumberId: topicTwoNumbers.get(204)!,
+        homeworkNumberId: topicTwoNumbers.get("204")!,
         status: HomeworkNumberStatus.GREEN,
         deadlineAt: atHourWithOffset(4, 19)
       },
       {
         studentId: ilya.id,
-        homeworkNumberId: topicTwoNumbers.get(207)!,
+        homeworkNumberId: topicTwoNumbers.get("207")!,
         status: HomeworkNumberStatus.GREEN
       },
       {
         studentId: ilya.id,
-        homeworkNumberId: topicTwoNumbers.get(211)!,
+        homeworkNumberId: topicTwoNumbers.get("211")!,
         status: null,
         deadlineAt: atHourWithOffset(7, 19)
       },
       {
         studentId: ilya.id,
-        homeworkNumberId: topicThreeNumbers.get(301)!,
+        homeworkNumberId: topicThreeNumbers.get("301")!,
         status: HomeworkNumberStatus.YELLOW,
         deadlineAt: atHourWithOffset(9, 20)
       },
       {
         studentId: ilya.id,
-        homeworkNumberId: topicThreeNumbers.get(302)!,
+        homeworkNumberId: topicThreeNumbers.get("302")!,
         status: null,
         deadlineAt: atHourWithOffset(12, 20)
       },
       {
         studentId: maria.id,
-        homeworkNumberId: topicOneNumbers.get(112)!,
+        homeworkNumberId: topicOneNumbers.get("112")!,
         status: HomeworkNumberStatus.GREEN
       },
       {
         studentId: maria.id,
-        homeworkNumberId: topicOneNumbers.get(113)!,
+        homeworkNumberId: topicOneNumbers.get("113")!,
         status: HomeworkNumberStatus.GREEN,
         deadlineAt: atHourWithOffset(3, 18)
       },
       {
         studentId: maria.id,
-        homeworkNumberId: topicOneNumbers.get(120)!,
+        homeworkNumberId: topicOneNumbers.get("120")!,
         status: HomeworkNumberStatus.RED,
         deadlineAt: atHourWithOffset(1, 19)
       },
       {
         studentId: maria.id,
-        homeworkNumberId: topicTwoNumbers.get(204)!,
+        homeworkNumberId: topicTwoNumbers.get("204")!,
         status: HomeworkNumberStatus.YELLOW
       },
       {
         studentId: maria.id,
-        homeworkNumberId: topicTwoNumbers.get(215)!,
+        homeworkNumberId: topicTwoNumbers.get("215")!,
         status: HomeworkNumberStatus.RED,
         deadlineAt: atHourWithOffset(-3, 19)
       },
       {
         studentId: maria.id,
-        homeworkNumberId: topicThreeNumbers.get(305)!,
+        homeworkNumberId: topicThreeNumbers.get("305")!,
         status: HomeworkNumberStatus.GREEN,
         deadlineAt: atHourWithOffset(6, 20)
       }

@@ -23,15 +23,15 @@ test("parseCheckResponse maps verdicts and keeps only valid numbers", () => {
     ]
   });
 
-  const results = parseCheckResponse(content, [204, 207, 211]);
+  const results = parseCheckResponse(content, ["204", "207", "211"]);
 
   assert.equal(results.length, 2);
-  assert.equal(results[0]?.number, 204);
+  assert.equal(results[0]?.number, "204");
   assert.equal(results[0]?.verdict, "CORRECT");
   assert.equal(results[0]?.recognizedAnswer, "x = 5");
   assert.equal(results[0]?.copySuspected, true);
   assert.equal(results[0]?.copyReason, "Вузовские обозначения.");
-  assert.equal(results[1]?.number, 207);
+  assert.equal(results[1]?.number, "207");
   assert.equal(results[1]?.verdict, "INCORRECT");
   assert.equal(results[1]?.confidence, 1);
   assert.equal(results[1]?.copySuspected, false);
@@ -48,7 +48,7 @@ test("parseCheckResponse parses diagnostics fields defensively", () => {
     ]
   });
 
-  const results = parseCheckResponse(content, [1, 2, 3, 4]);
+  const results = parseCheckResponse(content, ["1", "2", "3", "4"]);
 
   assert.equal(results[0]?.errorKind, "SIGN");
   assert.equal(results[0]?.errorNote, "Потерян знак при переносе.");
@@ -67,8 +67,8 @@ test("parseCheckResponse parses diagnostics fields defensively", () => {
 });
 
 test("parseCheckResponse throws on missing results array", () => {
-  assert.throws(() => parseCheckResponse('{"verdict":"CORRECT"}', [1]));
-  assert.throws(() => parseCheckResponse("нет json", [1]));
+  assert.throws(() => parseCheckResponse('{"verdict":"CORRECT"}', ["1"]));
+  assert.throws(() => parseCheckResponse("нет json", ["1"]));
 });
 
 test("normalizeCheckResultsByConfidence fails closed when confidence is missing or too low", () => {
@@ -82,7 +82,7 @@ test("normalizeCheckResultsByConfidence fails closed when confidence is missing 
         { number: 5, verdict: "UNCERTAIN" }
       ]
     }),
-    [1, 2, 3, 4, 5]
+    ["1", "2", "3", "4", "5"]
   );
 
   const normalized = normalizeCheckResultsByConfidence(results, 0.6);

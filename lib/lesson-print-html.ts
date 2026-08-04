@@ -10,7 +10,7 @@ import { KATEX_CSS_MARKER } from "@/lib/print-theme";
  */
 
 export type LessonPrintItem = {
-  number: number;
+  number: string;
   topicTitle: string;
   conditionLatex: string | null;
   isExtra?: boolean;

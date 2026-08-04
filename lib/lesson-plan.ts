@@ -1,5 +1,6 @@
 import type { HomeworkNumberStatus } from "@prisma/client";
 import { extractJsonObject } from "@/lib/solution-check-parse";
+import { compareHomeworkNumbers } from "@/lib/utils";
 
 /*
  * Факты и валидация ИИ-подбора заданий на урок.
@@ -31,7 +32,7 @@ const PLAN_REASONS: PlanReason[] = ["NEW", "GAP"];
 
 export type AvailableNumber = {
   id: string;
-  number: number;
+  number: string;
   topicId: string;
   topicTitle: string;
   topicDisplayOrder: number;
@@ -56,7 +57,7 @@ export type LessonPlanContextTopics = {
     displayOrder: number;
     numbers: Array<{
       id: string;
-      number: number;
+      number: string;
       displayOrder: number;
       difficulty: number | null;
       estimatedMinutes: number | null;
@@ -158,7 +159,9 @@ export function collectAvailableNumbers(
 
   available.sort(
     (a, b) =>
-      a.topicDisplayOrder - b.topicDisplayOrder || a.displayOrder - b.displayOrder || a.number - b.number
+      a.topicDisplayOrder - b.topicDisplayOrder ||
+      a.displayOrder - b.displayOrder ||
+      compareHomeworkNumbers(a.number, b.number)
   );
 
   return available;

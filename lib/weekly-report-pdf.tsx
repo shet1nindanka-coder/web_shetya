@@ -68,7 +68,7 @@ export type WeeklyPdfLesson = {
 export type WeeklyPdfRow = {
   whenLabel: string;
   topicTitle: string;
-  number: number;
+  number: string;
   statusKey: string;
   statusLabel: string;
   note: string;

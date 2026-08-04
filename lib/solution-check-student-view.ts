@@ -1,4 +1,5 @@
 import type { CheckVerdict } from "@/lib/solution-check-parse";
+import { compareHomeworkNumbers } from "@/lib/utils";
 
 /**
  * Что из результата автопроверки видит ученик.
@@ -17,14 +18,14 @@ export const UNCERTAIN_STUDENT_COMMENT =
   "Не удалось уверенно разобрать решение по фото. Покажи его учителю — он проверит вручную.";
 
 export type StudentFacingCheckResult = {
-  number: number;
+  number: string;
   verdict: CheckVerdict;
   recognizedAnswer: string | null;
   comment: string | null;
 };
 
 export function toStudentFacingResult(result: {
-  number: number;
+  number: string;
   verdict: CheckVerdict;
   recognizedAnswer: string | null;
   comment: string | null;
@@ -50,11 +51,11 @@ export function toStudentFacingResult(result: {
 
 export function toStudentFacingResults(
   results: Array<{
-    number: number;
+    number: string;
     verdict: CheckVerdict;
     recognizedAnswer: string | null;
     comment: string | null;
   }>
 ): StudentFacingCheckResult[] {
-  return results.map(toStudentFacingResult).sort((left, right) => left.number - right.number);
+  return results.map(toStudentFacingResult).sort((left, right) => compareHomeworkNumbers(left.number, right.number));
 }

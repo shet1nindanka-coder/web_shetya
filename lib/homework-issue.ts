@@ -6,6 +6,7 @@ import { logInfoEvent } from "@/lib/logger";
 import { createNotification } from "@/lib/notifications";
 import { revalidateAllPlatformData } from "@/lib/platform-data-cache";
 import { prisma } from "@/lib/prisma";
+import { compareHomeworkNumbers } from "@/lib/utils";
 
 /*
  * Единая точка создания HomeworkAssignment: вызывается ручным роутом
@@ -28,7 +29,7 @@ export type IssueHomeworkResult =
       ok: false;
       code: "invalid" | "not_found" | "conflict" | "unavailable";
       message: string;
-      conflictNumbers?: number[];
+      conflictNumbers?: string[];
       reason?: "table" | "deadlineColumn";
     };
 
@@ -95,7 +96,7 @@ export async function issueHomework(input: IssueHomeworkInput): Promise<IssueHom
   // Раньше блокировался любой когда-либо выданный номер, из-за чего перевыдача
   // была невозможна без отмены старого ДЗ. Дедлайн при пересечении номеров
   // больше не теряется: его пересчитывает recomputeMirroredDeadlines.
-  let solvedNumbers: number[] = [];
+  let solvedNumbers: string[] = [];
 
   try {
     const solvedStatuses = await prisma.studentTopicNumberStatus.findMany({
@@ -107,7 +108,7 @@ export async function issueHomework(input: IssueHomeworkInput): Promise<IssueHom
       select: { homeworkNumber: { select: { number: true } } }
     });
     solvedNumbers = Array.from(new Set(solvedStatuses.map((entry) => entry.homeworkNumber.number))).sort(
-      (left, right) => left - right
+      compareHomeworkNumbers
     );
   } catch (error) {
     if (isMissingHomeworkAssignmentTableError(error)) {
@@ -195,7 +196,7 @@ export async function issueHomework(input: IssueHomeworkInput): Promise<IssueHom
   const topic = await prisma.topic.findUnique({ where: { id: topicId }, select: { title: true } });
   const numbersLabel = foundNumbers
     .map((entry) => entry.number)
-    .sort((left, right) => left - right)
+    .sort(compareHomeworkNumbers)
     .join(", ");
   const deadlineLabel = new Intl.DateTimeFormat("ru-RU", {
     day: "numeric",

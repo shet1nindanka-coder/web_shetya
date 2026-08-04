@@ -138,17 +138,18 @@ test("findTopicByHomeworkNumber returns the earliest topic by display order", ()
       id: "topic-2",
       displayOrder: 2,
       createdAt: "2026-04-10T12:00:00.000Z",
-      homeworkNumbers: [{ number: 215 }]
+      homeworkNumbers: [{ number: "215" }]
     },
     {
       id: "topic-1",
       displayOrder: 1,
       createdAt: "2026-04-11T12:00:00.000Z",
-      homeworkNumbers: [{ number: 215 }]
+      homeworkNumbers: [{ number: "215" }]
     }
   ];
 
-  assert.equal(findTopicByHomeworkNumber(topics, 215)?.id, "topic-1");
+  assert.equal(findTopicByHomeworkNumber(topics, "215")?.id, "topic-1");
+  assert.equal(findTopicByHomeworkNumber(topics, "000215")?.id, "topic-1");
 });
 
 test("findTopicByHomeworkNumber returns null for invalid or missing numbers", () => {
@@ -157,10 +158,11 @@ test("findTopicByHomeworkNumber returns null for invalid or missing numbers", ()
       id: "topic-1",
       displayOrder: 1,
       createdAt: "2026-04-10T12:00:00.000Z",
-      homeworkNumbers: [{ number: 112 }]
+      homeworkNumbers: [{ number: "112" }]
     }
   ];
 
-  assert.equal(findTopicByHomeworkNumber(topics, 999), null);
-  assert.equal(findTopicByHomeworkNumber(topics, 0), null);
+  assert.equal(findTopicByHomeworkNumber(topics, "999"), null);
+  assert.equal(findTopicByHomeworkNumber(topics, "0"), null);
+  assert.equal(findTopicByHomeworkNumber(topics, "12а"), null);
 });

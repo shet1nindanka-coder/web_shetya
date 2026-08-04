@@ -90,7 +90,7 @@ test("parseTopicImport выбрасывает записи с пустым ус�
 
   assert.ok(result.ok);
   assert.equal(result.data.numbers.length, 1);
-  assert.equal(result.data.numbers[0].number, 3);
+  assert.equal(result.data.numbers[0].number, "3");
   assert.equal(result.data.issues.length, 3);
 });
 
@@ -117,7 +117,7 @@ test("parseTopicImport сортирует номера по возрастани
   assert.ok(result.ok);
   assert.deepEqual(
     result.data.numbers.map((item) => item.number),
-    [2, 7, 12]
+    ["2", "7", "12"]
   );
 });
 
@@ -143,33 +143,114 @@ test("parseTopicImport падает, если ни одной задачи ра�
 
 test("buildImportPlan делит номера на создание, заполнение и перезапись", () => {
   const parsed = [
-    { number: 1, conditionLatex: "новое условие", answerLatex: "$1$" },
-    { number: 2, conditionLatex: "условие 2", answerLatex: "$2$" },
-    { number: 3, conditionLatex: "другое условие", answerLatex: null },
-    { number: 4, conditionLatex: "условие 4", answerLatex: "$4$" }
+    { number: "1", conditionLatex: "новое условие", answerLatex: "$1$" },
+    { number: "2", conditionLatex: "условие 2", answerLatex: "$2$" },
+    { number: "3", conditionLatex: "другое условие", answerLatex: null },
+    { number: "4", conditionLatex: "условие 4", answerLatex: "$4$" }
   ];
 
   const existing = [
-    { number: 2, conditionLatex: null, answerLatex: null },
-    { number: 3, conditionLatex: "старое условие", answerLatex: null },
-    { number: 4, conditionLatex: "условие 4", answerLatex: "$4$" }
+    { number: "2", conditionLatex: null, answerLatex: null },
+    { number: "3", conditionLatex: "старое условие", answerLatex: null },
+    { number: "4", conditionLatex: "условие 4", answerLatex: "$4$" }
   ];
 
   const plan = buildImportPlan(parsed, existing);
 
   assert.deepEqual(
     plan.toCreate.map((item) => item.number),
-    [1]
+    ["1"]
   );
   assert.deepEqual(
     plan.toFill.map((item) => item.number),
-    [2]
+    ["2"]
   );
   assert.deepEqual(
     plan.toOverwrite.map((item) => item.number),
-    [3]
+    ["3"]
   );
   assert.equal(plan.untouched, 1);
+});
+
+test("parseTopicImport сохраняет ведущие нули строковых номеров", () => {
+  const result = parseTopicImport(
+    payload({
+      numbers: [
+        { number: "010203", conditionLatex: "первое условие", answerLatex: null },
+        { number: "010204", conditionLatex: "второе условие", answerLatex: null }
+      ]
+    })
+  );
+
+  assert.ok(result.ok);
+  assert.deepEqual(
+    result.data.numbers.map((item) => item.number),
+    ["010203", "010204"]
+  );
+});
+
+test("parseTopicImport считает «01» и «1» одним номером: берётся первый", () => {
+  const result = parseTopicImport(
+    payload({
+      numbers: [
+        { number: "01", conditionLatex: "первое", answerLatex: null },
+        { number: "1", conditionLatex: "второе", answerLatex: null }
+      ]
+    })
+  );
+
+  assert.ok(result.ok);
+  assert.equal(result.data.numbers.length, 1);
+  assert.equal(result.data.numbers[0].number, "01");
+  assert.equal(result.data.numbers[0].conditionLatex, "первое");
+  assert.match(result.data.issues[0]!, /встречается несколько раз/);
+});
+
+test("parseTopicImport отклоняет номер с буквой и дробный номер", () => {
+  const result = parseTopicImport(
+    payload({
+      numbers: [
+        { number: "12а", conditionLatex: "условие", answerLatex: null },
+        { number: 2.5, conditionLatex: "условие", answerLatex: null },
+        { number: "7", conditionLatex: "живое условие", answerLatex: null }
+      ]
+    })
+  );
+
+  assert.ok(result.ok);
+  assert.equal(result.data.numbers.length, 1);
+  assert.equal(result.data.numbers[0].number, "7");
+  assert.equal(result.data.issues.length, 2);
+});
+
+test("parseTopicImport сортирует строковые номера численно", () => {
+  const result = parseTopicImport(
+    payload({
+      numbers: [
+        { number: "10", conditionLatex: "в", answerLatex: null },
+        { number: "2", conditionLatex: "а", answerLatex: null },
+        { number: "010203", conditionLatex: "г", answerLatex: null }
+      ]
+    })
+  );
+
+  assert.ok(result.ok);
+  assert.deepEqual(
+    result.data.numbers.map((item) => item.number),
+    ["2", "10", "010203"]
+  );
+});
+
+test("buildImportPlan сопоставляет «010203» из файла с «10203» в теме, а не создаёт дубль", () => {
+  const parsed = [{ number: "010203", conditionLatex: "условие", answerLatex: null }];
+  const existing = [{ number: "10203", conditionLatex: null, answerLatex: null }];
+
+  const plan = buildImportPlan(parsed, existing);
+
+  assert.equal(plan.toCreate.length, 0);
+  assert.equal(plan.toFill.length, 1);
+  assert.equal(plan.toFill[0]!.existingNumber, "10203");
+  assert.equal(plan.toFill[0]!.number, "010203");
 });
 
 test("TOPIC_IMPORT_PROMPT не потерял обратные слэши при экранировании", () => {
@@ -245,7 +326,7 @@ test("parseTopicImportText принимает реальный ответ мод
 
   assert.ok(result.ok);
   assert.equal(result.data.numbers.length, 1);
-  assert.equal(result.data.numbers[0].number, 301001);
+  assert.equal(result.data.numbers[0].number, "301001");
   assert.match(result.data.numbers[0].conditionLatex, /\\dfrac/);
   assert.deepEqual(result.data.issues, []);
 });

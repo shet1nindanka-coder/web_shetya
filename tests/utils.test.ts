@@ -2,8 +2,10 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import { HomeworkNumberStatus, UserRole } from "@prisma/client";
 import {
+  compareHomeworkNumbers,
   cx,
   completionPercent,
+  findHomeworkNumberTwins,
   formatDate,
   formatDateTime,
   formatFileSize,
@@ -13,6 +15,7 @@ import {
   isImageMime,
   isOfficeMime,
   isPdfMime,
+  normalizeHomeworkNumber,
   normalizeLoginInput,
   normalizeMultilineText,
   normalizeSingleLineText,
@@ -49,15 +52,58 @@ test("normalizeLoginInput normalizes login casing and whitespace", () => {
 });
 
 test("parseNumbersInput expands ranges, deduplicates values, and sorts result", () => {
-  assert.deepEqual(parseNumbersInput("5, 2, 2, 4-6, 3"), [2, 3, 4, 5, 6]);
+  assert.deepEqual(parseNumbersInput("5, 2, 2, 4-6, 3"), ["2", "3", "4", "5", "6"]);
 });
 
 test("parseNumbersInput supports reversed ranges and unicode dashes", () => {
-  assert.deepEqual(parseNumbersInput("10–8, 3—4"), [3, 4, 8, 9, 10]);
+  // Ширина берётся у границ: в «10–8» большая граница двузначная, поэтому 08 и 09.
+  assert.deepEqual(parseNumbersInput("10–8, 3—4"), ["3", "4", "08", "09", "10"]);
 });
 
 test("parseNumbersInput ignores invalid and non-positive values", () => {
-  assert.deepEqual(parseNumbersInput("0, -1, hello, 7, 2-2"), [2, 7]);
+  assert.deepEqual(parseNumbersInput("0, -1, hello, 7, 2-2"), ["2", "7"]);
+});
+
+test("parseNumbersInput сохраняет ведущие нули одиночных номеров", () => {
+  assert.deepEqual(parseNumbersInput("010203, 010204"), ["010203", "010204"]);
+});
+
+test("parseNumbersInput разворачивает диапазон с нулями, сохраняя ширину границ", () => {
+  assert.deepEqual(parseNumbersInput("000001-000003"), ["000001", "000002", "000003"]);
+  assert.deepEqual(parseNumbersInput("051008-051010"), ["051008", "051009", "051010"]);
+});
+
+test("parseNumbersInput при границах разной ширины берёт большую", () => {
+  assert.deepEqual(parseNumbersInput("8-12"), ["08", "09", "10", "11", "12"]);
+});
+
+test("parseNumbersInput схлопывает близнецов с ведущими нулями: выигрывает первый", () => {
+  assert.deepEqual(parseNumbersInput("01, 1"), ["01"]);
+  assert.deepEqual(parseNumbersInput("1, 01"), ["1"]);
+});
+
+test("parseNumbersInput сортирует численно, а не лексикографически", () => {
+  assert.deepEqual(parseNumbersInput("10, 2, 020304, 51001"), ["2", "10", "020304", "51001"]);
+});
+
+test("normalizeHomeworkNumber срезает ведущие нули, но не последний символ", () => {
+  assert.equal(normalizeHomeworkNumber("010203"), "10203");
+  assert.equal(normalizeHomeworkNumber("  042  "), "42");
+  assert.equal(normalizeHomeworkNumber("000"), "0");
+  assert.equal(normalizeHomeworkNumber("7"), "7");
+});
+
+test("compareHomeworkNumbers сравнивает численно и не различает близнецов", () => {
+  assert.ok(compareHomeworkNumbers("2", "10") < 0);
+  assert.ok(compareHomeworkNumbers("051001", "51002") < 0);
+  assert.equal(compareHomeworkNumbers("01", "1"), 0);
+});
+
+test("findHomeworkNumberTwins находит совпадения с точностью до ведущих нулей", () => {
+  assert.deepEqual(findHomeworkNumberTwins(["10203", "42"], ["010203", "42", "7"]), [
+    { existing: "10203", typed: "010203" }
+  ]);
+  assert.deepEqual(findHomeworkNumberTwins(["1", "2", "3"], ["1", "2", "3"]), []);
 });
 
 test("formatDate and toIsoDateTimeString handle empty values safely", () => {

@@ -13,7 +13,7 @@ import { ERROR_KIND_GROUP, type ErrorKind } from "@/lib/solution-check-parse";
 import { PLATFORM_DATA_TAGS } from "@/lib/platform-data-cache";
 import { prisma } from "@/lib/prisma";
 import type { TimelineEntry } from "@/lib/progress-timeline";
-import { completionPercent, getStatusCounts } from "@/lib/utils";
+import { compareHomeworkNumbers, completionPercent, getStatusCounts, normalizeHomeworkNumber } from "@/lib/utils";
 
 function buildProgress(statuses: Array<HomeworkNumberStatus | null | undefined>, totalNumbers: number) {
   const counts = getStatusCounts(statuses);
@@ -981,7 +981,7 @@ export async function getDashboardSummary(userId: string, role: UserRole) {
   return getStudentTopicsOverview(userId);
 }
 
-export async function getStudentNumberDetail(studentId: string, topicId: string, targetNumber: number) {
+export async function getStudentNumberDetail(studentId: string, topicId: string, targetNumber: string) {
   const topic = await prisma.topic.findUniqueOrThrow({
     where: { id: topicId },
     select: {
@@ -991,11 +991,17 @@ export async function getStudentNumberDetail(studentId: string, topicId: string,
     }
   });
 
+  const targetRow = await findHomeworkNumberRowByValue(targetNumber, topicId);
+
+  if (!targetRow) {
+    throw new Error("Homework number was not found in the topic.");
+  }
+
   let homeworkNumber;
 
   try {
     homeworkNumber = await prisma.topicHomeworkNumber.findFirstOrThrow({
-      where: { topicId, number: targetNumber },
+      where: { id: targetRow.id },
       select: {
         id: true,
         number: true,
@@ -1016,7 +1022,7 @@ export async function getStudentNumberDetail(studentId: string, topicId: string,
   } catch (error) {
     if (isRecoverablePlatformDataError(error)) {
       homeworkNumber = await prisma.topicHomeworkNumber.findFirstOrThrow({
-        where: { topicId, number: targetNumber },
+        where: { id: targetRow.id },
         select: {
           id: true,
           number: true,
@@ -1074,7 +1080,7 @@ export async function getStudentNumberDetail(studentId: string, topicId: string,
   };
 }
 
-export async function getTeacherNumberDetail(topicId: string, targetNumber: number) {
+export async function getTeacherNumberDetail(topicId: string, targetNumber: string) {
   const topic = await prisma.topic.findUniqueOrThrow({
     where: { id: topicId },
     select: {
@@ -1084,11 +1090,17 @@ export async function getTeacherNumberDetail(topicId: string, targetNumber: numb
     }
   });
 
+  const targetRow = await findHomeworkNumberRowByValue(targetNumber, topicId);
+
+  if (!targetRow) {
+    throw new Error("Homework number was not found in the topic.");
+  }
+
   let homeworkNumber;
 
   try {
     homeworkNumber = await prisma.topicHomeworkNumber.findFirstOrThrow({
-      where: { topicId, number: targetNumber },
+      where: { id: targetRow.id },
       select: {
         id: true,
         number: true,
@@ -1099,7 +1111,7 @@ export async function getTeacherNumberDetail(topicId: string, targetNumber: numb
   } catch (error) {
     if (isRecoverablePlatformDataError(error)) {
       const minimal = await prisma.topicHomeworkNumber.findFirstOrThrow({
-        where: { topicId, number: targetNumber },
+        where: { id: targetRow.id },
         select: {
           id: true,
           number: true
@@ -1297,7 +1309,7 @@ async function getTeacherStudentHomeworksUncached(studentId: string) {
           note: notesEnabled ? ((status as { note?: string | null } | null)?.note ?? "") : ""
         };
       })
-      .sort((left, right) => left.number - right.number);
+      .sort((left, right) => compareHomeworkNumbers(left.number, right.number));
 
     const numberById = new Map(numbers.map((entry) => [entry.homeworkNumberId, entry.number]));
     const checks = assignment.checks.map((check) => ({
@@ -1312,7 +1324,7 @@ async function getTeacherStudentHomeworksUncached(studentId: string) {
       })),
       results: check.results
         .map((result) => ({
-          number: numberById.get(result.homeworkNumberId) ?? 0,
+          number: numberById.get(result.homeworkNumberId) ?? "",
           verdict: result.verdict,
           recognizedAnswer: result.recognizedAnswer,
           comment: result.comment,
@@ -1321,8 +1333,8 @@ async function getTeacherStudentHomeworksUncached(studentId: string) {
           injectionSuspected: result.injectionSuspected,
           injectionNote: result.injectionNote
         }))
-        .filter((result) => result.number > 0)
-        .sort((left, right) => left.number - right.number)
+        .filter((result) => result.number !== "")
+        .sort((left, right) => compareHomeworkNumbers(left.number, right.number))
     }));
     const latestCheck = checks[0] ?? null;
 
@@ -1597,12 +1609,29 @@ export async function getDeveloperStatistics(): Promise<Awaited<ReturnType<typeo
   return getDeveloperStatisticsCached();
 }
 
-export async function findTopicIdByNumber(targetNumber: number) {
-  const homeworkNumber = await prisma.topicHomeworkNumber.findFirst({
-    where: { number: targetNumber },
+/**
+ * Ищет номер по нормализованному виду: и «010203», и «10203» находят одну запись.
+ * Срезать ведущие нули на стороне Prisma нельзя, поэтому endsWith сужает выборку,
+ * а точное совпадение нормализованных видов проверяется в JS.
+ */
+async function findHomeworkNumberRowByValue(targetNumber: string, topicId?: string) {
+  const normalized = normalizeHomeworkNumber(targetNumber);
+
+  if (!/^\d+$/.test(normalized) || normalized === "0") {
+    return null;
+  }
+
+  const candidates = await prisma.topicHomeworkNumber.findMany({
+    where: { ...(topicId ? { topicId } : {}), number: { endsWith: normalized } },
     orderBy: [{ topic: { displayOrder: "asc" } }, { topic: { createdAt: "asc" } }],
-    select: { topicId: true }
+    select: { id: true, topicId: true, number: true }
   });
+
+  return candidates.find((entry) => normalizeHomeworkNumber(entry.number) === normalized) ?? null;
+}
+
+export async function findTopicIdByNumber(targetNumber: string) {
+  const homeworkNumber = await findHomeworkNumberRowByValue(targetNumber);
 
   return homeworkNumber?.topicId ?? null;
 }

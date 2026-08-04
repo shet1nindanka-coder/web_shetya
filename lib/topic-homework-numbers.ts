@@ -3,7 +3,7 @@ import { Prisma } from "@prisma/client";
 const CREATE_TOPIC_NUMBERS_BATCH_SIZE = 200;
 
 export type TopicHomeworkNumberRow = {
-  number: number;
+  number: string;
   displayOrder: number;
 };
 

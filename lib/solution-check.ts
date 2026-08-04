@@ -15,6 +15,7 @@ import {
 import { getStatusForAiVerdict, isStatusDowngrade } from "@/lib/solution-check-status";
 import { readStoredFile } from "@/lib/storage";
 import { deleteOwnedStoredFileIfUnused } from "@/lib/stored-files";
+import { compareHomeworkNumbers, normalizeHomeworkNumber } from "@/lib/utils";
 
 const MAX_PHOTOS_PER_CHECK = 10;
 const MODEL_TIMEOUT_MS = 180_000;
@@ -143,7 +144,7 @@ type CheckAssignment = {
   topicTitle: string;
   numbers: Array<{
     homeworkNumberId: string;
-    number: number;
+    number: string;
     conditionLatex: string | null;
     answerLatex: string | null;
   }>;
@@ -509,13 +510,16 @@ async function applyVerdictsToProgress(assignment: CheckAssignment, results: Par
   const existingByNumberId = new Map(
     existingStatuses.map((status) => [status.homeworkNumberId, status])
   );
-  const numberByValue = new Map(assignment.numbers.map((number) => [number.number, number]));
+  // Ключ — нормализованный вид номера: сопоставление нечувствительно к ведущим нулям.
+  const numberByValue = new Map(
+    assignment.numbers.map((number) => [normalizeHomeworkNumber(number.number), number])
+  );
   const changedAt = new Date();
   const creates = [];
   const updates = [];
 
   for (const result of results) {
-    const target = numberByValue.get(result.number);
+    const target = numberByValue.get(normalizeHomeworkNumber(result.number));
 
     if (!target) {
       continue;
@@ -651,7 +655,7 @@ export async function runHomeworkCheck(checkId: string) {
         conditionLatex: entry.homeworkNumber.conditionLatex,
         answerLatex: entry.homeworkNumber.answerLatex
       }))
-      .sort((left, right) => left.number - right.number),
+      .sort((left, right) => compareHomeworkNumbers(left.number, right.number)),
     photos: check.photos.map((photo) => ({
       storageKey: photo.file.storageKey,
       mimeType: photo.file.mimeType
@@ -779,7 +783,10 @@ export async function runHomeworkCheck(checkId: string) {
       return;
     }
 
-    const numberByValue = new Map(assignment.numbers.map((number) => [number.number, number]));
+    // Ключ — нормализованный вид номера: сопоставление нечувствительно к ведущим нулям.
+  const numberByValue = new Map(
+    assignment.numbers.map((number) => [normalizeHomeworkNumber(number.number), number])
+  );
 
     const finalized = await prisma.$transaction(async (transaction) => {
       const transition = await transaction.homeworkCheck.updateMany({
@@ -803,7 +810,7 @@ export async function runHomeworkCheck(checkId: string) {
       await transaction.homeworkCheckResult.createMany({
         data: results.map((result) => ({
           checkId,
-          homeworkNumberId: numberByValue.get(result.number)!.homeworkNumberId,
+          homeworkNumberId: numberByValue.get(normalizeHomeworkNumber(result.number))!.homeworkNumberId,
           verdict: result.verdict as SolutionVerdict,
           recognizedAnswer: result.recognizedAnswer,
           comment: result.comment,

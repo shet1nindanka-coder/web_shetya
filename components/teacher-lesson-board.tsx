@@ -12,7 +12,7 @@ const POLL_INTERVAL_MS = 2000;
 type LessonBoardItem = {
   id: string;
   homeworkNumberId: string;
-  number: number;
+  number: string;
   difficulty: number | null;
   reason: string;
   minutes: number | null;
@@ -45,7 +45,7 @@ type TeacherLessonBoardProps = {
   bank: Array<{
     topicId: string;
     topicTitle: string;
-    numbers: Array<{ id: string; number: number; difficulty: number | null }>;
+    numbers: Array<{ id: string; number: string; difficulty: number | null }>;
   }>;
 };
 

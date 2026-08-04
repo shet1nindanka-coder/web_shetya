@@ -160,7 +160,7 @@ model Topic {
 model TopicHomeworkNumber {
   id                 String                     @id @default(cuid())
   topicId            String
-  number             Int
+  number             String
   displayOrder       Int                        @default(0)
   answerFileId       String?
   conditionLatex     String?

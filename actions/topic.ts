@@ -18,7 +18,12 @@ import {
   parseConfirmedNumbers,
   summarizeTopicImpact
 } from "@/lib/topic-numbers-change";
-import { normalizeMultilineText, normalizeSingleLineText, parseNumbersInput } from "@/lib/utils";
+import {
+  findHomeworkNumberTwins,
+  normalizeMultilineText,
+  normalizeSingleLineText,
+  parseNumbersInput
+} from "@/lib/utils";
 
 function revalidateTopicRoutes(topicId?: string) {
   revalidateAllPlatformData();
@@ -284,6 +289,28 @@ export async function updateTopicAction(formData: FormData) {
 
   const topicToUpdate = existingTopic!;
 
+  // Близнецы: «010203» при существующем «10203» — формально другая строка, по
+  // смыслу тот же номер. Молча принять нельзя (получился бы дубль рядом со старой
+  // записью и потерянный прогресс), поэтому сохранение отклоняется.
+  const numberTwins = findHomeworkNumberTwins(
+    topicToUpdate.homeworkNumbers.map((entry) => entry.number),
+    numbers
+  );
+
+  if (numberTwins.length > 0) {
+    logWarnEvent(
+      "topic.update.number_twins_rejected",
+      {
+        teacherId: user.id,
+        topicId,
+        twins: numberTwins.map((twin) => `${twin.typed}≈${twin.existing}`)
+      },
+      undefined,
+      "Topic numbers update was rejected: new list contains twins of existing numbers."
+    );
+    redirectTeacherTopicWithStatus(topicId, new URLSearchParams({ error: "numbersTwin" }));
+  }
+
   // Гейт против «молчаливого» стирания чужой работы (PROD-002). План считается
   // здесь заново: подтверждение из формы — это ответ на конкретный список
   // номеров, и если набор с тех пор изменился, подтверждение недействительно.
@@ -396,7 +423,7 @@ export async function updateTopicAction(formData: FormData) {
         topicToUpdate.homeworkNumbers.map((number) => [number.number, number] as const)
       );
       const nextNumbersSet = new Set(numbers);
-      const numbersToCreate: Array<{ number: number; displayOrder: number }> = [];
+      const numbersToCreate: Array<{ number: string; displayOrder: number }> = [];
       const numberUpdates: Array<Promise<unknown>> = [];
       const numberIdsToDelete: string[] = [];
 

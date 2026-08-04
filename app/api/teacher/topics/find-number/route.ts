@@ -5,6 +5,7 @@ import { enforceApiRateLimit } from "@/lib/api-rate-limit";
 import { getRequestLogContext, logErrorEvent, logInfoEvent, logWarnEvent } from "@/lib/logger";
 import { prisma } from "@/lib/prisma";
 import { findTopicByHomeworkNumber } from "@/lib/teacher-topic-selection";
+import { normalizeHomeworkNumber } from "@/lib/utils";
 
 export const runtime = "nodejs";
 
@@ -23,9 +24,13 @@ export async function GET(request: Request) {
   }
 
   const { searchParams } = new URL(request.url);
-  const requestedNumber = Number(searchParams.get("number") ?? "");
+  const requestedNumber = (searchParams.get("number") ?? "").trim();
+  // Поиск по нормализованному виду: «1023» и «001023» находят один номер.
+  // Срезать ведущие нули в Prisma нельзя, поэтому endsWith сужает выборку,
+  // а точное совпадение проверяет findTopicByHomeworkNumber.
+  const normalizedNumber = normalizeHomeworkNumber(requestedNumber);
 
-  if (!Number.isInteger(requestedNumber) || requestedNumber <= 0) {
+  if (!/^\d{1,20}$/.test(requestedNumber) || normalizedNumber === "0") {
     return NextResponse.json({ error: "Укажите корректный номер." }, { status: 400 });
   }
 
@@ -34,7 +39,7 @@ export async function GET(request: Request) {
       where: {
         homeworkNumbers: {
           some: {
-            number: requestedNumber
+            number: { endsWith: normalizedNumber }
           }
         }
       },
@@ -46,7 +51,7 @@ export async function GET(request: Request) {
         createdAt: true,
         homeworkNumbers: {
           where: {
-            number: requestedNumber
+            number: { endsWith: normalizedNumber }
           },
           select: {
             number: true
@@ -56,6 +61,10 @@ export async function GET(request: Request) {
     });
 
     const topic = findTopicByHomeworkNumber(topics, requestedNumber);
+    // В ответ уходит записанный вид номера — как в задачнике, а не как набрали.
+    const recordedNumber =
+      topic?.homeworkNumbers.find((entry) => normalizeHomeworkNumber(entry.number) === normalizedNumber)?.number ??
+      requestedNumber;
 
     if (!topic) {
       logWarnEvent(
@@ -85,8 +94,8 @@ export async function GET(request: Request) {
     return NextResponse.json({
       topicId: topic.id,
       topicTitle: topic.title,
-      number: requestedNumber,
-      href: `/teacher/topics/${topic.id}/numbers/${requestedNumber}`
+      number: recordedNumber,
+      href: `/teacher/topics/${topic.id}/numbers/${encodeURIComponent(recordedNumber)}`
     });
   } catch (error) {
     logErrorEvent(

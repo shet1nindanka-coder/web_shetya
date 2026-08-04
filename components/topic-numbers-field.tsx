@@ -1,7 +1,7 @@
 "use client";
 
 import { useDeferredValue, useMemo, useState } from "react";
-import { parseNumbersInput } from "@/lib/utils";
+import { normalizeHomeworkNumber, parseNumbersInput } from "@/lib/utils";
 
 type TopicNumbersFieldProps = {
   name: string;
@@ -29,7 +29,14 @@ function pluralizeNumbers(count: number) {
   return `${count} номеров`;
 }
 
-function compressNumbersToRanges(numbers: number[]) {
+/** Численное значение номера для проверки соседства; очень длинные — вне диапазонов. */
+function toNumericValue(value: string) {
+  const normalized = normalizeHomeworkNumber(value);
+
+  return normalized.length <= 15 ? Number(normalized) : Number.NaN;
+}
+
+function compressNumbersToRanges(numbers: string[]) {
   if (numbers.length === 0) {
     return "";
   }
@@ -39,17 +46,17 @@ function compressNumbersToRanges(numbers: number[]) {
   let rangeEnd = numbers[0]!;
 
   for (const currentNumber of numbers.slice(1)) {
-    if (currentNumber === rangeEnd + 1) {
+    if (toNumericValue(currentNumber) === toNumericValue(rangeEnd) + 1) {
       rangeEnd = currentNumber;
       continue;
     }
 
-    segments.push(rangeStart === rangeEnd ? String(rangeStart) : `${rangeStart}-${rangeEnd}`);
+    segments.push(rangeStart === rangeEnd ? rangeStart : `${rangeStart}-${rangeEnd}`);
     rangeStart = currentNumber;
     rangeEnd = currentNumber;
   }
 
-  segments.push(rangeStart === rangeEnd ? String(rangeStart) : `${rangeStart}-${rangeEnd}`);
+  segments.push(rangeStart === rangeEnd ? rangeStart : `${rangeStart}-${rangeEnd}`);
 
   return segments.join(", ");
 }

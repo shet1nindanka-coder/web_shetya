@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 
 type CheckResult = {
-  number: number;
+  number: string;
   verdict: "CORRECT" | "INCORRECT" | "UNCERTAIN";
   recognizedAnswer: string | null;
   comment: string | null;

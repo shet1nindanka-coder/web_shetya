@@ -15,7 +15,7 @@ type SubmissionAssignment = {
   photosCount: number;
   numbers: Array<{
     homeworkNumberId: string;
-    number: number;
+    number: string;
     status: HomeworkNumberStatus | null;
   }>;
 };

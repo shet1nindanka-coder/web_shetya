@@ -4,7 +4,7 @@ import { enforceApiRateLimit } from "@/lib/api-rate-limit";
 import { tryGetCurrentUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
 import { buildTopicNumbersChangePlan, loadTopicNumberFacts } from "@/lib/topic-numbers-change";
-import { parseNumbersInput } from "@/lib/utils";
+import { findHomeworkNumberTwins, parseNumbersInput } from "@/lib/utils";
 
 /*
  * Предпросмотр правки поля «Номера» на странице темы: что именно исчезнет,
@@ -53,7 +53,27 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: "Тема не найдена." }, { status: 404 });
   }
 
-  const plan = buildTopicNumbersChangePlan(await loadTopicNumberFacts(topicId), numbers);
+  const facts = await loadTopicNumberFacts(topicId);
+
+  // Близнецы («010203» при существующем «10203») до плана: иначе предпросмотр
+  // покажет «удалится 10203, добавится 010203», а сохранение всё равно отклонится.
+  const twins = findHomeworkNumberTwins(
+    facts.map((entry) => entry.number),
+    numbers
+  );
+
+  if (twins.length > 0) {
+    const [first] = twins;
+
+    return NextResponse.json(
+      {
+        error: `Номера ${first!.typed} и ${first!.existing} — это один и тот же номер, оставьте один вариант записи.`
+      },
+      { status: 400 }
+    );
+  }
+
+  const plan = buildTopicNumbersChangePlan(facts, numbers);
 
   return NextResponse.json({
     keptCount: plan.keptCount,

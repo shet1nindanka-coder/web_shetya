@@ -13,7 +13,7 @@ import { homeworkStatusMeta } from "@/lib/utils";
 type StudentSingleNumberCardProps = {
   topicId: string;
   homeworkNumberId: string;
-  number: number;
+  number: string;
   conditionLatex: string | null;
   answerLatex: string | null;
   initialStatus: HomeworkNumberStatus | null;

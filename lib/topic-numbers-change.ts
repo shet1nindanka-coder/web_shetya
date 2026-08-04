@@ -11,10 +11,12 @@
  * лениво, чтобы модуль можно было гонять в юнит-тестах без подключения к базе).
  */
 
+import { compareHomeworkNumbers } from "@/lib/utils";
+
 /** Номер темы с посчитанными «следами» чужого труда. */
 export type TopicNumberFacts = {
   id: string;
-  number: number;
+  number: string;
   /** Сколько учеников имеют по номеру статус светофора. */
   studentsWithStatus: number;
   /** Сколько учеников написали по номеру заметку. */
@@ -45,7 +47,7 @@ export type TopicNumbersChangePlan = {
   /** Номера, которые исчезнут из темы, вместе с последствиями. */
   removed: TopicNumberImpact[];
   /** Номера, которые появятся. */
-  added: number[];
+  added: string[];
   /** Сколько номеров остаётся как есть. */
   keptCount: number;
   /** Есть ли среди удаляемых хоть один со следами работы — тогда нужен явный ответ. */
@@ -129,14 +131,14 @@ export function hasStudentWork(facts: TopicNumberFacts): boolean {
 /** Что случится, если заменить набор номеров темы на `nextNumbers`. */
 export function buildTopicNumbersChangePlan(
   existing: TopicNumberFacts[],
-  nextNumbers: number[]
+  nextNumbers: string[]
 ): TopicNumbersChangePlan {
   const nextSet = new Set(nextNumbers);
   const existingSet = new Set(existing.map((entry) => entry.number));
 
   const removed: TopicNumberImpact[] = existing
     .filter((entry) => !nextSet.has(entry.number))
-    .sort((left, right) => left.number - right.number)
+    .sort((left, right) => compareHomeworkNumbers(left.number, right.number))
     .map((entry) => ({
       ...entry,
       hasStudentWork: hasStudentWork(entry),
@@ -146,7 +148,7 @@ export function buildTopicNumbersChangePlan(
 
   const added = Array.from(new Set(nextNumbers))
     .filter((number) => !existingSet.has(number))
-    .sort((left, right) => left - right);
+    .sort(compareHomeworkNumbers);
 
   return {
     removed,
@@ -164,7 +166,7 @@ export function buildTopicNumbersChangePlan(
  * показом диалога и сохранением набор изменился (другая вкладка, импорт, чужая
  * правка), подтверждение считается недействительным и сохранять нельзя.
  */
-export function isRemovalConfirmationValid(plan: TopicNumbersChangePlan, confirmedNumbers: number[]): boolean {
+export function isRemovalConfirmationValid(plan: TopicNumbersChangePlan, confirmedNumbers: string[]): boolean {
   if (!plan.requiresConfirmation) {
     return true;
   }
@@ -175,12 +177,12 @@ export function isRemovalConfirmationValid(plan: TopicNumbersChangePlan, confirm
   return needed.length > 0 && needed.every((number) => confirmed.has(number));
 }
 
-/** Разбирает значение скрытого поля подтверждения: «301, 302» → [301, 302]. */
-export function parseConfirmedNumbers(raw: string): number[] {
+/** Разбирает значение скрытого поля подтверждения: «301, 0302» → ["301", "0302"]. */
+export function parseConfirmedNumbers(raw: string): string[] {
   return raw
     .split(",")
-    .map((part) => Number(part.trim()))
-    .filter((value) => Number.isInteger(value) && value > 0);
+    .map((part) => part.trim())
+    .filter((value) => /^\d+$/.test(value));
 }
 
 export type TopicImpactSummary = {

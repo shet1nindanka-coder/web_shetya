@@ -12,7 +12,7 @@ import { ProgressBar } from "@/components/progress-bar";
 type CheckVerdict = "CORRECT" | "INCORRECT" | "UNCERTAIN";
 
 type CheckResult = {
-  number: number;
+  number: string;
   verdict: CheckVerdict;
   recognizedAnswer: string | null;
   comment: string | null;
@@ -51,7 +51,7 @@ type ReviewAssignment = {
   checks: AssignmentCheck[];
   numbers: Array<{
     homeworkNumberId: string;
-    number: number;
+    number: string;
     status: HomeworkNumberStatus | null;
     note: string;
   }>;

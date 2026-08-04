@@ -43,7 +43,7 @@ test("renderLessonPrintHtml gives each student a section with a page break", () 
     createdAt: new Date("2026-07-28T10:00:00Z"),
     groupName: "Группа",
     participants: [
-      { studentName: "Аня", items: [{ number: 1, topicTitle: "Логарифмы", conditionLatex: "$x$" }] },
+      { studentName: "Аня", items: [{ number: "1", topicTitle: "Логарифмы", conditionLatex: "$x$" }] },
       { studentName: "Боря", items: [] },
       { studentName: "Вера", items: [] }
     ]
@@ -59,7 +59,7 @@ test("number without condition falls back to a homework file reference", () => {
     title: "Занятие",
     createdAt: "2026-07-28",
     groupName: null,
-    participants: [{ studentName: "Аня", items: [{ number: 14, topicTitle: "Тема «X»", conditionLatex: null }] }]
+    participants: [{ studentName: "Аня", items: [{ number: "14", topicTitle: "Тема «X»", conditionLatex: null }] }]
   });
 
   assert.ok(html.includes("см. файл ДЗ по теме"));

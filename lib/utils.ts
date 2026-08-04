@@ -149,6 +149,55 @@ export function completionPercent(done: number, total: number) {
   return Math.round((done / total) * 100);
 }
 
+/**
+ * Нормализованный вид номера: без ведущих нулей («010203» → «10203», «000» → «0»).
+ * По нему номера сравниваются и дедуплицируются; записанный вид хранится как набран.
+ */
+export function normalizeHomeworkNumber(value: string) {
+  return value.trim().replace(/^0+(?=.)/, "");
+}
+
+/**
+ * Численное сравнение номеров-строк: «2» < «10», ведущие нули не влияют.
+ * Без Number(): сравнение по длине нормализованного вида и лексикографике
+ * корректно для цифровых строк любой длины.
+ */
+export function compareHomeworkNumbers(left: string, right: string) {
+  const a = normalizeHomeworkNumber(left);
+  const b = normalizeHomeworkNumber(right);
+
+  if (a.length !== b.length) {
+    return a.length - b.length;
+  }
+
+  return a < b ? -1 : a > b ? 1 : 0;
+}
+
+/**
+ * Близнецы: номер из нового списка совпадает с уже сохранённым с точностью до
+ * ведущих нулей, но записан иначе («010203» при существующем «10203»). Формально
+ * для @@unique это разные строки, по смыслу — один номер; сохранение отклоняется.
+ */
+export function findHomeworkNumberTwins(existingNumbers: string[], nextNumbers: string[]) {
+  const byNormalized = new Map<string, string>();
+
+  for (const existing of existingNumbers) {
+    byNormalized.set(normalizeHomeworkNumber(existing), existing);
+  }
+
+  const twins: Array<{ existing: string; typed: string }> = [];
+
+  for (const typed of nextNumbers) {
+    const existing = byNormalized.get(normalizeHomeworkNumber(typed));
+
+    if (existing !== undefined && existing !== typed) {
+      twins.push({ existing, typed });
+    }
+  }
+
+  return twins;
+}
+
 export function parseNumbersInput(input: string) {
   const normalizedInput = input.replace(/[‐‑‒–—―−﹘﹣－]/g, "-");
   const matches = Array.from(
@@ -164,7 +213,19 @@ export function parseNumbersInput(input: string) {
   // синхронно развернут гигантский Set и попытаются вставить миллионы строк,
   // заблокировав единственный инстанс.
   const MAX_NUMBERS = 2000;
-  const numbers = new Set<number>();
+  // Ключ — нормализованный вид, значение — как набрано: «01, 1» — один номер,
+  // выигрывает первый набранный вариант.
+  const numbers = new Map<string, string>();
+
+  const addNumber = (recorded: string) => {
+    const normalized = normalizeHomeworkNumber(recorded);
+
+    if (normalized === "0" || numbers.has(normalized)) {
+      return;
+    }
+
+    numbers.set(normalized, recorded);
+  };
 
   for (const match of matches) {
     if (numbers.size >= MAX_NUMBERS) {
@@ -172,35 +233,43 @@ export function parseNumbersInput(input: string) {
     }
 
     if (match.includes("-")) {
-      const [rawStart, rawEnd] = match.split("-").map((value) => Number(value.trim()));
+      const [rawStart = "", rawEnd = ""] = match.split("-").map((value) => value.trim());
 
-      if (!Number.isInteger(rawStart) || !Number.isInteger(rawEnd) || rawStart <= 0 || rawEnd <= 0) {
+      // Границы длиннее 15 цифр не влезают в точные целые — почти наверняка опечатка.
+      if (!rawStart || !rawEnd || rawStart.length > 15 || rawEnd.length > 15) {
         continue;
       }
 
-      const start = Math.min(rawStart, rawEnd);
-      const end = Math.max(rawStart, rawEnd);
+      const startValue = Number(rawStart);
+      const endValue = Number(rawEnd);
+
+      if (startValue <= 0 || endValue <= 0) {
+        continue;
+      }
+
+      const start = Math.min(startValue, endValue);
+      const end = Math.max(startValue, endValue);
 
       // Гигантский диапазон — почти наверняка опечатка: пропускаем его целиком.
       if (end - start >= MAX_NUMBERS) {
         continue;
       }
 
+      // Ширина берётся у границ: «000001-000005» разворачивается в шестизначные
+      // номера. При границах разной ширины действует большая.
+      const width = Math.max(rawStart.length, rawEnd.length);
+
       for (let current = start; current <= end && numbers.size < MAX_NUMBERS; current += 1) {
-        numbers.add(current);
+        addNumber(String(current).padStart(width, "0"));
       }
 
       continue;
     }
 
-    const value = Number(match.trim());
-
-    if (Number.isInteger(value) && value > 0) {
-      numbers.add(value);
-    }
+    addNumber(match.trim());
   }
 
-  return Array.from(numbers).sort((left, right) => left - right);
+  return Array.from(numbers.values()).sort(compareHomeworkNumbers);
 }
 
 export function getFileExtension(fileName: string) {

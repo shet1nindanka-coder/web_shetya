@@ -14,7 +14,7 @@ type AssignBoardTopic = {
   totalNumbers: number;
   numbers: Array<{
     id: string;
-    number: number;
+    number: string;
     status: HomeworkNumberStatus | null;
     deadlineAt: string | null;
   }>;

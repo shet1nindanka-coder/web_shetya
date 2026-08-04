@@ -50,6 +50,11 @@ const topicEditNotices = {
     tone: "error",
     message: "Не удалось сохранить изменения. Проверьте подключение к базе данных и повторите попытку."
   },
+  numbersTwin: {
+    tone: "error",
+    message:
+      "Изменения не сохранены: среди новых номеров есть совпадающие с существующими с точностью до ведущих нулей (например, 01 и 1). Это один и тот же номер — оставьте один вариант записи."
+  },
   numbersConfirm: {
     tone: "error",
     message:
@@ -76,8 +81,8 @@ export default async function TeacherTopicPage({ params, searchParams }: Teacher
     typeof resolvedSearchParams.fileDeleted === "string" ? resolvedSearchParams.fileDeleted : undefined;
   const error = typeof resolvedSearchParams.error === "string" ? resolvedSearchParams.error : undefined;
   const requestedNumber =
-    typeof resolvedSearchParams.number === "string" && Number.isInteger(Number(resolvedSearchParams.number))
-      ? Number(resolvedSearchParams.number)
+    typeof resolvedSearchParams.number === "string" && /^\d+$/.test(resolvedSearchParams.number.trim())
+      ? resolvedSearchParams.number.trim()
       : null;
   const noticeKey =
     saved === "1"

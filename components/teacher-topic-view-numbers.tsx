@@ -5,7 +5,7 @@ import { LatexAnswerPreview } from "@/components/latex-answer-preview";
 type TeacherTopicViewNumbersProps = {
   numbers: Array<{
     id: string;
-    number: number;
+    number: string;
     conditionLatex: string | null;
     answerLatex: string | null;
   }>;

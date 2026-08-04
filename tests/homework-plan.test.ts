@@ -90,7 +90,7 @@ test("candidate pool is limited to the single homework topic", () => {
   const number = (id: string, n: number) =>
     ({
       id,
-      number: n,
+      number: String(n),
       displayOrder: n,
       difficulty: null,
       estimatedMinutes: null,

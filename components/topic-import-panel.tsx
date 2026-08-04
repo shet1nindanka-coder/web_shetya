@@ -6,7 +6,7 @@ import { LatexAnswerPreview } from "@/components/latex-answer-preview";
 import { TOPIC_IMPORT_PROMPT } from "@/lib/topic-import-prompt";
 
 type PreviewNumber = {
-  number: number;
+  number: string;
   conditionLatex: string;
   answerLatex: string | null;
 };

@@ -1,3 +1,5 @@
+import { normalizeHomeworkNumber } from "@/lib/utils";
+
 export type TeacherTopicSelectionTopic = {
   id: string;
   title: string;
@@ -16,7 +18,7 @@ export type TeacherTopicNumberSearchTopic = {
   displayOrder: number;
   createdAt: Date | string;
   homeworkNumbers: Array<{
-    number: number;
+    number: string;
   }>;
 };
 
@@ -105,9 +107,11 @@ export function moveTopicByDirection<T extends { id: string }>(
 
 export function findTopicByHomeworkNumber<T extends TeacherTopicNumberSearchTopic>(
   topics: T[],
-  targetNumber: number
+  targetNumber: string
 ) {
-  if (!Number.isInteger(targetNumber) || targetNumber <= 0) {
+  const normalizedTarget = normalizeHomeworkNumber(targetNumber);
+
+  if (!/^\d+$/.test(normalizedTarget) || normalizedTarget === "0") {
     return null;
   }
 
@@ -120,7 +124,9 @@ export function findTopicByHomeworkNumber<T extends TeacherTopicNumberSearchTopi
   });
 
   return (
-    orderedTopics.find((topic) => topic.homeworkNumbers.some((number) => number.number === targetNumber)) ?? null
+    orderedTopics.find((topic) =>
+      topic.homeworkNumbers.some((number) => normalizeHomeworkNumber(number.number) === normalizedTarget)
+    ) ?? null
   );
 }
 

@@ -19,7 +19,7 @@ type ComposeBoardTopic = {
   totalNumbers: number;
   numbers: Array<{
     id: string;
-    number: number;
+    number: string;
     status: HomeworkNumberStatus | null;
     inLesson: boolean;
   }>;

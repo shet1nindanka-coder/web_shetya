@@ -1,4 +1,9 @@
-import { normalizeMultilineText, normalizeSingleLineText } from "@/lib/utils";
+import {
+  compareHomeworkNumbers,
+  normalizeHomeworkNumber,
+  normalizeMultilineText,
+  normalizeSingleLineText
+} from "@/lib/utils";
 
 /*
  * Разбор файла импорта темы: JSON, который выдаёт внешний ИИ по промпту из
@@ -17,11 +22,11 @@ export const MAX_IMPORT_CONDITION_LENGTH = 4000;
 export const MAX_IMPORT_ANSWER_LENGTH = 2000;
 export const MAX_IMPORT_WARNINGS = 50;
 export const MAX_IMPORT_WARNING_LENGTH = 300;
-export const MIN_IMPORT_NUMBER = 1;
-export const MAX_IMPORT_NUMBER = 999_999;
+// Номер — строка из цифр как в задачнике, ведущие нули значимы («010203»).
+export const IMPORT_NUMBER_PATTERN = /^\d{1,12}$/;
 
 export type ImportNumber = {
-  number: number;
+  number: string;
   conditionLatex: string;
   answerLatex: string | null;
 };
@@ -148,6 +153,29 @@ function readString(value: unknown): string {
   return typeof value === "string" ? value : "";
 }
 
+/**
+ * Номер из файла: строка из цифр как в задачнике («010203»), ведущие нули значимы.
+ * JSON-число тоже принимается (нули в нём невозможны, но «"number": 301001» модели
+ * шлют постоянно); дроби и номера с буквами отклоняются.
+ */
+function readImportNumber(value: unknown): string | null {
+  if (typeof value === "string") {
+    const trimmed = value.trim();
+
+    if (!IMPORT_NUMBER_PATTERN.test(trimmed) || normalizeHomeworkNumber(trimmed) === "0") {
+      return null;
+    }
+
+    return trimmed;
+  }
+
+  if (typeof value === "number" && Number.isInteger(value) && value >= 1 && value <= 999_999_999_999) {
+    return String(value);
+  }
+
+  return null;
+}
+
 /** Разбирает и нормализует файл импорта. Грубые поломки → ok: false, мелочь → issues. */
 export function parseTopicImport(raw: unknown): TopicImportParseResult {
   if (!raw || typeof raw !== "object" || Array.isArray(raw)) {
@@ -187,7 +215,8 @@ export function parseTopicImport(raw: unknown): TopicImportParseResult {
   }
 
   const issues: string[] = [];
-  const seen = new Set<number>();
+  // Дедупликация по нормализованному виду: «01» и «1» — один номер, берётся первый.
+  const seen = new Set<string>();
   const numbers: ImportNumber[] = [];
 
   for (const entry of record.numbers) {
@@ -204,14 +233,16 @@ export function parseTopicImport(raw: unknown): TopicImportParseResult {
     }
 
     const item = entry as Record<string, unknown>;
-    const number = toFiniteInteger(item.number);
+    const number = readImportNumber(item.number);
 
-    if (number === null || number < MIN_IMPORT_NUMBER || number > MAX_IMPORT_NUMBER) {
+    if (number === null) {
       issues.push(`Пропущена запись с неверным номером: ${JSON.stringify(item.number ?? null)}.`);
       continue;
     }
 
-    if (seen.has(number)) {
+    const normalizedNumber = normalizeHomeworkNumber(number);
+
+    if (seen.has(normalizedNumber)) {
       issues.push(`Номер ${number} встречается несколько раз — взят первый.`);
       continue;
     }
@@ -228,7 +259,7 @@ export function parseTopicImport(raw: unknown): TopicImportParseResult {
 
     const answerRaw = normalizeMultilineText(readString(item.answerLatex)).slice(0, MAX_IMPORT_ANSWER_LENGTH);
 
-    seen.add(number);
+    seen.add(normalizedNumber);
     numbers.push({ number, conditionLatex, answerLatex: answerRaw || null });
   }
 
@@ -236,7 +267,7 @@ export function parseTopicImport(raw: unknown): TopicImportParseResult {
     return { ok: false, error: "В файле нет ни одной задачи, которую удалось бы разобрать." };
   }
 
-  numbers.sort((a, b) => a.number - b.number);
+  numbers.sort((a, b) => compareHomeworkNumbers(a.number, b.number));
 
   const warnings = Array.isArray(record.warnings)
     ? record.warnings
@@ -249,18 +280,24 @@ export function parseTopicImport(raw: unknown): TopicImportParseResult {
 }
 
 export type ExistingNumber = {
-  number: number;
+  number: string;
   conditionLatex: string | null;
   answerLatex: string | null;
+};
+
+/** Обновление существующего номера: existingNumber — записанный вид в теме
+ * (может отличаться от файла ведущими нулями), по нему идёт запись в базу. */
+export type ImportPlanUpdate = ImportNumber & {
+  existingNumber: string;
 };
 
 export type ImportPlan = {
   /** Номеров, которых в теме ещё нет. */
   toCreate: ImportNumber[];
   /** Номер есть, но соответствующее поле пустое — заполняем всегда. */
-  toFill: ImportNumber[];
+  toFill: ImportPlanUpdate[];
   /** Номер есть, поле заполнено и отличается — только при overwriteFilled. */
-  toOverwrite: ImportNumber[];
+  toOverwrite: ImportPlanUpdate[];
   /** Всё уже совпадает — не трогаем. */
   untouched: number;
 };
@@ -268,14 +305,17 @@ export type ImportPlan = {
 /**
  * Сопоставляет файл с текущим состоянием темы. Ничего не пишет — результат
  * показывается в предпросмотре, чтобы было видно, сколько ручной работы затрётся.
+ *
+ * Сопоставление — по нормализованному виду: иначе повторный импорт создал бы
+ * дубль «010203» рядом с «10203», потерявшим ведущий ноль до миграции.
  */
 export function buildImportPlan(parsed: ImportNumber[], existing: ExistingNumber[]): ImportPlan {
-  const existingByNumber = new Map(existing.map((row) => [row.number, row]));
+  const existingByNumber = new Map(existing.map((row) => [normalizeHomeworkNumber(row.number), row]));
 
   const plan: ImportPlan = { toCreate: [], toFill: [], toOverwrite: [], untouched: 0 };
 
   for (const item of parsed) {
-    const current = existingByNumber.get(item.number);
+    const current = existingByNumber.get(normalizeHomeworkNumber(item.number));
 
     if (!current) {
       plan.toCreate.push(item);
@@ -294,12 +334,12 @@ export function buildImportPlan(parsed: ImportNumber[], existing: ExistingNumber
     const needsFill = (!conditionFilled && conditionDiffers) || (!answerFilled && item.answerLatex !== null);
 
     if (needsOverwrite) {
-      plan.toOverwrite.push(item);
+      plan.toOverwrite.push({ ...item, existingNumber: current.number });
       continue;
     }
 
     if (needsFill) {
-      plan.toFill.push(item);
+      plan.toFill.push({ ...item, existingNumber: current.number });
       continue;
     }
 

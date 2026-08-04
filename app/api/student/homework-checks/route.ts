@@ -255,7 +255,7 @@ export async function GET(request: Request) {
           verdict: SolutionVerdict;
           recognizedAnswer: string | null;
           comment: string | null;
-          homeworkNumber: { number: number };
+          homeworkNumber: { number: string };
         }>;
       }
     | null;

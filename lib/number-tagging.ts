@@ -105,7 +105,7 @@ export function parseTaggingResponse(content: string, expectedCount: number): Ta
 
 type TaggingCandidate = {
   id: string;
-  number: number;
+  number: string;
   conditionLatex: string | null;
   topic: { title: string };
 };

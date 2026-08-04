@@ -15,9 +15,11 @@ type StudentNumberPageProps = {
 export default async function StudentNumberPage({ params }: StudentNumberPageProps) {
   const user = await requireUser(UserRole.STUDENT);
   const { number: numberParam } = await params;
-  const targetNumber = Number(numberParam);
+  // Номер — строка как есть; поиск дальше идёт по нормализованному виду, поэтому
+  // и /numbers/010203, и /numbers/10203 открывают одну и ту же карточку.
+  const targetNumber = decodeURIComponent(numberParam).trim();
 
-  if (!Number.isInteger(targetNumber) || targetNumber <= 0) {
+  if (!/^\d+$/.test(targetNumber)) {
     notFound();
   }
 

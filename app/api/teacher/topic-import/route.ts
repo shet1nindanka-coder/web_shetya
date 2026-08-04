@@ -157,7 +157,9 @@ export async function POST(request: Request) {
 
       for (const item of toWrite) {
         await tx.topicHomeworkNumber.update({
-          where: { topicId_number: { topicId: topic.id, number: item.number } },
+          // existingNumber — записанный вид номера в теме: он может отличаться от
+          // файла ведущими нулями («10203» в теме против «010203» в файле).
+          where: { topicId_number: { topicId: topic.id, number: item.existingNumber } },
           // difficulty, estimatedMinutes и answerFile живут своей жизнью — импорт их не трогает.
           data: { conditionLatex: item.conditionLatex, answerLatex: item.answerLatex }
         });

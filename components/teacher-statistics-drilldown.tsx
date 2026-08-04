@@ -12,7 +12,7 @@ type DrilldownTopic = {
   totalNumbers: number;
   homeworkNumbers: Array<{
     id: string;
-    number: number;
+    number: string;
     statuses: Array<{
       studentId: string;
       status: DrilldownStatus;

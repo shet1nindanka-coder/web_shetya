@@ -9,7 +9,7 @@ import { cx } from "@/lib/utils";
 type TeacherSingleNumberCardProps = {
   topicId: string;
   homeworkNumberId: string;
-  number: number;
+  number: string;
   initialConditionLatex: string | null;
   initialAnswerLatex: string | null;
 };

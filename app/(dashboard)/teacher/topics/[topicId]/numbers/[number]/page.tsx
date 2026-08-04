@@ -18,9 +18,11 @@ export default async function TeacherNumberPage({ params }: TeacherNumberPagePro
   const user = await requireUser([UserRole.TEACHER, UserRole.DEVELOPER]);
   const isDeveloper = user.role === UserRole.DEVELOPER;
   const { topicId, number: numberParam } = await params;
-  const targetNumber = Number(numberParam);
+  // Номер — строка как есть; поиск идёт по нормализованному виду («010203» и «10203» —
+  // одна карточка).
+  const targetNumber = decodeURIComponent(numberParam).trim();
 
-  if (!Number.isInteger(targetNumber) || targetNumber <= 0) {
+  if (!/^\d+$/.test(targetNumber)) {
     notFound();
   }
 

@@ -12,7 +12,7 @@ const POLL_INTERVAL_MS = 2000;
 type PlanItem = {
   id: string;
   homeworkNumberId: string;
-  number: number;
+  number: string;
   difficulty: number | null;
   conditionLatex: string | null;
   reason: string;
@@ -42,7 +42,7 @@ type TeacherHomeworkPlanBoardProps = {
     topicTitle: string;
     participants: PlanParticipant[];
   };
-  topicNumbers: Array<{ id: string; number: number; difficulty: number | null }>;
+  topicNumbers: Array<{ id: string; number: string; difficulty: number | null }>;
 };
 
 const reasonMeta: Record<string, { label: string; background: string; color: string }> = {
@@ -485,7 +485,7 @@ function ManualAdd({
   onAdd
 }: {
   topicTitle: string;
-  numbers: Array<{ id: string; number: number; difficulty: number | null }>;
+  numbers: Array<{ id: string; number: string; difficulty: number | null }>;
   busy: boolean;
   existingIds: string[];
   onAdd: (homeworkNumberId: string) => void;

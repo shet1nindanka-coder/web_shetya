@@ -85,7 +85,7 @@ Postgres service.
   `public/`. Allowed uploads: pdf, docx, png, jpg/jpeg. Server-action body limit is 15 MB
   (`next.config.ts`).
 - **Domain helpers** — `lib/utils.ts`: `homeworkStatusMeta` (GREEN/YELLOW/RED labels + CSS classes),
-  `roleHome`, `parseNumbersInput` (accepts lists and ranges like `"1-5, 7, 10"`), text
+  `roleHome`, `parseNumbersInput` (returns strings, keeps leading zeros; ranges like `"051001-051009"` inherit the boundaries' width), text
   normalizers, date/size formatters, MIME helpers, allowed-upload lists.
 - **Rate limiting** — `lib/rate-limit.ts`, in-memory token bucket (login and student creation);
   `lib/persistent-rate-limit.ts` — durable buckets in Postgres (AI budgets).
@@ -136,7 +136,9 @@ Postgres service.
   theory/homework/answer references, cleaned up when no longer referenced.
 - `Topic` — shared topic: `title`, `description`, `displayOrder`, optional `theoryFile` /
   `homeworkFile`.
-- `TopicHomeworkNumber` — a problem inside a topic: `number`, `displayOrder`, optional
+- `TopicHomeworkNumber` — a problem inside a topic: `number` (строка: ведущие нули значимы,
+  «010203»; сравнение и дедупликация — по нормализованному виду `normalizeHomeworkNumber`,
+  численная сортировка — `compareHomeworkNumbers`), `displayOrder`, optional
   `conditionLatex`, `answerLatex`, `answerFile`, `difficulty` (1–10) + `estimatedMinutes` +
   `difficultySource` (`ai` размечается батчем из дев-панели, `manual` не перезаписывается ИИ).
   Unique on `(topicId, number)`.

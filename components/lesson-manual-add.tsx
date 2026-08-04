@@ -6,7 +6,7 @@ import { ShbzSelect } from "@/components/shbz-select";
 export type LessonBankTopic = {
   topicId: string;
   topicTitle: string;
-  numbers: Array<{ id: string; number: number; difficulty: number | null }>;
+  numbers: Array<{ id: string; number: string; difficulty: number | null }>;
 };
 
 /** Ручное добавление номера в набор урока: тема → номер → в основную или доп. часть. */

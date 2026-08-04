@@ -226,7 +226,9 @@ export async function POST(request: Request) {
       prisma.topicHomeworkNumber.findMany({
         where: { id: { in: homeworkNumberIds } },
         select: { number: true },
-        orderBy: { number: "asc" }
+        // С текстовой колонкой orderBy по number станет лексикографическим («10» < «2») —
+        // сортируем, как и весь остальной код, по displayOrder.
+        orderBy: { displayOrder: "asc" }
       })
     ]);
     const numbersLabel = numbers.map((entry) => entry.number).join(", ");

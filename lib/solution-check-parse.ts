@@ -1,3 +1,5 @@
+import { normalizeHomeworkNumber } from "@/lib/utils";
+
 export type CheckVerdict = "CORRECT" | "INCORRECT" | "UNCERTAIN";
 
 // Единственный источник правды по типам ошибок: на него ссылаются промпт автопроверки
@@ -28,7 +30,7 @@ export const ERROR_KIND_GROUP: Record<ErrorKind, "conceptual" | "technical" | "i
 };
 
 export type ParsedCheckResult = {
-  number: number;
+  number: string;
   verdict: CheckVerdict;
   recognizedAnswer: string | null;
   comment: string | null;
@@ -84,15 +86,18 @@ export function extractJsonObject(content: string): unknown {
   return JSON.parse(withoutFences.slice(start, end + 1));
 }
 
-export function parseCheckResponse(content: string, validNumbers: number[]): ParsedCheckResult[] {
+export function parseCheckResponse(content: string, validNumbers: string[]): ParsedCheckResult[] {
   const payload = extractJsonObject(content) as { results?: unknown } | null;
 
   if (!payload || !Array.isArray(payload.results)) {
     throw new Error("Модель вернула JSON без массива results.");
   }
 
-  const validSet = new Set(validNumbers);
-  const seenNumbers = new Set<number>();
+  // Модель может вернуть номер и числом (JSON срезает ведущий ноль: 10203),
+  // и строкой («010203») — сопоставляем по нормализованному виду и возвращаем
+  // записанный вид номера из задания.
+  const validByNormalized = new Map(validNumbers.map((value) => [normalizeHomeworkNumber(value), value]));
+  const seenNumbers = new Set<string>();
   const parsed: ParsedCheckResult[] = [];
 
   for (const entry of payload.results) {
@@ -101,14 +106,17 @@ export function parseCheckResponse(content: string, validNumbers: number[]): Par
     }
 
     const raw = entry as Record<string, unknown>;
-    const number = Number(raw.number);
+    const rawNumber =
+      typeof raw.number === "string" || typeof raw.number === "number" ? String(raw.number).trim() : "";
+    const normalizedNumber = normalizeHomeworkNumber(rawNumber);
+    const number = /^\d+$/.test(normalizedNumber) ? validByNormalized.get(normalizedNumber) : undefined;
     const verdict = verdictAliases[String(raw.verdict ?? "").trim().toUpperCase()];
 
-    if (!Number.isInteger(number) || !validSet.has(number) || seenNumbers.has(number) || !verdict) {
+    if (number === undefined || seenNumbers.has(normalizedNumber) || !verdict) {
       continue;
     }
 
-    seenNumbers.add(number);
+    seenNumbers.add(normalizedNumber);
 
     const confidenceRaw = typeof raw.confidence === "number" ? raw.confidence : Number.NaN;
     const recognizedAnswer =
