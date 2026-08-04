@@ -42,7 +42,7 @@ export function LatexAnswerPreview({ value }: LatexAnswerPreviewProps) {
   }
 
   return (
-    <div className="min-w-0 max-w-full space-y-4 text-sm leading-7 text-[var(--theme-text-default)]">
+    <div className="min-w-0 max-w-full space-y-4 rounded-2xl bg-[var(--theme-surface-soft)] px-3 py-3 text-sm leading-7 text-[var(--theme-text-default)]">
       {blocks.map((block, blockIndex) => {
         const isDisplayMath =
           (block.startsWith("$$") && block.endsWith("$$") && block.length > 4) ||
@@ -56,10 +56,7 @@ export function LatexAnswerPreview({ value }: LatexAnswerPreviewProps) {
           // отдельная формула, переносится на новую строку целиком.
           if (mathItems.labeled && mathItems.items.length > 1) {
             return (
-              <div
-                key={`block-${blockIndex}`}
-                className="min-w-0 max-w-full rounded-2xl bg-[var(--theme-surface-soft)] px-3 py-3"
-              >
+              <div key={`block-${blockIndex}`} className="min-w-0 max-w-full">
                 <div className="flex flex-wrap items-center gap-x-7 gap-y-3">
                   {mathItems.items.map((item, itemIndex) => (
                     <span key={`math-item-${blockIndex}-${itemIndex}`} className="inline-block max-w-full py-0.5">
@@ -79,10 +76,7 @@ export function LatexAnswerPreview({ value }: LatexAnswerPreviewProps) {
           }
 
           return (
-            <div
-              key={`block-${blockIndex}`}
-              className="min-w-0 max-w-full overflow-x-auto rounded-2xl bg-[var(--theme-surface-soft)] px-3 py-3"
-            >
+            <div key={`block-${blockIndex}`} className="min-w-0 max-w-full overflow-x-auto">
               <BlockMath
                 math={math}
                 renderError={(error) => (
