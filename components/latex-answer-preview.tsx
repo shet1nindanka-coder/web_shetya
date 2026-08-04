@@ -100,19 +100,30 @@ export function LatexAnswerPreview({ value }: LatexAnswerPreviewProps) {
             {block.split("\n").map((line, lineIndex) => {
               const { items, labeled } = splitLineIntoItems(line);
 
+              // Пункты «А) … Б) …» раскладываются flex-сеткой: строки сетки не
+              // пересекаются по вертикали, даже когда в пунктах высокие дроби —
+              // обычный абзац с фиксированным межстрочным интервалом здесь
+              // давал наезжание строк друг на друга.
+              if (labeled) {
+                return (
+                  <div
+                    key={`line-${blockIndex}-${lineIndex}`}
+                    className="flex flex-wrap items-baseline gap-x-7 gap-y-3"
+                  >
+                    {items.map((item, itemIndex) => (
+                      <span
+                        key={`item-${blockIndex}-${lineIndex}-${itemIndex}`}
+                        className="inline-block max-w-full py-0.5"
+                      >
+                        {renderInlineLine(item, `${lineIndex}-${itemIndex}`)}
+                      </span>
+                    ))}
+                  </div>
+                );
+              }
+
               return (
-                <p key={`line-${blockIndex}-${lineIndex}`}>
-                  {labeled
-                    ? items.map((item, itemIndex) => (
-                        <Fragment key={`item-${blockIndex}-${lineIndex}-${itemIndex}`}>
-                          {itemIndex > 0 ? " " : null}
-                          <span className="inline-block max-w-full align-baseline">
-                            {renderInlineLine(item, `${lineIndex}-${itemIndex}`)}
-                          </span>
-                        </Fragment>
-                      ))
-                    : renderInlineLine(line, `${lineIndex}`)}
-                </p>
+                <p key={`line-${blockIndex}-${lineIndex}`}>{renderInlineLine(line, `${lineIndex}`)}</p>
               );
             })}
           </div>
