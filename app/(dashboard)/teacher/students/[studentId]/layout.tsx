@@ -4,6 +4,7 @@ import type { ReactNode } from "react";
 import { deleteStudentAction } from "@/actions/student";
 import { DeleteButton } from "@/components/delete-button";
 import { PageHeader } from "@/components/page-header";
+import { ShbzNumberSearch } from "@/components/shbz-number-search";
 import { TeacherStudentTabs } from "@/components/teacher-student-tabs";
 import { requireUser } from "@/lib/auth";
 import { getTeacherStudentDetail } from "@/lib/platform-data";
@@ -39,6 +40,7 @@ export default async function TeacherStudentLayout({ children, params }: Teacher
         eyebrow="Ученик"
         title={data.student.name}
         description={data.student.email}
+        aside={<ShbzNumberSearch endpoint="/api/teacher/topics/find-number" />}
         actions={
           <>
             <a

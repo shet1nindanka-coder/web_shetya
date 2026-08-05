@@ -3,6 +3,7 @@ import { deleteTopicAction } from "@/actions/topic";
 import { DeleteButton } from "@/components/delete-button";
 import { FileResourceCard } from "@/components/file-resource-card";
 import { PageHeader } from "@/components/page-header";
+import { ShbzNumberSearch } from "@/components/shbz-number-search";
 import { SectionCard } from "@/components/section-card";
 import { TeacherTopicTabs } from "@/components/teacher-topic-tabs";
 import { TeacherTopicViewNumbers } from "@/components/teacher-topic-view-numbers";
@@ -29,6 +30,7 @@ export default async function TeacherTopicPage({ params }: TeacherTopicPageProps
         eyebrow="Тема"
         title={data.topic.title}
         description={data.topic.description}
+        aside={<ShbzNumberSearch endpoint="/api/teacher/topics/find-number" />}
         actions={
           isDeveloper ? (
             <DeleteButton

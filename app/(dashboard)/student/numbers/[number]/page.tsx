@@ -1,6 +1,7 @@
 import { UserRole } from "@prisma/client";
 import { notFound } from "next/navigation";
 import { PageHeader } from "@/components/page-header";
+import { ShbzNumberSearch } from "@/components/shbz-number-search";
 import { StudentSingleNumberCard } from "@/components/student-single-number-card";
 import { requireUser } from "@/lib/auth";
 import { findTopicIdByNumber, getStudentNumberDetail } from "@/lib/platform-data";
@@ -43,6 +44,7 @@ export default async function StudentNumberPage({ params }: StudentNumberPagePro
         backHref="/student/homeworks"
         backLabel="← К моим ДЗ"
         eyebrow={data.topic.title}
+        aside={<ShbzNumberSearch endpoint="/api/student/homeworks/find-number" />}
         title={`Номер ${data.number.number}`}
       />
 

@@ -2,6 +2,7 @@ import { UserRole } from "@prisma/client";
 import { notFound } from "next/navigation";
 import { LatexAnswerPreview } from "@/components/latex-answer-preview";
 import { PageHeader } from "@/components/page-header";
+import { ShbzNumberSearch } from "@/components/shbz-number-search";
 import { SectionCard } from "@/components/section-card";
 import { TeacherSingleNumberCard } from "@/components/teacher-single-number-card";
 import { requireUser } from "@/lib/auth";
@@ -40,6 +41,7 @@ export default async function TeacherNumberPage({ params }: TeacherNumberPagePro
         backHref={isDeveloper ? `/teacher/topics/${topicId}/edit#topic-answers` : `/teacher/topics/${topicId}`}
         backLabel="← К теме"
         eyebrow={data.topic.title}
+        aside={<ShbzNumberSearch endpoint="/api/teacher/topics/find-number" />}
         title={`Номер ${data.number.number}`}
       />
 
