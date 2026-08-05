@@ -154,6 +154,23 @@ function readString(value: unknown): string {
 }
 
 /**
+ * Ответ из файла. По промпту это строка или null, но короткие числовые ответы
+ * модели сплошь и рядом шлют числом («"answerLatex": 7») — раньше такой ответ
+ * молча превращался в null и в тему не попадал.
+ */
+function readAnswerText(value: unknown): string {
+  if (typeof value === "string") {
+    return value;
+  }
+
+  if (typeof value === "number" && Number.isFinite(value)) {
+    return String(value);
+  }
+
+  return "";
+}
+
+/**
  * Номер из файла: строка из цифр как в задачнике («010203»), ведущие нули значимы.
  * JSON-число тоже принимается (нули в нём невозможны, но «"number": 301001» модели
  * шлют постоянно); дроби и номера с буквами отклоняются.
@@ -257,7 +274,7 @@ export function parseTopicImport(raw: unknown): TopicImportParseResult {
       continue;
     }
 
-    const answerRaw = normalizeMultilineText(readString(item.answerLatex)).slice(0, MAX_IMPORT_ANSWER_LENGTH);
+    const answerRaw = normalizeMultilineText(readAnswerText(item.answerLatex)).slice(0, MAX_IMPORT_ANSWER_LENGTH);
 
     seen.add(normalizedNumber);
     numbers.push({ number, conditionLatex, answerLatex: answerRaw || null });

@@ -94,6 +94,21 @@ test("parseTopicImport выбрасывает записи с пустым ус�
   assert.equal(result.data.issues.length, 3);
 });
 
+test("parseTopicImport принимает числовой ответ: модели шлют «answerLatex: 7» без кавычек", () => {
+  const result = parseTopicImport(
+    payload({
+      numbers: [
+        { number: "1", conditionLatex: "условие", answerLatex: 7 },
+        { number: "2", conditionLatex: "условие", answerLatex: 0.5 }
+      ]
+    })
+  );
+
+  assert.ok(result.ok);
+  assert.equal(result.data.numbers[0]!.answerLatex, "7");
+  assert.equal(result.data.numbers[1]!.answerLatex, "0.5");
+});
+
 test("parseTopicImport превращает пустой ответ в null", () => {
   const result = parseTopicImport(
     payload({ numbers: [{ number: 1, conditionLatex: "условие", answerLatex: "   " }] })
