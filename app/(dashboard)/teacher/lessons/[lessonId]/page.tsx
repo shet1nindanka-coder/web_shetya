@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { UserRole } from "@prisma/client";
+import { ShbzNumberSearch } from "@/components/shbz-number-search";
 import { ShbzPageHeader } from "@/components/shbz-page-header";
 import { TeacherLessonBoard } from "@/components/teacher-lesson-board";
 import { requireUser } from "@/lib/auth";
@@ -47,6 +48,7 @@ export default async function LessonDetailPage({ params }: LessonDetailPageProps
       <ShbzPageHeader
         kicker={`${lesson.group?.name ?? "Урок"} · ${formatDateTime(lesson.createdAt)} · ${lesson.durationMinutes} мин`}
         title={lesson.title}
+        aside={<ShbzNumberSearch endpoint="/api/teacher/topics/find-number" />}
       />
 
       <TeacherLessonBoard

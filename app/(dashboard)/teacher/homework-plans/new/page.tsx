@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { LessonKind, UserRole } from "@prisma/client";
+import { ShbzNumberSearch } from "@/components/shbz-number-search";
 import { ShbzPageHeader } from "@/components/shbz-page-header";
 import { TeacherHomeworkPlanCreateForm } from "@/components/teacher-homework-plan-create-form";
 import { requireUser } from "@/lib/auth";
@@ -107,7 +108,7 @@ export default async function HomeworkPlanNewPage({ searchParams }: HomeworkPlan
   if (members.length === 0) {
     return (
       <div>
-        <ShbzPageHeader kicker={kicker} title="Новое ДЗ" />
+        <ShbzPageHeader kicker={kicker} title="Новое ДЗ" aside={<ShbzNumberSearch endpoint="/api/teacher/topics/find-number" />} />
         <div className="shbz-card px-6 py-10 text-center">
           <p className="text-lg font-bold" style={{ color: "var(--shbz-text-strong)" }}>
             Некому выдавать: в группе нет учеников.
@@ -119,7 +120,7 @@ export default async function HomeworkPlanNewPage({ searchParams }: HomeworkPlan
 
   return (
     <div>
-      <ShbzPageHeader kicker={kicker} title="Новое ДЗ" />
+      <ShbzPageHeader kicker={kicker} title="Новое ДЗ" aside={<ShbzNumberSearch endpoint="/api/teacher/topics/find-number" />} />
       <div className="shbz-card shbz-section-pad">
         <TeacherHomeworkPlanCreateForm
           prefix={prefix}

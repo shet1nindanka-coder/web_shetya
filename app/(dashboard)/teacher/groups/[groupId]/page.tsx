@@ -4,6 +4,7 @@ import { UserRole } from "@prisma/client";
 import { deleteGroupAction, renameGroupAction } from "@/actions/group";
 import { DeleteButton } from "@/components/delete-button";
 import { GroupMembersManager } from "@/components/group-members-manager";
+import { ShbzNumberSearch } from "@/components/shbz-number-search";
 import { ShbzPageHeader } from "@/components/shbz-page-header";
 import { requireUser } from "@/lib/auth";
 import { getGroupDetail } from "@/lib/platform-data";
@@ -62,6 +63,7 @@ export default async function GroupDetailPage({ params, searchParams }: GroupDet
             >
               Составить урок
             </Link>
+            <ShbzNumberSearch endpoint="/api/teacher/topics/find-number" />
           </div>
         }
       />

@@ -3,6 +3,7 @@ import { UserRole } from "@prisma/client";
 import { deleteStudentAction } from "@/actions/student";
 import { DeleteButton } from "@/components/delete-button";
 import { StudentCreateForm } from "@/components/student-create-form";
+import { ShbzNumberSearch } from "@/components/shbz-number-search";
 import { ShbzPageHeader } from "@/components/shbz-page-header";
 import { requireUser } from "@/lib/auth";
 import { getTeacherTopicsOverview } from "@/lib/platform-data";
@@ -76,7 +77,7 @@ export default async function TeacherStudentsPage({ searchParams }: TeacherStude
 
   return (
     <div>
-      <ShbzPageHeader kicker="Ученики" title="Аккаунты и прогресс" />
+      <ShbzPageHeader kicker="Ученики" title="Аккаунты и прогресс" aside={<ShbzNumberSearch endpoint="/api/teacher/topics/find-number" />} />
 
       {notice ? (
         <div

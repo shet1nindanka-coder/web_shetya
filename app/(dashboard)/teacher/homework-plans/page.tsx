@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { UserRole } from "@prisma/client";
+import { ShbzNumberSearch } from "@/components/shbz-number-search";
 import { ShbzPageHeader } from "@/components/shbz-page-header";
 import { requireUser } from "@/lib/auth";
 import { getHomeworkPlans } from "@/lib/platform-data";
@@ -14,7 +15,7 @@ export default async function HomeworkPlansPage() {
 
   return (
     <div>
-      <ShbzPageHeader kicker="Домашние задания" title="ИИ-выдача ДЗ" />
+      <ShbzPageHeader kicker="Домашние задания" title="ИИ-выдача ДЗ" aside={<ShbzNumberSearch endpoint="/api/teacher/topics/find-number" />} />
 
       {plans.length === 0 ? (
         <div className="shbz-card px-6 py-10 text-center">

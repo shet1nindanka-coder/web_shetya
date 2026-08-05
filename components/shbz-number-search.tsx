@@ -23,9 +23,11 @@ export function ShbzNumberSearch({
       onSubmit={(event) => {
         event.preventDefault();
 
-        const nextNumber = Number(numberQuery.trim());
+        // Номер уходит строкой как набран: ведущие нули значимы («051001»),
+        // сервер сам ищет по нормализованному виду.
+        const nextNumber = numberQuery.trim();
 
-        if (!Number.isInteger(nextNumber) || nextNumber <= 0) {
+        if (!/^\d+$/.test(nextNumber) || /^0+$/.test(nextNumber)) {
           setFeedback("Введите корректный номер.");
           return;
         }
@@ -34,7 +36,7 @@ export function ShbzNumberSearch({
 
         startTransition(async () => {
           try {
-            const response = await fetch(`${endpoint}?number=${encodeURIComponent(String(nextNumber))}`, {
+            const response = await fetch(`${endpoint}?number=${encodeURIComponent(nextNumber)}`, {
               method: "GET",
               cache: "no-store"
             });

@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { UserRole } from "@prisma/client";
+import { ShbzNumberSearch } from "@/components/shbz-number-search";
 import { ShbzPageHeader } from "@/components/shbz-page-header";
 import { TeacherLessonCreateForm } from "@/components/teacher-lesson-create-form";
 import { requireUser } from "@/lib/auth";
@@ -64,7 +65,7 @@ export default async function LessonNewPage({ searchParams }: LessonNewPageProps
 
   return (
     <div>
-      <ShbzPageHeader kicker={kicker} title="Новый урок" />
+      <ShbzPageHeader kicker={kicker} title="Новый урок" aside={<ShbzNumberSearch endpoint="/api/teacher/topics/find-number" />} />
 
       {!aiAvailable ? (
         <div

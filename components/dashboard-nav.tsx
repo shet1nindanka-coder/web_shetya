@@ -40,7 +40,6 @@ const studentItems = [
 
 const developerItems = [
   { href: "/developer/topics", label: "темы", match: (p: string, _sp: URLSearchParams) => p.startsWith("/developer/topics") },
-  { href: "/developer/groups", label: "группы", match: (p: string, _sp: URLSearchParams) => p.startsWith("/developer/groups") || p.startsWith("/developer/lessons") || p.startsWith("/developer/homework-plans") },
   { href: "/developer/statistics", label: "статистика", match: (p: string, _sp: URLSearchParams) => p.startsWith("/developer/statistics") },
   { href: "/developer/panel", label: "дев-панель", match: (p: string, _sp: URLSearchParams) => p.startsWith("/developer/panel") },
   {

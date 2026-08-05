@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { UserRole } from "@prisma/client";
 import { GroupCreateForm } from "@/components/group-create-form";
+import { ShbzNumberSearch } from "@/components/shbz-number-search";
 import { ShbzPageHeader } from "@/components/shbz-page-header";
 import { requireUser } from "@/lib/auth";
 import { getTeacherGroups } from "@/lib/platform-data";
@@ -35,7 +36,7 @@ export default async function TeacherGroupsPage({ searchParams }: GroupsPageProp
 
   return (
     <div>
-      <ShbzPageHeader kicker="Группы" title="Группы учеников" />
+      <ShbzPageHeader kicker="Группы" title="Группы учеников" aside={<ShbzNumberSearch endpoint="/api/teacher/topics/find-number" />} />
 
       {notice ? (
         <div
@@ -50,12 +51,14 @@ export default async function TeacherGroupsPage({ searchParams }: GroupsPageProp
         </div>
       ) : null}
 
-      <section>
-        <h2 className="shbz-section-title">Создать группу</h2>
-        <div className="shbz-card shbz-section-pad">
-          <GroupCreateForm />
-        </div>
-      </section>
+      {user.role === UserRole.DEVELOPER ? null : (
+        <section>
+          <h2 className="shbz-section-title">Создать группу</h2>
+          <div className="shbz-card shbz-section-pad">
+            <GroupCreateForm />
+          </div>
+        </section>
+      )}
 
       <section className="mt-11">
         <h2 className="shbz-section-title">Текущие группы</h2>

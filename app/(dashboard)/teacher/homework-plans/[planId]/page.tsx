@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { LessonKind, UserRole } from "@prisma/client";
+import { ShbzNumberSearch } from "@/components/shbz-number-search";
 import { ShbzPageHeader } from "@/components/shbz-page-header";
 import { TeacherHomeworkPlanBoard } from "@/components/teacher-homework-plan-board";
 import { requireUser } from "@/lib/auth";
@@ -62,11 +63,14 @@ export default async function HomeworkPlanDetailPage({ params }: HomeworkPlanDet
         kicker={`${topic.title} · ${deadlineLabel}${plan.group ? ` · ${plan.group.name}` : ""}`}
         title={plan.title}
         aside={
-          sourceLesson ? (
-            <Link href={`${prefix}/lessons/${sourceLesson.id}`} className="shbz-btn-outline inline-block no-underline">
-              По итогам занятия «{sourceLesson.title}»
-            </Link>
-          ) : undefined
+          <div className="flex flex-wrap items-center gap-3">
+            {sourceLesson ? (
+              <Link href={`${prefix}/lessons/${sourceLesson.id}`} className="shbz-btn-outline inline-block no-underline">
+                По итогам занятия «{sourceLesson.title}»
+              </Link>
+            ) : null}
+            <ShbzNumberSearch endpoint="/api/teacher/topics/find-number" />
+          </div>
         }
       />
 

@@ -1,5 +1,6 @@
 import { UserRole } from "@prisma/client";
 import { DeveloperPanel } from "@/components/developer-panel";
+import { ShbzNumberSearch } from "@/components/shbz-number-search";
 import { ShbzPageHeader } from "@/components/shbz-page-header";
 import { requireUser } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
@@ -54,7 +55,8 @@ export default async function DeveloperPage() {
         kicker="Служебный доступ"
         title="Панель разработчика"
         aside={
-          <div className="flex flex-wrap gap-2 pb-1">
+          <div className="flex flex-wrap items-center gap-3">
+            <div className="flex flex-wrap gap-2 pb-1">
             <span className="shbz-chip shbz-chip-green">Очередь: {queueLength}</span>
             <span className={`shbz-chip ${budgetBusy ? "shbz-chip-yellow" : "shbz-chip-green"}`}>
               ИИ: {checksLastDay} / {settings.aiDailyLimit} за 24 ч
@@ -69,6 +71,8 @@ export default async function DeveloperPage() {
             >
               Хранилище: {filesSizeLabel}
             </span>
+            </div>
+            <ShbzNumberSearch endpoint="/api/teacher/topics/find-number" />
           </div>
         }
       />

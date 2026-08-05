@@ -2,6 +2,7 @@ import { UserRole } from "@prisma/client";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { HomeworkDoneBadge, HomeworkOverdueBadge } from "@/components/deadline-list";
+import { ShbzNumberSearch } from "@/components/shbz-number-search";
 import { ShbzPageHeader } from "@/components/shbz-page-header";
 import { StudentHomeworkCheck } from "@/components/student-homework-check";
 import { StudentHomeworkPhotos } from "@/components/student-homework-photos";
@@ -42,7 +43,7 @@ export default async function StudentHomeworkPage({ params }: StudentHomeworkPag
         ← Ко всем ДЗ
       </Link>
 
-      <ShbzPageHeader kicker={assignment.topicTitle} title={assignment.label} />
+      <ShbzPageHeader kicker={assignment.topicTitle} title={assignment.label} aside={<ShbzNumberSearch endpoint="/api/student/homeworks/find-number" />} />
 
       <p className="-mt-7 mb-8 flex flex-wrap items-center gap-2 text-sm" style={{ color: "var(--shbz-text-muted)" }}>
         <span>

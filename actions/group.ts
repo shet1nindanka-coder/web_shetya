@@ -39,7 +39,9 @@ async function findAccessibleGroup(groupId: string, user: { id: string; role: Us
 }
 
 export async function createGroupAction(formData: FormData) {
-  const user = await requireUser([UserRole.TEACHER, UserRole.DEVELOPER]);
+  // Группы создаёт только преподаватель: у разработчика вкладки «группы» нет,
+  // и завести группу на своё имя он не должен.
+  const user = await requireUser(UserRole.TEACHER);
   const base = groupsBasePath(user.role);
 
   const name = normalizeSingleLineText(String(formData.get("name") ?? "")).slice(0, MAX_GROUP_NAME_LENGTH);
