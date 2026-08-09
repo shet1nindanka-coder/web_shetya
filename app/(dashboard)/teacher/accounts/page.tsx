@@ -3,6 +3,7 @@ import { AccountCreateForm } from "@/components/account-create-form";
 import { ShbzNumberSearch } from "@/components/shbz-number-search";
 import { ShbzPageHeader } from "@/components/shbz-page-header";
 import { requireUser } from "@/lib/auth";
+import { prisma } from "@/lib/prisma";
 
 /*
  * Вкладка разработчика «аккаунты»: создание учеников и учителей.
@@ -27,7 +28,7 @@ const accountNotices = {
   },
   invalid: {
     tone: "error",
-    message: "Укажите роль, имя, логин и пароль: минимум 8 символов, обязательно буквы и цифры."
+    message: "Укажите роль, учителя (для ученика), имя, логин и пароль: минимум 8 символов, обязательно буквы и цифры."
   },
   exists: {
     tone: "error",
@@ -46,6 +47,12 @@ const accountNotices = {
 export default async function DeveloperAccountsPage({ searchParams }: AccountsPageProps) {
   await requireUser(UserRole.DEVELOPER);
   const params = (await searchParams) ?? {};
+  // Мелкие форм-данные: список учителей для привязки ученика.
+  const teachers = await prisma.user.findMany({
+    where: { role: UserRole.TEACHER },
+    orderBy: { name: "asc" },
+    select: { id: true, name: true, email: true }
+  });
   const created = typeof params.accountCreated === "string" ? params.accountCreated : undefined;
   const error = typeof params.accountError === "string" ? params.accountError : undefined;
 
@@ -83,7 +90,7 @@ export default async function DeveloperAccountsPage({ searchParams }: AccountsPa
       <section>
         <h2 className="shbz-section-title">Новый аккаунт</h2>
         <div className="shbz-card shbz-section-pad">
-          <AccountCreateForm />
+          <AccountCreateForm teachers={teachers} />
         </div>
       </section>
     </div>

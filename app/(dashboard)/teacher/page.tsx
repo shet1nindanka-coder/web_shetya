@@ -7,8 +7,8 @@ import { requireUser } from "@/lib/auth";
 import { getTeacherTopicsOverview } from "@/lib/platform-data";
 
 export default async function TeacherPage() {
-  await requireUser(UserRole.TEACHER);
-  const data = await getTeacherTopicsOverview();
+  const user = await requireUser(UserRole.TEACHER);
+  const data = await getTeacherTopicsOverview(user);
 
   const cards = [
     {

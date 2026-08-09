@@ -3,21 +3,41 @@ import assert from "node:assert/strict";
 import { UserRole } from "@prisma/client";
 import { canAccessStoredFile, summarizeStoredFileAccess } from "../lib/file-access";
 
-test("teacher can access any stored file snapshot", () => {
-  const result = canAccessStoredFile(
-    { id: "teacher-1", role: UserRole.TEACHER },
-    {
-      uploadedById: "teacher-1",
-      counts: {
-        theoryForTopics: 0,
-        homeworkForTopics: 0,
-        answerForNumberEntries: 3,
-        checkPhotoEntries: 0
-      }
-    }
+test("учитель видит файлы тем/банка и свои загрузки", () => {
+  const teacher = { id: "teacher-1", role: UserRole.TEACHER };
+
+  // Файл банка ответов — общий контент.
+  assert.equal(
+    canAccessStoredFile(teacher, {
+      uploadedById: "teacher-2",
+      counts: { theoryForTopics: 0, homeworkForTopics: 0, answerForNumberEntries: 3, checkPhotoEntries: 0 }
+    }),
+    true
   );
 
-  assert.equal(result, true);
+  // Своя загрузка, ещё никуда не привязанная.
+  assert.equal(
+    canAccessStoredFile(teacher, {
+      uploadedById: "teacher-1",
+      counts: { theoryForTopics: 0, homeworkForTopics: 0, answerForNumberEntries: 0, checkPhotoEntries: 0 }
+    }),
+    true
+  );
+});
+
+test("учитель НЕ получает чужое фото решения через общий доступ (SEC-003)", () => {
+  // Фото решения ученика: не тема и не своя загрузка — общий канал закрыт,
+  // принадлежность ученика учителю проверяется отдельным запросом в роуте.
+  assert.equal(
+    canAccessStoredFile(
+      { id: "teacher-2", role: UserRole.TEACHER },
+      {
+        uploadedById: "student-1",
+        counts: { theoryForTopics: 0, homeworkForTopics: 0, answerForNumberEntries: 0, checkPhotoEntries: 1 }
+      }
+    ),
+    false
+  );
 });
 
 test("student can access files attached to topic theory or homework", () => {

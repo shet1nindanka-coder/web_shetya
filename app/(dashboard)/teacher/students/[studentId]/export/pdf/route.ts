@@ -104,6 +104,16 @@ async function handleGet(
 
     ({ studentId } = await params);
 
+    // Отчёт можно строить только по своему ученику (SEC-003).
+    const ownedStudent = await prisma.user.findFirst({
+      where: { id: studentId, role: UserRole.STUDENT, teacherId: user.id },
+      select: { id: true }
+    });
+
+    if (!ownedStudent) {
+      return new NextResponse("Student not found", { status: 404 });
+    }
+
     const periodParam = new URL(request.url).searchParams.get("period");
     const period: ReportPeriod = periodParam === "30d" || periodParam === "year" ? periodParam : "7d";
 

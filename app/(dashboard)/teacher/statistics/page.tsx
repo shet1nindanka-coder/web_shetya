@@ -52,14 +52,14 @@ const statisticsViews = [
 ] as const;
 
 export default async function TeacherStatisticsPage({ searchParams }: TeacherStatisticsPageProps) {
-  await requireUser(UserRole.DEVELOPER);
+  const user = await requireUser(UserRole.DEVELOPER);
 
   const resolvedSearchParams = (await searchParams) ?? {};
   const requestedView = typeof resolvedSearchParams.view === "string" ? resolvedSearchParams.view : undefined;
   const requestedStudentId =
     typeof resolvedSearchParams.studentId === "string" ? resolvedSearchParams.studentId : undefined;
   const view = requestedView === "developer" ? "developer" : "teacher";
-  const data = await getTeacherTopicsOverview();
+  const data = await getTeacherTopicsOverview(user);
   const selectedTimelineStudent =
     data.students.find((student) => student.id === requestedStudentId) ?? null;
   const totalStatusSlots = data.stats.totalStudents * data.stats.totalNumbers;
@@ -151,8 +151,8 @@ export default async function TeacherStatisticsPage({ searchParams }: TeacherSta
   const activeTopicsPercent = completionPercent(activeTopics.length, data.stats.totalTopics);
   const activeStudentsPercent = completionPercent(activeStudents.length, data.stats.totalStudents);
   const solvedPercent = completionPercent(totalSolved, totalStatusSlots);
-  const progressTimelineEntries = await getProgressTimeline(selectedTimelineStudent?.id, 112);
-  const developerStats = await getDeveloperStatistics();
+  const progressTimelineEntries = await getProgressTimeline(selectedTimelineStudent?.id, 112, user);
+  const developerStats = await getDeveloperStatistics(user);
   const homework = developerStats.homework;
   const issuedTotal = homework.issuedNumbersTotal;
   const issuedSolvedPercent = completionPercent(homework.issuedNumbersSolved, issuedTotal);

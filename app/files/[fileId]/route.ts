@@ -73,7 +73,11 @@ export async function GET(request: Request, { params }: FileRouteProps) {
 
   let ownsStudentPhoto = false;
 
-  if (user.role === UserRole.STUDENT) {
+  // Фото решений: ученик видит свои, учитель — фото СВОИХ учеников (SEC-003).
+  if (user.role === UserRole.STUDENT || user.role === UserRole.TEACHER) {
+    const assignmentScope =
+      user.role === UserRole.STUDENT ? { studentId: user.id } : { student: { teacherId: user.id } };
+
     ownsStudentPhoto = await prisma.storedFile
       .count({
         where: {
@@ -82,7 +86,7 @@ export async function GET(request: Request, { params }: FileRouteProps) {
             {
               submissionPhotoEntries: {
                 some: {
-                  assignment: { studentId: user.id }
+                  assignment: assignmentScope
                 }
               }
             },
@@ -90,7 +94,7 @@ export async function GET(request: Request, { params }: FileRouteProps) {
               checkPhotoEntries: {
                 some: {
                   check: {
-                    assignment: { studentId: user.id }
+                    assignment: assignmentScope
                   }
                 }
               }

@@ -36,12 +36,14 @@ export async function createAccountAction(formData: FormData) {
 
   const roleRaw = String(formData.get("role") ?? "");
   const role = roleRaw === "TEACHER" ? UserRole.TEACHER : roleRaw === "STUDENT" ? UserRole.STUDENT : null;
+  const teacherIdRaw = String(formData.get("teacherId") ?? "").trim();
   const name = normalizeSingleLineText(String(formData.get("name") ?? ""));
   const login = normalizeLoginInput(String(formData.get("login") ?? ""));
   const password = String(formData.get("password") ?? "");
 
   if (
     !role ||
+    (role === UserRole.STUDENT && !teacherIdRaw) ||
     !name ||
     name.length > MAX_USER_NAME_LENGTH ||
     !login ||
@@ -115,6 +117,22 @@ export async function createAccountAction(formData: FormData) {
     redirectDeveloperWithAccountStatus(new URLSearchParams({ accountError: "rateLimited" }));
   }
 
+  // Ученик обязан принадлежать существующему учителю (SEC-003).
+  let ownerTeacherId: string | null = null;
+
+  if (role === UserRole.STUDENT) {
+    const ownerTeacher = await prisma.user.findFirst({
+      where: { id: teacherIdRaw, role: UserRole.TEACHER },
+      select: { id: true }
+    });
+
+    if (!ownerTeacher) {
+      redirectDeveloperWithAccountStatus(new URLSearchParams({ accountError: "invalid" }));
+    }
+
+    ownerTeacherId = ownerTeacher!.id;
+  }
+
   const existingUser = await prisma.user.findUnique({
     where: {
       email: login
@@ -147,7 +165,8 @@ export async function createAccountAction(formData: FormData) {
         name,
         email: login,
         passwordHash,
-        role: accountRole
+        role: accountRole,
+        teacherId: ownerTeacherId
       }
     });
   } catch (error) {

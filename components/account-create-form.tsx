@@ -2,6 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { createAccountAction } from "@/actions/account";
+import { ShbzSelect } from "@/components/shbz-select";
 import { MAX_PASSWORD_LENGTH, validatePasswordStrength } from "@/lib/password-policy";
 import { MAX_LOGIN_LENGTH, MAX_USER_NAME_LENGTH } from "@/lib/utils";
 
@@ -17,8 +18,14 @@ const roleOptions: Array<{ value: AccountRole; label: string }> = [
   { value: "TEACHER", label: "Учитель" }
 ];
 
-export function AccountCreateForm() {
+type AccountCreateFormProps = {
+  /** Учителя для привязки ученика: у каждого учителя свои ученики (SEC-003). */
+  teachers: Array<{ id: string; name: string; email: string }>;
+};
+
+export function AccountCreateForm({ teachers }: AccountCreateFormProps) {
   const [role, setRole] = useState<AccountRole>("STUDENT");
+  const [teacherId, setTeacherId] = useState("");
   const [name, setName] = useState("");
   const [login, setLogin] = useState("");
   const [password, setPassword] = useState("");
@@ -28,12 +35,18 @@ export function AccountCreateForm() {
     [password]
   );
 
-  const isSubmitDisabled = !name.trim() || !login.trim() || password.length === 0 || passwordError !== null;
+  const isSubmitDisabled =
+    !name.trim() ||
+    !login.trim() ||
+    password.length === 0 ||
+    passwordError !== null ||
+    (role === "STUDENT" && !teacherId);
   const roleLabel = role === "TEACHER" ? "учителя" : "ученика";
 
   return (
     <form action={createAccountAction}>
       <input type="hidden" name="role" value={role} />
+      <input type="hidden" name="teacherId" value={role === "STUDENT" ? teacherId : ""} />
 
       <div className="shbz-seg mb-5 inline-flex" role="group" aria-label="Роль нового аккаунта">
         {roleOptions.map((option) => (
@@ -50,6 +63,22 @@ export function AccountCreateForm() {
       </div>
 
       <div className="flex flex-wrap items-start gap-4">
+        {role === "STUDENT" ? (
+          <div className="min-w-[200px] flex-1">
+            <span className="mb-[9px] block text-[13px] font-semibold" style={{ color: "var(--shbz-label)" }}>
+              Учитель ученика
+            </span>
+            <ShbzSelect
+              value={teacherId}
+              onChange={setTeacherId}
+              options={teachers.map((teacher) => ({ value: teacher.id, label: `${teacher.name} (${teacher.email})` }))}
+              placeholder={teachers.length ? "Выберите учителя" : "Сначала создайте учителя"}
+              ariaLabel="Учитель ученика"
+              disabled={teachers.length === 0}
+            />
+          </div>
+        ) : null}
+
         <label className="min-w-[200px] flex-1">
           <span className="mb-[9px] block text-[13px] font-semibold" style={{ color: "var(--shbz-label)" }}>
             Имя {roleLabel}

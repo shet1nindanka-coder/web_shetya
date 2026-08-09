@@ -13,11 +13,11 @@ type TeacherStudentLessonsPageProps = {
 };
 
 export default async function TeacherStudentLessonsPage({ params }: TeacherStudentLessonsPageProps) {
-  await requireUser(UserRole.TEACHER);
+  const user = await requireUser(UserRole.TEACHER);
   const { studentId } = await params;
 
   const [lessons, bankTopics] = await Promise.all([
-    getTeacherStudentLessons(studentId),
+    getTeacherStudentLessons(user, studentId),
     prisma.topic.findMany({
       orderBy: [{ displayOrder: "asc" }, { createdAt: "asc" }],
       select: {

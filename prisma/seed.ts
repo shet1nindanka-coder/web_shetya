@@ -118,7 +118,8 @@ async function main() {
       name: "Илья Смирнов",
       email: "ilya@example.com",
       passwordHash: studentPassword,
-      role: UserRole.STUDENT
+      role: UserRole.STUDENT,
+      teacherId: teacher.id
     }
   });
 
@@ -127,7 +128,8 @@ async function main() {
       name: "Мария Волкова",
       email: "maria@example.com",
       passwordHash: studentPassword,
-      role: UserRole.STUDENT
+      role: UserRole.STUDENT,
+      teacherId: teacher.id
     }
   });
 

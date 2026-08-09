@@ -86,7 +86,12 @@ export async function POST(request: Request) {
   } else {
     // Индивидуальный урок без группы: как в планах ДЗ — проверяем только, что это ученики.
     const students = await prisma.user.findMany({
-      where: { role: UserRole.STUDENT, id: { in: requestedIds } },
+      // Только свои ученики (SEC-003); DEVELOPER может собрать урок любому.
+      where: {
+        role: UserRole.STUDENT,
+        id: { in: requestedIds },
+        ...(user.role === UserRole.TEACHER ? { teacherId: user.id } : {})
+      },
       select: { id: true }
     });
 

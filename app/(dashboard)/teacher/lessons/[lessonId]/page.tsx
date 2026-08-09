@@ -22,7 +22,7 @@ export default async function LessonDetailPage({ params }: LessonDetailPageProps
   const { lessonId } = await params;
 
   const [lesson, settings, bankTopics] = await Promise.all([
-    getLessonDetail(lessonId),
+    getLessonDetail(user, lessonId),
     getSiteSettingsUncached(),
     prisma.topic.findMany({
       orderBy: [{ displayOrder: "asc" }, { createdAt: "asc" }],

@@ -48,8 +48,8 @@ const studentNotices = {
 } as const;
 
 export default async function TeacherStudentsPage({ searchParams }: TeacherStudentsPageProps) {
-  await requireUser(UserRole.TEACHER);
-  const data = await getTeacherTopicsOverview();
+  const user = await requireUser(UserRole.TEACHER);
+  const data = await getTeacherTopicsOverview(user);
   const resolvedSearchParams = (await searchParams) ?? {};
   const studentCreated =
     typeof resolvedSearchParams.studentCreated === "string" ? resolvedSearchParams.studentCreated : undefined;

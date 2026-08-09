@@ -80,7 +80,7 @@ export default async function HomeworkPlanNewPage({ searchParams }: HomeworkPlan
     groupId = lesson.groupId;
     sourceLessonId = lesson.id;
   } else if (groupIdParam) {
-    const group = await getGroupDetail(groupIdParam);
+    const group = await getGroupDetail(user, groupIdParam);
 
     if (!group) {
       notFound();

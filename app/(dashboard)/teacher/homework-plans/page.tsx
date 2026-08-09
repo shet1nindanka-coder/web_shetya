@@ -11,7 +11,7 @@ export const dynamic = "force-dynamic";
 export default async function HomeworkPlansPage() {
   const user = await requireUser([UserRole.TEACHER, UserRole.DEVELOPER]);
   const prefix = user.role === UserRole.DEVELOPER ? "/developer" : "/teacher";
-  const plans = await getHomeworkPlans();
+  const plans = await getHomeworkPlans(user);
 
   return (
     <div>

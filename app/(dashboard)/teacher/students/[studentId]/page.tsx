@@ -12,9 +12,9 @@ type TeacherStudentPageProps = {
 };
 
 export default async function TeacherStudentPage({ params }: TeacherStudentPageProps) {
-  await requireUser(UserRole.TEACHER);
+  const user = await requireUser(UserRole.TEACHER);
   const { studentId } = await params;
-  const { assignmentsEnabled, assignments } = await getTeacherStudentHomeworks(studentId);
+  const { assignmentsEnabled, assignments } = await getTeacherStudentHomeworks(user, studentId);
 
   return (
     <SectionCard title="Проверка домашних заданий">

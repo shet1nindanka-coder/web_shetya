@@ -163,7 +163,12 @@ export async function addGroupMemberAction(formData: FormData): Promise<{ ok: bo
   }
 
   const student = await prisma.user.findFirst({
-    where: { id: studentId, role: UserRole.STUDENT },
+    // Только свои ученики: чужой неотличим от несуществующего (SEC-003).
+    where: {
+      id: studentId,
+      role: UserRole.STUDENT,
+      ...(user.role === UserRole.TEACHER ? { teacherId: user.id } : {})
+    },
     select: { id: true }
   });
 
@@ -247,7 +252,12 @@ export async function setStudentAiProfileAction(formData: FormData): Promise<{ o
   }
 
   const student = await prisma.user.findFirst({
-    where: { id: studentId, role: UserRole.STUDENT },
+    // Только свои ученики: чужой неотличим от несуществующего (SEC-003).
+    where: {
+      id: studentId,
+      role: UserRole.STUDENT,
+      ...(user.role === UserRole.TEACHER ? { teacherId: user.id } : {})
+    },
     select: { id: true }
   });
 

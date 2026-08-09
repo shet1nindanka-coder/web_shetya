@@ -23,7 +23,7 @@ export default async function HomeworkPlanDetailPage({ params }: HomeworkPlanDet
   const prefix = user.role === UserRole.DEVELOPER ? "/developer" : "/teacher";
   const { planId } = await params;
 
-  const [plan, settings] = await Promise.all([getLessonDetail(planId), getSiteSettingsUncached()]);
+  const [plan, settings] = await Promise.all([getLessonDetail(user, planId), getSiteSettingsUncached()]);
 
   if (!plan || plan.kind !== LessonKind.HOMEWORK || !plan.topicId) {
     notFound();

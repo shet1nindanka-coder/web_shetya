@@ -19,7 +19,15 @@ export type StoredFileAccessSnapshot = {
 
 export function canAccessStoredFile(user: FileAccessUser, file: StoredFileAccessSnapshot) {
   if (user.role === UserRole.TEACHER) {
-    return true;
+    // Файлы тем и банка задач общие; свои загрузки тоже доступны. Фото решений
+    // сюда НЕ входят: их принадлежность ученику учителя проверяется отдельным
+    // запросом в роуте (ownsStudentPhoto) — чужие детские работы закрыты (SEC-003).
+    return (
+      file.uploadedById === user.id ||
+      file.counts.theoryForTopics > 0 ||
+      file.counts.homeworkForTopics > 0 ||
+      file.counts.answerForNumberEntries > 0
+    );
   }
 
   return file.counts.theoryForTopics > 0 || file.counts.homeworkForTopics > 0;

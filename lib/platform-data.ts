@@ -15,6 +15,29 @@ import { prisma } from "@/lib/prisma";
 import type { TimelineEntry } from "@/lib/progress-timeline";
 import { compareHomeworkNumbers, completionPercent, getStatusCounts, normalizeHomeworkNumber } from "@/lib/utils";
 
+/*
+ * Скоуп по владельцу (SEC-002/003): у каждого учителя свои ученики
+ * (User.teacherId), группы и уроки (teacherId ресурса). TEACHER видит только
+ * своё, DEVELOPER — всё. viewer входит в аргументы кешируемых функций, поэтому
+ * unstable_cache сам разводит кэш между учителями.
+ */
+export type TeacherViewer = { id: string; role: UserRole };
+
+/** where-фильтр по ученикам учителя (для запросов к User). */
+function ownStudentsWhere(viewer: TeacherViewer) {
+  return viewer.role === UserRole.TEACHER ? { teacherId: viewer.id } : {};
+}
+
+/** where-фильтр по ресурсам учителя: группы, уроки, планы (поле teacherId). */
+function ownResourceWhere(viewer: TeacherViewer) {
+  return viewer.role === UserRole.TEACHER ? { teacherId: viewer.id } : {};
+}
+
+/** Фильтр статусов по владельцу ученика — для вложенных выборок statuses. */
+function ownStatusesWhere(viewer: TeacherViewer) {
+  return viewer.role === UserRole.TEACHER ? { where: { student: { teacherId: viewer.id } } } : {};
+}
+
 function buildProgress(statuses: Array<HomeworkNumberStatus | null | undefined>, totalNumbers: number) {
   const counts = getStatusCounts(statuses);
   const markedCount = counts.GREEN + counts.YELLOW + counts.RED;
@@ -486,10 +509,10 @@ export async function getStudentTopicDetail(
   }
 }
 
-async function getTeacherTopicsOverviewUncached() {
+async function getTeacherTopicsOverviewUncached(viewer: TeacherViewer) {
   const [students, topicsResult, totalFiles] = await Promise.all([
     prisma.user.findMany({
-      where: { role: UserRole.STUDENT },
+      where: { role: UserRole.STUDENT, ...ownStudentsWhere(viewer) },
       orderBy: { name: "asc" },
       select: {
         id: true,
@@ -509,6 +532,7 @@ async function getTeacherTopicsOverviewUncached() {
               number: true,
               displayOrder: true,
               statuses: {
+                ...ownStatusesWhere(viewer),
                 select: {
                   studentId: true,
                   status: true,
@@ -601,10 +625,10 @@ const getTeacherTopicsOverviewCached = unstable_cache(
   }
 );
 
-export async function getTeacherTopicsOverview(): Promise<
-  Awaited<ReturnType<typeof getTeacherTopicsOverviewUncached>>
-> {
-  return getTeacherTopicsOverviewCached();
+export async function getTeacherTopicsOverview(
+  viewer: TeacherViewer
+): Promise<Awaited<ReturnType<typeof getTeacherTopicsOverviewUncached>>> {
+  return getTeacherTopicsOverviewCached(viewer);
 }
 
 async function getTeacherTopicDetailUncached(topicId: string) {
@@ -691,7 +715,7 @@ export async function getTeacherTopicDetail(
   return getTeacherTopicDetailCached(topicId);
 }
 
-async function getTeacherStudentDetailUncached(studentId: string) {
+async function getTeacherStudentDetailUncached(viewer: TeacherViewer, studentId: string) {
   const buildTeacherStudentTopicsQuery = ({
     notesEnabled,
     deadlinesEnabled,
@@ -728,7 +752,8 @@ async function getTeacherStudentDetailUncached(studentId: string) {
     });
 
   const student = await prisma.user.findFirst({
-    where: { id: studentId },
+    // Скоуп по владельцу: чужой ученик для учителя неотличим от несуществующего.
+    where: { id: studentId, role: UserRole.STUDENT, ...ownStudentsWhere(viewer) },
     select: {
       id: true,
       name: true,
@@ -813,9 +838,10 @@ const getTeacherStudentDetailCached = unstable_cache(getTeacherStudentDetailUnca
 });
 
 export async function getTeacherStudentDetail(
+  viewer: TeacherViewer,
   studentId: string
 ): Promise<Awaited<ReturnType<typeof getTeacherStudentDetailUncached>>> {
-  return getTeacherStudentDetailCached(studentId);
+  return getTeacherStudentDetailCached(viewer, studentId);
 }
 
 
@@ -883,7 +909,11 @@ export async function getStudentDeadlines(studentId: string) {
 
 export type StudentDeadline = Awaited<ReturnType<typeof getStudentDeadlines>>[number];
 
-async function getProgressTimelineUncached(studentId: string | null, days: number): Promise<TimelineEntry[]> {
+async function getProgressTimelineUncached(
+  studentId: string | null,
+  days: number,
+  viewer: TeacherViewer | null
+): Promise<TimelineEntry[]> {
   const normalizedDays = Math.max(1, Math.min(112, Math.floor(days)));
   const today = startOfTimelineDay(new Date());
   const timelineStart = addTimelineDays(today, -(normalizedDays - 1));
@@ -894,7 +924,11 @@ async function getProgressTimelineUncached(studentId: string | null, days: numbe
         status: {
           in: [HomeworkNumberStatus.GREEN, HomeworkNumberStatus.YELLOW, HomeworkNumberStatus.RED]
         },
-        ...(studentId ? { studentId } : {}),
+        ...(studentId
+          ? { studentId }
+          : viewer && viewer.role === UserRole.TEACHER
+            ? { student: { teacherId: viewer.id } }
+            : {}),
         // Опираемся на statusChangedAt (когда статус реально менялся), а не на
         // updatedAt, который бампается зеркалированием дедлайна. Для строк без
         // statusChangedAt (до бэкфилла) откатываемся на updatedAt.
@@ -969,13 +1003,17 @@ const getProgressTimelineCached = unstable_cache(getProgressTimelineUncached, ["
   revalidate: 300
 });
 
-export async function getProgressTimeline(studentId?: string, days = 112): Promise<TimelineEntry[]> {
-  return getProgressTimelineCached(studentId ?? null, days);
+export async function getProgressTimeline(
+  studentId?: string,
+  days = 112,
+  viewer?: TeacherViewer
+): Promise<TimelineEntry[]> {
+  return getProgressTimelineCached(studentId ?? null, days, viewer ?? null);
 }
 
 export async function getDashboardSummary(userId: string, role: UserRole) {
   if (role === UserRole.TEACHER) {
-    return getTeacherTopicsOverview();
+    return getTeacherTopicsOverview({ id: userId, role });
   }
 
   return getStudentTopicsOverview(userId);
@@ -1178,9 +1216,9 @@ function isMissingHomeworkAssignmentTableError(error: unknown) {
   );
 }
 
-function queryTeacherStudentHomeworks(studentId: string, notesEnabled: boolean) {
+function queryTeacherStudentHomeworks(viewer: TeacherViewer, studentId: string, notesEnabled: boolean) {
   return prisma.homeworkAssignment.findMany({
-    where: { studentId },
+    where: { studentId, student: ownStudentsWhere(viewer) },
     orderBy: { createdAt: "asc" },
     select: {
       id: true,
@@ -1264,12 +1302,12 @@ function queryTeacherStudentHomeworks(studentId: string, notesEnabled: boolean) 
   });
 }
 
-async function getTeacherStudentHomeworksUncached(studentId: string) {
+async function getTeacherStudentHomeworksUncached(viewer: TeacherViewer, studentId: string) {
   let assignments: Awaited<ReturnType<typeof queryTeacherStudentHomeworks>>;
   let notesEnabled = true;
 
   try {
-    assignments = await queryTeacherStudentHomeworks(studentId, true);
+    assignments = await queryTeacherStudentHomeworks(viewer, studentId, true);
   } catch (error) {
     if (isMissingHomeworkAssignmentTableError(error)) {
       logWarnEvent(
@@ -1287,7 +1325,7 @@ async function getTeacherStudentHomeworksUncached(studentId: string) {
     }
 
     notesEnabled = false;
-    assignments = await queryTeacherStudentHomeworks(studentId, false);
+    assignments = await queryTeacherStudentHomeworks(viewer, studentId, false);
   }
 
   const orderByTopicId = new Map<string, number>();
@@ -1375,20 +1413,22 @@ const getTeacherStudentHomeworksCached = unstable_cache(getTeacherStudentHomewor
 });
 
 export async function getTeacherStudentHomeworks(
+  viewer: TeacherViewer,
   studentId: string
 ): Promise<Awaited<ReturnType<typeof getTeacherStudentHomeworksUncached>>> {
-  return getTeacherStudentHomeworksCached(studentId);
+  return getTeacherStudentHomeworksCached(viewer, studentId);
 }
 
 export async function getStudentHomeworks(
   studentId: string
 ): Promise<Awaited<ReturnType<typeof getTeacherStudentHomeworksUncached>>> {
-  return getTeacherStudentHomeworksCached(studentId);
+  // Ученик смотрит собственные ДЗ: роль STUDENT не фильтруется по владельцу.
+  return getTeacherStudentHomeworksCached({ id: studentId, role: UserRole.STUDENT }, studentId);
 }
 
 // ── Developer statistics ─────────────────────────────
 
-async function getDeveloperStatisticsUncached() {
+async function getDeveloperStatisticsUncached(viewer: TeacherViewer) {
   let assignments: Array<{
     id: string;
     studentId: string;
@@ -1399,6 +1439,7 @@ async function getDeveloperStatisticsUncached() {
 
   try {
     assignments = await prisma.homeworkAssignment.findMany({
+      where: { student: ownStudentsWhere(viewer) },
       select: {
         id: true,
         studentId: true,
@@ -1421,7 +1462,8 @@ async function getDeveloperStatisticsUncached() {
     where: {
       status: {
         not: null
-      }
+      },
+      student: ownStudentsWhere(viewer)
     },
     select: {
       studentId: true,
@@ -1605,8 +1647,10 @@ const getDeveloperStatisticsCached = unstable_cache(getDeveloperStatisticsUncach
   tags: [PLATFORM_DATA_TAGS.studentTopics, PLATFORM_DATA_TAGS.teacherTopics, PLATFORM_DATA_TAGS.teacherStudents]
 });
 
-export async function getDeveloperStatistics(): Promise<Awaited<ReturnType<typeof getDeveloperStatisticsUncached>>> {
-  return getDeveloperStatisticsCached();
+export async function getDeveloperStatistics(
+  viewer: TeacherViewer
+): Promise<Awaited<ReturnType<typeof getDeveloperStatisticsUncached>>> {
+  return getDeveloperStatisticsCached(viewer);
 }
 
 /**
@@ -1640,9 +1684,10 @@ export async function findTopicIdByNumber(targetNumber: string) {
    Группы учеников и уроки (ИИ-подбор заданий на занятие)
    ─────────────────────────────────────────────────────────────────────────── */
 
-async function getTeacherGroupsUncached() {
+async function getTeacherGroupsUncached(viewer: TeacherViewer) {
   try {
     const groups = await prisma.studentGroup.findMany({
+      where: ownResourceWhere(viewer),
       orderBy: [{ createdAt: "asc" }],
       select: {
         id: true,
@@ -1695,14 +1740,17 @@ const getTeacherGroupsCached = unstable_cache(getTeacherGroupsUncached, ["teache
   tags: [PLATFORM_DATA_TAGS.teacherStudents]
 });
 
-export async function getTeacherGroups(): Promise<Awaited<ReturnType<typeof getTeacherGroupsUncached>>> {
-  return getTeacherGroupsCached();
+export async function getTeacherGroups(
+  viewer: TeacherViewer
+): Promise<Awaited<ReturnType<typeof getTeacherGroupsUncached>>> {
+  return getTeacherGroupsCached(viewer);
 }
 
-export async function getGroupDetail(groupId: string) {
+export async function getGroupDetail(viewer: TeacherViewer, groupId: string) {
   try {
-    const group = await prisma.studentGroup.findUnique({
-      where: { id: groupId },
+    const group = await prisma.studentGroup.findFirst({
+      // Чужая группа для учителя неотличима от несуществующей (SEC-002).
+      where: { id: groupId, ...ownResourceWhere(viewer) },
       select: {
         id: true,
         name: true,
@@ -1728,7 +1776,7 @@ export async function getGroupDetail(groupId: string) {
 
     const [allStudents, statusGroups, totalNumbers] = await Promise.all([
       prisma.user.findMany({
-        where: { role: UserRole.STUDENT },
+        where: { role: UserRole.STUDENT, ...ownStudentsWhere(viewer) },
         orderBy: { name: "asc" },
         select: {
           id: true,
@@ -1790,10 +1838,10 @@ export async function getGroupDetail(groupId: string) {
   }
 }
 
-export async function getHomeworkPlans() {
+export async function getHomeworkPlans(viewer: TeacherViewer) {
   try {
     const plans = await prisma.lesson.findMany({
-      where: { kind: "HOMEWORK" },
+      where: { kind: "HOMEWORK", ...ownResourceWhere(viewer) },
       orderBy: { createdAt: "desc" },
       select: {
         id: true,
@@ -1829,10 +1877,10 @@ export async function getHomeworkPlans() {
   }
 }
 
-export async function getTeacherLessons() {
+export async function getTeacherLessons(viewer: TeacherViewer) {
   try {
     const lessons = await prisma.lesson.findMany({
-      where: { kind: "LESSON" },
+      where: { kind: "LESSON", ...ownResourceWhere(viewer) },
       orderBy: { createdAt: "desc" },
       select: {
         id: true,
@@ -1882,10 +1930,10 @@ export async function getTeacherLessons() {
 }
 
 /** Занятия одного ученика с наборами и итогами — вкладка «Занятия» в кабинете учителя. */
-export async function getTeacherStudentLessons(studentId: string) {
+export async function getTeacherStudentLessons(viewer: TeacherViewer, studentId: string) {
   try {
     const participants = await prisma.lessonParticipant.findMany({
-      where: { studentId, lesson: { kind: "LESSON" } },
+      where: { studentId, lesson: { kind: "LESSON", ...ownResourceWhere(viewer) } },
       orderBy: { lesson: { createdAt: "desc" } },
       select: {
         id: true,
@@ -2365,10 +2413,11 @@ export async function getLessonPlanContext(studentId: string, topicIds?: string[
   };
 }
 
-export async function getLessonDetail(lessonId: string) {
+export async function getLessonDetail(viewer: TeacherViewer, lessonId: string) {
   try {
-    const lesson = await prisma.lesson.findUnique({
-      where: { id: lessonId },
+    const lesson = await prisma.lesson.findFirst({
+      // Чужой урок/план для учителя неотличим от несуществующего (SEC-002).
+      where: { id: lessonId, ...ownResourceWhere(viewer) },
       select: {
         id: true,
         title: true,

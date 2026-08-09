@@ -24,7 +24,7 @@ export default async function TeacherGroupsPage({ searchParams }: GroupsPageProp
   const user = await requireUser([UserRole.TEACHER, UserRole.DEVELOPER]);
   const prefix = user.role === UserRole.DEVELOPER ? "/developer" : "/teacher";
   const params = (await searchParams) ?? {};
-  const groups = await getTeacherGroups();
+  const groups = await getTeacherGroups(user);
 
   const noticeKey =
     typeof params.groupDeleted === "string"

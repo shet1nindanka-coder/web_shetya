@@ -83,6 +83,7 @@ export async function POST(request: Request) {
 
   const result = await issueHomework({
     studentId: String(body?.studentId ?? ""),
+    issuedBy: { id: user.id, role: user.role },
     topicId: String(body?.topicId ?? ""),
     homeworkNumberIds: Array.isArray(body?.homeworkNumberIds) ? body.homeworkNumberIds : [],
     deadlineAt,
@@ -141,8 +142,12 @@ export async function DELETE(request: Request) {
   } | null;
 
   try {
-    assignment = await prisma.homeworkAssignment.findUnique({
-      where: { id: assignmentId },
+    assignment = await prisma.homeworkAssignment.findFirst({
+      // Отменять можно только ДЗ своего ученика (SEC-003).
+      where: {
+        id: assignmentId,
+        ...(user.role === UserRole.TEACHER ? { student: { teacherId: user.id } } : {})
+      },
       select: {
         id: true,
         studentId: true,

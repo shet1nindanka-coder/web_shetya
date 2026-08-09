@@ -137,7 +137,9 @@ export async function createStudentAction(formData: FormData) {
         name,
         email: login,
         passwordHash,
-        role: UserRole.STUDENT
+        role: UserRole.STUDENT,
+        // Ученик принадлежит создавшему его учителю (SEC-003).
+        teacherId: teacher.id
       }
     });
   } catch (error) {
@@ -187,7 +189,9 @@ export async function deleteStudentAction(formData: FormData) {
   const student = await prisma.user.findFirst({
     where: {
       id: studentId,
-      role: UserRole.STUDENT
+      role: UserRole.STUDENT,
+      // Удалять можно только своего ученика (SEC-003).
+      teacherId: teacher.id
     },
     select: {
       id: true

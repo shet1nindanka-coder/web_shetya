@@ -93,9 +93,11 @@ export async function POST(request: Request) {
 
   const [student, homeworkNumbers] = await Promise.all([
     prisma.user.findFirst({
+      // Только свой ученик (SEC-003).
       where: {
         id: studentId,
-        role: UserRole.STUDENT
+        role: UserRole.STUDENT,
+        teacherId: user.id
       },
       select: { id: true }
     }),

@@ -59,7 +59,7 @@ function pluralizeNumbers(count: number) {
 export default async function TeacherTopicsPage({ searchParams }: TeacherTopicsPageProps) {
   const user = await requireUser([UserRole.TEACHER, UserRole.DEVELOPER]);
   const isDeveloper = user.role === UserRole.DEVELOPER;
-  const data = await getTeacherTopicsOverview();
+  const data = await getTeacherTopicsOverview(user);
   const uploadMode = getStorageBackend() === "blob" ? "blob" : "local";
   const blobAccess = getBlobAccessMode();
   const resolvedSearchParams = (await searchParams) ?? {};

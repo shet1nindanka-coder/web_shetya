@@ -13,12 +13,12 @@ type TeacherStudentAssignPageProps = {
 };
 
 export default async function TeacherStudentAssignPage({ params }: TeacherStudentAssignPageProps) {
-  await requireUser(UserRole.TEACHER);
+  const user = await requireUser(UserRole.TEACHER);
   const { studentId } = await params;
   let data: Awaited<ReturnType<typeof getTeacherStudentDetail>>;
 
   try {
-    data = await getTeacherStudentDetail(studentId);
+    data = await getTeacherStudentDetail(user, studentId);
   } catch (error) {
     if (error instanceof Error && error.message.startsWith("Student not found:")) {
       notFound();

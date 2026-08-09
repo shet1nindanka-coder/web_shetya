@@ -74,8 +74,12 @@ model User {
   email                String                     @unique
   passwordHash         String
   role                 UserRole
+  // Владелец ученика: у каждого учителя свои ученики (SEC-002/003).
+  teacherId            String?
   createdAt            DateTime                   @default(now())
   updatedAt            DateTime                   @updatedAt
+  teacher              User?                      @relation("TeacherStudents", fields: [teacherId], references: [id], onDelete: SetNull)
+  students             User[]                     @relation("TeacherStudents")
   sessions             Session[]
   uploadedFiles        StoredFile[]               @relation("UploadedFiles")
   numberStatuses       StudentTopicNumberStatus[]
@@ -88,6 +92,8 @@ model User {
   testAttempts         TestAttempt[]
   topicMasteries       TopicMastery[]
   homeworkAssignments  HomeworkAssignment[]       @relation("StudentHomeworkAssignments")
+
+  @@index([teacherId])
 }
 
 model Session {

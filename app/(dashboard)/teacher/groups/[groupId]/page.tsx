@@ -28,7 +28,7 @@ export default async function GroupDetailPage({ params, searchParams }: GroupDet
   const prefix = user.role === UserRole.DEVELOPER ? "/developer" : "/teacher";
   const { groupId } = await params;
   const resolvedSearchParams = (await searchParams) ?? {};
-  const group = await getGroupDetail(groupId);
+  const group = await getGroupDetail(user, groupId);
 
   if (!group) {
     notFound();

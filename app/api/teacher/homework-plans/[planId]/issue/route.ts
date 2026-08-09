@@ -106,6 +106,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ pla
     try {
       const result = await issueHomework({
         studentId: participant.studentId,
+        issuedBy: { id: user.id, role: user.role },
         topicId: plan.topicId,
         homeworkNumberIds: participant.items.map((item) => item.homeworkNumberId),
         deadlineAt: plan.deadlineAt,

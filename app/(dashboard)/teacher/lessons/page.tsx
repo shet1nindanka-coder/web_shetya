@@ -17,7 +17,7 @@ const statusLabels: Record<string, string> = {
 export default async function TeacherLessonsPage() {
   const user = await requireUser([UserRole.TEACHER, UserRole.DEVELOPER]);
   const prefix = user.role === UserRole.DEVELOPER ? "/developer" : "/teacher";
-  const lessons = await getTeacherLessons();
+  const lessons = await getTeacherLessons(user);
 
   return (
     <div>

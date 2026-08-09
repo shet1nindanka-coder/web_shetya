@@ -27,7 +27,7 @@ export default async function LessonNewPage({ searchParams }: LessonNewPageProps
   let formGroupId: string | undefined;
 
   if (groupId) {
-    const group = await getGroupDetail(groupId);
+    const group = await getGroupDetail(user, groupId);
 
     if (!group) {
       notFound();

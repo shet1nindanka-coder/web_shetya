@@ -28,7 +28,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ less
   const url = new URL(request.url);
   const studentId = url.searchParams.get("studentId");
 
-  const payload = await buildLessonPrintPayload(lessonId, studentId);
+  const payload = await buildLessonPrintPayload(user, lessonId, studentId);
 
   if (!payload || payload.printData.participants.length === 0) {
     return NextResponse.json({ error: "Урок не найден." }, { status: 404 });

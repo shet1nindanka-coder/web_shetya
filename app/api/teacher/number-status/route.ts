@@ -61,7 +61,8 @@ export async function POST(request: Request) {
 
   const [student, homeworkNumber] = await Promise.all([
     prisma.user.findFirst({
-      where: { id: studentId, role: UserRole.STUDENT },
+      // Только свой ученик (SEC-003).
+      where: { id: studentId, role: UserRole.STUDENT, teacherId: user.id },
       select: { id: true }
     }),
     prisma.topicHomeworkNumber.findUnique({

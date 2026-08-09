@@ -17,6 +17,8 @@ import { compareHomeworkNumbers } from "@/lib/utils";
 
 export type IssueHomeworkInput = {
   studentId: string;
+  /** Кто выдаёт: TEACHER выдаёт только своим ученикам, DEVELOPER — любым (SEC-003). */
+  issuedBy?: { id: string; role: UserRole };
   topicId: string;
   homeworkNumberIds: string[];
   deadlineAt: Date;
@@ -76,7 +78,11 @@ export async function issueHomework(input: IssueHomeworkInput): Promise<IssueHom
 
   const [student, foundNumbers] = await Promise.all([
     prisma.user.findFirst({
-      where: { id: studentId, role: UserRole.STUDENT },
+      where: {
+        id: studentId,
+        role: UserRole.STUDENT,
+        ...(input.issuedBy && input.issuedBy.role === UserRole.TEACHER ? { teacherId: input.issuedBy.id } : {})
+      },
       select: { id: true }
     }),
     prisma.topicHomeworkNumber.findMany({

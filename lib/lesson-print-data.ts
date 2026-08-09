@@ -1,9 +1,10 @@
-import { getLessonDetail } from "@/lib/platform-data";
+import { getLessonDetail, type TeacherViewer } from "@/lib/platform-data";
 import type { LessonPrintData } from "@/lib/lesson-print-html";
 
-/** Данные раздатки: урок целиком или один ученик (?studentId=…). */
-export async function buildLessonPrintPayload(lessonId: string, studentId: string | null) {
-  const lesson = await getLessonDetail(lessonId);
+/** Данные раздатки: урок целиком или один ученик (?studentId=…). Урок ищется
+ * в скоупе владельца — чужая раздатка недоступна (SEC-002). */
+export async function buildLessonPrintPayload(viewer: TeacherViewer, lessonId: string, studentId: string | null) {
+  const lesson = await getLessonDetail(viewer, lessonId);
 
   if (!lesson) {
     return null;

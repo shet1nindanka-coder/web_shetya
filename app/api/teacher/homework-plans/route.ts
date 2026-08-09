@@ -95,7 +95,12 @@ export async function POST(request: Request) {
     resolvedGroupId = group.id;
   } else {
     const students = await prisma.user.findMany({
-      where: { role: UserRole.STUDENT, id: { in: requestedIds } },
+      // Только свои ученики (SEC-003); DEVELOPER может выдать любому.
+      where: {
+        role: UserRole.STUDENT,
+        id: { in: requestedIds },
+        ...(user.role === UserRole.TEACHER ? { teacherId: user.id } : {})
+      },
       select: { id: true }
     });
     studentIds = students.map((student) => student.id);
