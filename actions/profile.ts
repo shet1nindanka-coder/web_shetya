@@ -24,7 +24,6 @@ function revalidateAccountRoutes(role: UserRole) {
 
   revalidatePath("/dashboard");
   revalidatePath(homePath);
-  revalidatePath(`${homePath}/account`);
   revalidatePath(`${homePath}/settings`);
 
   if (role === UserRole.TEACHER) {
