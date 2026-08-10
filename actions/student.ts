@@ -26,7 +26,13 @@ function redirectTeacherWithStudentStatus(params: URLSearchParams): never {
   redirect(query ? `/teacher/students?${query}` : "/teacher/students");
 }
 
-export async function createStudentAction(formData: FormData) {
+export type CreateStudentResult = { ok: boolean; message: string };
+
+/**
+ * Возвращает результат клиенту (без redirect): форма показывает всплывающее
+ * окно с логином и паролем нового ученика — после него пароль нигде не виден.
+ */
+export async function createStudentAction(formData: FormData): Promise<CreateStudentResult> {
   const teacher = await requireUser(UserRole.TEACHER);
 
   const name = normalizeSingleLineText(String(formData.get("name") ?? ""));
@@ -41,7 +47,7 @@ export async function createStudentAction(formData: FormData) {
     password.length > MAX_PASSWORD_LENGTH ||
     validatePasswordStrength(password) !== null
   ) {
-    redirectTeacherWithStudentStatus(new URLSearchParams({ studentError: "invalid" }));
+    return { ok: false, message: "Укажите имя, логин и пароль: минимум 8 символов, обязательно буквы и цифры." };
   }
 
   const requestHeaders = await headers();
@@ -67,7 +73,7 @@ export async function createStudentAction(formData: FormData) {
         error,
         "Student creation request was rate limited."
       );
-      redirectTeacherWithStudentStatus(new URLSearchParams({ studentError: "rateLimited" }));
+      return { ok: false, message: "Слишком много попыток создать учеников за короткое время. Подождите несколько минут." };
     }
 
     throw error;
@@ -91,7 +97,7 @@ export async function createStudentAction(formData: FormData) {
       error,
       "Persistent student creation rate limit failed."
     );
-    redirectTeacherWithStudentStatus(new URLSearchParams({ studentError: "save" }));
+    return { ok: false, message: "Не удалось создать ученика. Проверьте подключение к PostgreSQL и повторите попытку." };
   }
 
   if (!persistentRateLimit.allowed) {
@@ -104,7 +110,7 @@ export async function createStudentAction(formData: FormData) {
       undefined,
       "Student creation was rate limited by the persistent teacher limit."
     );
-    redirectTeacherWithStudentStatus(new URLSearchParams({ studentError: "rateLimited" }));
+    return { ok: false, message: "Слишком много попыток создать учеников за короткое время. Подождите несколько минут." };
   }
 
   const existingStudent = await prisma.user.findUnique({
@@ -126,7 +132,7 @@ export async function createStudentAction(formData: FormData) {
       undefined,
       "Student creation was skipped because the login already exists."
     );
-    redirectTeacherWithStudentStatus(new URLSearchParams({ studentError: "exists" }));
+    return { ok: false, message: "Ученик с таким логином уже существует." };
   }
 
   try {
@@ -154,7 +160,7 @@ export async function createStudentAction(formData: FormData) {
       error,
       "Failed to create student account."
     );
-    redirectTeacherWithStudentStatus(new URLSearchParams({ studentError: "save" }));
+    return { ok: false, message: "Не удалось создать ученика. Проверьте подключение к PostgreSQL и повторите попытку." };
   }
 
   logInfoEvent(
@@ -174,7 +180,8 @@ export async function createStudentAction(formData: FormData) {
   revalidatePath("/teacher");
   revalidatePath("/teacher/students");
   revalidatePath("/teacher/statistics");
-  redirectTeacherWithStudentStatus(new URLSearchParams({ studentCreated: "1" }));
+
+  return { ok: true, message: "Ученик создан. Ему уже можно входить в систему." };
 }
 
 export async function deleteStudentAction(formData: FormData) {

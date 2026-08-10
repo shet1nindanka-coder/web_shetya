@@ -31,7 +31,13 @@ function redirectDeveloperWithAccountStatus(params: URLSearchParams): never {
   redirect(query ? `/developer/accounts?${query}` : "/developer/accounts");
 }
 
-export async function createAccountAction(formData: FormData) {
+export type CreateAccountResult = { ok: boolean; message: string };
+
+/**
+ * Возвращает результат клиенту (без redirect): форма показывает всплывающее
+ * окно с логином и паролем — после него пароль больше нигде не показывается.
+ */
+export async function createAccountAction(formData: FormData): Promise<CreateAccountResult> {
   const developer = await requireUser(UserRole.DEVELOPER);
 
   const roleRaw = String(formData.get("role") ?? "");
@@ -51,7 +57,10 @@ export async function createAccountAction(formData: FormData) {
     password.length > MAX_PASSWORD_LENGTH ||
     validatePasswordStrength(password) !== null
   ) {
-    redirectDeveloperWithAccountStatus(new URLSearchParams({ accountError: "invalid" }));
+    return {
+      ok: false,
+      message: "Укажите роль, учителя (для ученика), имя, логин и пароль: минимум 8 символов, буквы и цифры."
+    };
   }
 
   const requestHeaders = await headers();
@@ -77,7 +86,7 @@ export async function createAccountAction(formData: FormData) {
         error,
         "Account creation request was rate limited."
       );
-      redirectDeveloperWithAccountStatus(new URLSearchParams({ accountError: "rateLimited" }));
+      return { ok: false, message: "Слишком много попыток создать аккаунты. Подождите несколько минут." };
     }
 
     throw error;
@@ -101,7 +110,7 @@ export async function createAccountAction(formData: FormData) {
       error,
       "Persistent account creation rate limit failed."
     );
-    redirectDeveloperWithAccountStatus(new URLSearchParams({ accountError: "save" }));
+    return { ok: false, message: "Не удалось создать аккаунт. Проверьте подключение к PostgreSQL и повторите попытку." };
   }
 
   if (!persistentRateLimit.allowed) {
@@ -114,7 +123,7 @@ export async function createAccountAction(formData: FormData) {
       undefined,
       "Account creation was rate limited by the persistent developer limit."
     );
-    redirectDeveloperWithAccountStatus(new URLSearchParams({ accountError: "rateLimited" }));
+    return { ok: false, message: "Слишком много попыток создать аккаунты. Подождите несколько минут." };
   }
 
   // Ученик обязан принадлежать существующему учителю (SEC-003).
@@ -127,10 +136,10 @@ export async function createAccountAction(formData: FormData) {
     });
 
     if (!ownerTeacher) {
-      redirectDeveloperWithAccountStatus(new URLSearchParams({ accountError: "invalid" }));
+      return { ok: false, message: "Выбранный учитель не найден — обновите страницу и попробуйте снова." };
     }
 
-    ownerTeacherId = ownerTeacher!.id;
+    ownerTeacherId = ownerTeacher.id;
   }
 
   const existingUser = await prisma.user.findUnique({
@@ -152,7 +161,7 @@ export async function createAccountAction(formData: FormData) {
       undefined,
       "Account creation was skipped because the login already exists."
     );
-    redirectDeveloperWithAccountStatus(new URLSearchParams({ accountError: "exists" }));
+    return { ok: false, message: "Аккаунт с таким логином уже существует." };
   }
 
   const accountRole = role!;
@@ -182,7 +191,7 @@ export async function createAccountAction(formData: FormData) {
       error,
       "Failed to create account."
     );
-    redirectDeveloperWithAccountStatus(new URLSearchParams({ accountError: "save" }));
+    return { ok: false, message: "Не удалось создать аккаунт. Проверьте подключение к PostgreSQL и повторите попытку." };
   }
 
   logInfoEvent(
@@ -203,9 +212,11 @@ export async function createAccountAction(formData: FormData) {
   revalidatePath("/teacher");
   revalidatePath("/teacher/students");
   revalidatePath("/teacher/statistics");
-  redirectDeveloperWithAccountStatus(
-    new URLSearchParams({ accountCreated: accountRole === UserRole.TEACHER ? "teacher" : "student" })
-  );
+
+  return {
+    ok: true,
+    message: accountRole === UserRole.TEACHER ? "Аккаунт учителя создан." : "Аккаунт ученика создан."
+  };
 }
 
 /*

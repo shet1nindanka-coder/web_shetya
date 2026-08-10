@@ -1,14 +1,18 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, useTransition } from "react";
 import { createAccountAction } from "@/actions/account";
+import { AccountCredentialsDialog } from "@/components/account-credentials-dialog";
 import { ShbzSelect } from "@/components/shbz-select";
+import { generateReadablePassword } from "@/lib/password-generate";
 import { MAX_PASSWORD_LENGTH, validatePasswordStrength } from "@/lib/password-policy";
 import { MAX_LOGIN_LENGTH, MAX_USER_NAME_LENGTH } from "@/lib/utils";
 
 /*
  * Форма создания аккаунта разработчиком: интерфейс повторяет форму
  * «Добавить ученика» (student-create-form), сверху — переключатель роли.
+ * После создания открывается окно с логином и паролем — единственный момент,
+ * когда пароль можно скопировать.
  */
 
 type AccountRole = "STUDENT" | "TEACHER";
@@ -17,6 +21,8 @@ const roleOptions: Array<{ value: AccountRole; label: string }> = [
   { value: "STUDENT", label: "Ученик" },
   { value: "TEACHER", label: "Учитель" }
 ];
+
+type CreatedCredentials = { title: string; name: string; login: string; password: string };
 
 type AccountCreateFormProps = {
   /** Учителя для привязки ученика: у каждого учителя свои ученики (SEC-003). */
@@ -29,6 +35,10 @@ export function AccountCreateForm({ teachers }: AccountCreateFormProps) {
   const [name, setName] = useState("");
   const [login, setLogin] = useState("");
   const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
+  const [created, setCreated] = useState<CreatedCredentials | null>(null);
+  const [isPending, startTransition] = useTransition();
 
   const passwordError = useMemo(
     () => (password.length > 0 ? validatePasswordStrength(password) : null),
@@ -36,18 +46,57 @@ export function AccountCreateForm({ teachers }: AccountCreateFormProps) {
   );
 
   const isSubmitDisabled =
+    isPending ||
     !name.trim() ||
     !login.trim() ||
     password.length === 0 ||
     passwordError !== null ||
     (role === "STUDENT" && !teacherId);
+
   const roleLabel = role === "TEACHER" ? "учителя" : "ученика";
 
-  return (
-    <form action={createAccountAction}>
-      <input type="hidden" name="role" value={role} />
-      <input type="hidden" name="teacherId" value={role === "STUDENT" ? teacherId : ""} />
+  const handleSubmit = () => {
+    if (isSubmitDisabled) {
+      return;
+    }
 
+    const formData = new FormData();
+    formData.set("role", role);
+    formData.set("teacherId", role === "STUDENT" ? teacherId : "");
+    formData.set("name", name);
+    formData.set("login", login);
+    formData.set("password", password);
+
+    setFormError(null);
+
+    startTransition(async () => {
+      const result = await createAccountAction(formData);
+
+      if (!result.ok) {
+        setFormError(result.message);
+        return;
+      }
+
+      setCreated({
+        title: result.message,
+        name: name.trim(),
+        login: login.trim().toLowerCase(),
+        password
+      });
+      setName("");
+      setLogin("");
+      setPassword("");
+      setShowPassword(false);
+    });
+  };
+
+  return (
+    <form
+      onSubmit={(event) => {
+        event.preventDefault();
+        handleSubmit();
+      }}
+    >
       <div className="shbz-seg mb-5 inline-flex" role="group" aria-label="Роль нового аккаунта">
         {roleOptions.map((option) => (
           <button
@@ -120,7 +169,7 @@ export function AccountCreateForm({ teachers }: AccountCreateFormProps) {
             Пароль
           </span>
           <input
-            type="password"
+            type={showPassword ? "text" : "password"}
             name="password"
             value={password}
             onChange={(event) => setPassword(event.target.value)}
@@ -138,6 +187,18 @@ export function AccountCreateForm({ teachers }: AccountCreateFormProps) {
             aria-describedby={passwordError ? "account-password-feedback" : undefined}
             maxLength={MAX_PASSWORD_LENGTH}
           />
+          <button
+            type="button"
+            className="mt-2 text-[12.5px] font-semibold underline-offset-2 hover:underline"
+            style={{ color: "var(--shbz-accent-solid)" }}
+            onClick={() => {
+              setPassword(generateReadablePassword());
+              setShowPassword(true);
+              setFormError(null);
+            }}
+          >
+            Сгенерировать пароль
+          </button>
           {passwordError ? (
             <p
               id="account-password-feedback"
@@ -160,10 +221,26 @@ export function AccountCreateForm({ teachers }: AccountCreateFormProps) {
             {"\u00A0"}
           </span>
           <button type="submit" disabled={isSubmitDisabled} className="shbz-btn-primary h-[52px] px-[26px] text-[15px]">
-            {role === "TEACHER" ? "Создать учителя" : "Создать ученика"}
+            {isPending ? "Создаём..." : role === "TEACHER" ? "Создать учителя" : "Создать ученика"}
           </button>
         </div>
       </div>
+
+      {formError ? (
+        <p className="mt-4 text-[13px] font-medium" style={{ color: "var(--shbz-red-text)" }} aria-live="polite">
+          {formError}
+        </p>
+      ) : null}
+
+      {created ? (
+        <AccountCredentialsDialog
+          title={created.title}
+          name={created.name}
+          login={created.login}
+          password={created.password}
+          onClose={() => setCreated(null)}
+        />
+      ) : null}
     </form>
   );
 }
