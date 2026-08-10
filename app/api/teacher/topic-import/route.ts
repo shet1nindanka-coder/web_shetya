@@ -7,7 +7,7 @@ import { publishDashboardRealtimeEvent } from "@/lib/dashboard-realtime";
 import { getRequestLogContext, logErrorEvent, logInfoEvent, logWarnEvent } from "@/lib/logger";
 import { revalidateAllPlatformData } from "@/lib/platform-data-cache";
 import { prisma } from "@/lib/prisma";
-import { buildImportPlan, parseTopicImportText, type ImportNumber } from "@/lib/topic-import";
+import { buildImportPlan, buildImportUpdateData, parseTopicImportText, type ImportNumber } from "@/lib/topic-import";
 
 /*
  * Импорт номеров темы из JSON, который выдаёт внешняя ИИ по промпту из
@@ -160,8 +160,10 @@ export async function POST(request: Request) {
           // existingNumber — записанный вид номера в теме: он может отличаться от
           // файла ведущими нулями («10203» в теме против «010203» в файле).
           where: { topicId_number: { topicId: topic.id, number: item.existingNumber } },
-          // difficulty, estimatedMinutes и answerFile живут своей жизнью — импорт их не трогает.
-          data: { conditionLatex: item.conditionLatex, answerLatex: item.answerLatex }
+          // difficulty, estimatedMinutes и answerFile живут своей жизнью — импорт их
+          // не трогает. answerLatex пишется только когда он есть в файле: null
+          // не должен затирать введённый руками эталонный ответ (Б-2, аудит 10.08.2026).
+          data: buildImportUpdateData(item)
         });
       }
     });

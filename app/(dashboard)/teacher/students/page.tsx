@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { UserRole } from "@prisma/client";
 import { deleteStudentAction } from "@/actions/student";
+import { StudentPasswordResetButton } from "@/components/student-password-reset-button";
 import { DeleteButton } from "@/components/delete-button";
 import { StudentCreateForm } from "@/components/student-create-form";
 import { ShbzNumberSearch } from "@/components/shbz-number-search";
@@ -44,6 +45,26 @@ const studentNotices = {
   studentDeleteMissing: {
     tone: "error",
     message: "Такого ученика уже нет в системе."
+  },
+  passwordReset: {
+    tone: "success",
+    message: "Пароль ученика обновлён, все его сессии завершены. Передайте ученику новый пароль."
+  },
+  passwordInvalid: {
+    tone: "error",
+    message: "Новый пароль не подходит: минимум 8 символов, обязательно буквы и цифры."
+  },
+  passwordMissing: {
+    tone: "error",
+    message: "Такого ученика уже нет в системе."
+  },
+  passwordSave: {
+    tone: "error",
+    message: "Не удалось сменить пароль. Повторите попытку ещё раз."
+  },
+  passwordRateLimited: {
+    tone: "error",
+    message: "Слишком много смен пароля за короткое время. Подождите несколько минут."
   }
 } as const;
 
@@ -55,8 +76,22 @@ export default async function TeacherStudentsPage({ searchParams }: TeacherStude
     typeof resolvedSearchParams.studentCreated === "string" ? resolvedSearchParams.studentCreated : undefined;
   const studentError =
     typeof resolvedSearchParams.studentError === "string" ? resolvedSearchParams.studentError : undefined;
+  const passwordReset =
+    typeof resolvedSearchParams.passwordReset === "string" ? resolvedSearchParams.passwordReset : undefined;
+  const passwordResetError =
+    typeof resolvedSearchParams.passwordResetError === "string" ? resolvedSearchParams.passwordResetError : undefined;
   const noticeKey =
-    studentCreated === "1"
+    passwordReset === "1"
+      ? "passwordReset"
+      : passwordResetError === "invalid"
+        ? "passwordInvalid"
+        : passwordResetError === "missing"
+          ? "passwordMissing"
+          : passwordResetError === "save"
+            ? "passwordSave"
+            : passwordResetError === "rateLimited"
+              ? "passwordRateLimited"
+    : studentCreated === "1"
       ? "studentCreated"
       : typeof resolvedSearchParams.studentDeleted === "string" && resolvedSearchParams.studentDeleted === "1"
         ? "studentDeleted"
@@ -152,6 +187,7 @@ export default async function TeacherStudentsPage({ searchParams }: TeacherStude
                   >
                     Смотреть прогресс
                   </Link>
+                  <StudentPasswordResetButton studentId={student.id} studentName={student.name} />
                   <DeleteButton
                     label="Удалить"
                     title="Удалить ученика?"

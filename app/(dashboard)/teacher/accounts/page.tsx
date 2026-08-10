@@ -1,5 +1,6 @@
 import { UserRole } from "@prisma/client";
 import { AccountCreateForm } from "@/components/account-create-form";
+import { AccountStudentsManager } from "@/components/account-students-manager";
 import { ShbzNumberSearch } from "@/components/shbz-number-search";
 import { ShbzPageHeader } from "@/components/shbz-page-header";
 import { requireUser } from "@/lib/auth";
@@ -41,6 +42,38 @@ const accountNotices = {
   rateLimited: {
     tone: "error",
     message: "Слишком много попыток создать аккаунты за короткое время. Подождите несколько минут."
+  },
+  ownerChanged: {
+    tone: "success",
+    message: "Учитель ученика обновлён. Ученик уже виден новому учителю."
+  },
+  ownerInvalid: {
+    tone: "error",
+    message: "Не удалось сменить учителя: ученик или учитель не найдены. Обновите страницу."
+  },
+  ownerSave: {
+    tone: "error",
+    message: "Не удалось сменить учителя. Повторите попытку ещё раз."
+  },
+  passwordReset: {
+    tone: "success",
+    message: "Пароль ученика обновлён, все его сессии завершены. Передайте ученику новый пароль."
+  },
+  passwordInvalid: {
+    tone: "error",
+    message: "Новый пароль не подходит: минимум 8 символов, обязательно буквы и цифры."
+  },
+  passwordMissing: {
+    tone: "error",
+    message: "Такого ученика уже нет в системе."
+  },
+  passwordSave: {
+    tone: "error",
+    message: "Не удалось сменить пароль. Повторите попытку ещё раз."
+  },
+  passwordRateLimited: {
+    tone: "error",
+    message: "Слишком много смен пароля за короткое время. Подождите несколько минут."
   }
 } as const;
 
@@ -48,19 +81,42 @@ export default async function DeveloperAccountsPage({ searchParams }: AccountsPa
   await requireUser(UserRole.DEVELOPER);
   const params = (await searchParams) ?? {};
   // Мелкие форм-данные: список учителей для привязки ученика.
-  const teachers = await prisma.user.findMany({
-    where: { role: UserRole.TEACHER },
-    orderBy: { name: "asc" },
-    select: { id: true, name: true, email: true }
-  });
+  const [teachers, students] = await Promise.all([
+    prisma.user.findMany({
+      where: { role: UserRole.TEACHER },
+      orderBy: { name: "asc" },
+      select: { id: true, name: true, email: true }
+    }),
+    prisma.user.findMany({
+      where: { role: UserRole.STUDENT },
+      orderBy: { name: "asc" },
+      select: { id: true, name: true, email: true, teacherId: true }
+    })
+  ]);
   const created = typeof params.accountCreated === "string" ? params.accountCreated : undefined;
   const error = typeof params.accountError === "string" ? params.accountError : undefined;
+  const ownerChanged = typeof params.ownerChanged === "string" ? params.ownerChanged : undefined;
+  const passwordReset = typeof params.passwordReset === "string" ? params.passwordReset : undefined;
+  const passwordResetError =
+    typeof params.passwordResetError === "string" ? params.passwordResetError : undefined;
 
   const noticeKey =
     created === "teacher"
       ? "teacherCreated"
       : created === "student"
         ? "studentCreated"
+        : ownerChanged === "1"
+          ? "ownerChanged"
+          : passwordReset === "1"
+            ? "passwordReset"
+            : passwordResetError === "invalid"
+              ? "passwordInvalid"
+              : passwordResetError === "missing"
+                ? "passwordMissing"
+                : passwordResetError === "save"
+                  ? "passwordSave"
+                  : passwordResetError === "rateLimited"
+                    ? "passwordRateLimited"
         : error && error in accountNotices
           ? (error as Exclude<keyof typeof accountNotices, "studentCreated" | "teacherCreated">)
           : null;
@@ -92,6 +148,11 @@ export default async function DeveloperAccountsPage({ searchParams }: AccountsPa
         <div className="shbz-card shbz-section-pad">
           <AccountCreateForm teachers={teachers} />
         </div>
+      </section>
+
+      <section className="mt-11">
+        <h2 className="shbz-section-title">Ученики: учитель и пароль</h2>
+        <AccountStudentsManager students={students} teachers={teachers} />
       </section>
     </div>
   );

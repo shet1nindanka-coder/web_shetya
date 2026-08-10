@@ -2,6 +2,7 @@ import test from "node:test";
 import assert from "node:assert/strict";
 import {
   buildImportPlan,
+  buildImportUpdateData,
   IMPORT_FORMAT_VERSION,
   MAX_IMPORT_NUMBERS,
   parseImportJson,
@@ -266,6 +267,30 @@ test("buildImportPlan сопоставляет «010203» из файла с «1
   assert.equal(plan.toFill.length, 1);
   assert.equal(plan.toFill[0]!.existingNumber, "10203");
   assert.equal(plan.toFill[0]!.number, "010203");
+});
+
+test("файл без ответа (answerLatex: null) не затирает введённый руками эталонный ответ", () => {
+  // Исторический порядок ввода: ответ забит руками раньше условия. В файле у номера
+  // ответа нет — номер уходит в toFill (заполняем условие), но answerLatex в data
+  // попадать не должен, иначе update перезапишет эталон null-ом (Б-2, аудит 10.08.2026).
+  const parsed = [{ number: "5", conditionLatex: "новое условие", answerLatex: null }];
+  const existing = [{ number: "5", conditionLatex: null, answerLatex: "$42$" }];
+
+  const plan = buildImportPlan(parsed, existing);
+
+  assert.equal(plan.toOverwrite.length, 0);
+  assert.equal(plan.toFill.length, 1);
+
+  const data = buildImportUpdateData(plan.toFill[0]!);
+
+  assert.equal(data.conditionLatex, "новое условие");
+  assert.equal("answerLatex" in data, false);
+});
+
+test("файл с ответом по-прежнему пишет answerLatex при заполнении и перезаписи", () => {
+  const data = buildImportUpdateData({ number: "5", conditionLatex: "условие", answerLatex: "$8$" });
+
+  assert.deepEqual(data, { conditionLatex: "условие", answerLatex: "$8$" });
 });
 
 test("TOPIC_IMPORT_PROMPT не потерял обратные слэши при экранировании", () => {

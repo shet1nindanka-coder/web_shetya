@@ -2,6 +2,7 @@ import { UserRole } from "@prisma/client";
 import { notFound } from "next/navigation";
 import type { ReactNode } from "react";
 import { deleteStudentAction } from "@/actions/student";
+import { StudentPasswordResetButton } from "@/components/student-password-reset-button";
 import { DeleteButton } from "@/components/delete-button";
 import { PageHeader } from "@/components/page-header";
 import { ShbzNumberSearch } from "@/components/shbz-number-search";
@@ -61,6 +62,11 @@ export default async function TeacherStudentLayout({ children, params }: Teacher
             >
               Учебный год
             </a>
+            <StudentPasswordResetButton
+              studentId={data.student.id}
+              studentName={data.student.name}
+              className="ui-pressable ui-button-secondary inline-flex justify-center rounded-[8px] px-4 py-2.5 text-sm font-semibold transition"
+            />
             <DeleteButton
               label="Удалить ученика"
               title="Удалить ученика?"

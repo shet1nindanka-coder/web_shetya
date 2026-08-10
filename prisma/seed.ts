@@ -73,7 +73,31 @@ async function createPdfFileRecord(
   });
 }
 
+/*
+ * Сид полностью очищает базу (включая пользователей и файлы) — это инструмент
+ * для локальной разработки. Защита от запуска на проде (Б-3 аудита 10.08.2026):
+ * блок `prisma.seed` в package.json запускает сид и после `migrate reset`,
+ * поэтому guard стоит в самом скрипте, а не в npm-команде.
+ */
+function assertLocalDatabase() {
+  if (process.env.ALLOW_DESTRUCTIVE_SEED === "1") {
+    return;
+  }
+
+  const databaseUrl = process.env.DATABASE_URL ?? "";
+  const isLocalDatabase = /localhost|127\.0\.0\.1/.test(databaseUrl);
+
+  if (process.env.NODE_ENV === "production" || !isLocalDatabase) {
+    throw new Error(
+      "Сид стирает базу целиком и запрещён вне локальной БД (localhost/127.0.0.1). " +
+        "Если это осознанное решение, запустите с ALLOW_DESTRUCTIVE_SEED=1."
+    );
+  }
+}
+
 async function main() {
+  assertLocalDatabase();
+
   const existingFiles = await prisma.storedFile.findMany({
     select: {
       storageKey: true

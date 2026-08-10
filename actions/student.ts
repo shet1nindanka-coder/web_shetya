@@ -270,3 +270,103 @@ export async function deleteStudentAction(formData: FormData) {
   revalidatePath(`/teacher/students/${studentId}`);
   redirectTeacherWithStudentStatus(new URLSearchParams({ studentDeleted: "1" }));
 }
+
+/*
+ * Сброс пароля ученика (Б-1 аудита 10.08.2026). До этого забытый пароль
+ * «лечился» только удалением аккаунта со всей историей ДЗ и проверок.
+ * Учитель сбрасывает пароль только своим ученикам, разработчик — любым.
+ * Все сессии ученика закрываются; сессия и кука вызывающего не трогаются.
+ */
+export async function resetStudentPasswordAction(formData: FormData) {
+  const user = await requireUser([UserRole.TEACHER, UserRole.DEVELOPER]);
+  const isDeveloper = user.role === UserRole.DEVELOPER;
+
+  const redirectWithStatus = (params: URLSearchParams): never => {
+    const base = isDeveloper ? "/developer/accounts" : "/teacher/students";
+    const query = params.toString();
+    redirect(query ? `${base}?${query}` : base);
+  };
+
+  const studentId = String(formData.get("studentId") ?? "").trim();
+  const password = String(formData.get("password") ?? "");
+
+  if (!studentId) {
+    redirectWithStatus(new URLSearchParams({ passwordResetError: "missing" }));
+  }
+
+  if (password.length > MAX_PASSWORD_LENGTH || validatePasswordStrength(password) !== null) {
+    redirectWithStatus(new URLSearchParams({ passwordResetError: "invalid" }));
+  }
+
+  const requestHeaders = await headers();
+  const clientIp = getClientIpFromHeaders(requestHeaders);
+
+  try {
+    assertRateLimit(
+      {
+        scope: "reset-student-password",
+        identifier: `${user.id}:${clientIp}`,
+        limit: 20,
+        windowMs: 10 * 60 * 1000
+      },
+      "Слишком много смен пароля."
+    );
+  } catch (error) {
+    if (error instanceof RateLimitExceededError) {
+      logWarnEvent(
+        "student.password_reset.rate_limited",
+        getHeadersLogContext(requestHeaders, { actorId: user.id }),
+        error,
+        "Student password reset was rate limited."
+      );
+      redirectWithStatus(new URLSearchParams({ passwordResetError: "rateLimited" }));
+    }
+
+    throw error;
+  }
+
+  const student = await prisma.user.findFirst({
+    where: {
+      id: studentId,
+      role: UserRole.STUDENT,
+      // Учитель меняет пароль только своему ученику (SEC-003); разработчик — любому.
+      ...(isDeveloper ? {} : { teacherId: user.id })
+    },
+    select: { id: true }
+  });
+
+  if (!student) {
+    logWarnEvent(
+      "student.password_reset.missing",
+      { actorId: user.id, studentId },
+      undefined,
+      "Student password reset was skipped because the student was not found."
+    );
+    redirectWithStatus(new URLSearchParams({ passwordResetError: "missing" }));
+  }
+
+  try {
+    const passwordHash = await hashPassword(password);
+
+    await prisma.$transaction([
+      prisma.user.update({ where: { id: studentId }, data: { passwordHash } }),
+      // Старые сессии закрываются: если пароль утёк, доступ по нему обрывается сразу.
+      prisma.session.deleteMany({ where: { userId: studentId } })
+    ]);
+  } catch (error) {
+    logErrorEvent(
+      "student.password_reset.failed",
+      { actorId: user.id, studentId },
+      error,
+      "Failed to reset student password."
+    );
+    redirectWithStatus(new URLSearchParams({ passwordResetError: "save" }));
+  }
+
+  logInfoEvent(
+    "student.password_reset.succeeded",
+    { actorId: user.id, studentId },
+    "Student password was reset."
+  );
+  redirectWithStatus(new URLSearchParams({ passwordReset: "1" }));
+}

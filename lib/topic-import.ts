@@ -366,6 +366,18 @@ export function buildImportPlan(parsed: ImportNumber[], existing: ExistingNumber
   return plan;
 }
 
+/**
+ * Данные для update существующего номера. `answerLatex` пишется только когда он
+ * есть в файле: задачник без ответов (`answerLatex: null`) не должен молча
+ * затирать эталонный ответ, введённый руками до импорта, — предпросмотр такой
+ * номер честно показывает как «заполним условие», а не «перезапишем».
+ */
+export function buildImportUpdateData(item: ImportNumber): { conditionLatex: string; answerLatex?: string } {
+  return item.answerLatex !== null
+    ? { conditionLatex: item.conditionLatex, answerLatex: item.answerLatex }
+    : { conditionLatex: item.conditionLatex };
+}
+
 /** Разбирает содержимое файла целиком: JSON (с починкой экранирования) → валидация. */
 export function parseTopicImportText(raw: string): TopicImportParseResult {
   const json = parseImportJson(raw);

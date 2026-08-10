@@ -207,3 +207,75 @@ export async function createAccountAction(formData: FormData) {
     new URLSearchParams({ accountCreated: accountRole === UserRole.TEACHER ? "teacher" : "student" })
   );
 }
+
+/*
+ * Смена учителя-владельца ученика (Б-4 аудита 10.08.2026). До этого teacherId
+ * писался только при создании: осиротевшего или неверно привязанного ученика
+ * (бэкфилл волны 5, восстановление из бэкапа) лечили ручным SQL на VPS.
+ */
+export async function changeStudentOwnerAction(formData: FormData) {
+  const developer = await requireUser(UserRole.DEVELOPER);
+
+  const studentId = String(formData.get("studentId") ?? "").trim();
+  const teacherId = String(formData.get("teacherId") ?? "").trim();
+
+  if (!studentId || !teacherId) {
+    redirectDeveloperWithAccountStatus(new URLSearchParams({ accountError: "ownerInvalid" }));
+  }
+
+  const [teacher, student] = await Promise.all([
+    prisma.user.findFirst({
+      where: { id: teacherId, role: UserRole.TEACHER },
+      select: { id: true }
+    }),
+    prisma.user.findFirst({
+      where: { id: studentId, role: UserRole.STUDENT },
+      select: { id: true, teacherId: true }
+    })
+  ]);
+
+  if (!teacher || !student) {
+    logWarnEvent(
+      "student.owner_change.missing",
+      { developerId: developer.id, studentId, newTeacherId: teacherId },
+      undefined,
+      "Student owner change was skipped: student or teacher was not found."
+    );
+    redirectDeveloperWithAccountStatus(new URLSearchParams({ accountError: "ownerInvalid" }));
+  }
+
+  if (student!.teacherId === teacher!.id) {
+    // Идемпотентно: владелец уже тот, просто подтверждаем.
+    redirectDeveloperWithAccountStatus(new URLSearchParams({ ownerChanged: "1" }));
+  }
+
+  try {
+    await prisma.user.update({
+      where: { id: student!.id },
+      data: { teacherId: teacher!.id }
+    });
+  } catch (error) {
+    logErrorEvent(
+      "student.owner_change.failed",
+      { developerId: developer.id, studentId, newTeacherId: teacherId },
+      error,
+      "Failed to change student owner."
+    );
+    redirectDeveloperWithAccountStatus(new URLSearchParams({ accountError: "ownerSave" }));
+  }
+
+  logInfoEvent(
+    "student.owner_change.succeeded",
+    { developerId: developer.id, studentId, newTeacherId: teacherId },
+    "Student owner was changed by the developer."
+  );
+  revalidateTeacherStudentsData();
+  revalidateTeacherTopicsData();
+  publishDashboardRealtimeEvent({ kind: "students-changed" });
+  revalidatePath("/dashboard");
+  revalidatePath("/teacher");
+  revalidatePath("/teacher/students");
+  revalidatePath("/teacher/statistics");
+  revalidatePath("/developer/accounts");
+  redirectDeveloperWithAccountStatus(new URLSearchParams({ ownerChanged: "1" }));
+}

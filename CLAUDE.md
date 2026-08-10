@@ -33,8 +33,8 @@ npm run test         # tsx --test tests/**/*.test.ts  (pure logic, no DB)
 npm run db:generate  # prisma generate
 npm run db:migrate   # prisma migrate deploy
 npm run db:dev       # prisma migrate dev
-npm run db:reset     # prisma migrate reset --force
-npm run db:seed      # tsx prisma/seed.ts
+npm run db:reset:local  # prisma migrate reset --force — ТОЛЬКО локально
+npm run db:seed         # tsx prisma/seed.ts — СТИРАЕТ базу; guard пускает только localhost
 ```
 
 Local DB: `docker compose up -d` runs Postgres on **port 5433** (not 5432, to avoid clashing with a
