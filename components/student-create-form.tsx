@@ -1,8 +1,9 @@
 "use client";
 
-import { useMemo, useState, useTransition } from "react";
+import { useMemo, useRef, useState, useTransition } from "react";
 import { createStudentAction } from "@/actions/student";
 import { AccountCredentialsDialog } from "@/components/account-credentials-dialog";
+import { PasswordSuggestMenu } from "@/components/password-suggest-menu";
 import { generatePasswordFromName } from "@/lib/password-generate";
 import { MAX_PASSWORD_LENGTH, validatePasswordStrength } from "@/lib/password-policy";
 import { MAX_LOGIN_LENGTH, MAX_USER_NAME_LENGTH } from "@/lib/utils";
@@ -18,8 +19,9 @@ export function StudentCreateForm() {
   const [name, setName] = useState("");
   const [login, setLogin] = useState("");
   const [password, setPassword] = useState("");
-  const [showPassword, setShowPassword] = useState(false);
   const [suggestedPassword, setSuggestedPassword] = useState<string | null>(null);
+  const [isSuggestOpen, setIsSuggestOpen] = useState(false);
+  const passwordRef = useRef<HTMLInputElement | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
   const [created, setCreated] = useState<CreatedCredentials | null>(null);
   const [isPending, startTransition] = useTransition();
@@ -56,8 +58,8 @@ export function StudentCreateForm() {
       setName("");
       setLogin("");
       setPassword("");
-      setShowPassword(false);
       setSuggestedPassword(null);
+      setIsSuggestOpen(false);
     });
   };
 
@@ -81,6 +83,7 @@ export function StudentCreateForm() {
               setName(event.target.value);
               // Фамилия изменилась — прошлая подсказка устарела, соберём заново при фокусе.
               setSuggestedPassword(null);
+              setIsSuggestOpen(false);
             }}
             placeholder="Например, Мария Смирнова"
             className="shbz-input"
@@ -114,14 +117,20 @@ export function StudentCreateForm() {
             Пароль
           </span>
           <input
-            type={showPassword ? "text" : "password"}
+            ref={passwordRef}
+            // Пароль видно сразу: его диктуют ученику вслух, прятать нечего.
+            type="text"
             name="password"
             value={password}
-            onChange={(event) => setPassword(event.target.value)}
+            onChange={(event) => {
+              setPassword(event.target.value);
+              setIsSuggestOpen(false);
+            }}
             onFocus={() => {
-              // Подсказка появляется, когда имя и логин уже заполнены, а пароль пуст.
+              // Меню всплывает, когда имя и логин уже заполнены, а пароль пуст.
               if (password.length === 0 && name.trim() && login.trim()) {
-                setSuggestedPassword(generatePasswordFromName(name));
+                setSuggestedPassword((current) => current ?? generatePasswordFromName(name));
+                setIsSuggestOpen(true);
               }
             }}
             placeholder="От 8 символов, буквы и цифры"
@@ -132,28 +141,24 @@ export function StudentCreateForm() {
                 : undefined
             }
             required
-            autoComplete="new-password"
+            autoComplete="off"
             spellCheck={false}
             aria-invalid={passwordError !== null}
             aria-describedby={passwordError ? "student-password-feedback" : undefined}
             maxLength={MAX_PASSWORD_LENGTH}
           />
-          {suggestedPassword && password.length === 0 ? (
-            // preventDefault на mousedown: иначе blur поля срабатывает раньше клика по подсказке.
-            <button
-              type="button"
-              onMouseDown={(event) => event.preventDefault()}
-              onClick={() => {
-                setPassword(suggestedPassword);
-                setShowPassword(true);
-                setSuggestedPassword(null);
+          {suggestedPassword && isSuggestOpen ? (
+            <PasswordSuggestMenu
+              anchorRef={passwordRef}
+              suggestion={suggestedPassword}
+              onPick={(value) => {
+                setPassword(value);
+                setIsSuggestOpen(false);
                 setFormError(null);
               }}
-              className="mt-2 block w-fit rounded-[999px] px-3 py-1.5 text-[12.5px] font-semibold"
-              style={{ background: "var(--shbz-soft-bg)", color: "var(--shbz-accent-solid)" }}
-            >
-              Использовать пароль {suggestedPassword}
-            </button>
+              onAnother={() => setSuggestedPassword(generatePasswordFromName(name))}
+              onClose={() => setIsSuggestOpen(false)}
+            />
           ) : null}
           {passwordError ? (
             <p
