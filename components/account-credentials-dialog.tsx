@@ -1,12 +1,16 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
 
 /*
  * Всплывающее окно после создания аккаунта: логин и пароль показываются один
  * раз, отсюда их удобно скопировать и передать ученику или учителю. После
  * закрытия пароль больше нигде не показывается (в базе только хэш).
+ *
+ * Данные показаны готовым сообщением: на экране ровно тот текст, который уйдёт
+ * в буфер, — строки и для показа, и для копирования собираются из одного списка,
+ * поэтому разойтись не могут.
  */
 
 type AccountCredentialsDialogProps = {
@@ -19,36 +23,42 @@ type AccountCredentialsDialogProps = {
 
 export function AccountCredentialsDialog({ title, name, login, password, onClose }: AccountCredentialsDialogProps) {
   const [feedback, setFeedback] = useState<string | null>(null);
+  // Адрес сайта известен только в браузере — берём после монтирования.
+  const [siteHost, setSiteHost] = useState("");
 
-  const copyText = (label: string, text: string) => {
+  useEffect(() => {
+    setSiteHost(window.location.host);
+  }, []);
+
+  useEffect(() => {
+    const onEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        onClose();
+      }
+    };
+
+    document.addEventListener("keydown", onEscape);
+
+    return () => document.removeEventListener("keydown", onEscape);
+  }, [onClose]);
+
+  const lines = useMemo(
+    () => [
+      { label: "Сайт", value: siteHost },
+      { label: "Логин", value: login },
+      { label: "Пароль", value: password }
+    ],
+    [login, password, siteHost]
+  );
+
+  const messageText = lines.map((line) => `${line.label}: ${line.value}`).join("\n");
+
+  const copyMessage = () => {
     navigator.clipboard
-      .writeText(text)
-      .then(() => setFeedback(label))
+      .writeText(messageText)
+      .then(() => setFeedback("Скопировано — можно вставлять в мессенджер."))
       .catch(() => setFeedback("Не удалось скопировать — выделите текст вручную."));
   };
-
-  const copyAll = () => {
-    copyText(
-      "Данные для входа скопированы.",
-      `Сайт: ${window.location.origin}\nЛогин: ${login}\nПароль: ${password}`
-    );
-  };
-
-  const row = (label: string, value: string, copyLabel: string) => (
-    <div className="flex flex-wrap items-center justify-between gap-3 rounded-[12px] px-4 py-3" style={{ background: "var(--shbz-soft-bg)" }}>
-      <div className="min-w-0">
-        <div className="text-[11px] font-bold uppercase tracking-[1.2px]" style={{ color: "var(--shbz-kicker)" }}>
-          {label}
-        </div>
-        <div className="mt-0.5 break-all font-mono text-[15px] font-semibold" style={{ color: "var(--shbz-text-strong)" }}>
-          {value}
-        </div>
-      </div>
-      <button type="button" className="shbz-btn-outline" onClick={() => copyText(`${label} скопирован.`, value)}>
-        Скопировать
-      </button>
-    </div>
-  );
 
   return createPortal(
     <div
@@ -59,7 +69,7 @@ export function AccountCredentialsDialog({ title, name, login, password, onClose
         role="dialog"
         aria-modal="true"
         aria-label={title}
-        className="shbz-card w-full max-w-md max-h-[85vh] overflow-y-auto p-6"
+        className="shbz-card max-h-[85vh] w-full max-w-md overflow-y-auto p-6"
         onClick={(event) => event.stopPropagation()}
       >
         <div className="space-y-3">
@@ -70,14 +80,27 @@ export function AccountCredentialsDialog({ title, name, login, password, onClose
             {title}
           </h3>
           <p className="text-sm leading-6" style={{ color: "var(--shbz-text-muted)" }}>
-            {name} уже может входить на платформу. Пароль показывается только сейчас — скопируйте и передайте
-            данные, восстановить их позже нельзя (только задать новый пароль).
+            {name} уже может входить на платформу. Пароль показывается только сейчас — восстановить его позже нельзя,
+            можно только задать новый.
           </p>
         </div>
 
-        <div className="mt-5 space-y-3">
-          {row("Логин", login, "Логин")}
-          {row("Пароль", password, "Пароль")}
+        <p className="mt-5 text-[12px] font-bold uppercase tracking-[1px]" style={{ color: "var(--shbz-kicker)" }}>
+          Сообщение для передачи
+        </p>
+        <div
+          className="mt-2 whitespace-pre-wrap break-all rounded-[12px] border px-4 py-3.5 font-mono text-[14px] leading-[1.85]"
+          style={{ background: "var(--shbz-soft-bg)", borderColor: "var(--shbz-soft-border)" }}
+        >
+          {lines.map((line, index) => (
+            <span key={line.label}>
+              <span style={{ color: "var(--shbz-kicker)" }}>{line.label}: </span>
+              <span className="font-semibold" style={{ color: "var(--shbz-text-strong)" }}>
+                {line.value}
+              </span>
+              {index < lines.length - 1 ? "\n" : null}
+            </span>
+          ))}
         </div>
 
         {feedback ? (
@@ -87,8 +110,8 @@ export function AccountCredentialsDialog({ title, name, login, password, onClose
         ) : null}
 
         <div className="mt-5 flex flex-wrap gap-3">
-          <button type="button" className="shbz-btn-primary px-[26px] py-[13px] text-[15px]" onClick={copyAll}>
-            Скопировать всё
+          <button type="button" className="shbz-btn-primary px-[26px] py-[13px] text-[15px]" onClick={copyMessage}>
+            Скопировать
           </button>
           <button type="button" className="shbz-btn-outline shbz-btn-outline--lg" onClick={onClose}>
             Готово
