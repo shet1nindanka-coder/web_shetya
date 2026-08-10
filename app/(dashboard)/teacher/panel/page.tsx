@@ -57,26 +57,25 @@ export default async function DeveloperPage() {
         aside={<ShbzNumberSearch endpoint="/api/teacher/topics/find-number" />}
       />
 
-      {/* Чипы статуса — своей строкой под заголовком: пилюля поиска остаётся
-          в одном и том же углу на всех страницах. */}
-      <div className="-mt-4 mb-7 flex flex-wrap gap-2">
-        <span className="shbz-chip shbz-chip-green">Очередь: {queueLength}</span>
-        <span className={`shbz-chip ${budgetBusy ? "shbz-chip-yellow" : "shbz-chip-green"}`}>
-          ИИ: {checksLastDay} / {settings.aiDailyLimit} за 24 ч
-        </span>
-        <span
-          className={`shbz-chip ${filesSizeBytes > STORAGE_WARN_BYTES ? "shbz-chip-yellow" : ""}`}
-          style={
-            filesSizeBytes > STORAGE_WARN_BYTES
-              ? undefined
-              : { background: "var(--shbz-tab-hover)", color: "var(--shbz-kicker)" }
-          }
-        >
-          Хранилище: {filesSizeLabel}
-        </span>
-      </div>
-
       <DeveloperPanel
+        statusChips={
+          <div className="flex flex-wrap justify-end gap-2">
+            <span className="shbz-chip shbz-chip-green">Очередь: {queueLength}</span>
+            <span className={`shbz-chip ${budgetBusy ? "shbz-chip-yellow" : "shbz-chip-green"}`}>
+              ИИ: {checksLastDay} / {settings.aiDailyLimit} за 24 ч
+            </span>
+            <span
+              className={`shbz-chip ${filesSizeBytes > STORAGE_WARN_BYTES ? "shbz-chip-yellow" : ""}`}
+              style={
+                filesSizeBytes > STORAGE_WARN_BYTES
+                  ? undefined
+                  : { background: "var(--shbz-tab-hover)", color: "var(--shbz-kicker)" }
+              }
+            >
+              Хранилище: {filesSizeLabel}
+            </span>
+          </div>
+        }
         stats={{
           queueLength,
           checksLastDay,

@@ -1,7 +1,7 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useActionState, useRef, useState, useTransition } from "react";
+import { useActionState, useRef, useState, useTransition, type ReactNode } from "react";
 import {
   broadcastNotificationAction,
   flushCachesAction,
@@ -37,6 +37,8 @@ type DeveloperPanelProps = {
   stats: DeveloperPanelStats;
   settings: SiteSettings;
   students: Array<{ id: string; name: string }>;
+  /** Чипы статуса — рендерятся справа от таббара панели. */
+  statusChips?: ReactNode;
 };
 
 const EFFORT_OPTIONS = [
@@ -455,26 +457,29 @@ function SettingsForm({ settings }: { settings: SiteSettings }) {
   );
 }
 
-export function DeveloperPanel({ stats, settings, students }: DeveloperPanelProps) {
+export function DeveloperPanel({ stats, settings, students, statusChips }: DeveloperPanelProps) {
   const [tab, setTab] = useState<DeveloperPanelTab>("status");
 
   const budgetPercent = Math.min(100, Math.round((stats.checksLastDay / Math.max(1, settings.aiDailyLimit)) * 100));
 
   return (
     <div>
-      <nav className="shbz-seg" aria-label="Разделы панели">
-        {TABS.map((item) => (
-          <button
-            key={item.key}
-            type="button"
-            className="shbz-seg-btn shbz-seg-btn--plain"
-            data-active={tab === item.key}
-            onClick={() => setTab(item.key)}
-          >
-            {item.label}
-          </button>
-        ))}
-      </nav>
+      <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-3">
+        <nav className="shbz-seg" aria-label="Разделы панели">
+          {TABS.map((item) => (
+            <button
+              key={item.key}
+              type="button"
+              className="shbz-seg-btn shbz-seg-btn--plain"
+              data-active={tab === item.key}
+              onClick={() => setTab(item.key)}
+            >
+              {item.label}
+            </button>
+          ))}
+        </nav>
+        {statusChips}
+      </div>
 
       <div className="mt-[18px]">
         {tab === "status" ? (
