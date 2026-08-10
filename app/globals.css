@@ -2723,14 +2723,27 @@ html[data-theme="dark"] .app-topbar-profile {
   white-space: nowrap;
 }
 
-/* Неактивные кнопки — родной цвет, но приглушённый */
+/* Неактивные кнопки старого дизайна — родной цвет, но приглушённый */
 .ui-button-primary:disabled,
-html[data-theme="dark"] .ui-button-primary:disabled,
-.shbz-btn-primary:disabled {
+html[data-theme="dark"] .ui-button-primary:disabled {
   background: var(--shbz-accent-grad);
   border-color: transparent;
   color: #ffffff;
   opacity: 0.45;
+  box-shadow: none;
+  filter: none;
+  transform: none;
+  cursor: not-allowed;
+}
+
+/* Неактивная градиентная кнопка ШБЗ: белый текст на выцветшем градиенте
+   не читается, поэтому disabled — нейтральная серая заливка с приглушённым
+   текстом (токены обеих тем). */
+.shbz-btn-primary:disabled {
+  background: var(--shbz-seg-bg);
+  border-color: transparent;
+  color: var(--shbz-seg-text);
+  opacity: 1;
   box-shadow: none;
   filter: none;
   transform: none;

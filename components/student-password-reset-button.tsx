@@ -149,13 +149,18 @@ export function StudentPasswordResetButton({ studentId, studentName, className }
                   </label>
 
                   <div className="mt-5 flex flex-wrap gap-3">
-                    <button type="button" onClick={close} disabled={isPending} className="shbz-btn-outline disabled:opacity-60">
+                    <button
+                      type="button"
+                      onClick={close}
+                      disabled={isPending}
+                      className="shbz-btn-outline shbz-btn-outline--lg"
+                    >
                       Отмена
                     </button>
                     <button
                       type="submit"
                       disabled={isSubmitDisabled}
-                      className="shbz-btn-primary disabled:cursor-not-allowed disabled:opacity-60"
+                      className="shbz-btn-primary px-[26px] py-[13px] text-[15px]"
                     >
                       {isPending ? "Сохраняем..." : "Сменить пароль"}
                     </button>

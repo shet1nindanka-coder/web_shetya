@@ -71,7 +71,7 @@ const verdictMeta: Record<
     short: "верно",
     color: "var(--shbz-green-text)",
     background: "var(--shbz-green-soft)",
-    stripe: "#36e0a4"
+    stripe: "var(--shbz-accent-solid)"
   },
   INCORRECT: {
     chip: "ИИ: Ошибка",

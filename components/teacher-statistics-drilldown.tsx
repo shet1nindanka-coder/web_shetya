@@ -323,7 +323,7 @@ export function TeacherStatisticsDrilldown({
         <div className="shbz-progress-track" style={{ height: 10 }}>
           <div
             className="h-full rounded-full"
-            style={{ width: `${metrics.solvedPercent}%`, background: "linear-gradient(90deg, #36C77E, #2BB871)" }}
+            style={{ width: `${metrics.solvedPercent}%`, background: "var(--shbz-accent-grad)" }}
           />
         </div>
 
