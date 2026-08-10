@@ -1,6 +1,7 @@
 import { UserRole } from "@prisma/client";
 import { AccountCreateForm } from "@/components/account-create-form";
 import { AccountStudentsManager } from "@/components/account-students-manager";
+import { AccountTeachersManager } from "@/components/account-teachers-manager";
 import { ShbzNumberSearch } from "@/components/shbz-number-search";
 import { ShbzPageHeader } from "@/components/shbz-page-header";
 import { requireUser } from "@/lib/auth";
@@ -74,6 +75,42 @@ const accountNotices = {
   passwordRateLimited: {
     tone: "error",
     message: "Слишком много смен пароля за короткое время. Подождите несколько минут."
+  },
+  teacherDeleted: {
+    tone: "success",
+    message: "Учитель удалён. Его ученики переведены на выбранного учителя."
+  },
+  teacherMissing: {
+    tone: "error",
+    message: "Такого учителя уже нет в системе. Обновите страницу."
+  },
+  teacherTransfer: {
+    tone: "error",
+    message: "Учитель не удалён: сначала выберите, кому передать его учеников."
+  },
+  teacherDelete: {
+    tone: "error",
+    message: "Не удалось удалить учителя. Повторите попытку ещё раз."
+  },
+  teacherPasswordReset: {
+    tone: "success",
+    message: "Пароль учителя обновлён, все его сессии завершены. Передайте учителю новый пароль."
+  },
+  teacherPasswordInvalid: {
+    tone: "error",
+    message: "Новый пароль не подходит: минимум 8 символов, обязательно буквы и цифры."
+  },
+  teacherPasswordMissing: {
+    tone: "error",
+    message: "Такого учителя уже нет в системе."
+  },
+  teacherPasswordSave: {
+    tone: "error",
+    message: "Не удалось сменить пароль учителя. Повторите попытку ещё раз."
+  },
+  teacherPasswordRateLimited: {
+    tone: "error",
+    message: "Слишком много смен пароля за короткое время. Подождите несколько минут."
   }
 } as const;
 
@@ -85,7 +122,14 @@ export default async function DeveloperAccountsPage({ searchParams }: AccountsPa
     prisma.user.findMany({
       where: { role: UserRole.TEACHER },
       orderBy: { name: "asc" },
-      select: { id: true, name: true, email: true }
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        // Счётчики нужны окну удаления: сколько учеников переводить и что
+        // исчезнет вместе с аккаунтом (занятия и тесты каскадные).
+        _count: { select: { students: true, lessonsTaught: true, testsCreated: true } }
+      }
     }),
     prisma.user.findMany({
       where: { role: UserRole.STUDENT },
@@ -93,33 +137,48 @@ export default async function DeveloperAccountsPage({ searchParams }: AccountsPa
       select: { id: true, name: true, email: true, teacherId: true }
     })
   ]);
+  // Формам нужен только выбор учителя — без счётчиков.
+  const teacherOptions = teachers.map((teacher) => ({ id: teacher.id, name: teacher.name, email: teacher.email }));
   const created = typeof params.accountCreated === "string" ? params.accountCreated : undefined;
   const error = typeof params.accountError === "string" ? params.accountError : undefined;
   const ownerChanged = typeof params.ownerChanged === "string" ? params.ownerChanged : undefined;
   const passwordReset = typeof params.passwordReset === "string" ? params.passwordReset : undefined;
   const passwordResetError =
     typeof params.passwordResetError === "string" ? params.passwordResetError : undefined;
+  const teacherDeleted = typeof params.teacherDeleted === "string" ? params.teacherDeleted : undefined;
+  const teacherPasswordReset =
+    typeof params.teacherPasswordReset === "string" ? params.teacherPasswordReset : undefined;
+  const teacherPasswordError =
+    typeof params.teacherPasswordError === "string" ? params.teacherPasswordError : undefined;
+  const teacherPasswordNoticeKey =
+    teacherPasswordError === "invalid"
+      ? "teacherPasswordInvalid"
+      : teacherPasswordError === "missing"
+        ? "teacherPasswordMissing"
+        : teacherPasswordError === "save"
+          ? "teacherPasswordSave"
+          : teacherPasswordError === "rateLimited"
+            ? "teacherPasswordRateLimited"
+            : null;
 
+  // Статусы приходят из разных экшенов (создание, владелец, пароли, удаление) —
+  // берём первый сработавший, порядок сверху вниз от самого свежего действия.
   const noticeKey =
-    created === "teacher"
-      ? "teacherCreated"
-      : created === "student"
-        ? "studentCreated"
-        : ownerChanged === "1"
-          ? "ownerChanged"
-          : passwordReset === "1"
-            ? "passwordReset"
-            : passwordResetError === "invalid"
-              ? "passwordInvalid"
-              : passwordResetError === "missing"
-                ? "passwordMissing"
-                : passwordResetError === "save"
-                  ? "passwordSave"
-                  : passwordResetError === "rateLimited"
-                    ? "passwordRateLimited"
-        : error && error in accountNotices
-          ? (error as Exclude<keyof typeof accountNotices, "studentCreated" | "teacherCreated">)
-          : null;
+    (teacherDeleted === "1" && "teacherDeleted") ||
+    (teacherPasswordReset === "1" && "teacherPasswordReset") ||
+    teacherPasswordNoticeKey ||
+    (created === "teacher" && "teacherCreated") ||
+    (created === "student" && "studentCreated") ||
+    (ownerChanged === "1" && "ownerChanged") ||
+    (passwordReset === "1" && "passwordReset") ||
+    (passwordResetError === "invalid" && "passwordInvalid") ||
+    (passwordResetError === "missing" && "passwordMissing") ||
+    (passwordResetError === "save" && "passwordSave") ||
+    (passwordResetError === "rateLimited" && "passwordRateLimited") ||
+    (error && error in accountNotices
+      ? (error as Exclude<keyof typeof accountNotices, "studentCreated" | "teacherCreated">)
+      : null);
+
   const notice = noticeKey ? accountNotices[noticeKey] : null;
 
   return (
@@ -146,13 +205,27 @@ export default async function DeveloperAccountsPage({ searchParams }: AccountsPa
       <section>
         <h2 className="shbz-section-title">Новый аккаунт</h2>
         <div className="shbz-card shbz-section-pad">
-          <AccountCreateForm teachers={teachers} />
+          <AccountCreateForm teachers={teacherOptions} />
         </div>
       </section>
 
       <section className="mt-11">
+        <h2 className="shbz-section-title">Учителя</h2>
+        <AccountTeachersManager
+          teachers={teachers.map((teacher) => ({
+            id: teacher.id,
+            name: teacher.name,
+            email: teacher.email,
+            studentCount: teacher._count.students,
+            lessonCount: teacher._count.lessonsTaught,
+            testCount: teacher._count.testsCreated
+          }))}
+        />
+      </section>
+
+      <section className="mt-11">
         <h2 className="shbz-section-title">Ученики: учитель и пароль</h2>
-        <AccountStudentsManager students={students} teachers={teachers} />
+        <AccountStudentsManager students={students} teachers={teacherOptions} />
       </section>
     </div>
   );
