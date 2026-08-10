@@ -55,8 +55,9 @@ export default async function DeveloperPage() {
         kicker="Служебный доступ"
         title="Панель разработчика"
         aside={
-          <div className="flex flex-wrap items-center gap-3">
-            <div className="flex flex-wrap gap-2 pb-1">
+          <div className="flex flex-col items-end gap-3">
+            <ShbzNumberSearch endpoint="/api/teacher/topics/find-number" />
+            <div className="flex flex-wrap justify-end gap-2">
             <span className="shbz-chip shbz-chip-green">Очередь: {queueLength}</span>
             <span className={`shbz-chip ${budgetBusy ? "shbz-chip-yellow" : "shbz-chip-green"}`}>
               ИИ: {checksLastDay} / {settings.aiDailyLimit} за 24 ч
@@ -72,7 +73,6 @@ export default async function DeveloperPage() {
               Хранилище: {filesSizeLabel}
             </span>
             </div>
-            <ShbzNumberSearch endpoint="/api/teacher/topics/find-number" />
           </div>
         }
       />

@@ -46,7 +46,8 @@ const developerItems = [
   {
     href: "/developer/settings",
     label: "настройки",
-    match: (p: string, _sp: URLSearchParams) => p.startsWith("/developer/settings") || p.startsWith("/developer/account")
+    match: (p: string, _sp: URLSearchParams) =>
+      p.startsWith("/developer/settings") || p === "/developer/account" || p.startsWith("/developer/account/")
   }
 ];
 
@@ -68,7 +69,8 @@ const teacherItems = [
   {
     href: "/teacher/settings",
     label: "настройки",
-    match: (p: string, _sp: URLSearchParams) => p.startsWith("/teacher/settings") || p.startsWith("/teacher/account")
+    match: (p: string, _sp: URLSearchParams) =>
+      p.startsWith("/teacher/settings") || p === "/teacher/account" || p.startsWith("/teacher/account/")
   }
 ];
 
