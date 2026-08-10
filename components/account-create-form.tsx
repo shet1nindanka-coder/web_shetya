@@ -4,7 +4,7 @@ import { useMemo, useState, useTransition } from "react";
 import { createAccountAction } from "@/actions/account";
 import { AccountCredentialsDialog } from "@/components/account-credentials-dialog";
 import { ShbzSelect } from "@/components/shbz-select";
-import { generateReadablePassword } from "@/lib/password-generate";
+import { generatePasswordFromName } from "@/lib/password-generate";
 import { MAX_PASSWORD_LENGTH, validatePasswordStrength } from "@/lib/password-policy";
 import { MAX_LOGIN_LENGTH, MAX_USER_NAME_LENGTH } from "@/lib/utils";
 
@@ -36,6 +36,7 @@ export function AccountCreateForm({ teachers }: AccountCreateFormProps) {
   const [login, setLogin] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [suggestedPassword, setSuggestedPassword] = useState<string | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
   const [created, setCreated] = useState<CreatedCredentials | null>(null);
   const [isPending, startTransition] = useTransition();
@@ -87,6 +88,7 @@ export function AccountCreateForm({ teachers }: AccountCreateFormProps) {
       setLogin("");
       setPassword("");
       setShowPassword(false);
+      setSuggestedPassword(null);
     });
   };
 
@@ -136,7 +138,11 @@ export function AccountCreateForm({ teachers }: AccountCreateFormProps) {
             type="text"
             name="name"
             value={name}
-            onChange={(event) => setName(event.target.value)}
+            onChange={(event) => {
+              setName(event.target.value);
+              // Фамилия изменилась — прошлая подсказка устарела, соберём заново при фокусе.
+              setSuggestedPassword(null);
+            }}
             placeholder="Например, Мария Смирнова"
             className="shbz-input"
             required
@@ -173,6 +179,12 @@ export function AccountCreateForm({ teachers }: AccountCreateFormProps) {
             name="password"
             value={password}
             onChange={(event) => setPassword(event.target.value)}
+            onFocus={() => {
+              // Подсказка появляется, когда имя и логин уже заполнены, а пароль пуст.
+              if (password.length === 0 && name.trim() && login.trim()) {
+                setSuggestedPassword(generatePasswordFromName(name));
+              }
+            }}
             placeholder="От 8 символов, буквы и цифры"
             className="shbz-input"
             style={
@@ -187,18 +199,23 @@ export function AccountCreateForm({ teachers }: AccountCreateFormProps) {
             aria-describedby={passwordError ? "account-password-feedback" : undefined}
             maxLength={MAX_PASSWORD_LENGTH}
           />
-          <button
-            type="button"
-            className="mt-2 text-[12.5px] font-semibold underline-offset-2 hover:underline"
-            style={{ color: "var(--shbz-accent-solid)" }}
-            onClick={() => {
-              setPassword(generateReadablePassword());
-              setShowPassword(true);
-              setFormError(null);
-            }}
-          >
-            Сгенерировать пароль
-          </button>
+          {suggestedPassword && password.length === 0 ? (
+            // preventDefault на mousedown: иначе blur поля срабатывает раньше клика по подсказке.
+            <button
+              type="button"
+              onMouseDown={(event) => event.preventDefault()}
+              onClick={() => {
+                setPassword(suggestedPassword);
+                setShowPassword(true);
+                setSuggestedPassword(null);
+                setFormError(null);
+              }}
+              className="mt-2 block w-fit rounded-[999px] px-3 py-1.5 text-[12.5px] font-semibold"
+              style={{ background: "var(--shbz-soft-bg)", color: "var(--shbz-accent-solid)" }}
+            >
+              Использовать пароль {suggestedPassword}
+            </button>
+          ) : null}
           {passwordError ? (
             <p
               id="account-password-feedback"
