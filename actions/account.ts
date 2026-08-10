@@ -220,65 +220,86 @@ export async function createAccountAction(formData: FormData): Promise<CreateAcc
 }
 
 /*
- * Смена учителя-владельца ученика (Б-4 аудита 10.08.2026). До этого teacherId
- * писался только при создании: осиротевшего или неверно привязанного ученика
- * (бэкфилл волны 5, восстановление из бэкапа) лечили ручным SQL на VPS.
+ * Массовая смена учителя-владельца у учеников (Б-4 аудита 10.08.2026). До этого
+ * teacherId писался только при создании: осиротевшего или неверно привязанного
+ * ученика (бэкфилл волны 5, восстановление из бэкапа) лечили ручным SQL на VPS.
+ * Список приходит целиком — разработчик правит несколько строк и сохраняет разом.
  */
-export async function changeStudentOwnerAction(formData: FormData) {
+export async function changeStudentOwnersAction(formData: FormData) {
   const developer = await requireUser(UserRole.DEVELOPER);
 
-  const studentId = String(formData.get("studentId") ?? "").trim();
-  const teacherId = String(formData.get("teacherId") ?? "").trim();
+  let changes: Array<{ studentId: string; teacherId: string }> = [];
 
-  if (!studentId || !teacherId) {
+  try {
+    const parsed: unknown = JSON.parse(String(formData.get("changes") ?? "[]"));
+
+    if (!Array.isArray(parsed)) {
+      throw new Error("changes must be an array");
+    }
+
+    changes = parsed
+      .map((entry) => ({
+        studentId: String((entry as { studentId?: unknown })?.studentId ?? "").trim(),
+        teacherId: String((entry as { teacherId?: unknown })?.teacherId ?? "").trim()
+      }))
+      .filter((entry) => entry.studentId && entry.teacherId);
+  } catch {
     redirectDeveloperWithAccountStatus(new URLSearchParams({ accountError: "ownerInvalid" }));
   }
 
-  const [teacher, student] = await Promise.all([
-    prisma.user.findFirst({
-      where: { id: teacherId, role: UserRole.TEACHER },
+  if (changes.length === 0) {
+    redirectDeveloperWithAccountStatus(new URLSearchParams({ accountError: "ownerInvalid" }));
+  }
+
+  const studentIds = Array.from(new Set(changes.map((entry) => entry.studentId)));
+  const teacherIds = Array.from(new Set(changes.map((entry) => entry.teacherId)));
+
+  const [students, teachers] = await Promise.all([
+    prisma.user.findMany({
+      where: { id: { in: studentIds }, role: UserRole.STUDENT },
       select: { id: true }
     }),
-    prisma.user.findFirst({
-      where: { id: studentId, role: UserRole.STUDENT },
-      select: { id: true, teacherId: true }
+    prisma.user.findMany({
+      where: { id: { in: teacherIds }, role: UserRole.TEACHER },
+      select: { id: true }
     })
   ]);
 
-  if (!teacher || !student) {
+  // Достаточно одной пропавшей записи, чтобы список на экране был неактуален —
+  // тогда не применяем ничего и просим обновить страницу.
+  if (students.length !== studentIds.length || teachers.length !== teacherIds.length) {
     logWarnEvent(
       "student.owner_change.missing",
-      { developerId: developer.id, studentId, newTeacherId: teacherId },
+      { developerId: developer.id, studentIds, teacherIds },
       undefined,
-      "Student owner change was skipped: student or teacher was not found."
+      "Student owner change was skipped: some students or teachers were not found."
     );
     redirectDeveloperWithAccountStatus(new URLSearchParams({ accountError: "ownerInvalid" }));
   }
 
-  if (student!.teacherId === teacher!.id) {
-    // Идемпотентно: владелец уже тот, просто подтверждаем.
-    redirectDeveloperWithAccountStatus(new URLSearchParams({ ownerChanged: "1" }));
-  }
-
   try {
-    await prisma.user.update({
-      where: { id: student!.id },
-      data: { teacherId: teacher!.id }
-    });
+    await prisma.$transaction(
+      changes.map((entry) =>
+        prisma.user.update({
+          where: { id: entry.studentId },
+          data: { teacherId: entry.teacherId }
+        })
+      )
+    );
   } catch (error) {
     logErrorEvent(
       "student.owner_change.failed",
-      { developerId: developer.id, studentId, newTeacherId: teacherId },
+      { developerId: developer.id, changes },
       error,
-      "Failed to change student owner."
+      "Failed to change student owners."
     );
     redirectDeveloperWithAccountStatus(new URLSearchParams({ accountError: "ownerSave" }));
   }
 
   logInfoEvent(
     "student.owner_change.succeeded",
-    { developerId: developer.id, studentId, newTeacherId: teacherId },
-    "Student owner was changed by the developer."
+    { developerId: developer.id, changes },
+    "Student owners were changed by the developer."
   );
   revalidateTeacherStudentsData();
   revalidateTeacherTopicsData();
@@ -288,7 +309,7 @@ export async function changeStudentOwnerAction(formData: FormData) {
   revalidatePath("/teacher/students");
   revalidatePath("/teacher/statistics");
   revalidatePath("/developer/accounts");
-  redirectDeveloperWithAccountStatus(new URLSearchParams({ ownerChanged: "1" }));
+  redirectDeveloperWithAccountStatus(new URLSearchParams({ ownerChanged: String(changes.length) }));
 }
 
 /*

@@ -46,11 +46,11 @@ const accountNotices = {
   },
   ownerChanged: {
     tone: "success",
-    message: "Учитель ученика обновлён. Ученик уже виден новому учителю."
+    message: "Привязка учеников к учителям сохранена. Ученики уже видны новым учителям."
   },
   ownerInvalid: {
     tone: "error",
-    message: "Не удалось сменить учителя: ученик или учитель не найдены. Обновите страницу."
+    message: "Не удалось сменить учителя: часть учеников или учителей не найдена. Обновите страницу."
   },
   ownerSave: {
     tone: "error",
@@ -169,7 +169,7 @@ export default async function DeveloperAccountsPage({ searchParams }: AccountsPa
     teacherPasswordNoticeKey ||
     (created === "teacher" && "teacherCreated") ||
     (created === "student" && "studentCreated") ||
-    (ownerChanged === "1" && "ownerChanged") ||
+    (Boolean(ownerChanged) && "ownerChanged") ||
     (passwordReset === "1" && "passwordReset") ||
     (passwordResetError === "invalid" && "passwordInvalid") ||
     (passwordResetError === "missing" && "passwordMissing") ||

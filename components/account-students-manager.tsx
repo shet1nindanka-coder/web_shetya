@@ -1,13 +1,15 @@
 "use client";
 
-import { useState, useTransition } from "react";
-import { changeStudentOwnerAction } from "@/actions/account";
+import { useMemo, useState, useTransition } from "react";
+import { changeStudentOwnersAction } from "@/actions/account";
+import { AccountPasswordResetButton } from "@/components/account-password-reset-button";
 import { ShbzSelect } from "@/components/shbz-select";
-import { StudentPasswordResetButton } from "@/components/student-password-reset-button";
 
 /*
  * Список учеников на вкладке «Аккаунты» разработчика (Б-1/Б-4 аудита 10.08.2026):
  * смена учителя-владельца и сброс пароля без ручного SQL на VPS.
+ * Учителя правятся в нескольких строках сразу и сохраняются одной кнопкой под
+ * плашкой — так видно, что именно меняется, и не бывает половины сохранённого.
  */
 
 type Teacher = {
@@ -28,31 +30,28 @@ type AccountStudentsManagerProps = {
   teachers: Teacher[];
 };
 
-function StudentRow({ student, teachers, isLast }: { student: Student; teachers: Teacher[]; isLast: boolean }) {
-  const [teacherId, setTeacherId] = useState(student.teacherId ?? "");
-  const [isPending, startTransition] = useTransition();
-
-  const isDirty = teacherId !== "" && teacherId !== (student.teacherId ?? "");
+function StudentRow({
+  student,
+  teachers,
+  teacherId,
+  isDirty,
+  isPending,
+  onTeacherChange,
+  isLast
+}: {
+  student: Student;
+  teachers: Teacher[];
+  teacherId: string;
+  isDirty: boolean;
+  isPending: boolean;
+  onTeacherChange: (teacherId: string) => void;
+  isLast: boolean;
+}) {
   const hasOwner = Boolean(student.teacherId);
-
-  const save = () => {
-    if (!isDirty || isPending) {
-      return;
-    }
-
-    const formData = new FormData();
-    formData.append("studentId", student.id);
-    formData.append("teacherId", teacherId);
-
-    // Экшен завершается redirect-ом на /developer/accounts со статусом в query.
-    startTransition(async () => {
-      await changeStudentOwnerAction(formData);
-    });
-  };
 
   return (
     <div
-      className="flex flex-col gap-3 py-5 md:grid md:grid-cols-[1.4fr_1.4fr_auto] md:items-center md:gap-5"
+      className="shbz-account-row"
       style={!isLast ? { borderBottom: "1px solid var(--shbz-row-border)" } : undefined}
     >
       <div className="min-w-0">
@@ -72,31 +71,41 @@ function StudentRow({ student, teachers, isLast }: { student: Student; teachers:
       <div className="min-w-0">
         <ShbzSelect
           value={teacherId}
-          onChange={setTeacherId}
+          onChange={onTeacherChange}
           options={teachers.map((teacher) => ({ value: teacher.id, label: `${teacher.name} (${teacher.email})` }))}
           placeholder={teachers.length ? "Выберите учителя" : "Сначала создайте учителя"}
           ariaLabel={`Учитель ученика ${student.name}`}
           size="sm"
           disabled={teachers.length === 0 || isPending}
         />
+        {isDirty ? (
+          <p className="mt-1.5 text-[12.5px] font-semibold" style={{ color: "var(--shbz-accent-solid)" }}>
+            Изменено — не забудьте сохранить.
+          </p>
+        ) : null}
       </div>
 
       <div className="flex flex-wrap items-center gap-2.5 md:justify-end">
-        <button
-          type="button"
-          onClick={save}
-          disabled={!isDirty || isPending}
-          className="shbz-btn-primary px-5 py-[11px] text-sm disabled:cursor-not-allowed disabled:opacity-60"
-        >
-          {isPending ? "Сохраняем..." : "Сменить учителя"}
-        </button>
-        <StudentPasswordResetButton studentId={student.id} studentName={student.name} />
+        <AccountPasswordResetButton userId={student.id} userName={student.name} target="student" />
       </div>
     </div>
   );
 }
 
 export function AccountStudentsManager({ students, teachers }: AccountStudentsManagerProps) {
+  const [drafts, setDrafts] = useState<Record<string, string>>({});
+  const [isPending, startTransition] = useTransition();
+
+  // Правки, которые ещё не сохранены: пустой выбор и возврат к прежнему учителю не в счёт.
+  const changes = useMemo(
+    () =>
+      students
+        .map((student) => ({ student, teacherId: drafts[student.id] ?? student.teacherId ?? "" }))
+        .filter((entry) => entry.teacherId && entry.teacherId !== (entry.student.teacherId ?? ""))
+        .map((entry) => ({ studentId: entry.student.id, teacherId: entry.teacherId })),
+    [drafts, students]
+  );
+
   if (students.length === 0) {
     return (
       <div className="shbz-card px-6 py-10 text-center">
@@ -107,11 +116,60 @@ export function AccountStudentsManager({ students, teachers }: AccountStudentsMa
     );
   }
 
+  const save = () => {
+    if (changes.length === 0 || isPending) {
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append("changes", JSON.stringify(changes));
+
+    // Экшен завершается redirect-ом со статусом в query — страница перерисуется сама.
+    startTransition(async () => {
+      await changeStudentOwnersAction(formData);
+    });
+  };
+
   return (
-    <div className="shbz-card px-7 py-2">
-      {students.map((student, index) => (
-        <StudentRow key={student.id} student={student} teachers={teachers} isLast={index === students.length - 1} />
-      ))}
-    </div>
+    <>
+      <div className="shbz-card px-7 py-2">
+        {students.map((student, index) => (
+          <StudentRow
+            key={student.id}
+            student={student}
+            teachers={teachers}
+            teacherId={drafts[student.id] ?? student.teacherId ?? ""}
+            isDirty={changes.some((entry) => entry.studentId === student.id)}
+            isPending={isPending}
+            onTeacherChange={(teacherId) => setDrafts((current) => ({ ...current, [student.id]: teacherId }))}
+            isLast={index === students.length - 1}
+          />
+        ))}
+      </div>
+
+      <div className="mt-4 flex flex-wrap items-center justify-end gap-3">
+        <p className="mr-auto text-[13.5px] font-semibold" style={{ color: "var(--shbz-text-muted)" }}>
+          {changes.length > 0
+            ? `Учитель изменён у ${changes.length} ${changes.length === 1 ? "ученика" : "учеников"} — изменения ещё не сохранены.`
+            : "Выберите учителя в нужных строках и сохраните изменения."}
+        </p>
+        <button
+          type="button"
+          onClick={() => setDrafts({})}
+          disabled={changes.length === 0 || isPending}
+          className="shbz-btn-outline shbz-btn-outline--lg disabled:cursor-not-allowed disabled:opacity-60"
+        >
+          Отменить
+        </button>
+        <button
+          type="button"
+          onClick={save}
+          disabled={changes.length === 0 || isPending}
+          className="shbz-btn-primary px-[26px] py-[13px] text-[15px] disabled:cursor-not-allowed"
+        >
+          {isPending ? "Сохраняем..." : "Сохранить изменения"}
+        </button>
+      </div>
+    </>
   );
 }

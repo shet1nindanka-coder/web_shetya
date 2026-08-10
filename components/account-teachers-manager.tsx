@@ -199,7 +199,7 @@ function TeacherRow({
 
   return (
     <div
-      className="flex flex-col gap-3 py-5 md:grid md:grid-cols-[1.6fr_1fr_auto] md:items-center md:gap-5"
+      className="shbz-account-row"
       style={!isLast ? { borderBottom: "1px solid var(--shbz-row-border)" } : undefined}
     >
       <div className="min-w-0">

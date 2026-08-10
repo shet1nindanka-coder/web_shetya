@@ -2963,3 +2963,19 @@ html[data-theme="dark"] .shbz-search input:not([type="checkbox"]):not([type="rad
   background: var(--shbz-card-bg);
   border-color: var(--shbz-soft-border);
 }
+
+/* Строка списка аккаунтов: одна геометрия для плашек учителей и учеников */
+.shbz-account-row {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 20px 0;
+}
+@media (min-width: 768px) {
+  .shbz-account-row {
+    display: grid;
+    grid-template-columns: 1.6fr minmax(220px, 1.2fr) auto;
+    align-items: center;
+    gap: 20px;
+  }
+}
