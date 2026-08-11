@@ -6,6 +6,7 @@ import { ShbzNavCard } from "@/components/shbz-nav-card";
 import { ShbzNumberSearch } from "@/components/shbz-number-search";
 import { ShbzPageHeader } from "@/components/shbz-page-header";
 import { TopicImportPanel } from "@/components/topic-import-panel";
+import { TopicCreateSwitch } from "@/components/topic-create-switch";
 import { TopicCreateForm } from "@/components/topic-create-form";
 import { requireUser } from "@/lib/auth";
 import { getTeacherTopicsOverview } from "@/lib/platform-data";
@@ -101,21 +102,19 @@ export default async function TeacherTopicsPage({ searchParams }: TeacherTopicsP
         <section id="create-topic" className="scroll-mt-24">
           <h2 className="shbz-section-title">Создать новую тему</h2>
           <div className="shbz-card shbz-section-pad">
-            <TopicCreateForm uploadMode={uploadMode} blobAccess={blobAccess} />
-          </div>
-        </section>
-      ) : null}
-
-      {isDeveloper ? (
-        <section className="mt-11">
-          <h2 className="shbz-section-title">Импорт темы из задачника</h2>
-          <div className="shbz-card shbz-section-pad">
-            <p className="mb-4 text-sm leading-6" style={{ color: "var(--shbz-text-muted)" }}>
-              Тема создаётся целиком из файла: название и описание берутся из ответа ИИ, номера приходят сразу
-              с условиями и ответами. После импорта откроется страница редактирования — там можно приложить
-              файлы теории и ДЗ.
-            </p>
-            <TopicImportPanel createTopic />
+            <TopicCreateSwitch
+              aiImport={
+                <>
+                  <p className="mb-4 text-sm leading-6" style={{ color: "var(--shbz-text-muted)" }}>
+                    Тема создаётся целиком из файла: название и описание берутся из ответа ИИ, номера приходят
+                    сразу с условиями и ответами. После импорта откроется страница редактирования — там можно
+                    приложить файлы теории и ДЗ.
+                  </p>
+                  <TopicImportPanel createTopic />
+                </>
+              }
+              manual={<TopicCreateForm uploadMode={uploadMode} blobAccess={blobAccess} />}
+            />
           </div>
         </section>
       ) : null}
