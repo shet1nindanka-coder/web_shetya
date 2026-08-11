@@ -7,7 +7,6 @@ import { PageHeader } from "@/components/page-header";
 import { ShbzNumberSearch } from "@/components/shbz-number-search";
 import { SectionCard } from "@/components/section-card";
 import { TopicEditSubmitButton } from "@/components/topic-edit-submit-button";
-import { TopicImportPanel } from "@/components/topic-import-panel";
 import { TopicAnswerManager } from "@/components/topic-answer-manager";
 import { TeacherTopicTabs } from "@/components/teacher-topic-tabs";
 import { TopicNumbersField } from "@/components/topic-numbers-field";
@@ -258,13 +257,6 @@ export default async function TeacherTopicPage({ params, searchParams }: Teacher
             <TopicEditSubmitButton topicId={data.topic.id} />
           </div>
         </form>
-      </SectionCard>
-
-      <SectionCard
-        title="Импорт номеров из задачника"
-        description="Отдайте PDF с задачами любой ИИ вместе с промптом — номера, условия и ответы приедут одним файлом."
-      >
-        <TopicImportPanel topicId={data.topic.id} />
       </SectionCard>
 
       <div id="topic-answers" className="scroll-mt-28">
