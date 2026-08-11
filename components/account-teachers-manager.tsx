@@ -5,6 +5,7 @@ import { createPortal } from "react-dom";
 import { deleteTeacherAction } from "@/actions/account";
 import { AccountPasswordResetButton } from "@/components/account-password-reset-button";
 import { ShbzSelect } from "@/components/shbz-select";
+import { matchesAccountSearch } from "@/lib/utils";
 
 /*
  * Список учителей на вкладке «Аккаунты» разработчика: смена пароля и удаление.
@@ -24,6 +25,7 @@ export type ManagedTeacher = {
 
 type AccountTeachersManagerProps = {
   teachers: ManagedTeacher[];
+  searchQuery?: string;
 };
 
 function pluralize(count: number, one: string, few: string, many: string) {
@@ -231,7 +233,7 @@ function TeacherRow({
   );
 }
 
-export function AccountTeachersManager({ teachers }: AccountTeachersManagerProps) {
+export function AccountTeachersManager({ teachers, searchQuery = "" }: AccountTeachersManagerProps) {
   if (teachers.length === 0) {
     return (
       <div className="shbz-card px-6 py-10 text-center">
@@ -242,14 +244,33 @@ export function AccountTeachersManager({ teachers }: AccountTeachersManagerProps
     );
   }
 
+  // Поиск фильтрует только отображение; окно удаления по-прежнему предлагает
+  // ВСЕХ остальных учителей для перевода учеников.
+  const visibleTeachers = teachers.filter((teacher) =>
+    matchesAccountSearch(searchQuery, teacher.name, teacher.email)
+  );
+
+  if (visibleTeachers.length === 0) {
+    return (
+      <div className="shbz-card px-6 py-10 text-center">
+        <p className="text-lg font-bold" style={{ color: "var(--shbz-text-strong)" }}>
+          Никого не нашли.
+        </p>
+        <p className="mt-1 text-sm" style={{ color: "var(--shbz-text-muted)" }}>
+          Проверьте запрос — поиск идёт по имени и логину учителя.
+        </p>
+      </div>
+    );
+  }
+
   return (
     <div className="shbz-card px-7 py-2">
-      {teachers.map((teacher, index) => (
+      {visibleTeachers.map((teacher, index) => (
         <TeacherRow
           key={teacher.id}
           teacher={teacher}
           otherTeachers={teachers.filter((option) => option.id !== teacher.id)}
-          isLast={index === teachers.length - 1}
+          isLast={index === visibleTeachers.length - 1}
         />
       ))}
     </div>

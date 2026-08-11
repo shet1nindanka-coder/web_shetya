@@ -16,6 +16,7 @@ import {
   isOfficeMime,
   isPdfMime,
   normalizeHomeworkNumber,
+  matchesAccountSearch,
   normalizeLoginInput,
   normalizeMultilineText,
   normalizeSingleLineText,
@@ -188,4 +189,15 @@ test("isHomeworkOverdue detects passed deadlines for incomplete homework only", 
   assert.equal(isHomeworkOverdue("2026-08-01T00:00:00.000Z", false, now), false);
   assert.equal(isHomeworkOverdue(null, false, now), false);
   assert.equal(isHomeworkOverdue("not-a-date", false, now), false);
+});
+
+test("matchesAccountSearch ищет по словам без учёта регистра по имени и логину", () => {
+  assert.equal(matchesAccountSearch("", "Анна Петрова", "teacher@example.com"), true);
+  assert.equal(matchesAccountSearch("   ", "Анна Петрова", "teacher@example.com"), true);
+  assert.equal(matchesAccountSearch("анна", "Анна Петрова", "teacher@example.com"), true);
+  assert.equal(matchesAccountSearch("ПЕТРОВА анна", "Анна Петрова", "teacher@example.com"), true);
+  assert.equal(matchesAccountSearch("teacher@", "Анна Петрова", "teacher@example.com"), true);
+  assert.equal(matchesAccountSearch("анна фокин", "Анна Петрова", "teacher@example.com"), false);
+  assert.equal(matchesAccountSearch("иван", "Анна Петрова", "teacher@example.com"), false);
+  assert.equal(matchesAccountSearch("анна", "Анна", null, undefined), true);
 });

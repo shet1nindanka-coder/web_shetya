@@ -95,6 +95,26 @@ export function normalizeLoginInput(value: string) {
   return normalizeSingleLineText(value).toLowerCase();
 }
 
+/*
+ * Поиск по спискам аккаунтов (вкладка «Аккаунты» разработчика): запрос
+ * разбивается на слова, каждое слово должно встретиться хотя бы в одном из
+ * полей (имя, логин) без учёта регистра. Пустой запрос совпадает со всеми.
+ */
+export function matchesAccountSearch(query: string, ...fields: Array<string | null | undefined>) {
+  const words = normalizeSingleLineText(query).toLowerCase().split(" ").filter(Boolean);
+
+  if (words.length === 0) {
+    return true;
+  }
+
+  const haystack = fields
+    .filter((field): field is string => Boolean(field))
+    .join(" ")
+    .toLowerCase();
+
+  return words.every((word) => haystack.includes(word));
+}
+
 export function formatDate(value?: Date | string | null) {
   if (!value) {
     return "Без даты";

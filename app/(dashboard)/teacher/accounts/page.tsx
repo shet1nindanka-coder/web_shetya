@@ -1,7 +1,6 @@
 import { UserRole } from "@prisma/client";
 import { AccountCreateForm } from "@/components/account-create-form";
-import { AccountStudentsManager } from "@/components/account-students-manager";
-import { AccountTeachersManager } from "@/components/account-teachers-manager";
+import { AccountDirectory } from "@/components/account-directory";
 import { ShbzNumberSearch } from "@/components/shbz-number-search";
 import { ShbzPageHeader } from "@/components/shbz-page-header";
 import { requireUser } from "@/lib/auth";
@@ -210,8 +209,8 @@ export default async function DeveloperAccountsPage({ searchParams }: AccountsPa
       </section>
 
       <section className="mt-11">
-        <h2 className="shbz-section-title">Учителя</h2>
-        <AccountTeachersManager
+        <h2 className="shbz-section-title">Учителя и ученики</h2>
+        <AccountDirectory
           teachers={teachers.map((teacher) => ({
             id: teacher.id,
             name: teacher.name,
@@ -220,12 +219,9 @@ export default async function DeveloperAccountsPage({ searchParams }: AccountsPa
             lessonCount: teacher._count.lessonsTaught,
             testCount: teacher._count.testsCreated
           }))}
+          students={students}
+          teacherOptions={teacherOptions}
         />
-      </section>
-
-      <section className="mt-11">
-        <h2 className="shbz-section-title">Ученики: учитель и пароль</h2>
-        <AccountStudentsManager students={students} teachers={teacherOptions} />
       </section>
     </div>
   );

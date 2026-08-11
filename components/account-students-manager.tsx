@@ -4,6 +4,7 @@ import { useMemo, useState, useTransition } from "react";
 import { changeStudentOwnersAction } from "@/actions/account";
 import { AccountPasswordResetButton } from "@/components/account-password-reset-button";
 import { ShbzSelect } from "@/components/shbz-select";
+import { matchesAccountSearch } from "@/lib/utils";
 
 /*
  * Список учеников на вкладке «Аккаунты» разработчика (Б-1/Б-4 аудита 10.08.2026):
@@ -28,6 +29,7 @@ type Student = {
 type AccountStudentsManagerProps = {
   students: Student[];
   teachers: Teacher[];
+  searchQuery?: string;
 };
 
 function StudentRow({
@@ -92,7 +94,7 @@ function StudentRow({
   );
 }
 
-export function AccountStudentsManager({ students, teachers }: AccountStudentsManagerProps) {
+export function AccountStudentsManager({ students, teachers, searchQuery = "" }: AccountStudentsManagerProps) {
   const [drafts, setDrafts] = useState<Record<string, string>>({});
   const [isPending, startTransition] = useTransition();
 
@@ -104,6 +106,13 @@ export function AccountStudentsManager({ students, teachers }: AccountStudentsMa
         .filter((entry) => entry.teacherId && entry.teacherId !== (entry.student.teacherId ?? ""))
         .map((entry) => ({ studentId: entry.student.id, teacherId: entry.teacherId })),
     [drafts, students]
+  );
+
+  // Поиск фильтрует только отображение: несохранённые правки в скрытых
+  // строках не пропадают и по-прежнему уходят на сервер кнопкой «Сохранить».
+  const visibleStudents = useMemo(
+    () => students.filter((student) => matchesAccountSearch(searchQuery, student.name, student.email)),
+    [searchQuery, students]
   );
 
   if (students.length === 0) {
@@ -132,20 +141,31 @@ export function AccountStudentsManager({ students, teachers }: AccountStudentsMa
 
   return (
     <>
-      <div className="shbz-card px-7 py-2">
-        {students.map((student, index) => (
-          <StudentRow
-            key={student.id}
-            student={student}
-            teachers={teachers}
-            teacherId={drafts[student.id] ?? student.teacherId ?? ""}
-            isDirty={changes.some((entry) => entry.studentId === student.id)}
-            isPending={isPending}
-            onTeacherChange={(teacherId) => setDrafts((current) => ({ ...current, [student.id]: teacherId }))}
-            isLast={index === students.length - 1}
-          />
-        ))}
-      </div>
+      {visibleStudents.length === 0 ? (
+        <div className="shbz-card px-6 py-10 text-center">
+          <p className="text-lg font-bold" style={{ color: "var(--shbz-text-strong)" }}>
+            Никого не нашли.
+          </p>
+          <p className="mt-1 text-sm" style={{ color: "var(--shbz-text-muted)" }}>
+            Проверьте запрос — поиск идёт по имени и логину ученика.
+          </p>
+        </div>
+      ) : (
+        <div className="shbz-card px-7 py-2">
+          {visibleStudents.map((student, index) => (
+            <StudentRow
+              key={student.id}
+              student={student}
+              teachers={teachers}
+              teacherId={drafts[student.id] ?? student.teacherId ?? ""}
+              isDirty={changes.some((entry) => entry.studentId === student.id)}
+              isPending={isPending}
+              onTeacherChange={(teacherId) => setDrafts((current) => ({ ...current, [student.id]: teacherId }))}
+              isLast={index === visibleStudents.length - 1}
+            />
+          ))}
+        </div>
+      )}
 
       <div className="mt-4 flex flex-wrap items-center justify-end gap-3">
         <p className="mr-auto text-[13.5px] font-semibold" style={{ color: "var(--shbz-text-muted)" }}>
