@@ -72,8 +72,8 @@ export default async function TeacherStudentLayout({ children, params }: Teacher
               title="Удалить ученика?"
               description={
                 <>
-                  Аккаунт <span className="font-semibold">«{data.student.name}»</span> будет удалён вместе со
-                  статусами по номерам и назначенными дедлайнами. Это действие нельзя отменить.
+                  Аккаунт <span className="font-semibold">«{data.student.name}»</span> будет удалён вместе со всеми его
+                  ДЗ, фото решений, историей проверок, статусами по номерам и дедлайнами. Это действие нельзя отменить.
                 </>
               }
               action={deleteStudentAction}

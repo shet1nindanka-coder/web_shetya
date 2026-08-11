@@ -185,20 +185,32 @@ export async function createStudentAction(formData: FormData): Promise<CreateStu
 }
 
 export async function deleteStudentAction(formData: FormData) {
-  const teacher = await requireUser(UserRole.TEACHER);
+  // Учитель удаляет только своих учеников; разработчик — любых со вкладки
+  // «Аккаунты» (там же, где смена учителя и сброс пароля).
+  const user = await requireUser([UserRole.TEACHER, UserRole.DEVELOPER]);
+  const isDeveloper = user.role === UserRole.DEVELOPER;
+
+  const redirectWithStatus = (params: URLSearchParams): never => {
+    if (isDeveloper) {
+      const query = params.toString();
+      redirect(query ? `/developer/accounts?${query}` : "/developer/accounts");
+    }
+
+    redirectTeacherWithStudentStatus(params);
+  };
 
   const studentId = String(formData.get("studentId") ?? "").trim();
 
   if (!studentId) {
-    redirectTeacherWithStudentStatus(new URLSearchParams({ studentError: "delete" }));
+    redirectWithStatus(new URLSearchParams({ studentError: "delete" }));
   }
 
   const student = await prisma.user.findFirst({
     where: {
       id: studentId,
       role: UserRole.STUDENT,
-      // Удалять можно только своего ученика (SEC-003).
-      teacherId: teacher.id
+      // Удалять можно только своего ученика (SEC-003); разработчику — любого.
+      ...(isDeveloper ? {} : { teacherId: user.id })
     },
     select: {
       id: true
@@ -209,13 +221,14 @@ export async function deleteStudentAction(formData: FormData) {
     logWarnEvent(
       "student.delete.missing",
       {
-        teacherId: teacher.id,
+        actorId: user.id,
+        actorRole: user.role,
         studentId
       },
       undefined,
       "Student deletion was skipped because the student was not found."
     );
-    redirectTeacherWithStudentStatus(new URLSearchParams({ studentError: "deleteMissing" }));
+    redirectWithStatus(new URLSearchParams({ studentError: "deleteMissing" }));
   }
 
   try {
@@ -243,7 +256,7 @@ export async function deleteStudentAction(formData: FormData) {
       void removeStoredFile(file.storageKey).catch((cleanupError) => {
         logErrorEvent(
           "student.delete.file_cleanup_failed",
-          { teacherId: teacher.id, studentId, storageKey: file.storageKey },
+          { actorId: user.id, actorRole: user.role, studentId, storageKey: file.storageKey },
           cleanupError,
           "Failed to remove student's uploaded file from storage."
         );
@@ -252,17 +265,18 @@ export async function deleteStudentAction(formData: FormData) {
   } catch (error) {
     logErrorEvent(
       "student.delete.failed",
-      { teacherId: teacher.id, studentId },
+      { actorId: user.id, actorRole: user.role, studentId },
       error,
       "Failed to delete student account."
     );
-    redirectTeacherWithStudentStatus(new URLSearchParams({ studentError: "delete" }));
+    redirectWithStatus(new URLSearchParams({ studentError: "delete" }));
   }
 
   logInfoEvent(
     "student.delete.succeeded",
     {
-      teacherId: teacher.id,
+      actorId: user.id,
+      actorRole: user.role,
       studentId
     },
     "Student account was deleted."
@@ -275,7 +289,8 @@ export async function deleteStudentAction(formData: FormData) {
   revalidatePath("/teacher/students");
   revalidatePath("/teacher/statistics");
   revalidatePath(`/teacher/students/${studentId}`);
-  redirectTeacherWithStudentStatus(new URLSearchParams({ studentDeleted: "1" }));
+  revalidatePath("/developer/accounts");
+  redirectWithStatus(new URLSearchParams({ studentDeleted: "1" }));
 }
 
 /*

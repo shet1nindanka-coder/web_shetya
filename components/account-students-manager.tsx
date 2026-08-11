@@ -2,7 +2,9 @@
 
 import { useMemo, useState, useTransition } from "react";
 import { changeStudentOwnersAction } from "@/actions/account";
+import { deleteStudentAction } from "@/actions/student";
 import { AccountPasswordResetButton } from "@/components/account-password-reset-button";
+import { DeleteButton } from "@/components/delete-button";
 import { ShbzSelect } from "@/components/shbz-select";
 import { matchesAccountSearch } from "@/lib/utils";
 
@@ -89,6 +91,19 @@ function StudentRow({
 
       <div className="flex flex-wrap items-center gap-2.5 md:justify-end">
         <AccountPasswordResetButton userId={student.id} userName={student.name} target="student" />
+        <DeleteButton
+          label="Удалить"
+          title="Удалить ученика?"
+          description={
+            <>
+              Аккаунт <span className="font-semibold">«{student.name}»</span> будет удалён вместе со всеми его
+              ДЗ, фото решений, историей проверок, статусами по номерам и дедлайнами. Это действие нельзя
+              отменить.
+            </>
+          }
+          action={deleteStudentAction}
+          fields={{ studentId: student.id }}
+        />
       </div>
     </div>
   );

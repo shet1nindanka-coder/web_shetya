@@ -79,6 +79,18 @@ const accountNotices = {
     tone: "success",
     message: "Учитель удалён. Его ученики переведены на выбранного учителя."
   },
+  studentDeleted: {
+    tone: "success",
+    message: "Ученик удалён вместе со всеми его ДЗ, фото решений и историей проверок."
+  },
+  studentDeleteMissing: {
+    tone: "error",
+    message: "Такого ученика уже нет в системе. Обновите страницу."
+  },
+  studentDelete: {
+    tone: "error",
+    message: "Не удалось удалить ученика. Повторите попытку ещё раз."
+  },
   teacherMissing: {
     tone: "error",
     message: "Такого учителя уже нет в системе. Обновите страницу."
@@ -145,6 +157,8 @@ export default async function DeveloperAccountsPage({ searchParams }: AccountsPa
   const passwordResetError =
     typeof params.passwordResetError === "string" ? params.passwordResetError : undefined;
   const teacherDeleted = typeof params.teacherDeleted === "string" ? params.teacherDeleted : undefined;
+  const studentDeleted = typeof params.studentDeleted === "string" ? params.studentDeleted : undefined;
+  const studentError = typeof params.studentError === "string" ? params.studentError : undefined;
   const teacherPasswordReset =
     typeof params.teacherPasswordReset === "string" ? params.teacherPasswordReset : undefined;
   const teacherPasswordError =
@@ -164,6 +178,9 @@ export default async function DeveloperAccountsPage({ searchParams }: AccountsPa
   // берём первый сработавший, порядок сверху вниз от самого свежего действия.
   const noticeKey =
     (teacherDeleted === "1" && "teacherDeleted") ||
+    (studentDeleted === "1" && "studentDeleted") ||
+    (studentError === "deleteMissing" && "studentDeleteMissing") ||
+    (studentError === "delete" && "studentDelete") ||
     (teacherPasswordReset === "1" && "teacherPasswordReset") ||
     teacherPasswordNoticeKey ||
     (created === "teacher" && "teacherCreated") ||
