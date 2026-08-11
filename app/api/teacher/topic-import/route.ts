@@ -10,9 +10,11 @@ import { prisma } from "@/lib/prisma";
 import { buildImportPlan, buildImportUpdateData, parseTopicImportText, type ImportNumber } from "@/lib/topic-import";
 
 /*
- * Импорт номеров темы из JSON, который выдаёт внешняя ИИ по промпту из
- * lib/topic-import-prompt.ts. Живёт на странице редактирования темы, поэтому
- * цель всегда одна — эта тема; создания новых тем здесь нет.
+ * Импорт из JSON, который выдаёт внешняя ИИ по промпту из
+ * lib/topic-import-prompt.ts. Два сценария:
+ * - topicId задан — импорт номеров в существующую тему (страница редактирования);
+ * - createTopic — создание новой темы целиком: название и описание из блока
+ *   topic файла, номера с условиями и ответами сразу (страница «Темы»).
  *
  * mode: "preview" ничего не пишет — только считает, что изменится.
  */
@@ -28,6 +30,8 @@ type RequestBody = {
   /** Сырой текст файла: разбор и починка экранирования — на сервере. */
   text?: unknown;
   topicId?: unknown;
+  /** Вместо topicId: создать новую тему из блока topic файла. */
+  createTopic?: unknown;
   overwriteFilled?: unknown;
 };
 
@@ -89,9 +93,10 @@ export async function POST(request: Request) {
   const body = (await request.json().catch(() => null)) as RequestBody | null;
   const mode = body?.mode === "apply" ? "apply" : "preview";
   const topicId = typeof body?.topicId === "string" ? body.topicId.trim() : "";
+  const createTopic = body?.createTopic === true;
   const overwriteFilled = body?.overwriteFilled === true;
 
-  if (!topicId) {
+  if (!topicId && !createTopic) {
     return NextResponse.json({ error: "Не указана тема для импорта." }, { status: 400 });
   }
 
@@ -108,7 +113,84 @@ export async function POST(request: Request) {
     return NextResponse.json({ error: parsed.error }, { status: 400 });
   }
 
-  const { title, numbers, warnings, issues } = parsed.data;
+  const { title, description, numbers, warnings, issues } = parsed.data;
+
+  if (createTopic) {
+    if (mode === "preview") {
+      // Одноимённая тема — не запрет (названия не уникальны), но предупреждаем:
+      // обычно это значит, что задачник уже импортировали.
+      const duplicate = await prisma.topic.findFirst({ where: { title }, select: { id: true } });
+
+      return NextResponse.json({
+        fileTitle: title,
+        fileDescription: description,
+        willCreateTopic: true,
+        duplicateTitle: Boolean(duplicate),
+        totalInFile: numbers.length,
+        willAddNumbers: numbers.length,
+        willFillEmpty: 0,
+        willOverwrite: 0,
+        untouched: 0,
+        sample: numbers.slice(0, SAMPLE_SIZE),
+        warnings,
+        issues
+      });
+    }
+
+    try {
+      const newTopicId = await prisma.$transaction(async (tx) => {
+        const lastTopic = await tx.topic.findFirst({
+          orderBy: { displayOrder: "desc" },
+          select: { displayOrder: true }
+        });
+
+        const created = await tx.topic.create({
+          data: {
+            title,
+            description,
+            displayOrder: (lastTopic?.displayOrder ?? 0) + 1
+          },
+          select: { id: true }
+        });
+
+        await createNumbersInBatches(
+          tx,
+          created.id,
+          numbers.map((item, index) => ({ ...item, displayOrder: index + 1 }))
+        );
+
+        return created.id;
+      });
+
+      revalidateTopicRoutes(newTopicId);
+
+      logInfoEvent(
+        "topic.import.topic_created",
+        { ...requestContext, userId: user.id, topicId: newTopicId, created: numbers.length },
+        "A new topic was created from an import file."
+      );
+
+      return NextResponse.json({
+        topicId: newTopicId,
+        created: numbers.length,
+        filled: 0,
+        overwritten: 0,
+        skipped: 0
+      });
+    } catch (error) {
+      logErrorEvent(
+        "topic.import.topic_create_failed",
+        { ...requestContext, userId: user.id, numberCount: numbers.length },
+        error,
+        "Failed to create a topic from an import file."
+      );
+
+      return NextResponse.json(
+        { error: "Не удалось создать тему. Проверьте подключение к PostgreSQL." },
+        { status: 500 }
+      );
+    }
+  }
 
   const topic = await prisma.topic.findUnique({ where: { id: topicId }, select: { id: true } });
 

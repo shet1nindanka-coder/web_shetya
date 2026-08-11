@@ -13,6 +13,9 @@ type PreviewNumber = {
 
 type PreviewResponse = {
   fileTitle: string;
+  fileDescription?: string;
+  willCreateTopic?: boolean;
+  duplicateTitle?: boolean;
   totalInFile: number;
   willAddNumbers: number;
   willFillEmpty: number;
@@ -24,15 +27,16 @@ type PreviewResponse = {
 };
 
 type ApplyResponse = {
+  topicId?: string;
   created: number;
   filled: number;
   overwritten: number;
   skipped: number;
 };
 
-type TopicImportPanelProps = {
-  topicId: string;
-};
+type TopicImportPanelProps =
+  | { topicId: string; createTopic?: never }
+  | { topicId?: never; createTopic: true };
 
 const BUTTON_PRIMARY =
   "ui-pressable ui-button-primary rounded-[12px] px-4 py-2 text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-50";
@@ -58,7 +62,7 @@ function SummaryTile({ label, value, danger }: { label: string; value: number; d
  * по промпту из lib/topic-import-prompt.ts. Предпросмотр обязателен: он
  * показывает, сколько заполненных полей затрётся, до записи в базу.
  */
-export function TopicImportPanel({ topicId }: TopicImportPanelProps) {
+export function TopicImportPanel({ topicId, createTopic }: TopicImportPanelProps) {
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -108,7 +112,9 @@ export function TopicImportPanel({ topicId }: TopicImportPanelProps) {
       const response = await fetch("/api/teacher/topic-import", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ mode, text: rawJson, topicId, overwriteFilled })
+        body: JSON.stringify(
+          createTopic ? { mode, text: rawJson, createTopic: true } : { mode, text: rawJson, topicId, overwriteFilled }
+        )
       });
 
       const data = (await response.json().catch(() => null)) as Record<string, unknown> | null;
@@ -124,7 +130,15 @@ export function TopicImportPanel({ topicId }: TopicImportPanelProps) {
         return;
       }
 
-      setApplied(data as unknown as ApplyResponse);
+      const applyResult = data as unknown as ApplyResponse;
+
+      // Новая тема: сразу уводим на её редактирование — там файлы теории/ДЗ и номера.
+      if (createTopic && applyResult.topicId) {
+        router.push(`/teacher/topics/${applyResult.topicId}/edit`);
+        return;
+      }
+
+      setApplied(applyResult);
       setPreview(null);
       setRawJson("");
       setFileName(null);
@@ -262,6 +276,26 @@ export function TopicImportPanel({ topicId }: TopicImportPanelProps) {
             Файл «{preview.fileTitle}», задач внутри: {preview.totalInFile}
           </div>
 
+          {preview.willCreateTopic ? (
+            <div className="ui-card-soft rounded-[14px] px-3.5 py-3">
+              <div className="ui-kicker">Будет создана тема</div>
+              <div className="mt-1 text-base font-bold" style={{ color: "var(--theme-text-strong)" }}>
+                {preview.fileTitle}
+              </div>
+              {preview.fileDescription ? (
+                <p className="mt-1 text-sm leading-6" style={{ color: "var(--theme-text-muted)" }}>
+                  {preview.fileDescription}
+                </p>
+              ) : null}
+              {preview.duplicateTitle ? (
+                <p className="mt-2 text-xs font-semibold" style={{ color: "var(--theme-danger-text)" }}>
+                  Тема с таким названием уже существует. Возможно, этот задачник уже импортирован — тогда
+                  отмените импорт и добавьте номера в существующую тему с её страницы редактирования.
+                </p>
+              ) : null}
+            </div>
+          ) : null}
+
           <div className="grid gap-3" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(140px, 1fr))" }}>
             <SummaryTile label="Добавим" value={preview.willAddNumbers} />
             <SummaryTile label="Заполним пустых" value={preview.willFillEmpty} />
@@ -337,7 +371,7 @@ export function TopicImportPanel({ topicId }: TopicImportPanelProps) {
 
           <div className="flex flex-wrap gap-3">
             <button type="button" className={BUTTON_PRIMARY} disabled={pending} onClick={() => void send("apply")}>
-              {pending ? "Импортируем…" : "Импортировать"}
+              {pending ? "Импортируем…" : createTopic ? "Создать тему и импортировать" : "Импортировать"}
             </button>
             <button type="button" className={BUTTON_SECONDARY} disabled={pending} onClick={() => setPreview(null)}>
               Отменить

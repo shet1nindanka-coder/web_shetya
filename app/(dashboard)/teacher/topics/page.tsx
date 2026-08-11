@@ -5,6 +5,7 @@ import { DeleteButton } from "@/components/delete-button";
 import { ShbzNavCard } from "@/components/shbz-nav-card";
 import { ShbzNumberSearch } from "@/components/shbz-number-search";
 import { ShbzPageHeader } from "@/components/shbz-page-header";
+import { TopicImportPanel } from "@/components/topic-import-panel";
 import { TopicCreateForm } from "@/components/topic-create-form";
 import { requireUser } from "@/lib/auth";
 import { getTeacherTopicsOverview } from "@/lib/platform-data";
@@ -101,6 +102,20 @@ export default async function TeacherTopicsPage({ searchParams }: TeacherTopicsP
           <h2 className="shbz-section-title">Создать новую тему</h2>
           <div className="shbz-card shbz-section-pad">
             <TopicCreateForm uploadMode={uploadMode} blobAccess={blobAccess} />
+          </div>
+        </section>
+      ) : null}
+
+      {isDeveloper ? (
+        <section className="mt-11">
+          <h2 className="shbz-section-title">Импорт темы из задачника</h2>
+          <div className="shbz-card shbz-section-pad">
+            <p className="mb-4 text-sm leading-6" style={{ color: "var(--shbz-text-muted)" }}>
+              Тема создаётся целиком из файла: название и описание берутся из ответа ИИ, номера приходят сразу
+              с условиями и ответами. После импорта откроется страница редактирования — там можно приложить
+              файлы теории и ДЗ.
+            </p>
+            <TopicImportPanel createTopic />
           </div>
         </section>
       ) : null}
