@@ -7,6 +7,7 @@ import { ShbzNumberSearch } from "@/components/shbz-number-search";
 import { ShbzPageHeader } from "@/components/shbz-page-header";
 import { TopicImportPanel } from "@/components/topic-import-panel";
 import { TopicCreateSwitch } from "@/components/topic-create-switch";
+import { TopicImportPromptButton } from "@/components/topic-import-prompt-button";
 import { TopicCreateForm } from "@/components/topic-create-form";
 import { requireUser } from "@/lib/auth";
 import { getTeacherTopicsOverview } from "@/lib/platform-data";
@@ -103,16 +104,8 @@ export default async function TeacherTopicsPage({ searchParams }: TeacherTopicsP
           <h2 className="shbz-section-title">Создать новую тему</h2>
           <div className="shbz-card shbz-section-pad">
             <TopicCreateSwitch
-              aiImport={
-                <>
-                  <p className="ui-hint mb-4 text-sm leading-6" style={{ color: "var(--shbz-text-muted)" }}>
-                    Тема создаётся целиком из файла: название и описание берутся из ответа ИИ, номера приходят
-                    сразу с условиями и ответами. После импорта откроется страница редактирования — там можно
-                    приложить файлы теории и ДЗ.
-                  </p>
-                  <TopicImportPanel createTopic />
-                </>
-              }
+              aiImport={<TopicImportPanel createTopic hidePromptButton />}
+              aiAside={<TopicImportPromptButton />}
               manual={<TopicCreateForm uploadMode={uploadMode} blobAccess={blobAccess} />}
             />
           </div>

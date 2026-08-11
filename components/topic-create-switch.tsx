@@ -16,24 +16,36 @@ const MODES = [
 
 type ModeKey = (typeof MODES)[number]["key"];
 
-export function TopicCreateSwitch({ aiImport, manual }: { aiImport: ReactNode; manual: ReactNode }) {
+export function TopicCreateSwitch({
+  aiImport,
+  aiAside,
+  manual
+}: {
+  aiImport: ReactNode;
+  /** Правый край строки с переключателем в режиме ИИ (кнопка промпта). */
+  aiAside?: ReactNode;
+  manual: ReactNode;
+}) {
   // Контент сейчас наливают импортом — он и есть основной путь.
   const [mode, setMode] = useState<ModeKey>("ai");
 
   return (
     <>
-      <div className="shbz-seg mb-5 inline-flex" role="group" aria-label="Способ создания темы">
-        {MODES.map((option) => (
-          <button
-            key={option.key}
-            type="button"
-            data-active={mode === option.key}
-            onClick={() => setMode(option.key)}
-            className="shbz-seg-btn shbz-seg-btn--plain"
-          >
-            {option.label}
-          </button>
-        ))}
+      <div className="mb-5 flex flex-wrap items-center justify-between gap-x-6 gap-y-3">
+        <div className="shbz-seg inline-flex" role="group" aria-label="Способ создания темы">
+          {MODES.map((option) => (
+            <button
+              key={option.key}
+              type="button"
+              data-active={mode === option.key}
+              onClick={() => setMode(option.key)}
+              className="shbz-seg-btn shbz-seg-btn--plain"
+            >
+              {option.label}
+            </button>
+          ))}
+        </div>
+        {mode === "ai" ? aiAside : null}
       </div>
 
       <div hidden={mode !== "ai"}>{aiImport}</div>
