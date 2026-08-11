@@ -66,7 +66,6 @@ export function TopicImportPanel({ topicId, createTopic }: TopicImportPanelProps
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const [promptOpen, setPromptOpen] = useState(false);
   const [copied, setCopied] = useState(false);
   const [rawJson, setRawJson] = useState("");
   const [fileName, setFileName] = useState<string | null>(null);
@@ -160,14 +159,9 @@ export function TopicImportPanel({ topicId, createTopic }: TopicImportPanelProps
     <div className="space-y-4">
       <div className="ui-panel-soft space-y-3 rounded-[16px] p-3.5 sm:p-4">
         <div className="flex flex-wrap items-center gap-3">
-          <button type="button" className={BUTTON_SECONDARY} onClick={() => setPromptOpen((open) => !open)}>
-            {promptOpen ? "Скрыть промпт" : "Показать промпт для ИИ"}
+          <button type="button" className={BUTTON_PRIMARY} onClick={() => void copyPrompt()}>
+            Скопировать промпт для ИИ
           </button>
-          {promptOpen ? (
-            <button type="button" className={BUTTON_PRIMARY} onClick={() => void copyPrompt()}>
-              Скопировать промпт
-            </button>
-          ) : null}
           {copied ? (
             <span className="text-sm font-semibold" style={{ color: "var(--theme-success-text)" }}>
               Скопировано
@@ -175,16 +169,11 @@ export function TopicImportPanel({ topicId, createTopic }: TopicImportPanelProps
           ) : null}
         </div>
 
-        <p className="text-sm leading-6" style={{ color: "var(--theme-text-muted)" }}>
-          Откройте любой чат с ИИ, который умеет читать файлы, приложите задачник и отправьте промпт. Ответ
-          модели сохраните как файл <code>.json</code> или вставьте текстом ниже.
+        <p className="ui-hint text-sm leading-6" style={{ color: "var(--theme-text-muted)" }}>
+          Скопируйте промпт, откройте любой чат с ИИ, который умеет читать файлы, приложите задачник и
+          отправьте. Ответ модели сохраните как файл <code>.json</code> или вставьте текстом ниже.
         </p>
 
-        {promptOpen ? (
-          <pre className="ui-card-soft max-h-[320px] overflow-auto whitespace-pre-wrap rounded-[14px] px-3.5 py-3 text-xs leading-5 text-[var(--theme-text-muted)]">
-            {TOPIC_IMPORT_PROMPT}
-          </pre>
-        ) : null}
       </div>
 
       <div className="ui-panel-soft space-y-3 rounded-[16px] p-3.5 sm:space-y-4 sm:p-4">

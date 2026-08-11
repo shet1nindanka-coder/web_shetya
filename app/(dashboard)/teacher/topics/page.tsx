@@ -105,7 +105,7 @@ export default async function TeacherTopicsPage({ searchParams }: TeacherTopicsP
             <TopicCreateSwitch
               aiImport={
                 <>
-                  <p className="mb-4 text-sm leading-6" style={{ color: "var(--shbz-text-muted)" }}>
+                  <p className="ui-hint mb-4 text-sm leading-6" style={{ color: "var(--shbz-text-muted)" }}>
                     Тема создаётся целиком из файла: название и описание берутся из ответа ИИ, номера приходят
                     сразу с условиями и ответами. После импорта откроется страница редактирования — там можно
                     приложить файлы теории и ДЗ.

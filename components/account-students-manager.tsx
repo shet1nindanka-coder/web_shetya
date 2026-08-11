@@ -183,7 +183,14 @@ export function AccountStudentsManager({ students, teachers, searchQuery = "" }:
       )}
 
       <div className="mt-4 flex flex-wrap items-center justify-end gap-3">
-        <p className="mr-auto text-[13.5px] font-semibold" style={{ color: "var(--shbz-text-muted)" }}>
+        <p
+          className={
+            changes.length > 0
+              ? "mr-auto text-[13.5px] font-semibold"
+              : "ui-hint mr-auto text-[13.5px] font-semibold"
+          }
+          style={{ color: "var(--shbz-text-muted)" }}
+        >
           {changes.length > 0
             ? `Учитель изменён у ${changes.length} ${changes.length === 1 ? "ученика" : "учеников"} — изменения ещё не сохранены.`
             : "Выберите учителя в нужных строках и сохраните изменения."}
