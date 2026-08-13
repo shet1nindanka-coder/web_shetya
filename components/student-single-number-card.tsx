@@ -5,7 +5,6 @@ import { useCallback, useRef, useState } from "react";
 import { HomeworkStatusBadge } from "@/components/homework-status-badge";
 import { LatexAnswerPreview } from "@/components/latex-answer-preview";
 import { SectionCard } from "@/components/section-card";
-import { TelegramSpoiler } from "@/components/telegram-spoiler";
 import { markStudentTopicsNeedsRefresh } from "@/components/student-topics-refresh-bridge";
 import { useStudentStreak } from "@/components/student-streak-provider";
 import { homeworkStatusMeta } from "@/lib/utils";
@@ -15,7 +14,6 @@ type StudentSingleNumberCardProps = {
   homeworkNumberId: string;
   number: string;
   conditionLatex: string | null;
-  answerLatex: string | null;
   initialStatus: HomeworkNumberStatus | null;
   initialNote: string;
   deadlineAt: string | null;
@@ -27,7 +25,6 @@ export function StudentSingleNumberCard({
   homeworkNumberId,
   number,
   conditionLatex,
-  answerLatex,
   initialStatus,
   initialNote,
   deadlineAt: _deadlineAt,
@@ -142,18 +139,6 @@ export function StudentSingleNumberCard({
             <div className="min-w-0 max-w-full text-sm leading-relaxed text-[var(--theme-text-default)]">
               <LatexAnswerPreview value={conditionLatex} />
             </div>
-          </div>
-        ) : null}
-
-        {answerLatex ? (
-          <div className="shbz-panel-soft min-w-0 px-4 py-3.5">
-            <p className="ui-kicker mb-2">Ответ</p>
-            <TelegramSpoiler
-              className="rounded-[12px]"
-              ariaLabel={`Показать ответ к номеру ${number}`}
-            >
-              <LatexAnswerPreview value={answerLatex} />
-            </TelegramSpoiler>
           </div>
         ) : null}
 

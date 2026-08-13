@@ -53,7 +53,6 @@ export default async function StudentNumberPage({ params }: StudentNumberPagePro
         homeworkNumberId={data.number.id}
         number={data.number.number}
         conditionLatex={data.number.conditionLatex}
-        answerLatex={data.number.answerLatex}
         initialStatus={data.number.studentStatus?.status ?? null}
         initialNote={data.number.studentStatus?.note ?? ""}
         deadlineAt={toIsoDateTimeString(data.number.studentStatus?.deadlineAt ?? null)}

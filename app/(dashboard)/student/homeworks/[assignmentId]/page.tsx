@@ -110,7 +110,6 @@ export default async function StudentHomeworkPage({ params }: StudentHomeworkPag
             homeworkNumberId={number.homeworkNumberId}
             number={number.number}
             conditionLatex={number.conditionLatex}
-            answerLatex={number.answerLatex}
             initialStatus={number.status}
             initialNote={number.note}
             deadlineAt={deadlineAtIso}
