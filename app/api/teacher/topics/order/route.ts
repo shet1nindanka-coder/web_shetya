@@ -39,13 +39,18 @@ export async function POST(request: Request) {
     | {
         topicId?: string;
         direction?: string;
+        /** Полный порядок после перетаскивания — альтернатива направлению. */
+        orderedTopicIds?: unknown;
       }
     | null;
 
   const topicId = String(body?.topicId ?? "").trim();
   const direction = body?.direction === "up" || body?.direction === "down" ? body.direction : null;
+  const requestedOrder = Array.isArray(body?.orderedTopicIds)
+    ? body.orderedTopicIds.map((value) => String(value).trim()).filter(Boolean)
+    : null;
 
-  if (!topicId || !direction) {
+  if (!requestedOrder && (!topicId || !direction)) {
     return NextResponse.json({ error: "Некорректный запрос на изменение порядка тем." }, { status: 400 });
   }
 
@@ -57,17 +62,41 @@ export async function POST(request: Request) {
       }
     });
 
-    const reordered = moveTopicByDirection(topics, topicId, direction);
+    let orderedTopics: Array<{ id: string }>;
 
-    if (!reordered.moved) {
-      return NextResponse.json({
-        orderedTopicIds: topics.map((topic) => topic.id),
-        moved: false
-      });
+    if (requestedOrder) {
+      // Перетаскивание: клиент присылает порядок целиком. Принимаем только
+      // перестановку текущего набора тем — иначе список устарел (тему создали
+      // или удалили в другой вкладке), и писать его в базу нельзя.
+      const currentIds = new Set(topics.map((topic) => topic.id));
+      const isSameSet =
+        requestedOrder.length === topics.length &&
+        new Set(requestedOrder).size === requestedOrder.length &&
+        requestedOrder.every((id) => currentIds.has(id));
+
+      if (!isSameSet) {
+        return NextResponse.json(
+          { error: "Список тем изменился. Обновите страницу и повторите перетаскивание." },
+          { status: 409 }
+        );
+      }
+
+      orderedTopics = requestedOrder.map((id) => ({ id }));
+    } else {
+      const reordered = moveTopicByDirection(topics, topicId, direction as "up" | "down");
+
+      if (!reordered.moved) {
+        return NextResponse.json({
+          orderedTopicIds: topics.map((topic) => topic.id),
+          moved: false
+        });
+      }
+
+      orderedTopics = reordered.topics;
     }
 
     await prisma.$transaction(
-      reordered.topics.map((topic, index) =>
+      orderedTopics.map((topic, index) =>
         prisma.topic.update({
           where: { id: topic.id },
           data: {
@@ -86,13 +115,13 @@ export async function POST(request: Request) {
         userId: user.id,
         topicId,
         direction,
-        orderedTopicIds: reordered.topics.map((topic) => topic.id)
+        orderedTopicIds: orderedTopics.map((topic) => topic.id)
       },
       "Teacher topic order was updated successfully."
     );
 
     return NextResponse.json({
-      orderedTopicIds: reordered.topics.map((topic) => topic.id),
+      orderedTopicIds: orderedTopics.map((topic) => topic.id),
       moved: true
     });
   } catch (error) {

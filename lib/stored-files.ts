@@ -17,7 +17,7 @@ export async function countStoredFileUsages(fileId: string) {
   const [topicUsageCount, answerUsageCount, submissionPhotoUsageCount, checkPhotoUsageCount] = await Promise.all([
     prisma.topic.count({
       where: {
-        OR: [{ theoryFileId: fileId }, { homeworkFileId: fileId }]
+        OR: [{ theoryFileId: fileId }, { homeworkFileId: fileId }, { answersFileId: fileId }]
       }
     }),
     prisma.topicHomeworkNumber.count({

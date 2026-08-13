@@ -498,6 +498,7 @@ export async function getStudentTopicDetail(
       ...topic,
       theoryFile: null,
       homeworkFile: null,
+      answersFileId: null,
       homeworkNumbers: normalizedHomeworkNumbers,
       numbers,
       notesEnabled: false,
@@ -680,8 +681,22 @@ async function getTeacherTopicDetailUncached(topicId: string) {
 
   const { result: topic, answerLatexEnabled, conditionLatexEnabled } = await resolveTopicDataCapabilities(buildTeacherTopicDetailQuery);
 
+  // Файл ответов читается отдельными запросами по скалярному answersFileId:
+  // include по новой relation требует свежесгенерированного Prisma-клиента,
+  // а патченный клиент в разработке знает только про скалярное поле.
+  const answersFileRef = await prisma.topic
+    .findUnique({ where: { id: topicId }, select: { answersFileId: true } })
+    .catch(() => null);
+  const answersFile = answersFileRef?.answersFileId
+    ? await prisma.storedFile.findUnique({
+        where: { id: answersFileRef.answersFileId },
+        select: { id: true, originalName: true, mimeType: true, size: true, uploadedAt: true }
+      })
+    : null;
+
   const normalizedTopic = {
     ...topic,
+    answersFile,
     homeworkNumbers: topic.homeworkNumbers.map((number) => ({
       ...number,
       conditionLatex: conditionLatexEnabled ? (number as { conditionLatex?: string | null }).conditionLatex ?? null : null,
@@ -1044,7 +1059,6 @@ export async function getStudentNumberDetail(studentId: string, topicId: string,
         id: true,
         number: true,
         conditionLatex: true,
-        answerLatex: true,
         statuses: {
           where: { studentId },
           select: {
@@ -1083,7 +1097,6 @@ export async function getStudentNumberDetail(studentId: string, topicId: string,
           id: homeworkNumber.id,
           number: homeworkNumber.number,
           conditionLatex: null as string | null,
-          answerLatex: null as string | null,
           studentStatus: rawStatus
             ? { ...rawStatus, note: "" as string, deadlineAt: null as Date | null }
             : null
@@ -1104,7 +1117,6 @@ export async function getStudentNumberDetail(studentId: string, topicId: string,
       id: homeworkNumber.id,
       number: homeworkNumber.number,
       conditionLatex: (homeworkNumber as { conditionLatex?: string | null }).conditionLatex ?? null,
-      answerLatex: (homeworkNumber as { answerLatex?: string | null }).answerLatex ?? null,
       studentStatus: rawStatus
         ? {
             ...rawStatus,
@@ -1342,7 +1354,9 @@ async function getTeacherStudentHomeworksUncached(viewer: TeacherViewer, student
           homeworkNumberId: entry.homeworkNumber.id,
           number: entry.homeworkNumber.number,
           conditionLatex: entry.homeworkNumber.conditionLatex ?? null,
-          answerLatex: entry.homeworkNumber.answerLatex ?? null,
+          // Эталонный ответ виден только учителю: ученик решает сам, спойлеров
+          // с ответом в кабинете ученика больше нет (решение владельца 11.08.2026).
+          answerLatex: viewer.role === UserRole.STUDENT ? null : entry.homeworkNumber.answerLatex ?? null,
           status: status?.status ?? null,
           note: notesEnabled ? ((status as { note?: string | null } | null)?.note ?? "") : ""
         };

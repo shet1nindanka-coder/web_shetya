@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { UserRole } from "@prisma/client";
+import { LessonDeleteButton } from "@/components/lesson-delete-button";
 import { ShbzNumberSearch } from "@/components/shbz-number-search";
 import { ShbzPageHeader } from "@/components/shbz-page-header";
 import { requireUser } from "@/lib/auth";
@@ -78,6 +79,7 @@ export default async function TeacherLessonsPage() {
                 <a href={`${prefix}/lessons/${lesson.id}/pdf`} className="shbz-btn-outline inline-block no-underline">
                   PDF
                 </a>
+                <LessonDeleteButton lessonId={lesson.id} />
               </div>
             </article>
           ))}

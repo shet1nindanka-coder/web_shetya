@@ -8,6 +8,8 @@ type FileAccessUser = {
 type FileAccessCounts = {
   theoryForTopics: number;
   homeworkForTopics: number;
+  /** Файл ответов темы: только для учителя, ученику не отдаётся никогда. */
+  answersForTopics: number;
   answerForNumberEntries: number;
   checkPhotoEntries: number;
 };
@@ -26,6 +28,7 @@ export function canAccessStoredFile(user: FileAccessUser, file: StoredFileAccess
       file.uploadedById === user.id ||
       file.counts.theoryForTopics > 0 ||
       file.counts.homeworkForTopics > 0 ||
+      file.counts.answersForTopics > 0 ||
       file.counts.answerForNumberEntries > 0
     );
   }
@@ -38,6 +41,7 @@ export function summarizeStoredFileAccess(file: StoredFileAccessSnapshot) {
     uploadedById: file.uploadedById,
     theoryTopicCount: file.counts.theoryForTopics,
     homeworkTopicCount: file.counts.homeworkForTopics,
+    answersTopicCount: file.counts.answersForTopics,
     answerEntryCount: file.counts.answerForNumberEntries,
     checkPhotoEntryCount: file.counts.checkPhotoEntries
   };

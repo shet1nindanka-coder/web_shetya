@@ -8,6 +8,7 @@ import { ShbzPageHeader } from "@/components/shbz-page-header";
 import { TopicImportPanel } from "@/components/topic-import-panel";
 import { TopicCreateSwitch } from "@/components/topic-create-switch";
 import { TopicImportPromptButton } from "@/components/topic-import-prompt-button";
+import { TopicReorderGrid } from "@/components/topic-reorder-grid";
 import { TopicCreateForm } from "@/components/topic-create-form";
 import { requireUser } from "@/lib/auth";
 import { getTeacherTopicsOverview } from "@/lib/platform-data";
@@ -123,39 +124,46 @@ export default async function TeacherTopicsPage({ searchParams }: TeacherTopicsP
               Пока нет ни одной темы
             </p>
           </div>
-        ) : (
-          <div className="grid gap-5" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))" }}>
-            {data.topics.map((topic) => (
-              <ShbzNavCard
-                key={topic.id}
-                kicker="Тема"
-                title={topic.title}
-                meta={`${pluralizeNumbers(topic.totalNumbers)} · ${topic.studentsWithActivity} активных`}
-                footer={
-                  <>
-                    <Link href={`/teacher/topics/${topic.id}`} className="shbz-btn-primary px-[18px] py-2.5 text-[13px]">
-                      Открыть
-                    </Link>
-                    {isDeveloper ? (
-                      <DeleteButton
-                        label="Удалить"
-                        title="Удалить тему?"
-                        description={
-                          <>
-                            Тема <span className="font-semibold">«{topic.title}»</span> будет удалена вместе с
-                            прикреплёнными файлами и статусами по номерам. Это действие нельзя отменить.
-                          </>
-                        }
-                        action={deleteTopicAction}
-                        fields={{ topicId: topic.id }}
-                      />
-                    ) : null}
-                  </>
-                }
-              />
-            ))}
-          </div>
-        )}
+        ) : (() => {
+          const cards = data.topics.map((topic) => (
+            <ShbzNavCard
+              key={topic.id}
+              kicker="Тема"
+              title={topic.title}
+              meta={`${pluralizeNumbers(topic.totalNumbers)} · ${topic.studentsWithActivity} активных`}
+              footer={
+                <>
+                  <Link href={`/teacher/topics/${topic.id}`} className="shbz-btn-primary px-[18px] py-2.5 text-[13px]">
+                    Открыть
+                  </Link>
+                  {isDeveloper ? (
+                    <DeleteButton
+                      label="Удалить"
+                      title="Удалить тему?"
+                      description={
+                        <>
+                          Тема <span className="font-semibold">«{topic.title}»</span> будет удалена вместе с
+                          прикреплёнными файлами и статусами по номерам. Это действие нельзя отменить.
+                        </>
+                      }
+                      action={deleteTopicAction}
+                      fields={{ topicId: topic.id }}
+                    />
+                  ) : null}
+                </>
+              }
+            />
+          ));
+
+          // Разработчик двигает темы перетаскиванием; учителю — обычная сетка.
+          return isDeveloper ? (
+            <TopicReorderGrid items={data.topics.map((topic, index) => ({ id: topic.id, card: cards[index] }))} />
+          ) : (
+            <div className="grid gap-5" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))" }}>
+              {cards}
+            </div>
+          );
+        })()}
       </section>
     </div>
   );

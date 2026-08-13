@@ -118,6 +118,7 @@ model StoredFile {
   uploadedBy             User                      @relation("UploadedFiles", fields: [uploadedById], references: [id], onDelete: Restrict)
   theoryForTopics        Topic[]                   @relation("TheoryFile")
   homeworkForTopics      Topic[]                   @relation("HomeworkFile")
+  answersForTopics       Topic[]                   @relation("TopicAnswersFile")
   answerForNumberEntries TopicHomeworkNumber[]     @relation("NumberAnswerFile")
   submissionPhotoEntries HomeworkSubmissionPhoto[] @relation("SubmissionPhotoFile")
   checkPhotoEntries      HomeworkCheckPhoto[]      @relation("HomeworkCheckPhotoFile")
@@ -145,10 +146,12 @@ model Topic {
   displayOrder        Int                   @default(0)
   theoryFileId        String?
   homeworkFileId      String?
+  answersFileId       String?
   createdAt           DateTime              @default(now())
   updatedAt           DateTime              @updatedAt
   theoryFile          StoredFile?           @relation("TheoryFile", fields: [theoryFileId], references: [id], onDelete: SetNull)
   homeworkFile        StoredFile?           @relation("HomeworkFile", fields: [homeworkFileId], references: [id], onDelete: SetNull)
+  answersFile         StoredFile?           @relation("TopicAnswersFile", fields: [answersFileId], references: [id], onDelete: SetNull)
   homeworkNumbers     TopicHomeworkNumber[]
   subject             Subject               @default(MATH)
   grade               Int?

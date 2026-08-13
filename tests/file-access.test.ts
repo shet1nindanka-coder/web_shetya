@@ -10,7 +10,7 @@ test("учитель видит файлы тем/банка и свои заг�
   assert.equal(
     canAccessStoredFile(teacher, {
       uploadedById: "teacher-2",
-      counts: { theoryForTopics: 0, homeworkForTopics: 0, answerForNumberEntries: 3, checkPhotoEntries: 0 }
+      counts: { theoryForTopics: 0, homeworkForTopics: 0, answersForTopics: 0, answerForNumberEntries: 3, checkPhotoEntries: 0 }
     }),
     true
   );
@@ -19,7 +19,7 @@ test("учитель видит файлы тем/банка и свои заг�
   assert.equal(
     canAccessStoredFile(teacher, {
       uploadedById: "teacher-1",
-      counts: { theoryForTopics: 0, homeworkForTopics: 0, answerForNumberEntries: 0, checkPhotoEntries: 0 }
+      counts: { theoryForTopics: 0, homeworkForTopics: 0, answersForTopics: 0, answerForNumberEntries: 0, checkPhotoEntries: 0 }
     }),
     true
   );
@@ -33,7 +33,7 @@ test("учитель НЕ получает чужое фото решения ч
       { id: "teacher-2", role: UserRole.TEACHER },
       {
         uploadedById: "student-1",
-        counts: { theoryForTopics: 0, homeworkForTopics: 0, answerForNumberEntries: 0, checkPhotoEntries: 1 }
+        counts: { theoryForTopics: 0, homeworkForTopics: 0, answersForTopics: 0, answerForNumberEntries: 0, checkPhotoEntries: 1 }
       }
     ),
     false
@@ -49,6 +49,7 @@ test("student can access files attached to topic theory or homework", () => {
       counts: {
         theoryForTopics: 1,
         homeworkForTopics: 0,
+        answersForTopics: 0,
         answerForNumberEntries: 0,
         checkPhotoEntries: 0
       }
@@ -62,6 +63,7 @@ test("student can access files attached to topic theory or homework", () => {
       counts: {
         theoryForTopics: 0,
         homeworkForTopics: 2,
+        answersForTopics: 0,
         answerForNumberEntries: 0,
         checkPhotoEntries: 0
       }
@@ -79,6 +81,7 @@ test("student cannot access answer-only or unattached files", () => {
       counts: {
         theoryForTopics: 0,
         homeworkForTopics: 0,
+        answersForTopics: 0,
         answerForNumberEntries: 1,
         checkPhotoEntries: 0
       }
@@ -92,6 +95,7 @@ test("student cannot access answer-only or unattached files", () => {
       counts: {
         theoryForTopics: 0,
         homeworkForTopics: 0,
+        answersForTopics: 0,
         answerForNumberEntries: 0,
         checkPhotoEntries: 1
       }
@@ -106,6 +110,7 @@ test("summarizeStoredFileAccess exposes grep-friendly reference counters", () =>
     counts: {
       theoryForTopics: 2,
       homeworkForTopics: 1,
+      answersForTopics: 5,
       answerForNumberEntries: 4,
       checkPhotoEntries: 3
     }
@@ -115,7 +120,18 @@ test("summarizeStoredFileAccess exposes grep-friendly reference counters", () =>
     uploadedById: "teacher-1",
     theoryTopicCount: 2,
     homeworkTopicCount: 1,
+    answersTopicCount: 5,
     answerEntryCount: 4,
     checkPhotoEntryCount: 3
   });
+});
+
+test("файл ответов темы: учителю можно, ученику нельзя", () => {
+  const answersFile = {
+    uploadedById: "developer-1",
+    counts: { theoryForTopics: 0, homeworkForTopics: 0, answersForTopics: 1, answerForNumberEntries: 0, checkPhotoEntries: 0 }
+  };
+
+  assert.equal(canAccessStoredFile({ id: "teacher-1", role: UserRole.TEACHER }, answersFile), true);
+  assert.equal(canAccessStoredFile({ id: "student-1", role: UserRole.STUDENT }, answersFile), false);
 });

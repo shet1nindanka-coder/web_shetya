@@ -249,6 +249,26 @@ export default async function TeacherTopicPage({ params, searchParams }: Teacher
                   />
                 ) : null}
               </div>
+
+              <div className="ui-card-soft space-y-3 rounded-[16px] p-3 sm:space-y-4 sm:p-3.5">
+                <FileResourceCard title="Ответы — видны только учителю" file={data.topic.answersFile} showPreview={false} />
+                <FileDropInput
+                  name="answersFile"
+                  label={data.topic.answersFile ? "Заменить файл ответов" : "Загрузить файл ответов"}
+                  accept=".pdf,.docx,.png,.jpg,.jpeg"
+                  helperText="Необязательный файл. Ученики его не видят ни на одной странице."
+                />
+                {data.topic.answersFile ? (
+                  <DeleteButton
+                    variant="sm"
+                    label="Удалить файл ответов"
+                    title="Удалить файл ответов?"
+                    description="Файл ответов будет откреплён от темы и удалён из хранилища. Это действие нельзя отменить."
+                    action={deleteTopicFileAction}
+                    fields={{ topicId: data.topic.id, fileKind: "answers" }}
+                  />
+                ) : null}
+              </div>
             </div>
           </div>
 

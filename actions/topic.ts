@@ -51,7 +51,7 @@ function redirectTeacherTopicWithStatus(topicId: string, params: URLSearchParams
 }
 
 function getTopicFileKind(value: FormDataEntryValue | null) {
-  return value === "theory" || value === "homework" ? value : null;
+  return value === "theory" || value === "homework" || value === "answers" ? value : null;
 }
 
 async function cleanupUploadedStorageKeys(
@@ -257,6 +257,7 @@ export async function updateTopicAction(formData: FormData) {
   const numbers = parseNumbersInput(String(formData.get("numbers") ?? ""));
   const theoryFile = formData.get("theoryFile");
   const homeworkFile = formData.get("homeworkFile");
+  const answersFile = formData.get("answersFile");
 
   if (!topicId || !title || !numbers.length) {
     if (topicId) {
@@ -272,6 +273,7 @@ export async function updateTopicAction(formData: FormData) {
       id: true,
       theoryFileId: true,
       homeworkFileId: true,
+      answersFileId: true,
       homeworkNumbers: {
         select: {
           id: true,
@@ -352,11 +354,13 @@ export async function updateTopicAction(formData: FormData) {
 
   let theoryUpload: Awaited<ReturnType<typeof saveUploadedFile>> | null = null;
   let homeworkUpload: Awaited<ReturnType<typeof saveUploadedFile>> | null = null;
+  let answersUpload: Awaited<ReturnType<typeof saveUploadedFile>> | null = null;
 
   try {
     theoryUpload = theoryFile instanceof File && theoryFile.size > 0 ? await saveUploadedFile(theoryFile) : null;
     homeworkUpload =
       homeworkFile instanceof File && homeworkFile.size > 0 ? await saveUploadedFile(homeworkFile) : null;
+    answersUpload = answersFile instanceof File && answersFile.size > 0 ? await saveUploadedFile(answersFile) : null;
   } catch (error) {
     logErrorEvent(
       "topic.update.upload_failed",
@@ -364,16 +368,20 @@ export async function updateTopicAction(formData: FormData) {
       error,
       "Failed to upload replacement file while updating topic."
     );
-    await cleanupUploadedStorageKeys([theoryUpload?.storageKey, homeworkUpload?.storageKey], {
-      teacherId: user.id,
-      topicId,
-      stage: "update-topic-upload"
-    });
+    await cleanupUploadedStorageKeys(
+      [theoryUpload?.storageKey, homeworkUpload?.storageKey, answersUpload?.storageKey],
+      {
+        teacherId: user.id,
+        topicId,
+        stage: "update-topic-upload"
+      }
+    );
     redirectTeacherTopicWithStatus(topicId, new URLSearchParams({ error: "upload" }));
   }
 
   let oldTheoryFileIdToDelete: string | null = null;
   let oldHomeworkFileIdToDelete: string | null = null;
+  let oldAnswersFileIdToDelete: string | null = null;
   const removedAnswerFileIds = new Set<string>();
 
   try {
@@ -396,8 +404,18 @@ export async function updateTopicAction(formData: FormData) {
           })
         : null;
 
+      const createdAnswersFile = answersUpload
+        ? await tx.storedFile.create({
+            data: {
+              ...answersUpload,
+              uploadedById: user.id
+            }
+          })
+        : null;
+
       let theoryFileId = topicToUpdate.theoryFileId;
       let homeworkFileId = topicToUpdate.homeworkFileId;
+      let answersFileId = topicToUpdate.answersFileId;
 
       if (createdTheoryFile) {
         theoryFileId = createdTheoryFile.id;
@@ -409,13 +427,19 @@ export async function updateTopicAction(formData: FormData) {
         oldHomeworkFileIdToDelete = topicToUpdate.homeworkFileId;
       }
 
+      if (createdAnswersFile) {
+        answersFileId = createdAnswersFile.id;
+        oldAnswersFileIdToDelete = topicToUpdate.answersFileId;
+      }
+
       await tx.topic.update({
         where: { id: topicId },
         data: {
           title,
           description,
           theoryFileId,
-          homeworkFileId
+          homeworkFileId,
+          answersFileId
         }
       });
 
@@ -488,17 +512,22 @@ export async function updateTopicAction(formData: FormData) {
       error,
       "Failed to update topic in the database."
     );
-    await cleanupUploadedStorageKeys([theoryUpload?.storageKey, homeworkUpload?.storageKey], {
-      teacherId: user.id,
-      topicId,
-      stage: "update-topic-db"
-    });
+    await cleanupUploadedStorageKeys(
+      [theoryUpload?.storageKey, homeworkUpload?.storageKey, answersUpload?.storageKey],
+      {
+        teacherId: user.id,
+        topicId,
+        stage: "update-topic-db"
+      }
+    );
     redirectTeacherTopicWithStatus(topicId, new URLSearchParams({ error: "save" }));
   }
 
   const fileIdsToCleanup: string[] = [
     ...Array.from(removedAnswerFileIds),
-    ...[oldTheoryFileIdToDelete, oldHomeworkFileIdToDelete].flatMap((fileId) => (fileId ? [fileId] : []))
+    ...[oldTheoryFileIdToDelete, oldHomeworkFileIdToDelete, oldAnswersFileIdToDelete].flatMap((fileId) =>
+      fileId ? [fileId] : []
+    )
   ];
 
   await cleanupStoredFileIds(fileIdsToCleanup, { teacherId: user.id, topicId, stage: "update-topic-cleanup" });
@@ -536,7 +565,8 @@ export async function deleteTopicFileAction(formData: FormData) {
     select: {
       id: true,
       theoryFileId: true,
-      homeworkFileId: true
+      homeworkFileId: true,
+      answersFileId: true
     }
   });
 
@@ -545,7 +575,12 @@ export async function deleteTopicFileAction(formData: FormData) {
   }
 
   const topicToUpdate = topic!;
-  const fileId = targetFileKind === "theory" ? topicToUpdate.theoryFileId : topicToUpdate.homeworkFileId;
+  const fileId =
+    targetFileKind === "theory"
+      ? topicToUpdate.theoryFileId
+      : targetFileKind === "homework"
+        ? topicToUpdate.homeworkFileId
+        : topicToUpdate.answersFileId;
 
   if (!fileId) {
     redirectTeacherTopicWithStatus(topicId, new URLSearchParams({ fileDeleted: targetFileKind }));
@@ -554,7 +589,12 @@ export async function deleteTopicFileAction(formData: FormData) {
   try {
     await prisma.topic.update({
       where: { id: topicId },
-      data: targetFileKind === "theory" ? { theoryFileId: null } : { homeworkFileId: null }
+      data:
+        targetFileKind === "theory"
+          ? { theoryFileId: null }
+          : targetFileKind === "homework"
+            ? { homeworkFileId: null }
+            : { answersFileId: null }
     });
   } catch (error) {
     logErrorEvent(
@@ -647,6 +687,10 @@ export async function deleteTopicAction(formData: FormData) {
 
   if (existingTopic.homeworkFileId) {
     fileIdsToCleanup.add(existingTopic.homeworkFileId);
+  }
+
+  if (existingTopic.answersFileId) {
+    fileIdsToCleanup.add(existingTopic.answersFileId);
   }
 
   for (const number of existingTopic.homeworkNumbers) {

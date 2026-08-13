@@ -61,11 +61,14 @@ export async function GET(request: Request, { params }: FileRouteProps) {
     return new Response("Not found", { status: 404 });
   }
 
+  const answersForTopics = await prisma.topic.count({ where: { answersFileId: file.id } });
+
   const accessSnapshot = {
     uploadedById: file.uploadedById,
     counts: {
       theoryForTopics: file._count.theoryForTopics,
       homeworkForTopics: file._count.homeworkForTopics,
+      answersForTopics,
       answerForNumberEntries: file._count.answerForNumberEntries,
       checkPhotoEntries: file._count.checkPhotoEntries
     }

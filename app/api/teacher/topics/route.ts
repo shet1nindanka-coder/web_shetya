@@ -49,6 +49,7 @@ export async function POST(request: Request) {
         numbers?: string;
         theoryFileId?: string;
         homeworkFileId?: string;
+        answersFileId?: string;
       }
     | null;
 
@@ -57,6 +58,8 @@ export async function POST(request: Request) {
   const numbers = parseNumbersInput(String(body?.numbers ?? ""));
   const theoryFileId = String(body?.theoryFileId ?? "").trim();
   const homeworkFileId = String(body?.homeworkFileId ?? "").trim();
+  // Файл ответов необязателен: тема полноценно живёт без него.
+  const answersFileId = String(body?.answersFileId ?? "").trim();
 
   // Описание необязательное: тема живёт и без него.
   if (!title || !numbers.length || !theoryFileId || !homeworkFileId) {
@@ -68,9 +71,11 @@ export async function POST(request: Request) {
     );
   }
 
+  const requiredFileIds = [theoryFileId, homeworkFileId, ...(answersFileId ? [answersFileId] : [])];
+
   const uploadedFiles = await prisma.storedFile.findMany({
     where: {
-      id: { in: [theoryFileId, homeworkFileId] },
+      id: { in: requiredFileIds },
       uploadedById: user.id
     },
     select: {
@@ -78,7 +83,7 @@ export async function POST(request: Request) {
     }
   });
 
-  if (uploadedFiles.length !== 2) {
+  if (uploadedFiles.length !== requiredFileIds.length) {
     return NextResponse.json(
       {
         error: "Файлы не найдены или уже недоступны. Загрузите их заново."
@@ -100,7 +105,8 @@ export async function POST(request: Request) {
           description,
           displayOrder: (lastTopic?.displayOrder ?? 0) + 1,
           theoryFileId,
-          homeworkFileId
+          homeworkFileId,
+          answersFileId: answersFileId || null
         },
         select: {
           id: true
