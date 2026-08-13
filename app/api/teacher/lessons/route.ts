@@ -144,7 +144,11 @@ export async function POST(request: Request) {
         participants: {
           create: studentIds.map((studentId) => ({
             studentId,
-            speed: speedOverrides.get(studentId) ?? null
+            speed: speedOverrides.get(studentId) ?? null,
+            // Ручная сборка: набор «готов» сразу, ИИ-подбора не будет. Без этой
+            // отметки доска вечно крутит «ИИ подбирает задания…», а по таймауту
+            // врёт про сброшенную рестартом очередь.
+            ...(body?.skipPlan === true ? { planGeneratedAt: new Date() } : {})
           }))
         }
       },
