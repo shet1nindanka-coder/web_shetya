@@ -248,6 +248,12 @@ export function TeacherLessonBoard({ prefix, aiAvailable, lesson, bank }: Teache
           Версия для печати
         </a>
         <a
+          href={`${prefix}/lessons/${lesson.id}/pdf?answers=1`}
+          className="shbz-btn-outline inline-block no-underline"
+        >
+          Ответы (PDF)
+        </a>
+        <a
           href={`${prefix}/homework-plans/new?lessonId=${lesson.id}`}
           className="shbz-btn-outline inline-block no-underline"
         >

@@ -1,5 +1,5 @@
 import katex from "katex";
-import { splitMathIntoItems } from "@/lib/latex-line-items";
+import { splitLineIntoItems, splitMathIntoItems } from "@/lib/latex-line-items";
 import { KATEX_CSS_MARKER } from "@/lib/print-theme";
 
 /*
@@ -13,6 +13,8 @@ export type LessonPrintItem = {
   number: string;
   topicTitle: string;
   conditionLatex: string | null;
+  /** Эталонный ответ — используется только листом «Ответы». */
+  answerLatex?: string | null;
   isExtra?: boolean;
 };
 
@@ -26,6 +28,8 @@ export type LessonPrintData = {
   createdAt: Date | string;
   groupName: string | null;
   durationMinutes?: number | null;
+  /** LESSON — раздатка урока, HOMEWORK — план ИИ-ДЗ (у него есть только «Ответы»). */
+  kind?: "LESSON" | "HOMEWORK";
   participants: LessonPrintParticipant[];
 };
 
@@ -134,6 +138,39 @@ export function renderConditionHtml(condition: string): string {
     .join("");
 }
 
+/**
+ * Условие с раскладкой пунктов по сетке. Если display-математики нет, каждая
+ * строка проверяется на метки «а) … б) …»: пункты становятся ячейками сетки и
+ * переносятся целиком. Условия с $$…$$ рендерятся классическим потоком —
+ * там сетку строит .math-items внутри самой формулы.
+ */
+export function renderConditionGridHtml(condition: string): string {
+  if (condition.includes("$$") || condition.includes("\\[")) {
+    return `<div class="cond-line">${renderConditionHtml(condition)}</div>`;
+  }
+
+  return condition
+    .split("\n")
+    .map((line) => {
+      if (!line.trim()) {
+        return "";
+      }
+
+      const split = splitLineIntoItems(line);
+
+      if (split.labeled && split.items.length > 1) {
+        const cells = split.items
+          .map((item) => `<span class="item-cell">${renderConditionHtml(item)}</span>`)
+          .join("");
+
+        return `<div class="items-grid">${cells}</div>`;
+      }
+
+      return `<div class="cond-line">${renderConditionHtml(line)}</div>`;
+    })
+    .join("");
+}
+
 function formatPrintDate(value: Date | string): string {
   const date = typeof value === "string" ? new Date(value) : value;
 
@@ -153,27 +190,120 @@ function pluralTasks(count: number): string {
   return `${count} задач`;
 }
 
+type DocMeta = {
+  dateLabel: string;
+  metaParts: string[];
+};
+
+function buildDocMeta(lesson: LessonPrintData): DocMeta {
+  return {
+    dateLabel: formatPrintDate(lesson.createdAt),
+    metaParts: [
+      escapeHtml(lesson.title),
+      lesson.groupName ? escapeHtml(lesson.groupName) : null,
+      lesson.durationMinutes ? `${lesson.durationMinutes} минут` : null
+    ].filter((part): part is string => Boolean(part))
+  };
+}
+
+function buildHeadRow(docLabel: string, rightHtml: string): string {
+  return `<div class="doc-head-line">
+  <div class="doc-brand">ШБЗ · ${docLabel}</div>
+  <div class="doc-meta">${rightHtml}</div>
+</div>`;
+}
+
+const PRINT_CSS = `
+  @page { size: A4; margin: 15mm 15mm 18mm; }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: "Onest", -apple-system, "Segoe UI", Roboto, sans-serif;
+    font-size: 11pt;
+    line-height: 1.5;
+    color: #2c2e33;
+  }
+  .doc-head-line {
+    display: flex; justify-content: space-between; align-items: baseline; gap: 12pt;
+    border-bottom: 1.8pt solid #0a0a0a; padding-bottom: 6pt;
+  }
+  .doc-brand { font-size: 11pt; font-weight: 800; color: #0a0a0a; letter-spacing: -0.2px; white-space: nowrap; }
+  .doc-meta { font-size: 8pt; color: #6a6e75; text-align: right; }
+  .doc-meta b { color: #0a0a0a; font-weight: 700; }
+  .task { padding: 10pt 0 9pt; border-bottom: 0.75pt solid #ececee; break-inside: avoid; }
+  .task:last-of-type { border-bottom: none; }
+  .task-kicker {
+    display: flex; justify-content: space-between; align-items: baseline; gap: 8pt;
+    font-size: 7.5pt; font-weight: 800; letter-spacing: 1.3px; text-transform: uppercase;
+    color: #9aa0a6; margin-bottom: 5pt;
+  }
+  .task-kicker b { color: #0a0a0a; }
+  .cond-line { font-size: 11pt; line-height: 1.65; }
+  .items-grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(112pt, 1fr));
+    gap: 7pt 16pt; margin-top: 3pt;
+  }
+  .item-cell { break-inside: avoid; font-size: 11pt; line-height: 1.5; }
+  .math-items {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(112pt, 1fr));
+    gap: 7pt 16pt; max-width: 100%;
+  }
+  .math-items > .math-item { display: inline-block; max-width: 100%; }
+  .math-display { display: block; margin: 4pt 0; }
+  .math-display .katex-display { margin: 0; text-align: left; }
+  .math-display .katex-display > .katex { text-align: left; }
+  .empty { font-style: italic; color: #6a6e75; }
+  .extra-divider {
+    display: flex; align-items: center; gap: 8pt; margin: 12pt 0 2pt;
+    font-size: 8pt; font-weight: 800; letter-spacing: 1.2px; text-transform: uppercase; color: #1b9e63;
+  }
+  .extra-divider::before, .extra-divider::after { content: ""; height: 0.75pt; background: #c7cad0; flex: 1; }
+  .ans-row {
+    display: flex; gap: 12pt; align-items: baseline;
+    padding: 6pt 0; border-bottom: 0.75pt solid #ececee; break-inside: avoid;
+  }
+  .ans-row:last-of-type { border-bottom: none; }
+  .ans-ref {
+    width: 118pt; flex-shrink: 0;
+    font-size: 7.5pt; font-weight: 800; letter-spacing: 1px; text-transform: uppercase; color: #6a6e75;
+  }
+  .ans-ref b { color: #0a0a0a; }
+  .ans-ref .ans-extra { color: #1b9e63; }
+  .ans-val { min-width: 0; flex: 1; font-size: 10.5pt; line-height: 1.55; }
+  .ans-missing { color: #9aa0a6; font-style: italic; }
+  .math-error { color: #c23d4b; }
+`;
+
+function buildPrintDocument(title: string, body: string): string {
+  return `<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8"/>
+<title>${escapeHtml(title)}</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Onest:wght@400;600;700;800&display=swap" rel="stylesheet"/>
+${KATEX_CSS_MARKER}
+<style>${PRINT_CSS}</style>
+</head>
+<body>
+${body}
+</body>
+</html>`;
+}
+
 export function renderLessonPrintHtml(lesson: LessonPrintData): string {
-  const dateLabel = formatPrintDate(lesson.createdAt);
-  const metaParts = [
-    escapeHtml(lesson.title),
-    lesson.groupName ? escapeHtml(lesson.groupName) : null,
-    lesson.durationMinutes ? `${lesson.durationMinutes} минут` : null
-  ].filter(Boolean);
+  const { dateLabel, metaParts } = buildDocMeta(lesson);
 
   const sections = lesson.participants
     .map((participant, participantIndex) => {
       const renderTask = (item: LessonPrintItem, index: number, extra: boolean) => {
         const conditionHtml = item.conditionLatex
-          ? renderConditionHtml(item.conditionLatex)
-          : `<em>см. файл ДЗ по теме «${escapeHtml(item.topicTitle)}», № ${item.number}</em>`;
+          ? renderConditionGridHtml(item.conditionLatex)
+          : `<div class="cond-line"><em>см. файл ДЗ по теме «${escapeHtml(item.topicTitle)}», № ${item.number}</em></div>`;
 
         return `<div class="task">
-  <div class="task-num${extra ? " task-num--extra" : ""}">${index + 1}</div>
-  <div class="task-body">
-    <div class="task-ref">№ ${item.number} · <b>${escapeHtml(item.topicTitle)}</b></div>
-    <div class="task-cond">${conditionHtml}</div>
-  </div>
+  <div class="task-kicker"><span><b>Задача ${index + 1}</b> · № ${item.number} · ${escapeHtml(item.topicTitle)}${extra ? " · доп." : ""}</span></div>
+  ${conditionHtml}
 </div>`;
       };
 
@@ -186,104 +316,50 @@ export function renderLessonPrintHtml(lesson: LessonPrintData): string {
         tasks += extraItems.map((item, index) => renderTask(item, mainItems.length + index, true)).join("\n");
       }
 
+      const rightMeta = `<b>${escapeHtml(participant.studentName)}</b> · ${metaParts.join(" · ")}${dateLabel ? ` · ${dateLabel}` : ""} · ${pluralTasks(participant.items.length)}`;
+
       return `<section class="student"${participantIndex > 0 ? ' style="break-before: page;"' : ""}>
-  <div class="doc-head">
-    <div class="brand">
-      <div class="brand-badge">ШБЗ</div>
-      <div><div class="brand-name">ШБЗ</div><div class="brand-sub">Школа Базовых Знаний</div></div>
-    </div>
-    <div class="doc-kind">
-      <div class="kicker">Раздатка урока</div>
-      <div class="gen">${metaParts.join(" · ")}${dateLabel ? ` · ${dateLabel}` : ""}</div>
-    </div>
-  </div>
-  <hr class="head-rule"/>
-  <header class="subject-band">
-    <div class="subject-name">${escapeHtml(participant.studentName)}</div>
-    <div class="subject-meta">${pluralTasks(participant.items.length)} · порядок решения — сверху вниз</div>
-  </header>
+  ${buildHeadRow("Раздатка урока", rightMeta)}
   ${tasks || '<p class="empty">Задания не назначены.</p>'}
 </section>`;
     })
     .join("\n");
 
-  return `<!doctype html>
-<html lang="ru">
-<head>
-<meta charset="utf-8"/>
-<title>${escapeHtml(lesson.title)}</title>
-<link rel="preconnect" href="https://fonts.googleapis.com"/>
-<link href="https://fonts.googleapis.com/css2?family=Onest:wght@400;600;700;800&display=swap" rel="stylesheet"/>
-${KATEX_CSS_MARKER}
-<style>
-  @page { size: A4; margin: 15mm 15mm 18mm; }
-  * { box-sizing: border-box; }
-  body {
-    margin: 0;
-    font-family: "Onest", -apple-system, "Segoe UI", Roboto, sans-serif;
-    font-size: 11pt;
-    line-height: 1.5;
-    color: #2c2e33;
-  }
-  .doc-head { display: flex; justify-content: space-between; align-items: flex-start; }
-  .brand { display: flex; align-items: center; gap: 8px; }
-  .brand-badge {
-    width: 30px; height: 30px; border-radius: 7px; background: #0a0a0a; color: #fff;
-    display: flex; align-items: center; justify-content: center;
-    font-weight: 800; font-size: 10.5pt; letter-spacing: 0.3px;
-    -webkit-print-color-adjust: exact; print-color-adjust: exact;
-  }
-  .brand-name { font-size: 10pt; font-weight: 800; color: #0a0a0a; line-height: 1.2; }
-  .brand-sub { font-size: 7.5pt; color: #6a6e75; }
-  .doc-kind { text-align: right; }
-  .kicker { font-size: 8.5pt; font-weight: 800; letter-spacing: 1.6px; text-transform: uppercase; color: #0a0a0a; }
-  .kicker::after {
-    content: ""; display: block; height: 2.5pt; width: 34px; background: #16b07e;
-    margin: 4px 0 0 auto; border-radius: 2px;
-    -webkit-print-color-adjust: exact; print-color-adjust: exact;
-  }
-  .gen { font-size: 7.5pt; color: #6a6e75; margin-top: 4px; }
-  .head-rule { border: none; border-top: 1.6pt solid #0a0a0a; margin: 10pt 0 0; }
-  .subject-band {
-    display: flex; justify-content: space-between; align-items: baseline;
-    padding: 9pt 0 8pt; border-bottom: 0.75pt solid #e5e7eb; margin-bottom: 2pt;
-  }
-  .subject-name { font-size: 16pt; font-weight: 800; color: #0a0a0a; letter-spacing: -0.2px; }
-  .subject-meta { font-size: 8pt; color: #6a6e75; }
-  .task {
-    display: flex; gap: 10pt; padding: 10pt 0 9pt;
-    border-bottom: 0.75pt solid #e5e7eb; break-inside: avoid;
-  }
-  .task:last-of-type { border-bottom: none; }
-  .task-num {
-    width: 19pt; height: 19pt; border: 1.2pt solid #0a0a0a; border-radius: 5pt;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 9.5pt; font-weight: 800; color: #0a0a0a; flex-shrink: 0; margin-top: 1pt;
-  }
-  .task-body { min-width: 0; flex: 1; }
-  .task-ref {
-    font-size: 7.5pt; font-weight: 700; letter-spacing: 1px; text-transform: uppercase;
-    color: #6a6e75; margin-bottom: 4pt;
-  }
-  .task-ref b { color: #0a0a0a; }
-  .task-cond { font-size: 11pt; line-height: 1.7; }
-  .math-items { display: inline-flex; flex-wrap: wrap; gap: 6pt 22pt; align-items: center; max-width: 100%; }
-  .math-items > .math-item { display: inline-block; max-width: 100%; }
-  .math-display { display: block; margin: 4pt 0; }
-  .math-display .katex-display { margin: 0; text-align: left; }
-  .math-display .katex-display > .katex { text-align: left; }
-  .empty { font-style: italic; color: #6a6e75; }
-  .task-num--extra { border-style: dashed; color: #6a6e75; border-color: #6a6e75; }
-  .extra-divider {
-    display: flex; align-items: center; gap: 8pt; margin: 12pt 0 2pt;
-    font-size: 8pt; font-weight: 800; letter-spacing: 1.2px; text-transform: uppercase; color: #6a6e75;
-  }
-  .extra-divider::before, .extra-divider::after { content: ""; height: 0.75pt; background: #c7cad0; flex: 1; }
-  .math-error { color: #c23d4b; }
-</style>
-</head>
-<body>
-${sections}
-</body>
-</html>`;
+  return buildPrintDocument(lesson.title, sections);
+}
+
+/**
+ * Отдельный документ «Ответы»: только номера и эталонные ответы, без условий.
+ * Печатается сам по себе — учитель не рискует раздать ответы вместе с задачами.
+ * Работает и для урока, и для плана ИИ-ДЗ (kind HOMEWORK).
+ */
+export function renderLessonAnswersHtml(lesson: LessonPrintData): string {
+  const { dateLabel, metaParts } = buildDocMeta(lesson);
+  const docLabel = lesson.kind === "HOMEWORK" ? "Ответы к ДЗ" : "Ответы к занятию";
+
+  const sections = lesson.participants
+    .map((participant, participantIndex) => {
+      const rows = participant.items
+        .map((item) => {
+          const answerHtml = item.answerLatex
+            ? renderConditionGridHtml(item.answerLatex)
+            : '<span class="ans-missing">ответ не заполнен</span>';
+
+          return `<div class="ans-row">
+  <div class="ans-ref"><b>№ ${item.number}</b> · ${escapeHtml(item.topicTitle)}${item.isExtra ? ' · <span class="ans-extra">доп.</span>' : ""}</div>
+  <div class="ans-val">${answerHtml}</div>
+</div>`;
+        })
+        .join("\n");
+
+      const rightMeta = `<b>${escapeHtml(participant.studentName)}</b> · ${metaParts.join(" · ")}${dateLabel ? ` · ${dateLabel}` : ""}`;
+
+      return `<section class="student"${participantIndex > 0 ? ' style="break-before: page;"' : ""}>
+  ${buildHeadRow(docLabel, rightMeta)}
+  ${rows || '<p class="empty">Задания не назначены.</p>'}
+</section>`;
+    })
+    .join("\n");
+
+  return buildPrintDocument(`Ответы — ${lesson.title}`, sections);
 }

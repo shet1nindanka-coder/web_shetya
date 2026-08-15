@@ -2472,6 +2472,7 @@ export async function getLessonDetail(viewer: TeacherViewer, lessonId: string) {
                     number: true,
                     difficulty: true,
                     conditionLatex: true,
+                    answerLatex: true,
                     topic: { select: { id: true, title: true } },
                     statuses: { select: { studentId: true, status: true } }
                   }
@@ -2540,6 +2541,9 @@ export async function getLessonDetail(viewer: TeacherViewer, lessonId: string) {
           number: item.homeworkNumber.number,
           difficulty: item.homeworkNumber.difficulty,
           conditionLatex: item.homeworkNumber.conditionLatex,
+          // Эталонный ответ нужен листу «Ответы»; это учительская читалка,
+          // ученику она недоступна (ownResourceWhere).
+          answerLatex: item.homeworkNumber.answerLatex,
           topicId: item.homeworkNumber.topic.id,
           topicTitle: item.homeworkNumber.topic.title,
           studentStatus:

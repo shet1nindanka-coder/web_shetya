@@ -1,6 +1,8 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import {
+  renderConditionGridHtml,
+  renderLessonAnswersHtml,
   escapeHtml,
   renderConditionHtml,
   renderLessonPrintHtml,
@@ -64,4 +66,43 @@ test("number without condition falls back to a homework file reference", () => {
 
   assert.ok(html.includes("см. файл ДЗ по теме"));
   assert.ok(html.includes("№ 14"));
+});
+
+test("renderConditionGridHtml раскладывает пункты а)–в) по сетке, надпись — отдельной строкой", () => {
+  const html = renderConditionGridHtml("Сократите дробь:\nа) $x$ б) $y$ в) $z$");
+
+  assert.ok(html.includes('class="cond-line"'));
+  assert.ok(html.includes("Сократите дробь:"));
+  assert.equal(html.match(/class="item-cell"/g)?.length, 3);
+});
+
+test("renderConditionGridHtml не режет условия с display-математикой", () => {
+  const html = renderConditionGridHtml("Решите:\n$$а) x=1 \\quad б) y=2$$");
+
+  assert.ok(!html.includes('class="items-grid"'));
+});
+
+test("renderLessonAnswersHtml печатает только ответы и честно помечает пустые", () => {
+  const html = renderLessonAnswersHtml({
+    title: "Занятие",
+    createdAt: new Date("2026-08-15T10:00:00Z"),
+    groupName: null,
+    kind: "HOMEWORK",
+    participants: [
+      {
+        studentName: "Аня",
+        items: [
+          { number: "052001", topicTitle: "Дроби", conditionLatex: "$x$", answerLatex: "$x=7$" },
+          { number: "052002", topicTitle: "Дроби", conditionLatex: "$y$", answerLatex: null, isExtra: true }
+        ]
+      }
+    ]
+  });
+
+  assert.ok(html.includes("Ответы к ДЗ"));
+  assert.ok(html.includes("№ 052001"));
+  assert.ok(html.includes("ответ не заполнен"));
+  assert.ok(html.includes("доп."));
+  // блоков задач с условиями в файле ответов нет (общий CSS не в счёт)
+  assert.ok(!html.includes('<div class="task">'));
 });

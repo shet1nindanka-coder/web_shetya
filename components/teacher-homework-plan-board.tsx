@@ -243,6 +243,12 @@ export function TeacherHomeworkPlanBoard({ prefix, aiAvailable, plan, topicNumbe
             Выдать всем ({issuableCount})
           </span>
         </button>
+        <a
+          href={`${prefix}/lessons/${plan.id}/pdf?answers=1`}
+          className="shbz-btn-outline inline-block no-underline"
+        >
+          Ответы (PDF)
+        </a>
         {issuedCount > 0 ? (
           <span className="shbz-chip shbz-chip-green">выдано {issuedCount} из {participants.length}</span>
         ) : null}

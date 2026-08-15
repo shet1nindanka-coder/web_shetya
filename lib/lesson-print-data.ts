@@ -19,12 +19,14 @@ export async function buildLessonPrintPayload(viewer: TeacherViewer, lessonId: s
     createdAt: lesson.createdAt,
     groupName: lesson.group?.name ?? null,
     durationMinutes: lesson.durationMinutes,
+    kind: lesson.kind,
     participants: participants.map((participant) => ({
       studentName: participant.studentName,
       items: participant.items.map((item) => ({
         number: item.number,
         topicTitle: item.topicTitle,
         conditionLatex: item.conditionLatex,
+        answerLatex: item.answerLatex,
         isExtra: item.isExtra
       }))
     }))
