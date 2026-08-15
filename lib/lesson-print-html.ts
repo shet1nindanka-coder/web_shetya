@@ -182,7 +182,7 @@ export function renderLessonPrintHtml(lesson: LessonPrintData): string {
       let tasks = mainItems.map((item, index) => renderTask(item, index, false)).join("\n");
 
       if (extraItems.length > 0) {
-        tasks += `\n<div class="extra-divider"><span>Дополнительные задания ⭐ — если основная часть решена</span></div>\n`;
+        tasks += `\n<div class="extra-divider"><span>Дополнительные задания — если основная часть решена</span></div>\n`;
         tasks += extraItems.map((item, index) => renderTask(item, mainItems.length + index, true)).join("\n");
       }
 

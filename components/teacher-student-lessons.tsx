@@ -412,7 +412,7 @@ export function TeacherStudentLessons({
                         className="text-[11px] font-bold uppercase tracking-[1.2px]"
                         style={{ color: "var(--shbz-kicker)" }}
                       >
-                        Дополнительно ⭐ — если успел
+                        Дополнительно — если успел
                       </span>
                     </div>
                     <ol className="space-y-1.5">{extraItems.map(renderItemRow)}</ol>

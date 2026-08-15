@@ -84,7 +84,7 @@ export function LessonManualAdd({
         }}
         className="shbz-btn-outline disabled:cursor-not-allowed disabled:opacity-50"
       >
-        В доп. ⭐
+        В доп.
       </button>
     </div>
   );

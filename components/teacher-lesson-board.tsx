@@ -438,7 +438,7 @@ export function TeacherLessonBoard({ prefix, aiAvailable, lesson, bank }: Teache
                     className="mb-2 text-[11px] font-bold uppercase tracking-[1.2px]"
                     style={{ color: "var(--shbz-kicker)" }}
                   >
-                    Дополнительно ⭐ — если основная часть решена
+                    Дополнительно — если основная часть решена
                   </p>
                   <ol className="space-y-2">
                     {extraItems.map((item) => {
