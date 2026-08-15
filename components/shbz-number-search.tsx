@@ -78,14 +78,15 @@ export function ShbzNumberSearch({
           disabled={isPending}
         />
         {numberQuery.length > 0 ? (
+          // Просто цветная стрелка без круга и заливки (вариант 3 макета 15.08.2026).
           <button
             type="submit"
             disabled={isPending}
             aria-label="Найти"
-            className="flex h-[30px] w-[30px] shrink-0 items-center justify-center rounded-full text-white"
-            style={{ background: "var(--shbz-accent-grad)", opacity: isPending ? 0.55 : 1 }}
+            className="flex shrink-0 items-center justify-center"
+            style={{ color: "var(--shbz-accent-solid)", opacity: isPending ? 0.55 : 1 }}
           >
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
               <path d="M5 12h14M13 6l6 6-6 6" />
             </svg>
           </button>

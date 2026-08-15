@@ -198,10 +198,10 @@ type DocMeta = {
 function buildDocMeta(lesson: LessonPrintData): DocMeta {
   return {
     dateLabel: formatPrintDate(lesson.createdAt),
+    // Минуты в печать не идут: время — внутренняя оценка ИИ, ученику оно не нужно.
     metaParts: [
       escapeHtml(lesson.title),
-      lesson.groupName ? escapeHtml(lesson.groupName) : null,
-      lesson.durationMinutes ? `${lesson.durationMinutes} минут` : null
+      lesson.groupName ? escapeHtml(lesson.groupName) : null
     ].filter((part): part is string => Boolean(part))
   };
 }
@@ -302,7 +302,7 @@ export function renderLessonPrintHtml(lesson: LessonPrintData): string {
           : `<div class="cond-line"><em>см. файл ДЗ по теме «${escapeHtml(item.topicTitle)}», № ${item.number}</em></div>`;
 
         return `<div class="task">
-  <div class="task-kicker"><span><b>Задача ${index + 1}</b> · № ${item.number} · ${escapeHtml(item.topicTitle)}${extra ? " · доп." : ""}</span></div>
+  <div class="task-kicker"><span><b>Задача ${index + 1}</b> · № ${item.number}${extra ? " · доп." : ""}</span></div>
   ${conditionHtml}
 </div>`;
       };
@@ -346,7 +346,7 @@ export function renderLessonAnswersHtml(lesson: LessonPrintData): string {
             : '<span class="ans-missing">ответ не заполнен</span>';
 
           return `<div class="ans-row">
-  <div class="ans-ref"><b>№ ${item.number}</b> · ${escapeHtml(item.topicTitle)}${item.isExtra ? ' · <span class="ans-extra">доп.</span>' : ""}</div>
+  <div class="ans-ref"><b>№ ${item.number}</b>${item.isExtra ? ' · <span class="ans-extra">доп.</span>' : ""}</div>
   <div class="ans-val">${answerHtml}</div>
 </div>`;
         })

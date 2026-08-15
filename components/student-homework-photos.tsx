@@ -86,7 +86,8 @@ export function StudentHomeworkPhotos({ assignmentId, maxPhotos = MAX_PHOTOS, ph
   };
 
   return (
-    <div className="shbz-card shbz-section-pad">
+    // Без собственной карточки: на странице ДЗ фото и автопроверка живут в одной плашке.
+    <div>
       <div className="mb-5 flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
           <h2 className="text-[20px] font-extrabold tracking-[-0.3px]" style={{ color: "var(--shbz-text-strong)" }}>

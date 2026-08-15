@@ -61,7 +61,7 @@ export default async function StudentHomeworkPage({ params }: StudentHomeworkPag
         ) : null}
       </p>
 
-      <section className="mb-8">
+      <section className="mb-8 shbz-card shbz-section-pad">
         <StudentHomeworkPhotos
           assignmentId={assignment.id}
           maxPhotos={siteSettings.maxPhotosPerAssignment}
@@ -71,9 +71,9 @@ export default async function StudentHomeworkPage({ params }: StudentHomeworkPag
             originalName: photo.originalName
           }))}
         />
-      </section>
 
-      <section className="mb-8">
+        <div className="my-7 border-t" style={{ borderColor: "var(--shbz-row-border)" }} />
+
         <StudentHomeworkCheck
           assignmentId={assignment.id}
           hasPhotos={assignment.photos.length > 0}
