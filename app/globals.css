@@ -1538,6 +1538,28 @@ html[data-theme="dark"] .student-virtual-scroll::-webkit-scrollbar-thumb {
   .ui-pressable, .ui-progress-fill { transition: opacity 140ms ease, background-color 140ms ease, color 140ms ease, border-color 140ms ease !important; }
   .ui-surface { transition: opacity 200ms ease, background-color 200ms ease, border-color 200ms ease !important; }
   .ui-surface:hover, .ui-pressable:hover, .ui-pressable:active { transform: none !important; }
+  .shbz-btn-primary,
+  .shbz-btn-outline,
+  .shbz-btn-dark,
+  .shbz-btn-danger,
+  .shbz-btn-danger-solid,
+  .shbz-btn-danger-icon,
+  .shbz-card-hover {
+    transition: opacity var(--duration-fast) ease, background var(--duration-fast) ease, border-color var(--duration-fast) ease, color var(--duration-fast) ease, box-shadow var(--duration-fast) ease !important;
+  }
+  .shbz-btn-primary:hover,
+  .shbz-btn-primary:active,
+  .shbz-btn-outline:active,
+  .shbz-btn-dark:active,
+  .shbz-btn-danger:active,
+  .shbz-btn-danger-solid:active,
+  .shbz-btn-danger-icon:active,
+  .shbz-card-hover:hover {
+    transform: none !important;
+  }
+  .shbz-switch-knob {
+    transition: none !important;
+  }
 }
 @keyframes ui-fade-opacity {
   from { opacity: 0; }
@@ -1608,6 +1630,14 @@ html[data-theme="dark"] .student-virtual-scroll::-webkit-scrollbar-thumb {
     border-color: var(--theme-accent-border);
     background: color-mix(in srgb, var(--theme-surface-soft) 86%, white 14%);
     color: var(--theme-text-strong);
+  }
+  .shbz-btn-primary:hover {
+    box-shadow: 0 10px 26px var(--shbz-accent-shadow-hover);
+    transform: translateY(-1px);
+  }
+  .shbz-card-hover:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 2px 4px rgba(10, 10, 10, 0.05), 0 14px 36px rgba(10, 10, 10, 0.09);
   }
 }
 
@@ -1712,10 +1742,6 @@ html[data-theme="dark"] {
   cursor: pointer;
   box-shadow: 0 6px 18px var(--shbz-accent-shadow);
   transition: box-shadow var(--duration-base) ease, transform var(--duration-base) var(--ease-out);
-}
-.shbz-btn-primary:hover {
-  box-shadow: 0 10px 26px var(--shbz-accent-shadow-hover);
-  transform: translateY(-1px);
 }
 .shbz-btn-primary:active:not(:disabled) {
   transform: scale(0.97);
@@ -2100,10 +2126,6 @@ html[data-theme="dark"] {
 .shbz-checkbox:disabled { opacity: 0.5; cursor: not-allowed; }
 
 .shbz-card-hover { transition: transform var(--duration-base) var(--ease-out), box-shadow var(--duration-base) ease; }
-.shbz-card-hover:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 2px 4px rgba(10, 10, 10, 0.05), 0 14px 36px rgba(10, 10, 10, 0.09);
-}
 
 .shbz-seg {
   display: inline-flex;
