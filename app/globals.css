@@ -1717,6 +1717,10 @@ html[data-theme="dark"] {
   box-shadow: 0 10px 26px var(--shbz-accent-shadow-hover);
   transform: translateY(-1px);
 }
+.shbz-btn-primary:active:not(:disabled) {
+  transform: scale(0.97);
+  transition-duration: 60ms;
+}
 .shbz-btn-primary:disabled {
   opacity: 0.55;
   cursor: not-allowed;
@@ -1896,9 +1900,13 @@ html[data-theme="dark"] {
   font-weight: 600;
   color: var(--shbz-tab-text);
   cursor: pointer;
-  transition: border-color var(--duration-fast);
+  transition: border-color var(--duration-fast), transform var(--duration-base) var(--ease-out);
 }
 .shbz-btn-outline:hover { border-color: var(--shbz-outline-hover); }
+.shbz-btn-outline:active:not(:disabled) {
+  transform: scale(0.97);
+  transition-duration: 60ms;
+}
 
 /* Парная кнопка к .shbz-btn-primary px-[26px] py-[13px] text-[15px]: совпадает по высоте */
 .shbz-btn-outline--lg {
@@ -2165,10 +2173,14 @@ html[data-theme="dark"] {
   font-size: 14px;
   font-weight: 700;
   cursor: pointer;
-  transition: filter var(--duration-fast);
+  transition: filter var(--duration-fast), transform var(--duration-base) var(--ease-out);
 }
 .shbz-btn-dark:hover { filter: brightness(1.25); }
 html[data-theme="dark"] .shbz-btn-dark:hover { filter: brightness(0.85); }
+.shbz-btn-dark:active:not(:disabled) {
+  transform: scale(0.97);
+  transition-duration: 60ms;
+}
 
 .shbz-btn-danger {
   padding: 11px 20px;
@@ -2180,9 +2192,13 @@ html[data-theme="dark"] .shbz-btn-dark:hover { filter: brightness(0.85); }
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
-  transition: background var(--duration-fast);
+  transition: background var(--duration-fast), transform var(--duration-base) var(--ease-out);
 }
 .shbz-btn-danger:hover { background: var(--shbz-red-soft); }
+.shbz-btn-danger:active:not(:disabled) {
+  transform: scale(0.97);
+  transition-duration: 60ms;
+}
 
 .shbz-select {
   -webkit-appearance: none;
@@ -2266,9 +2282,13 @@ html[data-theme="dark"] .shbz-btn-dark:hover { filter: brightness(0.85); }
   font-size: 14px;
   font-weight: 700;
   cursor: pointer;
-  transition: filter var(--duration-fast);
+  transition: filter var(--duration-fast), transform var(--duration-base) var(--ease-out);
 }
 .shbz-btn-danger-solid:hover { filter: brightness(1.08); }
+.shbz-btn-danger-solid:active:not(:disabled) {
+  transform: scale(0.97);
+  transition-duration: 60ms;
+}
 .shbz-btn-danger-solid:disabled { opacity: 0.55; cursor: not-allowed; }
 
 .shbz-seg-btn--plain[data-active="true"] { color: var(--shbz-text-strong); }
@@ -2934,12 +2954,16 @@ html[data-theme="dark"] .shbz-search input:not([type="checkbox"]):not([type="rad
   line-height: 1;
   cursor: pointer;
   opacity: 0.55;
-  transition: opacity var(--duration-fast), background var(--duration-fast), border-color var(--duration-fast);
+  transition: opacity var(--duration-fast), background var(--duration-fast), border-color var(--duration-fast), transform var(--duration-base) var(--ease-out);
 }
 .shbz-btn-danger-icon:hover {
   opacity: 1;
   background: var(--shbz-red-soft);
   border-color: var(--shbz-danger-outline);
+}
+.shbz-btn-danger-icon:active:not(:disabled) {
+  transform: scale(0.97);
+  transition-duration: 60ms;
 }
 .shbz-btn-danger-icon:disabled {
   opacity: 0.3;

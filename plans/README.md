@@ -7,7 +7,7 @@
 | № | План | Важность | Категория | Статус |
 | --- | --- | --- | --- | --- |
 | 001 | [Токены длительности и easing на движущихся переходах](001-motion-duration-tokens.md) | MEDIUM | 2, 7 | DONE |
-| 002 | [Отклик на нажатие кнопкам слоя shbz](002-shbz-button-press-feedback.md) | HIGH | 3 | TODO |
+| 002 | [Отклик на нажатие кнопкам слоя shbz](002-shbz-button-press-feedback.md) | HIGH | 3 | DONE |
 | 003 | [Гейтинг hover и поддержка reduced-motion](003-shbz-hover-gating-and-reduced-motion.md) | HIGH | 6 | TODO |
 | 004 | [Появление выпадающего списка от триггера](004-shbz-select-dropdown-entrance.md) | HIGH | 3, 4 | TODO |
 
