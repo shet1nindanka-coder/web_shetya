@@ -19,13 +19,21 @@ export function useStreakMotion(currentStreak: number): StudentStreakMotionState
       previousStreak === 0 && currentStreak > 0 ? "ignite" : currentStreak > previousStreak ? "grow" : "drop";
 
     previousStreakRef.current = currentStreak;
-    setMotionState(nextMotionState);
 
-    const timeout = window.setTimeout(() => {
-      setMotionState(null);
-    }, 900);
+    // Сброс в null и установка на следующем кадре: без снятия атрибута CSS не перезапустит
+    // keyframes, если новое значение совпало с предыдущим (две прибавки подряд).
+    setMotionState(null);
+
+    let timeout = 0;
+    const frame = window.requestAnimationFrame(() => {
+      setMotionState(nextMotionState);
+      timeout = window.setTimeout(() => {
+        setMotionState(null);
+      }, 900);
+    });
 
     return () => {
+      window.cancelAnimationFrame(frame);
       window.clearTimeout(timeout);
     };
   }, [currentStreak]);
