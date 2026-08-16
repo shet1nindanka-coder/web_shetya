@@ -1038,8 +1038,8 @@ html[data-theme="dark"] .ui-status-button.ui-status-red:hover {
   color: var(--streak-text, #c2410c);
   box-shadow: 0 10px 22px var(--streak-shadow, rgba(251, 146, 60, 0.14));
   transition:
-    transform 180ms cubic-bezier(0.23, 1, 0.32, 1),
-    box-shadow 220ms cubic-bezier(0.23, 1, 0.32, 1),
+    transform 180ms var(--ease-out),
+    box-shadow 220ms var(--ease-out),
     border-color 220ms ease,
     background 220ms ease,
     color 220ms ease;
@@ -1076,8 +1076,8 @@ html[data-theme="dark"] .ui-status-button.ui-status-red:hover {
     linear-gradient(180deg, color-mix(in srgb, var(--theme-surface-strong) 96%, white 4%), color-mix(in srgb, var(--theme-surface-soft) 92%, white 8%));
   box-shadow: var(--theme-shadow-soft);
   transition:
-    transform 220ms cubic-bezier(0.23, 1, 0.32, 1),
-    box-shadow 260ms cubic-bezier(0.23, 1, 0.32, 1),
+    transform 220ms var(--ease-out),
+    box-shadow 260ms var(--ease-out),
     border-color 220ms ease,
     background 240ms ease;
 }
@@ -1102,7 +1102,7 @@ html[data-theme="dark"] .ui-status-button.ui-status-red:hover {
   animation: streak-pill-grow 820ms cubic-bezier(0.22, 1.4, 0.36, 1);
 }
 .app-streak-pill[data-animate="drop"] {
-  animation: streak-pill-drop 520ms cubic-bezier(0.23, 1, 0.32, 1);
+  animation: streak-pill-drop 520ms var(--ease-out);
 }
 .app-streak-pill[data-animate="ignite"]::after,
 .app-streak-pill[data-animate="grow"]::after {
@@ -1110,13 +1110,13 @@ html[data-theme="dark"] .ui-status-button.ui-status-red:hover {
 }
 .app-streak-pill[data-animate="ignite"] .app-streak-icon,
 .app-streak-pill[data-animate="grow"] .app-streak-icon {
-  animation: streak-flame-flicker 900ms cubic-bezier(0.23, 1, 0.32, 1);
+  animation: streak-flame-flicker 900ms var(--ease-out);
 }
 .student-streak-hero[data-streak-animate="ignite"] {
-  animation: streak-hero-ignite 900ms cubic-bezier(0.23, 1, 0.32, 1);
+  animation: streak-hero-ignite 900ms var(--ease-out);
 }
 .student-streak-hero[data-streak-animate="grow"] {
-  animation: streak-hero-grow 760ms cubic-bezier(0.23, 1, 0.32, 1);
+  animation: streak-hero-grow 760ms var(--ease-out);
 }
 
 @keyframes streak-pill-ignite {
@@ -1363,7 +1363,6 @@ html[data-theme="dark"] [class*="bg-slate-950"] { background: var(--theme-hero) 
    ─────────────────────────────────────────────── */
 .ui-progress-fill {
   transition: transform 280ms var(--ease-out), filter 220ms ease, opacity 220ms ease;
-  will-change: transform;
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.32),
     inset 0 -1px 0 rgba(15, 23, 42, 0.08);
@@ -2948,7 +2947,7 @@ html[data-theme="dark"] .ui-button-danger:disabled,
 
 .shbz-streak-hero[data-animate="ignite"],
 .shbz-streak-hero[data-animate="grow"] {
-  animation: shbz-hero-bump 900ms cubic-bezier(0.22, 1, 0.36, 1);
+  animation: shbz-hero-bump 900ms var(--anim-spring);
 }
 
 @media (prefers-reduced-motion: reduce) {
