@@ -55,9 +55,6 @@ export default async function TeacherTopicPage({ params }: TeacherTopicPageProps
         <div className="grid gap-4 xl:grid-cols-2">
           <FileResourceCard title="Теория" file={data.topic.theoryFile} />
           <FileResourceCard title="Задания" file={data.topic.homeworkFile} />
-          {data.topic.answersFile ? (
-            <FileResourceCard title="Ответы — видны только учителю" file={data.topic.answersFile} />
-          ) : null}
         </div>
       </SectionCard>
 

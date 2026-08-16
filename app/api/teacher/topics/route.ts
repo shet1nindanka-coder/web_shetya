@@ -49,7 +49,6 @@ export async function POST(request: Request) {
         numbers?: string;
         theoryFileId?: string;
         homeworkFileId?: string;
-        answersFileId?: string;
       }
     | null;
 
@@ -58,8 +57,6 @@ export async function POST(request: Request) {
   const numbers = parseNumbersInput(String(body?.numbers ?? ""));
   const theoryFileId = String(body?.theoryFileId ?? "").trim();
   const homeworkFileId = String(body?.homeworkFileId ?? "").trim();
-  // Файл ответов необязателен: тема полноценно живёт без него.
-  const answersFileId = String(body?.answersFileId ?? "").trim();
 
   // Описание необязательное: тема живёт и без него.
   if (!title || !numbers.length || !theoryFileId || !homeworkFileId) {
@@ -71,7 +68,7 @@ export async function POST(request: Request) {
     );
   }
 
-  const requiredFileIds = [theoryFileId, homeworkFileId, ...(answersFileId ? [answersFileId] : [])];
+  const requiredFileIds = [theoryFileId, homeworkFileId];
 
   const uploadedFiles = await prisma.storedFile.findMany({
     where: {
@@ -105,8 +102,7 @@ export async function POST(request: Request) {
           description,
           displayOrder: (lastTopic?.displayOrder ?? 0) + 1,
           theoryFileId,
-          homeworkFileId,
-          answersFileId: answersFileId || null
+          homeworkFileId
         },
         select: {
           id: true

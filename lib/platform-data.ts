@@ -681,22 +681,8 @@ async function getTeacherTopicDetailUncached(topicId: string) {
 
   const { result: topic, answerLatexEnabled, conditionLatexEnabled } = await resolveTopicDataCapabilities(buildTeacherTopicDetailQuery);
 
-  // Файл ответов читается отдельными запросами по скалярному answersFileId:
-  // include по новой relation требует свежесгенерированного Prisma-клиента,
-  // а патченный клиент в разработке знает только про скалярное поле.
-  const answersFileRef = await prisma.topic
-    .findUnique({ where: { id: topicId }, select: { answersFileId: true } })
-    .catch(() => null);
-  const answersFile = answersFileRef?.answersFileId
-    ? await prisma.storedFile.findUnique({
-        where: { id: answersFileRef.answersFileId },
-        select: { id: true, originalName: true, mimeType: true, size: true, uploadedAt: true }
-      })
-    : null;
-
   const normalizedTopic = {
     ...topic,
-    answersFile,
     homeworkNumbers: topic.homeworkNumbers.map((number) => ({
       ...number,
       conditionLatex: conditionLatexEnabled ? (number as { conditionLatex?: string | null }).conditionLatex ?? null : null,

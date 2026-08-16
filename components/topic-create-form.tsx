@@ -151,12 +151,10 @@ export function TopicCreateForm({
   const [numbers, setNumbers] = useState("");
   const [theoryUpload, setTheoryUpload] = useState<UploadState>(initialUploadState);
   const [homeworkUpload, setHomeworkUpload] = useState<UploadState>(initialUploadState);
-  const [answersUpload, setAnswersUpload] = useState<UploadState>(initialUploadState);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const theoryAbortRef = useRef<(() => void) | null>(null);
   const homeworkAbortRef = useRef<(() => void) | null>(null);
-  const answersAbortRef = useRef<(() => void) | null>(null);
 
   const handleUpload = useCallback((
     nextFile: File | null,
@@ -320,18 +318,12 @@ export function TopicCreateForm({
     request.send(formData);
   }, [blobAccess, uploadMode]);
 
-  const isUploading =
-    theoryUpload.status === "uploading" ||
-    homeworkUpload.status === "uploading" ||
-    answersUpload.status === "uploading";
-  // Файл ответов необязателен, но если его выбрали — ждём окончания загрузки.
+  const isUploading = theoryUpload.status === "uploading" || homeworkUpload.status === "uploading";
   const isReadyToCreate =
     theoryUpload.status === "uploaded" &&
     homeworkUpload.status === "uploaded" &&
     Boolean(theoryUpload.file?.id) &&
-    Boolean(homeworkUpload.file?.id) &&
-    answersUpload.status !== "error" &&
-    (answersUpload.status === "idle" || Boolean(answersUpload.file?.id));
+    Boolean(homeworkUpload.file?.id);
   const hasRequiredFields = Boolean(title.trim() && numbers.trim());
   const isSubmitDisabled = !isReadyToCreate || isUploading || isSubmitting || !hasRequiredFields;
 
@@ -342,10 +334,6 @@ export function TopicCreateForm({
   const handleHomeworkFileSelect = useCallback(
     (file: File | null) => handleUpload(file, homeworkUpload, setHomeworkUpload, homeworkAbortRef),
     [handleUpload, homeworkUpload]
-  );
-  const handleAnswersFileSelect = useCallback(
-    (file: File | null) => handleUpload(file, answersUpload, setAnswersUpload, answersAbortRef),
-    [handleUpload, answersUpload]
   );
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
@@ -369,8 +357,7 @@ export function TopicCreateForm({
           description,
           numbers,
           theoryFileId: theoryUpload.file?.id,
-          homeworkFileId: homeworkUpload.file?.id,
-          answersFileId: answersUpload.file?.id ?? null
+          homeworkFileId: homeworkUpload.file?.id
         })
       });
 
@@ -434,13 +421,6 @@ export function TopicCreateForm({
           label="Файл заданий"
           state={homeworkUpload}
           onFileSelect={handleHomeworkFileSelect}
-        />
-
-        <FileUploadField
-          name="answersFile"
-          label="Файл ответов — необязательно, виден только учителю"
-          state={answersUpload}
-          onFileSelect={handleAnswersFileSelect}
         />
       </div>
 
