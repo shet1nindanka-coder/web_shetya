@@ -1231,6 +1231,7 @@ html[data-theme="dark"] .ui-status-button.ui-status-red:hover {
   }
 
   .app-streak-pill[data-animate],
+  .app-streak-pill[data-animate]::after,
   .app-streak-pill[data-animate] .app-streak-icon,
   .student-streak-hero[data-streak-animate] {
     animation: none !important;
