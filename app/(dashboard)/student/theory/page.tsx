@@ -1,14 +1,15 @@
 import { UserRole } from "@prisma/client";
-import { FileResourceCard } from "@/components/file-resource-card";
+import { FileFullscreenPreview } from "@/components/file-fullscreen-preview";
 import { ShbzNumberSearch } from "@/components/shbz-number-search";
 import { ShbzPageHeader } from "@/components/shbz-page-header";
 import { requireUser } from "@/lib/auth";
 import { getStudentTheoryLibrary } from "@/lib/platform-data";
+import { formatDateTime, formatFileSize } from "@/lib/utils";
 
 /*
  * Вкладка «Теория» у ученика (заменила «Общую инфу» 15.08.2026): файлы теории
- * всех тем с предпросмотром и скачиванием. Файлы отдаются только через
- * защищённый /files/[fileId].
+ * всех тем. Предпросмотр открывается по кнопке во весь экран — сразу ничего
+ * не грузим. Файлы отдаются только через защищённый /files/[fileId].
  */
 
 export const dynamic = "force-dynamic";
@@ -35,14 +36,33 @@ export default async function StudentTheoryPage() {
           </p>
         </div>
       ) : (
-        <div className="grid gap-5" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(340px, 1fr))" }}>
+        <div className="grid gap-5" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))" }}>
           {topics.map((topic) => (
-            <FileResourceCard
-              key={topic.id}
-              title={topic.title}
-              description={topic.description || undefined}
-              file={topic.theoryFile}
-            />
+            <article key={topic.id} className="shbz-card flex flex-col gap-4 shbz-section-pad">
+              <div className="min-w-0">
+                <p className="shbz-kicker">{topic.title}</p>
+                <h3 className="mt-1 break-words text-[17px] font-bold" style={{ color: "var(--shbz-text-strong)" }}>
+                  {topic.theoryFile!.originalName}
+                </h3>
+                {topic.description ? (
+                  <p className="ui-hint mt-1.5 text-sm leading-6" style={{ color: "var(--shbz-text-muted)" }}>
+                    {topic.description}
+                  </p>
+                ) : null}
+                <p className="mt-2 text-[12.5px]" style={{ color: "var(--shbz-kicker)" }}>
+                  {formatFileSize(topic.theoryFile!.size)} · {formatDateTime(topic.theoryFile!.uploadedAt)}
+                </p>
+              </div>
+              <div className="mt-auto flex flex-wrap items-center gap-2.5">
+                <FileFullscreenPreview fileId={topic.theoryFile!.id} fileName={topic.theoryFile!.originalName} />
+                <a
+                  href={`/files/${topic.theoryFile!.id}?download=1`}
+                  className="shbz-btn-outline no-underline"
+                >
+                  Скачать файл
+                </a>
+              </div>
+            </article>
           ))}
         </div>
       )}
