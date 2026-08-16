@@ -2,6 +2,7 @@
 
 import { useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { AnimatedDropzone } from "@/components/animated-dropzone";
 import { DeleteButton } from "@/components/delete-button";
 import { cx } from "@/lib/utils";
 
@@ -22,7 +23,6 @@ export function StudentHomeworkPhotos({ assignmentId, maxPhotos = MAX_PHOTOS, ph
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [isDragging, setIsDragging] = useState(false);
 
   const atLimit = photos.length >= maxPhotos;
 
@@ -107,29 +107,33 @@ export function StudentHomeworkPhotos({ assignmentId, maxPhotos = MAX_PHOTOS, ph
 
       {error ? <div className="ui-notice-error mb-4 rounded-[8px] px-4 py-3 text-sm">{error}</div> : null}
 
-      <label
-        onDragOver={(event) => {
-          event.preventDefault();
-          if (!isUploading && !atLimit) {
-            setIsDragging(true);
-          }
-        }}
-        onDragLeave={() => setIsDragging(false)}
-        onDrop={(event) => {
-          event.preventDefault();
-          setIsDragging(false);
-          if (!isUploading && !atLimit) {
-            void uploadPhotos(event.dataTransfer.files);
-          }
-        }}
+      <AnimatedDropzone
         className={cx(
-          "flex flex-col items-center gap-2 rounded-[16px] border-[1.5px] border-dashed px-6 py-7 text-center transition",
+          "flex flex-col items-center gap-2 px-6 py-7 text-center",
           atLimit ? "cursor-not-allowed" : "cursor-pointer"
         )}
-        style={{
-          borderColor: isDragging ? "var(--shbz-green-text)" : "var(--shbz-input-border)",
-          background: isDragging ? "var(--shbz-green-soft)" : "var(--shbz-dropzone-bg)"
-        }}
+        disabled={isUploading || atLimit}
+        onDropFiles={(files) => void uploadPhotos(files)}
+        title={
+          isUploading
+            ? "Загружаем..."
+            : atLimit
+              ? `Достигнут лимит — ${maxPhotos} фото`
+              : "Перетащите фото сюда или нажмите"
+        }
+        dragTitle="Отпустите файлы"
+        successTitle="Файлы добавлены"
+        icon={
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <path d="M12 16V4m0 0L7 9m5-5l5 5" strokeLinecap="round" strokeLinejoin="round" />
+            <path d="M4 17v2a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-2" strokeLinecap="round" />
+          </svg>
+        }
+        subtitle={
+          <span className="text-[12.5px]" style={{ color: "var(--shbz-kicker)" }}>
+            {`До ${maxPhotos} фото · PNG или JPG`}
+          </span>
+        }
       >
         <input
           ref={fileInputRef}
@@ -140,27 +144,7 @@ export function StudentHomeworkPhotos({ assignmentId, maxPhotos = MAX_PHOTOS, ph
           className="hidden"
           onChange={(event) => void uploadPhotos(event.target.files)}
         />
-        <span
-          className="inline-flex h-11 w-11 items-center justify-center rounded-[12px]"
-          style={{ background: "var(--shbz-green-soft)", color: "var(--shbz-green-text)" }}
-          aria-hidden="true"
-        >
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <path d="M12 16V4m0 0L7 9m5-5l5 5" strokeLinecap="round" strokeLinejoin="round" />
-            <path d="M4 17v2a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-2" strokeLinecap="round" />
-          </svg>
-        </span>
-        <span className="text-[14.5px] font-bold" style={{ color: "var(--shbz-text-strong)" }}>
-          {isUploading
-            ? "Загружаем..."
-            : atLimit
-              ? `Достигнут лимит — ${maxPhotos} фото`
-              : "Перетащите фото сюда или нажмите"}
-        </span>
-        <span className="text-[12.5px]" style={{ color: "var(--shbz-kicker)" }}>
-          {`До ${maxPhotos} фото · PNG или JPG`}
-        </span>
-      </label>
+      </AnimatedDropzone>
 
       {photos.length > 0 ? (
         <div className="mt-5 flex flex-wrap gap-3">

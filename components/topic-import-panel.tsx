@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
+import { AnimatedDropzone } from "@/components/animated-dropzone";
 import { LatexAnswerPreview } from "@/components/latex-answer-preview";
 import { TopicImportPromptButton } from "@/components/topic-import-prompt-button";
 
@@ -73,7 +74,6 @@ export function TopicImportPanel({ topicId, createTopic, hidePromptButton }: Top
   const [rawJson, setRawJson] = useState("");
   const [pasteOpen, setPasteOpen] = useState(false);
   const [fileName, setFileName] = useState<string | null>(null);
-  const [isDragging, setIsDragging] = useState(false);
   const [overwriteFilled, setOverwriteFilled] = useState(false);
   const [preview, setPreview] = useState<PreviewResponse | null>(null);
   const [applied, setApplied] = useState<ApplyResponse | null>(null);
@@ -153,26 +153,49 @@ export function TopicImportPanel({ topicId, createTopic, hidePromptButton }: Top
     <div className="space-y-5">
       {!hidePromptButton ? <TopicImportPromptButton /> : null}
 
-      <label
-        onDragOver={(event) => {
-          event.preventDefault();
-          setIsDragging(true);
-        }}
-        onDragLeave={() => setIsDragging(false)}
-        onDrop={(event) => {
-          event.preventDefault();
-          setIsDragging(false);
-          const dropped = event.dataTransfer.files?.[0];
+      <AnimatedDropzone
+        className="flex cursor-pointer flex-col items-center gap-2.5 px-6 py-11 text-center"
+        onDropFiles={(files) => {
+          const dropped = files[0];
 
           if (dropped) {
             void readFile(dropped);
           }
         }}
-        className="flex cursor-pointer flex-col items-center gap-2.5 rounded-[16px] border-[1.5px] border-dashed px-6 py-11 text-center transition"
-        style={{
-          borderColor: isDragging ? "var(--shbz-green-text)" : "var(--shbz-input-border)",
-          background: isDragging ? "var(--shbz-green-soft)" : "var(--shbz-dropzone-bg)"
-        }}
+        title={fileName ?? "Перетащите ответ ИИ сюда или нажмите"}
+        dragTitle="Отпустите файл"
+        successTitle="Файл добавлен"
+        icon={
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+            <path d="M12 16V4m0 0L7 9m5-5l5 5" strokeLinecap="round" strokeLinejoin="round" />
+            <path d="M4 17v2a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-2" strokeLinecap="round" />
+          </svg>
+        }
+        subtitle={
+          <span className="text-[12.5px]" style={{ color: "var(--shbz-kicker)" }}>
+            {fileName ? (
+              "Файл прочитан — нажмите «Проверить файл»"
+            ) : (
+              <>
+                Один файл .json ·{" "}
+                <button
+                  type="button"
+                  className="underline underline-offset-2"
+                  style={{ color: "var(--shbz-kicker)" }}
+                  onClick={(event) => {
+                    // Кнопка живёт внутри label дропзоны: без preventDefault клик
+                    // откроет выбор файла вместо поля для текста.
+                    event.preventDefault();
+                    event.stopPropagation();
+                    setPasteOpen((open) => !open);
+                  }}
+                >
+                  вставить текстом
+                </button>
+              </>
+            )}
+          </span>
+        }
       >
         <input
           ref={fileInputRef}
@@ -187,43 +210,7 @@ export function TopicImportPanel({ topicId, createTopic, hidePromptButton }: Top
             }
           }}
         />
-        <span
-          className="inline-flex h-11 w-11 items-center justify-center rounded-[12px]"
-          style={{ background: "var(--shbz-green-soft)", color: "var(--shbz-green-text)" }}
-          aria-hidden="true"
-        >
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-            <path d="M12 16V4m0 0L7 9m5-5l5 5" strokeLinecap="round" strokeLinejoin="round" />
-            <path d="M4 17v2a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-2" strokeLinecap="round" />
-          </svg>
-        </span>
-        <span className="text-[14.5px] font-bold" style={{ color: "var(--shbz-text-strong)" }}>
-          {fileName ?? "Перетащите ответ ИИ сюда или нажмите"}
-        </span>
-        <span className="text-[12.5px]" style={{ color: "var(--shbz-kicker)" }}>
-          {fileName ? (
-            "Файл прочитан — нажмите «Проверить файл»"
-          ) : (
-            <>
-              Один файл .json ·{" "}
-              <button
-                type="button"
-                className="underline underline-offset-2"
-                style={{ color: "var(--shbz-kicker)" }}
-                onClick={(event) => {
-                  // Кнопка живёт внутри label дропзоны: без preventDefault клик
-                  // откроет выбор файла вместо поля для текста.
-                  event.preventDefault();
-                  event.stopPropagation();
-                  setPasteOpen((open) => !open);
-                }}
-              >
-                вставить текстом
-              </button>
-            </>
-          )}
-        </span>
-      </label>
+      </AnimatedDropzone>
 
       {pasteOpen ? (
         <label className="block space-y-1.5">
