@@ -217,6 +217,35 @@ const getStudentTopicsOverviewCached = unstable_cache(getStudentTopicsOverviewUn
   tags: [PLATFORM_DATA_TAGS.studentTopics, PLATFORM_DATA_TAGS.teacherTopics]
 });
 
+/*
+ * Вкладка «Теория» у ученика: файлы теории всех тем с полными метаданными для
+ * карточек с предпросмотром. Данные общие (не зависят от ученика), поэтому
+ * кэш один на всех.
+ */
+async function getStudentTheoryLibraryUncached() {
+  const topics = await prisma.topic.findMany({
+    select: {
+      id: true,
+      title: true,
+      description: true,
+      theoryFile: {
+        select: { id: true, originalName: true, mimeType: true, size: true, uploadedAt: true }
+      }
+    },
+    orderBy: [{ displayOrder: "asc" }, { createdAt: "asc" }]
+  });
+
+  return topics.filter((topic) => topic.theoryFile !== null);
+}
+
+const getStudentTheoryLibraryCached = unstable_cache(getStudentTheoryLibraryUncached, ["student-theory-library"], {
+  tags: [PLATFORM_DATA_TAGS.studentTopics, PLATFORM_DATA_TAGS.teacherTopics]
+});
+
+export async function getStudentTheoryLibrary(): Promise<Awaited<ReturnType<typeof getStudentTheoryLibraryUncached>>> {
+  return getStudentTheoryLibraryCached();
+}
+
 export async function getStudentTopicsOverview(
   studentId: string
 ): Promise<Awaited<ReturnType<typeof getStudentTopicsOverviewUncached>>> {
