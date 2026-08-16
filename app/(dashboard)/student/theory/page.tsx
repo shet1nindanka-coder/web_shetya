@@ -40,12 +40,14 @@ export default async function StudentTheoryPage() {
           {topics.map((topic) => (
             <article key={topic.id} className="shbz-card flex flex-col gap-4 shbz-section-pad">
               <div className="min-w-0">
-                <p className="shbz-kicker">{topic.title}</p>
+                <p className="shbz-kicker">Теория</p>
                 <h3 className="mt-1 break-words text-[17px] font-bold" style={{ color: "var(--shbz-text-strong)" }}>
-                  {topic.theoryFile!.originalName}
+                  {topic.title}
                 </h3>
+                {/* Описание темы — контент, а не подсказка интерфейса: настройка
+                    «Подсказки» его не прячет. */}
                 {topic.description ? (
-                  <p className="ui-hint mt-1.5 text-sm leading-6" style={{ color: "var(--shbz-text-muted)" }}>
+                  <p className="mt-1.5 text-sm leading-6" style={{ color: "var(--shbz-text-muted)" }}>
                     {topic.description}
                   </p>
                 ) : null}
@@ -54,7 +56,7 @@ export default async function StudentTheoryPage() {
                 </p>
               </div>
               <div className="mt-auto">
-                <FileFullscreenPreview fileId={topic.theoryFile!.id} fileName={topic.theoryFile!.originalName} />
+                <FileFullscreenPreview fileId={topic.theoryFile!.id} fileName={topic.title} />
               </div>
             </article>
           ))}
