@@ -26,7 +26,7 @@
 | 006 | [Появление двум модальным диалогам](006-modal-dialog-entrance.md) | MEDIUM | 3, 4 | DONE |
 | 007 | [Шиммер скелетонов на transform + reduced-motion](007-skeleton-shimmer-transform.md) | MEDIUM | 5, 6 | DONE |
 | 008 | [Вспышка streak под reduced-motion](008-streak-burst-reduced-motion.md) | MEDIUM | 6 | DONE |
-| 009 | [Ползунок переключателя на transform](009-switch-knob-transform.md) | MEDIUM | 5 | TODO |
+| 009 | [Ползунок переключателя на transform](009-switch-knob-transform.md) | MEDIUM | 5 | DONE |
 | 010 | [Уборка: кривые в токены, убрать will-change](010-token-cleanup.md) | LOW | 7, 5 | TODO |
 | 011 | [Каскад появления в двух списках](011-group-entrance-stagger.md) | LOW | 7 | TODO |
 | 012 | [Повторный запуск анимации streak](012-streak-motion-retrigger.md) | LOW | 4 | TODO |

@@ -2077,19 +2077,19 @@ html[data-theme="dark"] {
   position: absolute;
   left: 3.5px;
   top: 50%;
-  transform: translateY(-50%);
+  transform: translate(0, -50%);
   width: 20px;
   height: 20px;
   border-radius: 999px;
   background: #ffffff;
   box-shadow: 0 1px 3px rgba(10, 10, 10, 0.25);
-  transition: left var(--duration-slow) var(--ease-in-out);
+  transition: transform var(--duration-slow) var(--ease-in-out);
 }
 .shbz-switch input:checked ~ .shbz-switch-track {
   background: var(--shbz-accent-grad);
   border-color: transparent;
 }
-.shbz-switch input:checked ~ .shbz-switch-knob { left: 23px; }
+.shbz-switch input:checked ~ .shbz-switch-knob { transform: translate(19.5px, -50%); }
 .shbz-switch input:focus-visible ~ .shbz-switch-track {
   outline: 2px solid var(--shbz-accent-solid);
   outline-offset: 2px;
