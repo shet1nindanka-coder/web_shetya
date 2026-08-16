@@ -46,7 +46,7 @@ function ChevronIcon({ expanded }: { expanded: boolean }) {
       viewBox="0 0 16 16"
       fill="none"
       aria-hidden
-      className="shrink-0 transition-transform duration-150"
+      className="shrink-0 transition-transform duration-[180ms] ease-[var(--ease-in-out)]"
       style={{ color: "var(--shbz-kicker)", transform: expanded ? "rotate(90deg)" : "none" }}
     >
       <path d="M6 4l4 4-4 4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />

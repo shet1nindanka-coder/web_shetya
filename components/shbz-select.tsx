@@ -153,7 +153,7 @@ export function ShbzSelect({
           strokeWidth="2.5"
           strokeLinecap="round"
           aria-hidden="true"
-          className="shrink-0 transition-transform"
+          className="shrink-0 transition-transform duration-[180ms] ease-[var(--ease-in-out)]"
           style={{ transform: isOpen ? "rotate(180deg)" : "none" }}
         >
           <path d="M6 9l6 6 6-6" />

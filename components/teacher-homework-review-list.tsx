@@ -476,7 +476,7 @@ export function TeacherHomeworkReviewList({ studentId, assignments }: TeacherHom
                   <span className="text-[15px] font-bold text-[var(--theme-text-strong)]">История проверок</span>
                   <span className="ui-copy-muted text-sm">· {pluralizeRuns(assignment.checks.length)}</span>
                   <svg
-                    className="ml-auto h-3.5 w-3.5 transition-transform group-open:rotate-180"
+                    className="ml-auto h-3.5 w-3.5 transition-transform duration-[180ms] ease-[var(--ease-in-out)] group-open:rotate-180"
                     viewBox="0 0 24 24"
                     fill="none"
                     stroke="currentColor"

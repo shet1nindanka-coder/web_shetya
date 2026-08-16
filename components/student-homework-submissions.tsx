@@ -124,7 +124,7 @@ export function StudentHomeworkSubmissions({ assignments }: StudentHomeworkSubmi
           >
             Выполненные ДЗ ({archived.length})
             <svg
-              className="h-3.5 w-3.5 transition-transform group-open:rotate-180"
+              className="h-3.5 w-3.5 transition-transform duration-[180ms] ease-[var(--ease-in-out)] group-open:rotate-180"
               viewBox="0 0 24 24"
               fill="none"
               stroke="currentColor"

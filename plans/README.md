@@ -30,7 +30,7 @@
 | 010 | [Уборка: кривые в токены, убрать will-change](010-token-cleanup.md) | LOW | 7, 5 | DONE |
 | 011 | [Каскад появления в двух списках](011-group-entrance-stagger.md) | LOW | 7 | DONE |
 | 012 | [Повторный запуск анимации streak](012-streak-motion-retrigger.md) | LOW | 4 | DONE |
-| 013 | [Повороты «галочек» на токен кривой](013-chevron-easing-token.md) | LOW | 2 | TODO |
+| 013 | [Повороты «галочек» на токен кривой](013-chevron-easing-token.md) | LOW | 2 | DONE |
 
 ## Порядок выполнения
 
