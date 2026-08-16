@@ -30,7 +30,7 @@ const studentItems = [
   { href: "/student", label: "обзор", match: (p: string, _sp: URLSearchParams) => p === "/student" },
   { href: "/student/homeworks", label: "дз", match: (p: string, _sp: URLSearchParams) => p.startsWith("/student/homeworks") },
   { href: "/student/deadlines", label: "дедлайны", match: (p: string, _sp: URLSearchParams) => p.startsWith("/student/deadlines") },
-  { href: "/student/info", label: "общая инфа", match: (p: string, _sp: URLSearchParams) => p.startsWith("/student/info") },
+  { href: "/student/theory", label: "теория", match: (p: string, _sp: URLSearchParams) => p.startsWith("/student/theory") },
   {
     href: "/student/settings",
     label: "настройки",

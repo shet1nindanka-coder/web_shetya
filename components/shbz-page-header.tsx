@@ -16,7 +16,9 @@ export function ShbzPageHeader({ kicker, title, aside }: ShbzPageHeaderProps) {
           <span className="shbz-dot h-3 w-3 shrink-0 self-center" />
         </h1>
       </div>
-      {aside}
+      {/* ml-auto: при переносе на узком экране aside остаётся у правого края,
+          а не прижимается к левому (жалоба 15.08.2026 на «Новое ДЗ»). */}
+      {aside ? <div className="ml-auto">{aside}</div> : null}
     </div>
   );
 }
