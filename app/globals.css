@@ -419,8 +419,8 @@ html[data-theme="dark"] .page-header-panel::after { background: radial-gradient(
   to { opacity: 1; transform: scale(1) translateY(0); }
 }
 @keyframes ui-shimmer {
-  from { background-position: 200% 0; }
-  to { background-position: -200% 0; }
+  from { transform: translateX(-100%); }
+  to { transform: translateX(100%); }
 }
 .ui-fade-slide { animation: ui-fade-slide 0.25s var(--ease-out) both; }
 .ui-pop-in { animation: ui-pop-in 0.18s var(--ease-out) both; }
@@ -1432,19 +1432,20 @@ html[data-theme="dark"] .ui-tab[data-active="true"] {
 .ui-skeleton {
   position: relative;
   overflow: hidden;
-  background: linear-gradient(90deg, rgba(226, 232, 240, 0.6) 20%, rgba(255, 255, 255, 0.9) 50%, rgba(226, 232, 240, 0.6) 80%);
-  background-size: 200% 100%;
+  background: rgba(226, 232, 240, 0.6);
+}
+.ui-skeleton::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent 20%, rgba(255, 255, 255, 0.9) 50%, transparent 80%);
   animation: ui-shimmer 1.4s linear infinite;
 }
 html[data-theme="dark"] .ui-skeleton {
-  background:
-    linear-gradient(
-      90deg,
-      rgba(30, 41, 59, 0.78) 20%,
-      rgba(51, 65, 85, 0.96) 50%,
-      rgba(30, 41, 59, 0.78) 80%
-    );
-  background-size: 200% 100%;
+  background: rgba(30, 41, 59, 0.78);
+}
+html[data-theme="dark"] .ui-skeleton::after {
+  background: linear-gradient(90deg, transparent 20%, rgba(51, 65, 85, 0.96) 50%, transparent 80%);
 }
 
 /* ───────────────────────────────────────────────
@@ -1534,7 +1535,8 @@ html[data-theme="dark"] .student-virtual-scroll::-webkit-scrollbar-thumb {
   /* Keep opacity fades — remove only movement-based motion */
   .ui-fade-slide { animation: ui-fade-opacity 0.2s ease both; }
   .ui-pop-in { animation: ui-fade-opacity 0.15s ease both; }
-  .ui-skeleton { animation: none !important; }
+  .ui-skeleton::after { animation: none !important; }
+  .ui-skeleton-spinner { animation: none !important; }
   .ui-pressable, .ui-progress-fill { transition: opacity 140ms ease, background-color 140ms ease, color 140ms ease, border-color 140ms ease !important; }
   .ui-surface { transition: opacity 200ms ease, background-color 200ms ease, border-color 200ms ease !important; }
   .ui-surface:hover, .ui-pressable:hover, .ui-pressable:active { transform: none !important; }
