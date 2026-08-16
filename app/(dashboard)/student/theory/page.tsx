@@ -53,14 +53,8 @@ export default async function StudentTheoryPage() {
                   {formatFileSize(topic.theoryFile!.size)} · {formatDateTime(topic.theoryFile!.uploadedAt)}
                 </p>
               </div>
-              <div className="mt-auto flex flex-wrap items-center gap-2.5">
+              <div className="mt-auto">
                 <FileFullscreenPreview fileId={topic.theoryFile!.id} fileName={topic.theoryFile!.originalName} />
-                <a
-                  href={`/files/${topic.theoryFile!.id}?download=1`}
-                  className="shbz-btn-outline no-underline"
-                >
-                  Скачать файл
-                </a>
               </div>
             </article>
           ))}

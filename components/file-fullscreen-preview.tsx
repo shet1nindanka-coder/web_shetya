@@ -44,7 +44,7 @@ export function FileFullscreenPreview({ fileId, fileName }: FileFullscreenPrevie
         onClick={() => setIsOpen(true)}
         className="shbz-btn-primary px-[20px] py-2.5 text-[13.5px]"
       >
-        Предпросмотр
+        Открыть
       </button>
 
       {isOpen
