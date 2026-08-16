@@ -1,12 +1,19 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { AnimatedDropzone } from "@/components/animated-dropzone";
 import { DeleteButton } from "@/components/delete-button";
 import { cx } from "@/lib/utils";
 
 const MAX_PHOTOS = 10;
+
+/** Черновая карточка под дропзоной: превью файла, пока идёт загрузка. */
+type PendingUpload = {
+  id: string;
+  name: string;
+  previewUrl: string;
+};
 
 type StudentHomeworkPhotosProps = {
   assignmentId: string;
@@ -23,6 +30,33 @@ export function StudentHomeworkPhotos({ assignmentId, maxPhotos = MAX_PHOTOS, ph
   const fileInputRef = useRef<HTMLInputElement | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [pendingUploads, setPendingUploads] = useState<PendingUpload[]>([]);
+  const pendingRef = useRef<PendingUpload[]>([]);
+  // Фото первого рендера не анимируем: появление — только для новых карточек.
+  const initialPhotoIdsRef = useRef<Set<string> | null>(null);
+
+  if (initialPhotoIdsRef.current === null) {
+    initialPhotoIdsRef.current = new Set(photos.map((photo) => photo.id));
+  }
+
+  const flushPendingUploads = useCallback(() => {
+    if (!pendingRef.current.length) {
+      return;
+    }
+
+    for (const upload of pendingRef.current) {
+      URL.revokeObjectURL(upload.previewUrl);
+    }
+
+    pendingRef.current = [];
+    setPendingUploads([]);
+  }, []);
+
+  // Сервер прислал обновлённый список фото — черновые карточки своё отработали.
+  useEffect(() => {
+    flushPendingUploads();
+    return flushPendingUploads;
+  }, [photos, flushPendingUploads]);
 
   const atLimit = photos.length >= maxPhotos;
 
@@ -33,6 +67,15 @@ export function StudentHomeworkPhotos({ assignmentId, maxPhotos = MAX_PHOTOS, ph
 
     setIsUploading(true);
     setError(null);
+
+    // Файлы видны под дропзоной сразу после дропа — ещё до ответа сервера.
+    const pending = Array.from(files).map((file, index) => ({
+      id: `pending-${Date.now()}-${index}`,
+      name: file.name,
+      previewUrl: URL.createObjectURL(file)
+    }));
+    pendingRef.current = pending;
+    setPendingUploads(pending);
 
     try {
       const formData = new FormData();
@@ -55,6 +98,7 @@ export function StudentHomeworkPhotos({ assignmentId, maxPhotos = MAX_PHOTOS, ph
 
       router.refresh();
     } catch (uploadError) {
+      flushPendingUploads();
       setError(uploadError instanceof Error ? uploadError.message : "Не удалось загрузить фото.");
     } finally {
       setIsUploading(false);
@@ -146,10 +190,13 @@ export function StudentHomeworkPhotos({ assignmentId, maxPhotos = MAX_PHOTOS, ph
         />
       </AnimatedDropzone>
 
-      {photos.length > 0 ? (
+      {photos.length > 0 || pendingUploads.length > 0 ? (
         <div className="mt-5 flex flex-wrap gap-3">
           {photos.map((photo) => (
-            <div key={photo.id} className="relative">
+            <div
+              key={photo.id}
+              className={cx("relative", !initialPhotoIdsRef.current?.has(photo.id) && "shbz-file-card-enter")}
+            >
               <a href={`/files/${photo.fileId}`} target="_blank" rel="noreferrer" title={photo.originalName}>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
@@ -171,6 +218,17 @@ export function StudentHomeworkPhotos({ assignmentId, maxPhotos = MAX_PHOTOS, ph
                   setError(deleteError instanceof Error ? deleteError.message : "Не удалось удалить фото.")
                 }
               />
+            </div>
+          ))}
+          {pendingUploads.map((upload, index) => (
+            <div key={upload.id} className="shbz-file-card-enter" style={{ animationDelay: `${index * 45}ms` }}>
+              <div
+                className="shbz-file-uploading h-24 w-24 overflow-hidden rounded-[12px] border"
+                style={{ borderColor: "var(--shbz-soft-border)" }}
+              >
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={upload.previewUrl} alt={upload.name} className="h-full w-full object-cover" />
+              </div>
             </div>
           ))}
         </div>

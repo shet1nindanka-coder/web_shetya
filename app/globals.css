@@ -3350,3 +3350,78 @@ html[data-theme="dark"] .shbz-search input:not([type="checkbox"]):not([type="rad
     transform: none;
   }
 }
+
+/* ------------------------------------------------------------
+   Карточки файлов под дропзоной: появление новых и режим загрузки.
+   Черновая карточка (шиммер + спиннер) живёт, пока сервер не
+   пришлёт настоящую; бесконечные анимации здесь — индикация
+   загрузки, в покое их нет.
+   ------------------------------------------------------------ */
+
+.shbz-file-card-enter {
+  animation: shbz-file-in 280ms cubic-bezier(0.22, 1, 0.36, 1) backwards;
+}
+
+.shbz-file-uploading {
+  position: relative;
+}
+.shbz-file-uploading img {
+  opacity: 0.55;
+}
+/* спиннер поверх превью */
+.shbz-file-uploading::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 22px;
+  height: 22px;
+  margin: -11px;
+  border-radius: 999px;
+  border: 2.5px solid var(--shbz-green-soft);
+  border-top-color: var(--shbz-accent-solid);
+  animation: shbz-file-spin 800ms linear infinite;
+  z-index: 1;
+}
+/* световая волна по превью */
+.shbz-file-uploading::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(100deg, transparent 30%, rgba(255, 255, 255, 0.35) 50%, transparent 70%);
+  transform: translateX(-100%);
+  animation: shbz-file-shimmer 1.2s ease-in-out infinite;
+}
+
+@keyframes shbz-file-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px) scale(0.95);
+  }
+}
+@keyframes shbz-file-in-fade {
+  from {
+    opacity: 0;
+  }
+}
+@keyframes shbz-file-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@keyframes shbz-file-shimmer {
+  to {
+    transform: translateX(100%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  /* появление — только прозрачностью; шиммер убираем, спиннер-индикатор остаётся */
+  .shbz-file-card-enter {
+    animation: shbz-file-in-fade 120ms ease backwards;
+  }
+  .shbz-file-uploading::after {
+    animation: none;
+    opacity: 0;
+  }
+}
