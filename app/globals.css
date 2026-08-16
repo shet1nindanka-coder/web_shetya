@@ -2274,6 +2274,19 @@ html[data-theme="dark"] .shbz-btn-dark:hover { filter: brightness(0.85); }
 .shbz-dropdown-panel[data-open-up="true"] {
   transform-origin: bottom center;
 }
+@keyframes shbz-dropdown-in-centered {
+  from { opacity: 0; transform: translateX(-50%) scale(0.96) translateY(-4px); }
+  to { opacity: 1; transform: translateX(-50%) scale(1) translateY(0); }
+}
+.shbz-dropdown-panel--centered {
+  transform-origin: top center;
+  animation: shbz-dropdown-in-centered var(--duration-slow) var(--ease-out) both;
+}
+@media (prefers-reduced-motion: reduce) {
+  .shbz-dropdown-panel--centered {
+    animation: shbz-dropdown-fade var(--duration-fast) ease both;
+  }
+}
 @media (prefers-reduced-motion: reduce) {
   .shbz-dropdown-panel {
     animation: shbz-dropdown-fade var(--duration-fast) ease both;

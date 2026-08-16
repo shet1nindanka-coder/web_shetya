@@ -215,7 +215,7 @@ export function StudentNotificationsBell() {
             <div
               ref={panelRef}
               data-shbz-portal=""
-              className="fixed overflow-hidden rounded-[16px] border"
+              className="shbz-dropdown-panel fixed overflow-hidden rounded-[16px] border"
               style={{
                 top: menuPosition.top,
                 left: menuPosition.left,

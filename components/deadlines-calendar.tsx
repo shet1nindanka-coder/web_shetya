@@ -186,7 +186,7 @@ export function DeadlinesCalendar({ deadlines }: DeadlinesCalendarProps) {
 
               {isPreviewOpen ? (
                 <div
-                  className="absolute left-1/2 top-[calc(100%+10px)] z-30 w-[300px] max-w-[86vw] -translate-x-1/2 rounded-[16px] border p-3.5"
+                  className="shbz-dropdown-panel--centered absolute left-1/2 top-[calc(100%+10px)] z-30 w-[300px] max-w-[86vw] -translate-x-1/2 rounded-[16px] border p-3.5"
                   style={{
                     background: "var(--shbz-card-bg)",
                     borderColor: "var(--shbz-card-border)",

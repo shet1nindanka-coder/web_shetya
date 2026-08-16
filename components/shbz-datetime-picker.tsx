@@ -247,7 +247,8 @@ export function ShbzDateTimePicker({
         <div
           ref={popoverRef}
           data-shbz-portal=""
-          className="fixed w-[308px] max-w-[92vw] overflow-y-auto rounded-[16px] border p-4"
+          data-open-up={popoverPosition.top === undefined ? "true" : "false"}
+          className="shbz-dropdown-panel fixed w-[308px] max-w-[92vw] overflow-y-auto rounded-[16px] border p-4"
           style={{
             top: popoverPosition.top,
             bottom: popoverPosition.bottom,

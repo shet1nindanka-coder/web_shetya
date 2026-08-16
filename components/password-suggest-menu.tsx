@@ -97,6 +97,7 @@ export function PasswordSuggestMenu({ anchorRef, suggestion, onPick, onAnother, 
     <div
       ref={menuRef}
       data-shbz-portal=""
+      data-open-up={position.top === undefined ? "true" : "false"}
       role="dialog"
       aria-label="Предложенный пароль"
       // preventDefault: клик по меню не должен уводить фокус из поля пароля.
