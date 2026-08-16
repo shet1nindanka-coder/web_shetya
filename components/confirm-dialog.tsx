@@ -58,7 +58,7 @@ export function ConfirmDialog({
 
   return createPortal(
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-[rgba(15,23,42,0.45)] px-4 py-6 backdrop-blur-sm"
+      className="shbz-modal-overlay fixed inset-0 z-50 flex items-center justify-center bg-[rgba(15,23,42,0.45)] px-4 py-6 backdrop-blur-sm"
       onClick={() => {
         if (!isPending) {
           onCancel();
@@ -69,7 +69,7 @@ export function ConfirmDialog({
         role="dialog"
         aria-modal="true"
         aria-label={title}
-        className={`shbz-card w-full ${wide ? "max-w-xl" : "max-w-md"} max-h-[85vh] overflow-y-auto p-6`}
+        className={`shbz-modal-card shbz-card w-full ${wide ? "max-w-xl" : "max-w-md"} max-h-[85vh] overflow-y-auto p-6`}
         onClick={(event) => event.stopPropagation()}
       >
         <div className="space-y-3">
