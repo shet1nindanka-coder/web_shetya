@@ -22,6 +22,9 @@
   --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
   --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1);
   --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1);
+  --duration-fast: 150ms;
+  --duration-base: 180ms;
+  --duration-slow: 200ms;
 
   --theme-bg: #f1f5f9;
   --theme-text: #0f172a;
@@ -1688,7 +1691,7 @@ html[data-theme="dark"] {
   border: 1.5px solid var(--shbz-input-border);
   border-radius: 12px;
   outline: none;
-  transition: border-color 0.15s, box-shadow 0.15s;
+  transition: border-color var(--duration-fast), box-shadow var(--duration-fast);
 }
 .shbz-input:focus {
   border-color: transparent;
@@ -1708,7 +1711,7 @@ html[data-theme="dark"] {
   font-weight: 700;
   cursor: pointer;
   box-shadow: 0 6px 18px var(--shbz-accent-shadow);
-  transition: box-shadow 0.18s, transform 0.18s;
+  transition: box-shadow var(--duration-base) ease, transform var(--duration-base) var(--ease-out);
 }
 .shbz-btn-primary:hover {
   box-shadow: 0 10px 26px var(--shbz-accent-shadow-hover);
@@ -1859,7 +1862,7 @@ html[data-theme="dark"] {
   font-weight: 600;
   cursor: pointer;
   white-space: nowrap;
-  transition: background 0.15s;
+  transition: background var(--duration-fast);
 }
 .shbz-tab:hover { background: var(--shbz-tab-hover); }
 .shbz-tab[data-active="true"] {
@@ -1893,7 +1896,7 @@ html[data-theme="dark"] {
   font-weight: 600;
   color: var(--shbz-tab-text);
   cursor: pointer;
-  transition: border-color 0.15s;
+  transition: border-color var(--duration-fast);
 }
 .shbz-btn-outline:hover { border-color: var(--shbz-outline-hover); }
 
@@ -2030,7 +2033,7 @@ html[data-theme="dark"] {
   border-radius: 999px;
   background: var(--shbz-seg-bg);
   border: 1.5px solid var(--shbz-input-border);
-  transition: background 0.2s, border-color 0.2s;
+  transition: background var(--duration-slow), border-color var(--duration-slow);
   flex-shrink: 0;
 }
 .shbz-switch-knob {
@@ -2043,7 +2046,7 @@ html[data-theme="dark"] {
   border-radius: 999px;
   background: #ffffff;
   box-shadow: 0 1px 3px rgba(10, 10, 10, 0.25);
-  transition: left 0.2s;
+  transition: left var(--duration-slow) var(--ease-in-out);
 }
 .shbz-switch input:checked ~ .shbz-switch-track {
   background: var(--shbz-accent-grad);
@@ -2069,7 +2072,7 @@ html[data-theme="dark"] {
   display: inline-block;
   position: relative;
   vertical-align: middle;
-  transition: background 0.15s, border-color 0.15s;
+  transition: background var(--duration-fast), border-color var(--duration-fast);
 }
 .shbz-checkbox:hover { border-color: var(--shbz-outline-hover); }
 .shbz-checkbox:checked {
@@ -2088,7 +2091,7 @@ html[data-theme="dark"] {
 }
 .shbz-checkbox:disabled { opacity: 0.5; cursor: not-allowed; }
 
-.shbz-card-hover { transition: transform 0.18s, box-shadow 0.18s; }
+.shbz-card-hover { transition: transform var(--duration-base) var(--ease-out), box-shadow var(--duration-base) ease; }
 .shbz-card-hover:hover {
   transform: translateY(-2px);
   box-shadow: 0 2px 4px rgba(10, 10, 10, 0.05), 0 14px 36px rgba(10, 10, 10, 0.09);
@@ -2114,7 +2117,7 @@ html[data-theme="dark"] {
   color: var(--shbz-seg-text);
   background: transparent;
   box-shadow: none;
-  transition: background 0.15s, box-shadow 0.15s, color 0.15s;
+  transition: background var(--duration-fast), box-shadow var(--duration-fast), color var(--duration-fast);
 }
 .shbz-seg-btn[data-active="true"] {
   color: var(--shbz-accent-solid);
@@ -2162,7 +2165,7 @@ html[data-theme="dark"] {
   font-size: 14px;
   font-weight: 700;
   cursor: pointer;
-  transition: filter 0.15s;
+  transition: filter var(--duration-fast);
 }
 .shbz-btn-dark:hover { filter: brightness(1.25); }
 html[data-theme="dark"] .shbz-btn-dark:hover { filter: brightness(0.85); }
@@ -2177,7 +2180,7 @@ html[data-theme="dark"] .shbz-btn-dark:hover { filter: brightness(0.85); }
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
-  transition: background 0.15s;
+  transition: background var(--duration-fast);
 }
 .shbz-btn-danger:hover { background: var(--shbz-red-soft); }
 
@@ -2200,7 +2203,7 @@ html[data-theme="dark"] .shbz-btn-dark:hover { filter: brightness(0.85); }
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%239AA0A6' stroke-width='2.5' stroke-linecap='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
   background-position: right 16px center;
-  transition: border-color 0.15s, box-shadow 0.15s;
+  transition: border-color var(--duration-fast), box-shadow var(--duration-fast);
 }
 .shbz-select:focus {
   border-color: transparent;
@@ -2232,7 +2235,7 @@ html[data-theme="dark"] .shbz-btn-dark:hover { filter: brightness(0.85); }
   border-radius: 12px;
   outline: none;
   resize: vertical;
-  transition: border-color 0.15s, box-shadow 0.15s;
+  transition: border-color var(--duration-fast), box-shadow var(--duration-fast);
 }
 .shbz-textarea:focus {
   border-color: transparent;
@@ -2263,7 +2266,7 @@ html[data-theme="dark"] .shbz-btn-dark:hover { filter: brightness(0.85); }
   font-size: 14px;
   font-weight: 700;
   cursor: pointer;
-  transition: filter 0.15s;
+  transition: filter var(--duration-fast);
 }
 .shbz-btn-danger-solid:hover { filter: brightness(1.08); }
 .shbz-btn-danger-solid:disabled { opacity: 0.55; cursor: not-allowed; }
@@ -2409,7 +2412,7 @@ html[data-theme="dark"] .ui-input {
   border: 1.5px solid var(--shbz-input-border);
   border-radius: 12px;
   color: var(--shbz-text-strong);
-  transition: border-color 0.15s, box-shadow 0.15s;
+  transition: border-color var(--duration-fast), box-shadow var(--duration-fast);
 }
 .ui-input:focus,
 html[data-theme="dark"] .ui-input:focus {
@@ -2882,7 +2885,7 @@ html[data-theme="dark"] .shbz-search input:not([type="checkbox"]):not([type="rad
   border-radius: 12px;
   outline: none;
   resize: vertical;
-  transition: border-color 0.15s, background 0.15s, box-shadow 0.15s;
+  transition: border-color var(--duration-fast), background var(--duration-fast), box-shadow var(--duration-fast);
 }
 .shbz-note-field:not(:placeholder-shown) { border-style: solid; }
 .shbz-note-field:focus {
@@ -2931,7 +2934,7 @@ html[data-theme="dark"] .shbz-search input:not([type="checkbox"]):not([type="rad
   line-height: 1;
   cursor: pointer;
   opacity: 0.55;
-  transition: opacity 0.15s, background 0.15s, border-color 0.15s;
+  transition: opacity var(--duration-fast), background var(--duration-fast), border-color var(--duration-fast);
 }
 .shbz-btn-danger-icon:hover {
   opacity: 1;
