@@ -1,10 +1,15 @@
 "use client";
 
-import { useEffect, useRef, useState, type DragEvent, type ReactNode } from "react";
+import { useEffect, useImperativeHandle, useRef, useState, type DragEvent, type ReactNode, type Ref } from "react";
 import { cx } from "@/lib/utils";
 
 /** Визуальная фаза дропзоны. Hover — четвёртое состояние, живёт в чистом CSS (:hover). */
 type DropzonePhase = "idle" | "drag" | "success";
+
+export type AnimatedDropzoneHandle = {
+  /** Проиграть подтверждение вручную — когда файл выбран кликом, а не дропом. */
+  confirm: () => void;
+};
 
 type AnimatedDropzoneProps = {
   /** Заголовок в спокойном состоянии (имя файла, лимит, приглашение). */
@@ -25,6 +30,8 @@ type AnimatedDropzoneProps = {
   className?: string;
   /** Скрытый file-input. */
   children?: ReactNode;
+  /** Доступ к confirm() для подтверждения выбора через диалог файлов. */
+  ref?: Ref<AnimatedDropzoneHandle>;
 };
 
 /** Сколько держится подтверждение: провал иконки (~320 мс) + галочка, затем возврат в idle. */
@@ -45,7 +52,8 @@ export function AnimatedDropzone({
   disabled,
   onDropFiles,
   className,
-  children
+  children,
+  ref
 }: AnimatedDropzoneProps) {
   const [phase, setPhase] = useState<DropzonePhase>("idle");
   const dragDepth = useRef(0);
@@ -65,6 +73,16 @@ export function AnimatedDropzone({
       successTimer.current = null;
     }
   };
+
+  // Подтверждение одинаковое для дропа и выбора кликом: анимация должна быть всегда.
+  const celebrate = () => {
+    clearSuccessTimer();
+    dragDepth.current = 0;
+    setPhase("success");
+    successTimer.current = setTimeout(() => setPhase("idle"), SUCCESS_HOLD_MS);
+  };
+
+  useImperativeHandle(ref, () => ({ confirm: celebrate }));
 
   const handleDragEnter = (event: DragEvent<HTMLLabelElement>) => {
     event.preventDefault();
@@ -109,8 +127,7 @@ export function AnimatedDropzone({
 
     // Сначала обработка файлов, потом визуальное подтверждение.
     onDropFiles(event.dataTransfer.files);
-    setPhase("success");
-    successTimer.current = setTimeout(() => setPhase("idle"), SUCCESS_HOLD_MS);
+    celebrate();
   };
 
   return (

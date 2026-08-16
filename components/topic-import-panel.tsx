@@ -2,7 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useRef, useState } from "react";
-import { AnimatedDropzone } from "@/components/animated-dropzone";
+import { AnimatedDropzone, type AnimatedDropzoneHandle } from "@/components/animated-dropzone";
 import { LatexAnswerPreview } from "@/components/latex-answer-preview";
 import { TopicImportPromptButton } from "@/components/topic-import-prompt-button";
 
@@ -70,6 +70,7 @@ function SummaryTile({ label, value, danger }: { label: string; value: number; d
 export function TopicImportPanel({ topicId, createTopic, hidePromptButton }: TopicImportPanelProps) {
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const dropzoneRef = useRef<AnimatedDropzoneHandle>(null);
 
   const [rawJson, setRawJson] = useState("");
   const [pasteOpen, setPasteOpen] = useState(false);
@@ -154,6 +155,7 @@ export function TopicImportPanel({ topicId, createTopic, hidePromptButton }: Top
       {!hidePromptButton ? <TopicImportPromptButton /> : null}
 
       <AnimatedDropzone
+        ref={dropzoneRef}
         className="flex cursor-pointer flex-col items-center gap-2.5 px-6 py-11 text-center"
         onDropFiles={(files) => {
           const dropped = files[0];
@@ -206,6 +208,8 @@ export function TopicImportPanel({ topicId, createTopic, hidePromptButton }: Top
             const file = event.target.files?.[0];
 
             if (file) {
+              // То же подтверждение, что при дропе: выбор через диалог — равноценный путь.
+              dropzoneRef.current?.confirm();
               void readFile(file);
             }
           }}

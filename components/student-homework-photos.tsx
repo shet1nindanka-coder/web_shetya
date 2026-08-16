@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { AnimatedDropzone } from "@/components/animated-dropzone";
+import { AnimatedDropzone, type AnimatedDropzoneHandle } from "@/components/animated-dropzone";
 import { DeleteButton } from "@/components/delete-button";
 import { cx } from "@/lib/utils";
 
@@ -28,6 +28,7 @@ type StudentHomeworkPhotosProps = {
 export function StudentHomeworkPhotos({ assignmentId, maxPhotos = MAX_PHOTOS, photos }: StudentHomeworkPhotosProps) {
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement | null>(null);
+  const dropzoneRef = useRef<AnimatedDropzoneHandle>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [pendingUploads, setPendingUploads] = useState<PendingUpload[]>([]);
@@ -152,6 +153,7 @@ export function StudentHomeworkPhotos({ assignmentId, maxPhotos = MAX_PHOTOS, ph
       {error ? <div className="ui-notice-error mb-4 rounded-[8px] px-4 py-3 text-sm">{error}</div> : null}
 
       <AnimatedDropzone
+        ref={dropzoneRef}
         className={cx(
           "flex flex-col items-center gap-2 px-6 py-7 text-center",
           atLimit ? "cursor-not-allowed" : "cursor-pointer"
@@ -186,7 +188,16 @@ export function StudentHomeworkPhotos({ assignmentId, maxPhotos = MAX_PHOTOS, ph
           multiple
           disabled={isUploading || atLimit}
           className="hidden"
-          onChange={(event) => void uploadPhotos(event.target.files)}
+          onChange={(event) => {
+            const files = event.target.files;
+
+            // То же подтверждение, что при дропе: выбор через диалог — равноценный путь.
+            if (files?.length) {
+              dropzoneRef.current?.confirm();
+            }
+
+            void uploadPhotos(files);
+          }}
         />
       </AnimatedDropzone>
 
