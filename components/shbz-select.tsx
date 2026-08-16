@@ -166,7 +166,8 @@ export function ShbzSelect({
               ref={menuRef}
               role="listbox"
               data-shbz-portal=""
-              className="fixed overflow-y-auto rounded-[12px] border p-1.5"
+              data-open-up={menuPosition.top === undefined ? "true" : "false"}
+              className="shbz-dropdown-panel fixed overflow-y-auto rounded-[12px] border p-1.5"
               style={{
                 top: menuPosition.top,
                 bottom: menuPosition.bottom,
