@@ -28,7 +28,7 @@
 | 008 | [Вспышка streak под reduced-motion](008-streak-burst-reduced-motion.md) | MEDIUM | 6 | DONE |
 | 009 | [Ползунок переключателя на transform](009-switch-knob-transform.md) | MEDIUM | 5 | DONE |
 | 010 | [Уборка: кривые в токены, убрать will-change](010-token-cleanup.md) | LOW | 7, 5 | DONE |
-| 011 | [Каскад появления в двух списках](011-group-entrance-stagger.md) | LOW | 7 | TODO |
+| 011 | [Каскад появления в двух списках](011-group-entrance-stagger.md) | LOW | 7 | DONE |
 | 012 | [Повторный запуск анимации streak](012-streak-motion-retrigger.md) | LOW | 4 | TODO |
 | 013 | [Повороты «галочек» на токен кривой](013-chevron-easing-token.md) | LOW | 2 | TODO |
 

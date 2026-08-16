@@ -5,6 +5,7 @@ import { useEffect, useRef, useState, useTransition } from "react";
 import { addGroupMemberAction, removeGroupMemberAction } from "@/actions/group";
 import { DeleteButton } from "@/components/delete-button";
 import { GroupMemberEditor } from "@/components/group-member-editor";
+import { cx } from "@/lib/utils";
 
 type GroupMember = {
   id: string;
@@ -109,10 +110,10 @@ export function GroupMembersManager({ groupId, members, allStudents }: GroupMemb
         </p>
       ) : (
         <div className="mb-3 space-y-3.5">
-          {members.map((member) => (
+          {members.map((member, index) => (
             <div
               key={member.id}
-              className="ui-fade-slide rounded-[16px] border px-5 py-4"
+              className={cx("ui-fade-slide rounded-[16px] border px-5 py-4", `ui-stagger-${Math.min(index + 1, 6)}`)}
               style={{ background: "var(--shbz-soft-bg)", borderColor: "var(--shbz-soft-border)" }}
             >
               <div className="flex flex-wrap items-center justify-between gap-3">
