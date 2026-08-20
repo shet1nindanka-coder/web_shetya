@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { UserRole } from "@prisma/client";
+import { LessonComposeCard } from "@/components/lesson-compose-card";
 import { LessonDeleteButton } from "@/components/lesson-delete-button";
 import { ShbzNumberSearch } from "@/components/shbz-number-search";
 import { ShbzPageHeader } from "@/components/shbz-page-header";
@@ -56,33 +57,19 @@ export default async function TeacherLessonsPage() {
         aside={<ShbzNumberSearch endpoint="/api/teacher/topics/find-number" />}
       />
 
-      {lessons.length > 0 ? (
-        <div className="mb-7">
-          <Link
-            href={`${prefix}/lessons/new`}
-            className="shbz-btn-primary inline-block px-[22px] py-[12px] text-[14.5px] no-underline"
-          >
-            Составить урок
-          </Link>
-        </div>
-      ) : null}
+      {/* Единый вход в создание урока — «пустое занятие», как во вкладке ученика. */}
+      <div className="mb-9">
+        <LessonComposeCard
+          href={`${prefix}/lessons/new`}
+          hint={
+            lessons.length === 0
+              ? "Уроков пока нет — выберите группу или ученика, и ИИ соберёт набор задач каждому."
+              : "Пустое занятие: выберите группу или ученика — ИИ-подбор или ручной выбор номеров."
+          }
+        />
+      </div>
 
-      {lessons.length === 0 ? (
-        <div className="shbz-card px-6 py-10 text-center">
-          <p className="text-lg font-bold" style={{ color: "var(--shbz-text-strong)" }}>
-            Уроков пока нет.
-          </p>
-          <p className="mt-1.5 text-sm" style={{ color: "var(--shbz-text-muted)" }}>
-            Нажмите «Составить урок», выберите группу или ученика — ИИ соберёт персональный набор задач каждому.
-          </p>
-          <Link
-            href={`${prefix}/lessons/new`}
-            className="shbz-btn-primary mt-5 inline-block px-[26px] py-[13px] text-[15px] no-underline"
-          >
-            Составить урок
-          </Link>
-        </div>
-      ) : (
+      {lessons.length === 0 ? null : (
         <div className="space-y-9">
           {sections.map((section) => (
             <section key={section.key}>

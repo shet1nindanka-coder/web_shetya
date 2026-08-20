@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 import { DeleteButton } from "@/components/delete-button";
+import { LessonComposeCard } from "@/components/lesson-compose-card";
 import { LessonManualAdd, type LessonBankTopic } from "@/components/lesson-manual-add";
 import { ResultToggle } from "@/components/lesson-result-toggle";
 
@@ -296,29 +297,14 @@ export function TeacherStudentLessons({
 
       {/* «Пустое занятие» всегда первое в списке: приглашение собрать новое,
           клик ведёт на страницу создания (решение владельца вместо отдельной вкладки). */}
-      <Link
+      <LessonComposeCard
         href={composeHref}
-        className="flex items-center gap-3.5 rounded-[16px] border-[1.5px] border-dashed px-5 py-4 no-underline transition hover:bg-[var(--shbz-tab-hover)]"
-        style={{ borderColor: "var(--shbz-input-border)" }}
-      >
-        <span
-          className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-[20px] font-bold"
-          style={{ background: "var(--shbz-green-soft)", color: "var(--shbz-green-text)" }}
-          aria-hidden="true"
-        >
-          +
-        </span>
-        <span className="min-w-0">
-          <span className="block text-[15px] font-bold" style={{ color: "var(--shbz-text-strong)" }}>
-            Составить занятие
-          </span>
-          <span className="ui-hint block text-xs" style={{ color: "var(--shbz-text-muted)" }}>
-            {localLessons.length === 0
-              ? "Занятий пока не было — соберите первое: набор и итоги появятся здесь."
-              : "Пустое занятие: выберите номера вручную или запустите ИИ-подбор."}
-          </span>
-        </span>
-      </Link>
+        hint={
+          localLessons.length === 0
+            ? "Занятий пока не было — соберите первое: набор и итоги появятся здесь."
+            : "Пустое занятие: ИИ-подбор или ручной выбор номеров."
+        }
+      />
 
       {localLessons.map((lesson) => {
         const marked = lesson.items.filter((item) => item.result !== null).length;
