@@ -4,6 +4,7 @@ import { SectionCard } from "@/components/section-card";
 import { TeacherHomeworkAssignBoard } from "@/components/teacher-homework-assign-board";
 import { requireUser } from "@/lib/auth";
 import { getTeacherStudentDetail } from "@/lib/platform-data";
+import { prisma } from "@/lib/prisma";
 import { toIsoDateTimeString } from "@/lib/utils";
 
 type TeacherStudentAssignPageProps = {
@@ -27,6 +28,12 @@ export default async function TeacherStudentAssignPage({ params }: TeacherStuden
     throw error;
   }
 
+  // Условия задач для карточек выбора; .catch — колонки может не быть до миграции.
+  const conditions = await prisma.topicHomeworkNumber
+    .findMany({ select: { id: true, conditionLatex: true } })
+    .catch(() => [] as Array<{ id: string; conditionLatex: string | null }>);
+  const conditionById = new Map(conditions.map((entry) => [entry.id, entry.conditionLatex]));
+
   return (
     <SectionCard title="Выдать домашнее задание">
       {!data.deadlinesEnabled ? (
@@ -48,7 +55,8 @@ export default async function TeacherStudentAssignPage({ params }: TeacherStuden
               id: number.id,
               number: number.number,
               status: number.studentStatus?.status ?? null,
-              deadlineAt: toIsoDateTimeString(number.studentStatus?.deadlineAt ?? null)
+              deadlineAt: toIsoDateTimeString(number.studentStatus?.deadlineAt ?? null),
+              conditionLatex: conditionById.get(number.id) ?? null
             }))
           }))}
         />

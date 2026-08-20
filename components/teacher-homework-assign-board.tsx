@@ -4,6 +4,7 @@ import { HomeworkNumberStatus } from "@prisma/client";
 import { useMemo, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { HomeworkStatusBadge } from "@/components/homework-status-badge";
+import { LatexAnswerPreview } from "@/components/latex-answer-preview";
 import { ShbzDateTimePicker } from "@/components/shbz-datetime-picker";
 import { ShbzSelect } from "@/components/shbz-select";
 import { cx } from "@/lib/utils";
@@ -17,6 +18,7 @@ type AssignBoardTopic = {
     number: string;
     status: HomeworkNumberStatus | null;
     deadlineAt: string | null;
+    conditionLatex?: string | null;
   }>;
 };
 
@@ -246,6 +248,12 @@ export function TeacherHomeworkAssignBoard({ studentId, topics }: TeacherHomewor
               <p className="teacher-number-title mt-3 text-lg font-semibold text-[var(--theme-text-strong)]">
                 № {number.number}
               </p>
+              {number.conditionLatex ? (
+                // Содержание задания, чтобы выдавать не вслепую; длинные условия обрезаются.
+                <div className="mt-2 max-h-32 overflow-hidden text-left text-sm">
+                  <LatexAnswerPreview value={number.conditionLatex} />
+                </div>
+              ) : null}
               {number.deadlineAt ? (
                 <p className="ui-copy-muted mt-2 text-xs leading-5">Уже в ДЗ с дедлайном</p>
               ) : null}
