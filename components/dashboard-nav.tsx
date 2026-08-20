@@ -111,6 +111,11 @@ export function DashboardNav({ user, studentStreak }: DashboardNavProps) {
   const liveStreak = useStudentStreak();
   const streakValue = liveStreak?.streak ?? studentStreak;
   const items = isStudent ? studentItems : user.role === UserRole.DEVELOPER ? developerItems : teacherItems;
+  // На десктопе «настройки» живут в кружке с шестерёнкой у профиля,
+  // освобождая слот в таббаре; в мобильном меню остаются пунктом списка.
+  const settingsItem = items.find((item) => item.href.endsWith("/settings")) ?? null;
+  const tabbarItems = items.filter((item) => item !== settingsItem);
+  const settingsActive = settingsItem ? settingsItem.match(pathname, searchParams) : false;
 
   const closeMobile = useCallback(() => setMobileOpen(false), []);
 
@@ -142,9 +147,9 @@ export function DashboardNav({ user, studentStreak }: DashboardNavProps) {
         </Link>
 
         {/* Таббар */}
-        {items.length > 0 ? (
+        {tabbarItems.length > 0 ? (
           <nav className="shbz-tabbar order-3 mx-auto hidden w-auto md:inline-flex xl:order-none xl:mx-0" aria-label="Разделы">
-            {items.map((item) => (
+            {tabbarItems.map((item) => (
               <Link
                 key={item.href}
                 href={item.href}
@@ -177,6 +182,35 @@ export function DashboardNav({ user, studentStreak }: DashboardNavProps) {
             </div>
           </div>
           {isStudent ? <StudentNotificationsBell /> : null}
+          {settingsItem ? (
+            <Link
+              href={settingsItem.href}
+              prefetch
+              aria-label="Настройки"
+              aria-current={settingsActive ? "page" : undefined}
+              className="flex h-10 w-10 items-center justify-center rounded-full border-[1.5px] transition-colors"
+              style={{
+                borderColor: settingsActive ? "var(--shbz-text-strong)" : "var(--shbz-outline-border)",
+                color: "var(--shbz-text-strong)",
+                background: settingsActive ? "var(--shbz-tab-hover)" : undefined
+              }}
+            >
+              <svg
+                width="18"
+                height="18"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.7"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                aria-hidden="true"
+              >
+                <circle cx="12" cy="12" r="3.2" />
+                <path d="M19.4 15a1.7 1.7 0 0 0 .34 1.87l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.7 1.7 0 0 0-1.87-.34 1.7 1.7 0 0 0-1.03 1.56V21a2 2 0 1 1-4 0v-.09a1.7 1.7 0 0 0-1.11-1.56 1.7 1.7 0 0 0-1.87.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.7 1.7 0 0 0 .34-1.87 1.7 1.7 0 0 0-1.56-1.03H3a2 2 0 1 1 0-4h.09a1.7 1.7 0 0 0 1.56-1.11 1.7 1.7 0 0 0-.34-1.87l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.7 1.7 0 0 0 1.87.34h.01A1.7 1.7 0 0 0 10 3.09V3a2 2 0 1 1 4 0v.09a1.7 1.7 0 0 0 1.03 1.56 1.7 1.7 0 0 0 1.87-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.7 1.7 0 0 0-.34 1.87v.01A1.7 1.7 0 0 0 20.91 10H21a2 2 0 1 1 0 4h-.09a1.7 1.7 0 0 0-1.51 1z" />
+              </svg>
+            </Link>
+          ) : null}
           <form action={logoutAction}>
             <button type="submit" className="shbz-btn-outline">
               Выйти

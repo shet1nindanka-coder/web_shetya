@@ -58,7 +58,8 @@ export default async function TeacherLessonsPage() {
       />
 
       {/* Единый вход в создание урока — «пустое занятие», как во вкладке ученика. */}
-      <div className="mb-9">
+      <section className="mb-9">
+        <h2 className="shbz-section-title">Составить занятие</h2>
         <LessonComposeCard
           href={`${prefix}/lessons/new`}
           hint={
@@ -67,7 +68,7 @@ export default async function TeacherLessonsPage() {
               : "Пустое занятие: выберите группу или ученика — ИИ-подбор или ручной выбор номеров."
           }
         />
-      </div>
+      </section>
 
       {lessons.length === 0 ? null : (
         <div className="space-y-9">
