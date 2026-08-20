@@ -174,6 +174,15 @@ export function TeacherHomeworkReviewList({ studentId, assignments }: TeacherHom
   const router = useRouter();
   const [savingStatusId, setSavingStatusId] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  // Режим урока: ноутбук повёрнут к ученику — служебная диагностика
+  // (списывание, инъекции) временно прячется целиком.
+  const [lessonMode, setLessonMode] = useState(false);
+
+  const hasDiagnostics = assignments.some((assignment) =>
+    assignment.checks.some((check) =>
+      check.results.some((result) => result.copySuspected || result.injectionSuspected)
+    )
+  );
 
   const setNumberStatus = async (homeworkNumberId: string, status: HomeworkNumberStatus | null) => {
     setSavingStatusId(homeworkNumberId);
@@ -240,9 +249,52 @@ export function TeacherHomeworkReviewList({ studentId, assignments }: TeacherHom
         const latestDone = assignment.checks.find((check) => check.status === "DONE") ?? null;
         const aiByNumber = new Map(latestDone?.results.map((result) => [result.number, result]) ?? []);
         const lastCheckedLabel = formatDateTime(latestDone?.checkedAt ?? null);
+        const injectionResults = latestDone?.results.filter((result) => result.injectionSuspected) ?? [];
 
         return (
           <article key={assignment.id} className="teacher-topic-card rounded-[16px] border p-5 sm:p-6">
+            {injectionResults.length > 0 && !lessonMode ? (
+              // Сигнал безопасности, а не оценка: своя полоса и нейтрально-строгая
+              // палитра, чтобы не путался с «ИИ: Ошибка» (цвет INCORRECT запрещён).
+              <div
+                className="mb-4 rounded-[12px] border-[1.5px] px-4 py-3.5"
+                style={{ borderColor: "var(--shbz-text-strong)", background: "var(--shbz-soft-bg)" }}
+              >
+                <p
+                  className="flex items-center gap-2 text-sm font-bold"
+                  style={{ color: "var(--shbz-text-strong)" }}
+                >
+                  <svg
+                    width="16"
+                    height="16"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    aria-hidden="true"
+                  >
+                    <path d="M12 3l9 4v5c0 5-3.8 8.4-9 9-5.2-.6-9-4-9-9V7l9-4z" strokeLinejoin="round" />
+                    <path d="M12 9v4" strokeLinecap="round" />
+                    <circle cx="12" cy="16" r="0.5" fill="currentColor" />
+                  </svg>
+                  На фото найдена надпись-инструкция для ИИ
+                </p>
+                {injectionResults.map((result) =>
+                  result.injectionNote ? (
+                    <blockquote
+                      key={result.number}
+                      className="mt-2 rounded-[8px] px-3 py-2 font-mono text-xs leading-5"
+                      style={{ background: "var(--shbz-tab-hover)", color: "var(--shbz-text-strong)" }}
+                    >
+                      № {result.number}: {result.injectionNote}
+                    </blockquote>
+                  ) : null
+                )}
+                <p className="mt-2 text-xs font-semibold" style={{ color: "var(--shbz-text-muted)" }}>
+                  Вердикты этой проверки могут быть недостоверны.
+                </p>
+              </div>
+            ) : null}
             <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
               <div className="min-w-0 space-y-1.5">
                 <div className="flex flex-wrap items-center gap-2">
@@ -401,24 +453,6 @@ export function TeacherHomeworkReviewList({ studentId, assignments }: TeacherHom
                               {aiMeta.chip}
                             </span>
                           ) : null}
-                          {ai?.copySuspected ? (
-                            <span
-                              className="rounded-[8px] px-2.5 py-0.5 text-[11.5px] font-bold"
-                              style={{ background: "var(--shbz-cal-ok-bg)", color: "var(--shbz-streak-text)" }}
-                              title={ai.copyReason ?? undefined}
-                            >
-                              Похоже на списанное
-                            </span>
-                          ) : null}
-                          {ai?.injectionSuspected ? (
-                            <span
-                              className="rounded-[8px] px-2.5 py-0.5 text-[11.5px] font-bold"
-                              style={{ background: "var(--shbz-danger-bg)", color: "var(--shbz-danger-text)" }}
-                              title={ai.injectionNote ?? undefined}
-                            >
-                              Надпись-инструкция на фото
-                            </span>
-                          ) : null}
                           <HomeworkStatusBadge status={number.status} />
                         </div>
 
@@ -428,15 +462,23 @@ export function TeacherHomeworkReviewList({ studentId, assignments }: TeacherHom
                           </p>
                         ) : null}
                         {ai?.comment ? <p className="ui-copy-muted mt-1 text-sm leading-6">{ai.comment}</p> : null}
-                        {ai?.copySuspected && ai.copyReason ? (
-                          <p className="mt-1 text-xs leading-5" style={{ color: "var(--shbz-streak-text)" }}>
-                            Подозрение: {ai.copyReason}
-                          </p>
-                        ) : null}
-                        {ai?.injectionSuspected && ai.injectionNote ? (
-                          <p className="mt-1 text-xs leading-5" style={{ color: "var(--shbz-danger-text)" }}>
-                            Надпись на фото: {ai.injectionNote}
-                          </p>
+                        {!lessonMode && ai && (ai.copySuspected || ai.injectionSuspected) ? (
+                          <details className="mt-2 rounded-[8px]" style={{ background: "var(--shbz-tab-hover)" }}>
+                            <summary
+                              className="cursor-pointer list-none px-3 py-1.5 text-xs font-bold [&::-webkit-details-marker]:hidden"
+                              style={{ color: "var(--shbz-kicker)" }}
+                            >
+                              Служебная диагностика · видно только вам
+                            </summary>
+                            <div className="space-y-1 px-3 pb-2 text-xs leading-5" style={{ color: "var(--shbz-text-muted)" }}>
+                              {ai.copySuspected ? (
+                                <p>Похоже на списанное{ai.copyReason ? `: ${ai.copyReason}` : "."}</p>
+                              ) : null}
+                              {ai.injectionSuspected ? (
+                                <p>Надпись-инструкция на фото{ai.injectionNote ? `: ${ai.injectionNote}` : "."}</p>
+                              ) : null}
+                            </div>
+                          </details>
                         ) : null}
                         {number.note ? (
                           <div className="ui-card-soft mt-2 rounded-[12px] px-3 py-1.5">
@@ -643,6 +685,19 @@ export function TeacherHomeworkReviewList({ studentId, assignments }: TeacherHom
   return (
     <div className="space-y-4">
       {error ? <div className="ui-notice-error rounded-[8px] px-4 py-3 text-sm">{error}</div> : null}
+
+      {hasDiagnostics ? (
+        <div className="flex justify-end">
+          <button
+            type="button"
+            aria-pressed={lessonMode}
+            onClick={() => setLessonMode((value) => !value)}
+            className="shbz-btn-outline"
+          >
+            {lessonMode ? "Показать служебную диагностику" : "Скрыть диагностику на время урока"}
+          </button>
+        </div>
+      ) : null}
 
       {activeAssignments.map((assignment) => renderAssignmentCard(assignment))}
 
