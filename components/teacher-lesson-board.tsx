@@ -348,7 +348,7 @@ export function TeacherLessonBoard({ prefix, aiAvailable, lesson, bank }: Teache
 
               {stale ? (
                 <div className="shbz-notice-error mt-4 px-4 py-3 text-sm">
-                  Не сгенерировано: похоже, очередь была сброшена рестартом.{" "}
+                  План не собрался: задача потерялась при перезапуске сервера. Нажмите «Повторить» — соберём заново.{" "}
                   <button type="button" className="font-bold underline" onClick={() => void regenerate(participant.id)}>
                     Повторить
                   </button>

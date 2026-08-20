@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { humanizeSolutionCheckError } from "@/lib/solution-check-error-text";
 
 type CheckResult = {
   number: string;
@@ -162,7 +163,7 @@ export function StudentHomeworkCheck({ assignmentId, hasPhotos, initialCheck }: 
 
       {check?.status === "FAILED" ? (
         <p className="mt-4 text-sm" style={{ color: "var(--shbz-danger-text)" }}>
-          Проверка не удалась: {check.error ?? "неизвестная ошибка"}. Попробуйте ещё раз.
+          {humanizeSolutionCheckError(check.error)}
         </p>
       ) : null}
 
