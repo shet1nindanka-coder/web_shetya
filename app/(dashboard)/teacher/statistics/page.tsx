@@ -227,6 +227,7 @@ export default async function TeacherStatisticsPage({ searchParams }: TeacherSta
             href={item.href}
             className="shbz-seg-btn shbz-seg-btn--plain"
             data-active={item.key === view}
+            aria-current={item.key === view ? "page" : undefined}
           >
             {item.label}
           </Link>

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useFormStatus } from "react-dom";
 import { loginAction } from "@/actions/auth";
 import { MAX_PASSWORD_LENGTH } from "@/lib/password-policy";
 import { MAX_LOGIN_LENGTH } from "@/lib/utils";
@@ -16,6 +17,22 @@ const errorMap: Record<string, string> = {
 type LoginFormProps = {
   error?: string;
 };
+
+// Пока server action входа выполняется, кнопка блокируется: двойное нажатие
+// не сжигает попытку из лимита входа.
+function LoginSubmitButton() {
+  const { pending } = useFormStatus();
+
+  return (
+    <button
+      type="submit"
+      disabled={pending}
+      className="shbz-btn-primary mt-1.5 h-[54px] w-full text-base"
+    >
+      {pending ? "Входим…" : "Войти"}
+    </button>
+  );
+}
 
 export function LoginForm({ error }: LoginFormProps) {
   const [showPassword, setShowPassword] = useState(false);
@@ -88,9 +105,7 @@ export function LoginForm({ error }: LoginFormProps) {
             </div>
           ) : null}
 
-          <button type="submit" className="shbz-btn-primary mt-1.5 h-[54px] w-full text-base">
-            Войти
-          </button>
+          <LoginSubmitButton />
         </form>
       </div>
     </div>

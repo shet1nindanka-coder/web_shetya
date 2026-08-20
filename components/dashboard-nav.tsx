@@ -141,7 +141,14 @@ export function DashboardNav({ user, studentStreak }: DashboardNavProps) {
         {items.length > 0 ? (
           <nav className="shbz-tabbar order-3 mx-auto hidden w-auto md:inline-flex xl:order-none xl:mx-0" aria-label="Разделы">
             {items.map((item) => (
-              <Link key={item.href} href={item.href} prefetch data-active={item.match(pathname, searchParams)} className="shbz-tab">
+              <Link
+                key={item.href}
+                href={item.href}
+                prefetch
+                data-active={item.match(pathname, searchParams)}
+                aria-current={item.match(pathname, searchParams) ? "page" : undefined}
+                className="shbz-tab"
+              >
                 {item.label}
               </Link>
             ))}
@@ -216,6 +223,7 @@ export function DashboardNav({ user, studentStreak }: DashboardNavProps) {
                     key={item.href}
                     href={item.href}
                     data-active={item.match(pathname, searchParams)}
+                    aria-current={item.match(pathname, searchParams) ? "page" : undefined}
                     className="shbz-tab"
                   >
                     {item.label}

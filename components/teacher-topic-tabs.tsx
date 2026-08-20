@@ -25,6 +25,7 @@ export function TeacherTopicTabs({ topicId }: TeacherTopicTabsProps) {
           href={item.href}
           prefetch
           data-active={item.isActive}
+          aria-current={item.isActive ? "page" : undefined}
           className="shbz-seg-btn shbz-seg-btn--plain"
         >
           {item.label}

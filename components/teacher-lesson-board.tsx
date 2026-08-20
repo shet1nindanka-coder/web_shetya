@@ -67,8 +67,10 @@ function isParticipantPending(participant: LessonBoardParticipant) {
   return !participant.planGeneratedAt && !participant.planError;
 }
 
-function isParticipantStale(participant: LessonBoardParticipant) {
-  return isParticipantPending(participant) && Date.now() - new Date(participant.createdAt).getTime() > STALE_PLAN_MS;
+// «Сейчас» приходит параметром из тикающего состояния: без него зависший
+// участник никогда не перерисуется и stale не наступит.
+function isParticipantStale(participant: LessonBoardParticipant, now: number) {
+  return isParticipantPending(participant) && now - new Date(participant.createdAt).getTime() > STALE_PLAN_MS;
 }
 
 export function TeacherLessonBoard({ prefix, aiAvailable, lesson, bank }: TeacherLessonBoardProps) {
@@ -76,6 +78,7 @@ export function TeacherLessonBoard({ prefix, aiAvailable, lesson, bank }: Teache
   const [participants, setParticipants] = useState(lesson.participants);
   const [notice, setNotice] = useState<{ tone: "success" | "error"; text: string } | null>(null);
   const [busyParticipantId, setBusyParticipantId] = useState<string | null>(null);
+  const [now, setNow] = useState(() => Date.now());
   const [, startTransition] = useTransition();
   const lastSignature = useRef("");
 
@@ -83,9 +86,18 @@ export function TeacherLessonBoard({ prefix, aiAvailable, lesson, bank }: Teache
     setParticipants(lesson.participants);
   }, [lesson.participants]);
 
+  // Тик раз в 30 секунд, чтобы зависшая генерация со временем стала stale на экране.
+  useEffect(() => {
+    const timer = setInterval(() => setNow(Date.now()), 30_000);
+
+    return () => clearInterval(timer);
+  }, []);
+
   const pendingCount = useMemo(
-    () => participants.filter((participant) => isParticipantPending(participant) && !isParticipantStale(participant)).length,
-    [participants]
+    () =>
+      participants.filter((participant) => isParticipantPending(participant) && !isParticipantStale(participant, now))
+        .length,
+    [participants, now]
   );
   const readyCount = participants.filter((participant) => participant.planGeneratedAt).length;
 
@@ -262,7 +274,11 @@ export function TeacherLessonBoard({ prefix, aiAvailable, lesson, bank }: Teache
           Выдать ДЗ по итогам занятия
         </a>
         {pendingCount > 0 ? (
-          <span className="inline-flex items-center gap-2 text-sm font-semibold" style={{ color: "var(--shbz-text-muted)" }}>
+          <span
+            role="status"
+            className="inline-flex items-center gap-2 text-sm font-semibold"
+            style={{ color: "var(--shbz-text-muted)" }}
+          >
             <span className="shbz-spinner" style={{ color: "var(--shbz-accent-solid)" }} aria-hidden />
             Готово {readyCount} из {participants.length}…
           </span>
@@ -301,8 +317,8 @@ export function TeacherLessonBoard({ prefix, aiAvailable, lesson, bank }: Teache
 
       <div className="space-y-5">
         {participants.map((participant) => {
-          const pending = isParticipantPending(participant) && !isParticipantStale(participant);
-          const stale = isParticipantStale(participant);
+          const pending = isParticipantPending(participant) && !isParticipantStale(participant, now);
+          const stale = isParticipantStale(participant, now);
           const busy = busyParticipantId === participant.id;
           const mainItems = participant.items.filter((item) => !item.isExtra);
           const extraItems = participant.items.filter((item) => item.isExtra);

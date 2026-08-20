@@ -8,6 +8,9 @@ import { LessonManualAdd, type LessonBankTopic } from "@/components/lesson-manua
 import { ResultToggle } from "@/components/lesson-result-toggle";
 
 const POLL_INTERVAL_MS = 2500;
+// Столько наблюдаем «ИИ подбирает…» на клиенте, прежде чем честно признать,
+// что генерация зависла (сервер не отдаёт сюда время постановки в очередь).
+const STALE_PLAN_MS = 15 * 60_000;
 
 type StudentLessonItem = {
   id: string;
@@ -92,12 +95,42 @@ export function TeacherStudentLessons({
   const [pendingIds, setPendingIds] = useState<Set<string>>(
     () => new Set(lessons.filter((lesson) => lesson.planPending).map((lesson) => lesson.id))
   );
+  const [now, setNow] = useState(() => Date.now());
+  const pendingSinceRef = useRef<Map<string, number>>(new Map());
   const [, startTransition] = useTransition();
 
   useEffect(() => {
     setLocalLessons(lessons);
     setPendingIds(new Set(lessons.filter((lesson) => lesson.planPending).map((lesson) => lesson.id)));
   }, [lessons]);
+
+  // Детекция зависшей генерации — как на доске урока: тикающее «сейчас»
+  // против момента, когда мы впервые увидели занятие в состоянии pending.
+  useEffect(() => {
+    const since = pendingSinceRef.current;
+
+    for (const id of pendingIds) {
+      if (!since.has(id)) {
+        since.set(id, Date.now());
+      }
+    }
+
+    for (const id of [...since.keys()]) {
+      if (!pendingIds.has(id)) {
+        since.delete(id);
+      }
+    }
+  }, [pendingIds]);
+
+  useEffect(() => {
+    if (pendingIds.size === 0) {
+      return;
+    }
+
+    const timer = setInterval(() => setNow(Date.now()), 30_000);
+
+    return () => clearInterval(timer);
+  }, [pendingIds]);
 
   // Поллинг генерации: как на доске урока, пока есть незавершённые пересборки.
   useEffect(() => {
@@ -272,7 +305,9 @@ export function TeacherStudentLessons({
       {localLessons.map((lesson) => {
         const marked = lesson.items.filter((item) => item.result !== null).length;
         const expanded = expandedIds.has(lesson.id);
-        const pending = pendingIds.has(lesson.id);
+        const pendingSince = pendingSinceRef.current.get(lesson.id);
+        const stale = pendingIds.has(lesson.id) && pendingSince !== undefined && now - pendingSince > STALE_PLAN_MS;
+        const pending = pendingIds.has(lesson.id) && !stale;
         const busy = busyLessonId === lesson.id;
         const mainItems = lesson.items.filter((item) => !item.isExtra);
         const extraItems = lesson.items.filter((item) => item.isExtra);
@@ -371,12 +406,23 @@ export function TeacherStudentLessons({
               <div className="mt-2">
                 {pending ? (
                   <p
+                    role="status"
                     className="mt-2 inline-flex items-center gap-2.5 text-sm font-medium"
                     style={{ color: "var(--shbz-text-muted)" }}
                   >
                     <span className="shbz-spinner" style={{ color: "var(--shbz-accent-solid)" }} aria-hidden />
                     ИИ подбирает задания…
                   </p>
+                ) : null}
+
+                {stale ? (
+                  <div className="shbz-notice-error mb-3 mt-2 px-4 py-3 text-sm">
+                    План не собрался: задача, похоже, потерялась при перезапуске сервера. Нажмите «Повторить» —
+                    соберём заново.{" "}
+                    <button type="button" className="font-bold underline" onClick={() => void regenerate(lesson)}>
+                      Повторить
+                    </button>
+                  </div>
                 ) : null}
 
                 {lesson.planError && !pending ? (

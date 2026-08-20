@@ -3,6 +3,10 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { humanizeSolutionCheckError } from "@/lib/solution-check-error-text";
+import { formatDateTime } from "@/lib/utils";
+
+const POLL_BASE_DELAY_MS = 4000;
+const MAX_POLL_FAILURES = 5;
 
 type CheckResult = {
   number: string;
@@ -57,9 +61,11 @@ export function StudentHomeworkCheck({ assignmentId, hasPhotos, initialCheck }: 
   const [check, setCheck] = useState<CheckSnapshot | null>(initialCheck);
   const [isStarting, setIsStarting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [pollBroken, setPollBroken] = useState(false);
   const pollTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const pollFailuresRef = useRef(0);
 
-  const isRunning = check?.status === "PENDING" || check?.status === "CHECKING";
+  const isRunning = !pollBroken && (check?.status === "PENDING" || check?.status === "CHECKING");
 
   const doneResults = check?.status === "DONE" ? check.results : [];
   const correctCount = doneResults.filter((result) => result.verdict === "CORRECT").length;
@@ -67,6 +73,8 @@ export function StudentHomeworkCheck({ assignmentId, hasPhotos, initialCheck }: 
   const uncertainCount = doneResults.filter((result) => result.verdict === "UNCERTAIN").length;
 
   const poll = useCallback(async () => {
+    let failed = false;
+
     try {
       const response = await fetch(
         `/api/student/homework-checks?assignmentId=${encodeURIComponent(assignmentId)}&consume=1`,
@@ -75,6 +83,7 @@ export function StudentHomeworkCheck({ assignmentId, hasPhotos, initialCheck }: 
       const result = (await response.json().catch(() => null)) as { check?: CheckSnapshot | null } | null;
 
       if (response.ok && result) {
+        pollFailuresRef.current = 0;
         const nextCheck = result.check ?? null;
         setCheck(nextCheck);
 
@@ -82,12 +91,26 @@ export function StudentHomeworkCheck({ assignmentId, hasPhotos, initialCheck }: 
           router.refresh();
           return;
         }
+      } else {
+        // 401/429/500 — не «пробуем вечно»: считаем неудачи и растим паузу.
+        failed = true;
       }
     } catch {
-      // Сеть моргнула — попробуем в следующем тике.
+      failed = true;
     }
 
-    pollTimerRef.current = setTimeout(() => void poll(), 4000);
+    if (failed) {
+      pollFailuresRef.current += 1;
+
+      if (pollFailuresRef.current >= MAX_POLL_FAILURES) {
+        // Терминальное состояние вместо вечного «Проверяется…».
+        setPollBroken(true);
+        return;
+      }
+    }
+
+    const delay = POLL_BASE_DELAY_MS * Math.min(2 ** pollFailuresRef.current, 8);
+    pollTimerRef.current = setTimeout(() => void poll(), delay);
   }, [assignmentId, router]);
 
   useEffect(() => {
@@ -106,6 +129,8 @@ export function StudentHomeworkCheck({ assignmentId, hasPhotos, initialCheck }: 
   const startCheck = async () => {
     setIsStarting(true);
     setError(null);
+    setPollBroken(false);
+    pollFailuresRef.current = 0;
 
     try {
       const response = await fetch("/api/student/homework-checks", {
@@ -155,9 +180,26 @@ export function StudentHomeworkCheck({ assignmentId, hasPhotos, initialCheck }: 
 
       {error ? <div className="ui-notice-error mt-4 rounded-[8px] px-4 py-3 text-sm">{error}</div> : null}
 
+      {/* Живой регион: скринридер узнаёт о запуске и завершении многоминутной проверки. */}
+      <p role="status" className="sr-only">
+        {isRunning
+          ? "Проверка решения выполняется."
+          : check?.status === "DONE"
+            ? `Проверка завершена. Верно: ${correctCount}, перерешать: ${incorrectCount}, на проверке учителя: ${uncertainCount}.`
+            : check?.status === "FAILED"
+              ? "Проверка не удалась."
+              : ""}
+      </p>
+
       {isRunning ? (
         <p className="mt-4 text-sm font-semibold" style={{ color: "var(--shbz-kicker)" }}>
           Решение проверяется — обычно это занимает до минуты. Страница обновится сама.
+        </p>
+      ) : null}
+
+      {pollBroken ? (
+        <p className="mt-4 text-sm" style={{ color: "var(--shbz-danger-text)" }}>
+          Не получается узнать статус проверки — соединение с сервером прерывается. Обновите страницу через минуту.
         </p>
       ) : null}
 
@@ -169,6 +211,11 @@ export function StudentHomeworkCheck({ assignmentId, hasPhotos, initialCheck }: 
 
       {check?.status === "DONE" && check.results.length > 0 ? (
         <div className="mt-5">
+          {check.checkedAt ? (
+            <p className="mb-2 text-xs font-semibold" style={{ color: "var(--shbz-kicker)" }}>
+              Проверено: {formatDateTime(check.checkedAt)}
+            </p>
+          ) : null}
           <div className="mb-3 flex flex-wrap gap-2">
             {correctCount > 0 ? (
               <span
