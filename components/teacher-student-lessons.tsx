@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useState, useTransition } from "react";
+import { useCallback, useEffect, useRef, useState, useTransition } from "react";
 import { DeleteButton } from "@/components/delete-button";
 import { LessonManualAdd, type LessonBankTopic } from "@/components/lesson-manual-add";
 import { ResultToggle } from "@/components/lesson-result-toggle";
