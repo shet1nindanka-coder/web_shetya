@@ -16,11 +16,6 @@ type TeacherLessonCreateFormProps = {
 const MAX_TEACHER_NOTE = 500;
 const MAX_TOPIC_SUGGESTIONS = 8;
 
-const DIFFICULTY_OPTIONS = [
-  { value: "", label: "Авто" },
-  ...Array.from({ length: 10 }, (_, index) => ({ value: String(index + 1), label: `${index + 1} из 10` }))
-];
-
 const SPEED_OPTIONS = [
   { value: "", label: "Не указана" },
   ...Array.from({ length: 10 }, (_, index) => ({ value: String(index + 1), label: String(index + 1) }))
@@ -35,7 +30,6 @@ export function TeacherLessonCreateForm({ prefix, groupId, members, topics }: Te
   const [topicQuery, setTopicQuery] = useState("");
   const [isTopicDropdownOpen, setIsTopicDropdownOpen] = useState(false);
   const topicBoxRef = useRef<HTMLDivElement | null>(null);
-  const [targetDifficulty, setTargetDifficulty] = useState("");
   const [teacherNote, setTeacherNote] = useState("");
   const [selectedStudentIds, setSelectedStudentIds] = useState<string[]>(members.map((member) => member.id));
   const [speeds, setSpeeds] = useState<Record<string, string>>(
@@ -95,17 +89,6 @@ export function TeacherLessonCreateForm({ prefix, groupId, members, topics }: Te
     return () => document.removeEventListener("mousedown", onOutsideClick);
   }, []);
 
-  // Бейдж на свёрнутом блоке: сколько параметров отличается от дефолтов.
-  const changedParamsCount = [
-    title.trim() !== "",
-    duration !== "60",
-    targetDifficulty !== "",
-    selectedTopicIds.length > 0,
-    teacherNote.trim() !== "",
-    selectedStudentIds.length !== members.length,
-    members.some((member) => (speeds[member.id] ?? "") !== (member.speed ? String(member.speed) : ""))
-  ].filter(Boolean).length;
-
   const submit = () => {
     setError(null);
 
@@ -121,7 +104,8 @@ export function TeacherLessonCreateForm({ prefix, groupId, members, topics }: Te
             startsAt: startsAt || undefined,
             durationMinutes: Number(duration) || 60,
             topicIds: selectedTopicIds,
-            targetDifficulty: targetDifficulty === "" ? null : Number(targetDifficulty),
+            // Целевая сложность убрана из формы (решение владельца): всегда «Авто».
+            targetDifficulty: null,
             teacherNote: teacherNote.trim(),
             speeds: Object.fromEntries(
               selectedStudentIds.map((studentId) => [studentId, speeds[studentId] === "" ? null : Number(speeds[studentId])])
@@ -162,51 +146,6 @@ export function TeacherLessonCreateForm({ prefix, groupId, members, topics }: Te
         </div>
       ) : null}
 
-      {/* Дата и время — видимое поле: от них живёт статус урока
-          (запланирован → идёт → завершён), без даты статус не меняется. */}
-      <div className="max-w-[340px]">
-        <span className="mb-[9px] block text-[13px] font-semibold" style={{ color: "var(--shbz-label)" }}>
-          Дата и время урока
-        </span>
-        <ShbzDateTimePicker value={startsAt} onChange={setStartsAt} placeholder="Выбрать дату и время" />
-        <p className="ui-hint mt-2 text-xs" style={{ color: "var(--shbz-text-muted)" }}>
-          Статус урока сменится сам: до начала — «Запланирован», во время — «Идёт», после — «Завершён».
-        </p>
-      </div>
-
-      {/* Одно видимое решение — «Подобрать задания»; всё остальное — параметры
-          подбора со здравыми дефолтами, свёрнутые в блок с бейджем изменений. */}
-      <details className="rounded-[16px] border" style={{ borderColor: "var(--shbz-soft-border)" }}>
-        <summary
-          className="flex cursor-pointer list-none flex-wrap items-center gap-2.5 px-5 py-4 text-sm font-bold [&::-webkit-details-marker]:hidden"
-          style={{ color: "var(--shbz-text-strong)" }}
-        >
-          Параметры подбора
-          {changedParamsCount > 0 ? (
-            <span className="shbz-chip" style={{ background: "var(--shbz-green-soft)", color: "var(--shbz-green-text)", padding: "3px 9px" }}>
-              изменено: {changedParamsCount}
-            </span>
-          ) : (
-            <span className="ui-hint text-xs font-normal" style={{ color: "var(--shbz-text-muted)" }}>
-              по умолчанию: 60 минут, все ученики, темы и сложность выберет ИИ
-            </span>
-          )}
-          <svg
-            className="ml-auto h-3.5 w-3.5"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2.5"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            style={{ color: "var(--shbz-kicker)" }}
-            aria-hidden="true"
-          >
-            <path d="M6 9l6 6 6-6" />
-          </svg>
-        </summary>
-
-        <div className="space-y-7 px-5 pb-5">
       <div className="grid gap-5" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))" }}>
         <label className="block">
           <span className="mb-[9px] block text-[13px] font-semibold" style={{ color: "var(--shbz-label)" }}>
@@ -237,14 +176,10 @@ export function TeacherLessonCreateForm({ prefix, groupId, members, topics }: Te
         </label>
         <div>
           <span className="mb-[9px] block text-[13px] font-semibold" style={{ color: "var(--shbz-label)" }}>
-            Целевая сложность
+            Дата и время урока
           </span>
-          <ShbzSelect
-            ariaLabel="Целевая сложность"
-            value={targetDifficulty}
-            options={DIFFICULTY_OPTIONS}
-            onChange={setTargetDifficulty}
-          />
+          {/* От расписания живёт статус: до начала «Запланирован», во время «Идёт», после «Завершён». */}
+          <ShbzDateTimePicker value={startsAt} onChange={setStartsAt} placeholder="Выбрать дату и время" />
         </div>
       </div>
 
@@ -371,8 +306,6 @@ export function TeacherLessonCreateForm({ prefix, groupId, members, topics }: Te
           })}
         </div>
       </div>
-        </div>
-      </details>
 
       <button
         type="submit"
