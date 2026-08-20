@@ -1,7 +1,7 @@
 "use client";
 
 import { HomeworkNumberStatus } from "@prisma/client";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Badge } from "@/components/badge";
 import { DeleteButton } from "@/components/delete-button";
@@ -170,6 +170,8 @@ function countVerdicts(results: CheckResult[]) {
 
 const statusOptions = [HomeworkNumberStatus.GREEN, HomeworkNumberStatus.YELLOW, HomeworkNumberStatus.RED] as const;
 
+const ACCEPT_UNDO_MS = 10_000;
+
 export function TeacherHomeworkReviewList({ studentId, assignments }: TeacherHomeworkReviewListProps) {
   const router = useRouter();
   const [savingStatusId, setSavingStatusId] = useState<string | null>(null);
@@ -184,30 +186,188 @@ export function TeacherHomeworkReviewList({ studentId, assignments }: TeacherHom
     )
   );
 
-  const setNumberStatus = async (homeworkNumberId: string, status: HomeworkNumberStatus | null) => {
+  // Оптимистичное локальное состояние статусов: клик подсвечивается сразу,
+  // без router.refresh() на каждое нажатие.
+  const [localStatuses, setLocalStatuses] = useState<Record<string, HomeworkNumberStatus | null>>({});
+  // Тост «Вердикты приняты» с 10-секундной отменой.
+  const [acceptUndo, setAcceptUndo] = useState<{
+    label: string;
+    previous: Array<{ homeworkNumberId: string; status: HomeworkNumberStatus | null }>;
+  } | null>(null);
+  const acceptUndoTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (acceptUndoTimer.current) {
+        clearTimeout(acceptUndoTimer.current);
+      }
+    };
+  }, []);
+
+  const effectiveStatus = (homeworkNumberId: string, serverStatus: HomeworkNumberStatus | null) =>
+    homeworkNumberId in localStatuses ? localStatuses[homeworkNumberId] : serverStatus;
+
+  const pushStatus = async (homeworkNumberId: string, status: HomeworkNumberStatus | null) => {
+    const response = await fetch("/api/teacher/number-status", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ studentId, homeworkNumberId, status })
+    });
+
+    const result = (await response.json().catch(() => null)) as { error?: string } | null;
+
+    if (!response.ok) {
+      throw new Error(result?.error || "Не удалось сохранить статус.");
+    }
+  };
+
+  const setNumberStatus = async (
+    homeworkNumberId: string,
+    status: HomeworkNumberStatus | null,
+    previous: HomeworkNumberStatus | null
+  ) => {
     setSavingStatusId(homeworkNumberId);
     setError(null);
+    setLocalStatuses((current) => ({ ...current, [homeworkNumberId]: status }));
 
     try {
-      const response = await fetch("/api/teacher/number-status", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify({ studentId, homeworkNumberId, status })
-      });
-
-      const result = (await response.json().catch(() => null)) as { error?: string } | null;
-
-      if (!response.ok) {
-        throw new Error(result?.error || "Не удалось сохранить статус.");
-      }
-
-      router.refresh();
+      await pushStatus(homeworkNumberId, status);
     } catch (statusError) {
+      // Откат оптимистичного значения при неудаче.
+      setLocalStatuses((current) => ({ ...current, [homeworkNumberId]: previous }));
       setError(statusError instanceof Error ? statusError.message : "Не удалось сохранить статус.");
     } finally {
       setSavingStatusId(null);
+    }
+  };
+
+  // «Принять вердикты ИИ»: CORRECT→GREEN, INCORRECT→RED, UNCERTAIN не трогаем.
+  const acceptAiVerdicts = async (assignment: ReviewAssignment) => {
+    const latestDone = assignment.checks.find((check) => check.status === "DONE") ?? null;
+
+    if (!latestDone) {
+      return;
+    }
+
+    const byNumber = new Map(assignment.numbers.map((number) => [number.number, number]));
+    const changes: Array<{
+      homeworkNumberId: string;
+      next: HomeworkNumberStatus;
+      previous: HomeworkNumberStatus | null;
+    }> = [];
+
+    for (const result of latestDone.results) {
+      const target = byNumber.get(result.number);
+
+      if (!target || result.verdict === "UNCERTAIN") {
+        continue;
+      }
+
+      const next = result.verdict === "CORRECT" ? HomeworkNumberStatus.GREEN : HomeworkNumberStatus.RED;
+      const previous = effectiveStatus(target.homeworkNumberId, target.status);
+
+      if (previous !== next) {
+        changes.push({ homeworkNumberId: target.homeworkNumberId, next, previous });
+      }
+    }
+
+    if (changes.length === 0) {
+      return;
+    }
+
+    setError(null);
+    setLocalStatuses((current) => {
+      const merged = { ...current };
+
+      for (const change of changes) {
+        merged[change.homeworkNumberId] = change.next;
+      }
+
+      return merged;
+    });
+
+    if (acceptUndoTimer.current) {
+      clearTimeout(acceptUndoTimer.current);
+    }
+
+    setAcceptUndo({
+      label: `Вердикты ИИ приняты: ${changes.length}`,
+      previous: changes.map((change) => ({ homeworkNumberId: change.homeworkNumberId, status: change.previous }))
+    });
+    acceptUndoTimer.current = setTimeout(() => setAcceptUndo(null), ACCEPT_UNDO_MS);
+
+    try {
+      await Promise.all(changes.map((change) => pushStatus(change.homeworkNumberId, change.next)));
+    } catch (acceptError) {
+      setError(acceptError instanceof Error ? acceptError.message : "Не удалось применить вердикты.");
+      router.refresh();
+    }
+  };
+
+  const undoAcceptAiVerdicts = async () => {
+    if (!acceptUndo) {
+      return;
+    }
+
+    if (acceptUndoTimer.current) {
+      clearTimeout(acceptUndoTimer.current);
+      acceptUndoTimer.current = null;
+    }
+
+    const { previous } = acceptUndo;
+
+    setAcceptUndo(null);
+    setLocalStatuses((current) => {
+      const merged = { ...current };
+
+      for (const entry of previous) {
+        merged[entry.homeworkNumberId] = entry.status;
+      }
+
+      return merged;
+    });
+
+    try {
+      await Promise.all(previous.map((entry) => pushStatus(entry.homeworkNumberId, entry.status)));
+    } catch (undoError) {
+      setError(undoError instanceof Error ? undoError.message : "Не удалось отменить применение вердиктов.");
+      router.refresh();
+    }
+  };
+
+  // Roving tabindex тройки статусов: ←/→ — между кнопками, 1/2/3 — установка,
+  // ↓/↑ — к тройке следующего/предыдущего номера.
+  const handleStatusGroupKeyDown = (
+    event: React.KeyboardEvent<HTMLDivElement>,
+    homeworkNumberId: string,
+    serverStatus: HomeworkNumberStatus | null
+  ) => {
+    const buttons = Array.from(event.currentTarget.querySelectorAll<HTMLButtonElement>("button"));
+    const focusedIndex = buttons.indexOf(document.activeElement as HTMLButtonElement);
+
+    if (event.key === "ArrowLeft" || event.key === "ArrowRight") {
+      event.preventDefault();
+      const delta = event.key === "ArrowRight" ? 1 : -1;
+      buttons[(focusedIndex + delta + buttons.length) % buttons.length]?.focus();
+      return;
+    }
+
+    if (event.key === "1" || event.key === "2" || event.key === "3") {
+      event.preventDefault();
+      const option = statusOptions[Number(event.key) - 1];
+      const current = effectiveStatus(homeworkNumberId, serverStatus);
+      void setNumberStatus(homeworkNumberId, current === option ? null : option, current);
+      return;
+    }
+
+    if (event.key === "ArrowDown" || event.key === "ArrowUp") {
+      event.preventDefault();
+      const groups = Array.from(document.querySelectorAll<HTMLDivElement>("[data-status-group]"));
+      const groupIndex = groups.indexOf(event.currentTarget);
+      const nextGroup = groups[groupIndex + (event.key === "ArrowDown" ? 1 : -1)];
+      nextGroup?.querySelector<HTMLButtonElement>("button")?.focus();
     }
   };
 
@@ -426,12 +586,28 @@ export function TeacherHomeworkReviewList({ studentId, assignments }: TeacherHom
               <p className="ui-copy-muted mt-4 text-sm">Ученик пока не прикрепил фото решения.</p>
             )}
 
+            {latestDone && latestDone.results.some((result) => result.verdict !== "UNCERTAIN") ? (
+              <div className="mt-4">
+                <button
+                  type="button"
+                  onClick={() => void acceptAiVerdicts(assignment)}
+                  className="shbz-btn-outline"
+                >
+                  Принять вердикты ИИ
+                </button>
+                <span className="ml-2.5 text-xs" style={{ color: "var(--shbz-kicker)" }}>
+                  Верно → Зеленый, Ошибка → Красный; «на проверке» не трогаем.
+                </span>
+              </div>
+            ) : null}
+
             <p className="ui-kicker mt-5">Номера</p>
             <div className="mt-2.5 space-y-2.5">
               {assignment.numbers.map((number) => {
                 const ai = aiByNumber.get(number.number) ?? null;
                 const aiMeta = ai ? verdictMeta[ai.verdict] : null;
                 const showAnswer = Boolean(ai && ai.verdict !== "UNCERTAIN" && ai.recognizedAnswer);
+                const currentStatus = effectiveStatus(number.homeworkNumberId, number.status);
 
                 return (
                   <div
@@ -453,7 +629,7 @@ export function TeacherHomeworkReviewList({ studentId, assignments }: TeacherHom
                               {aiMeta.chip}
                             </span>
                           ) : null}
-                          <HomeworkStatusBadge status={number.status} />
+                          <HomeworkStatusBadge status={currentStatus} />
                         </div>
 
                         {showAnswer && ai ? (
@@ -487,18 +663,32 @@ export function TeacherHomeworkReviewList({ studentId, assignments }: TeacherHom
                         ) : null}
                       </div>
 
-                      <div className="flex flex-none flex-wrap items-center gap-1.5">
-                        {statusOptions.map((option) => {
+                      <div
+                        className="flex flex-none flex-wrap items-center gap-1.5"
+                        data-status-group
+                        onKeyDown={(event) =>
+                          handleStatusGroupKeyDown(event, number.homeworkNumberId, number.status)
+                        }
+                      >
+                        {statusOptions.map((option, optionIndex) => {
                           const meta = homeworkStatusMeta[option];
-                          const isActive = number.status === option;
+                          const isActive = currentStatus === option;
 
                           return (
                             <button
                               key={option}
                               type="button"
                               aria-pressed={isActive}
+                              // Roving tabindex: Tab входит в тройку один раз, внутри — стрелки.
+                              tabIndex={optionIndex === 0 ? 0 : -1}
                               disabled={savingStatusId === number.homeworkNumberId}
-                              onClick={() => void setNumberStatus(number.homeworkNumberId, isActive ? null : option)}
+                              onClick={() =>
+                                void setNumberStatus(
+                                  number.homeworkNumberId,
+                                  isActive ? null : option,
+                                  currentStatus
+                                )
+                              }
                               className={cx(
                                 "ui-pressable rounded-[12px] px-3.5 py-2 text-center text-sm font-semibold transition disabled:cursor-not-allowed disabled:opacity-60",
                                 isActive ? meta.buttonClassName : "ui-status-button"
@@ -725,6 +915,28 @@ export function TeacherHomeworkReviewList({ studentId, assignments }: TeacherHom
             {completedAssignments.map((assignment) => renderAssignmentCard(assignment))}
           </div>
         </details>
+      ) : null}
+
+      {acceptUndo ? (
+        <div
+          role="status"
+          className="fixed bottom-6 left-1/2 z-40 flex -translate-x-1/2 items-center gap-3 rounded-[12px] border px-4 py-3 text-sm font-semibold shadow-lg"
+          style={{
+            background: "var(--shbz-card-bg)",
+            borderColor: "var(--shbz-card-border)",
+            color: "var(--shbz-text-strong)"
+          }}
+        >
+          {acceptUndo.label}
+          <button
+            type="button"
+            className="font-bold underline"
+            style={{ color: "var(--shbz-accent-solid)" }}
+            onClick={() => void undoAcceptAiVerdicts()}
+          >
+            Отменить
+          </button>
+        </div>
       ) : null}
     </div>
   );
