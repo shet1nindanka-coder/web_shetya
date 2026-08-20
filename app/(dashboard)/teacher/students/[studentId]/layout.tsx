@@ -49,15 +49,6 @@ export default async function TeacherStudentLayout({ children, params }: Teacher
         eyebrow="Ученик"
         title={data.student.name}
         description={data.student.email}
-        metrics={[
-          {
-            label: "Отмечено",
-            value: `${data.stats.totalMarked} из ${data.stats.totalNumbers} · ${data.stats.markedPercent}%`
-          },
-          { label: "Зелёные", value: data.stats.totalGreen, tone: "success" },
-          { label: "Жёлтые", value: data.stats.totalYellow, tone: "warning" },
-          { label: "Красные", value: data.stats.totalRed, tone: "danger" }
-        ]}
         aside={<ShbzNumberSearch endpoint="/api/teacher/topics/find-number" />}
         actions={
           <>
