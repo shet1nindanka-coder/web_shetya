@@ -93,19 +93,34 @@ export function StudentWeeklyActivity({ streak }: StudentWeeklyActivityProps) {
             <div className="mt-auto flex items-end justify-between gap-2.5 pt-7">
               {currentStreak.dailyActivity.map((day) => {
                 const isToday = day.date === todayDate;
-                const dotColor = day.count > 0 ? "var(--shbz-accent-solid)" : "var(--shbz-week-dot-off)";
+                const active = day.count > 0;
                 const labelColor = isToday ? "var(--shbz-accent-solid)" : "var(--shbz-kicker)";
 
                 return (
                   <div key={day.date} className="flex flex-1 flex-col items-center gap-3">
                     <div
                       className="flex h-16 w-full items-end justify-center rounded-[12px] pb-2"
-                      style={{ background: "var(--shbz-week-cell)" }}
-                      title={day.count > 0 ? `Закрыто номеров: ${day.count}` : "Нет закрытых номеров"}
+                      style={{
+                        background: "var(--shbz-week-cell)",
+                        // «Сегодня» отличается рамкой клетки, а не только цветом подписи.
+                        boxShadow: isToday ? "inset 0 0 0 1.5px var(--shbz-accent-solid)" : undefined
+                      }}
+                      aria-label={
+                        active
+                          ? `${day.dayLabel}: закрыто номеров — ${day.count}`
+                          : `${day.dayLabel}: нет закрытых номеров`
+                      }
                     >
-                      <span className="h-2 w-2 rounded-full" style={{ background: dotColor }} />
+                      {/* Активный день — полоска, пустой — точка: форма дублирует цвет. */}
+                      <span
+                        className={active ? "h-2 w-5 rounded-full" : "h-2 w-2 rounded-full"}
+                        style={{ background: active ? "var(--shbz-accent-solid)" : "var(--shbz-week-dot-off)" }}
+                      />
                     </div>
-                    <span className="text-xs font-bold" style={{ color: labelColor }}>
+                    <span
+                      className="text-xs font-bold"
+                      style={{ color: labelColor, textDecoration: isToday ? "underline" : undefined }}
+                    >
                       {day.dayLabel}
                     </span>
                   </div>

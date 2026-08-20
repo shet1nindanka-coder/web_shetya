@@ -12,6 +12,8 @@ import {
   getFileExtension,
   getMimeTypeFromExtension,
   getStatusCounts,
+  homeworkStatusGlyph,
+  homeworkStatusMeta,
   isImageMime,
   isOfficeMime,
   isPdfMime,
@@ -200,4 +202,17 @@ test("matchesAccountSearch ищет по словам без учёта реги
   assert.equal(matchesAccountSearch("анна фокин", "Анна Петрова", "teacher@example.com"), false);
   assert.equal(matchesAccountSearch("иван", "Анна Петрова", "teacher@example.com"), false);
   assert.equal(matchesAccountSearch("анна", "Анна", null, undefined), true);
+});
+
+test("homeworkStatusGlyph покрывает все статусы уникальными глифами", () => {
+  const statuses = Object.values(HomeworkNumberStatus);
+  const glyphs = statuses.map((status) => homeworkStatusGlyph[status]);
+
+  for (const glyph of glyphs) {
+    assert.equal(typeof glyph, "string");
+    assert.ok(glyph.length > 0);
+  }
+
+  assert.equal(new Set(glyphs).size, statuses.length);
+  assert.deepEqual(Object.keys(homeworkStatusGlyph).sort(), Object.keys(homeworkStatusMeta).sort());
 });

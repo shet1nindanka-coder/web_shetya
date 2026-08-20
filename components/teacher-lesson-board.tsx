@@ -49,16 +49,18 @@ type TeacherLessonBoardProps = {
   }>;
 };
 
+// Причина подбора — не статус: нейтральная палитра, чтобы в одной строке
+// не стояли два одинаковых по форме чипа из статусной палитры («Правило светофора», DESIGN.md).
 const reasonMeta: Record<string, { label: string; background: string; color: string }> = {
-  GAP: { label: "Пробел", background: "var(--shbz-yellow-soft)", color: "var(--shbz-yellow-text)" },
+  GAP: { label: "Пробел", background: "var(--shbz-tab-hover)", color: "var(--shbz-kicker)" },
   REVIEW: { label: "Повторение", background: "var(--shbz-tab-hover)", color: "var(--shbz-kicker)" },
-  NEW: { label: "Новое", background: "var(--shbz-green-soft)", color: "var(--shbz-green-text)" }
+  NEW: { label: "Новое", background: "var(--shbz-tab-hover)", color: "var(--shbz-kicker)" }
 };
 
 const statusMeta: Record<string, { label: string; background: string; color: string }> = {
-  GREEN: { label: "решено", background: "var(--shbz-green-soft)", color: "var(--shbz-green-text)" },
-  YELLOW: { label: "с ошибками", background: "var(--shbz-yellow-soft)", color: "var(--shbz-yellow-text)" },
-  RED: { label: "не решено", background: "var(--shbz-danger-bg)", color: "var(--shbz-danger-text)" }
+  GREEN: { label: "✓ решено", background: "var(--shbz-green-soft)", color: "var(--shbz-green-text)" },
+  YELLOW: { label: "↻ с ошибками", background: "var(--shbz-yellow-soft)", color: "var(--shbz-yellow-text)" },
+  RED: { label: "! не решено", background: "var(--shbz-danger-bg)", color: "var(--shbz-danger-text)" }
 };
 
 function isParticipantPending(participant: LessonBoardParticipant) {

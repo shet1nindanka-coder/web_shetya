@@ -51,6 +51,14 @@ export const homeworkStatusMeta: Record<
   }
 };
 
+// Нецветовой носитель статуса: глиф дублирует цвет светофора,
+// чтобы статус читался в grayscale и при дальтонизме.
+export const homeworkStatusGlyph: Record<HomeworkNumberStatus, string> = {
+  GREEN: "✓",
+  YELLOW: "↻",
+  RED: "!"
+};
+
 export const allowedUploadExtensions = [".pdf", ".docx", ".png", ".jpg", ".jpeg"];
 
 export const allowedUploadMimeTypes = new Set([

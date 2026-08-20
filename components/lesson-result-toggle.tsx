@@ -1,6 +1,6 @@
 "use client";
 
-import { cx, homeworkStatusMeta } from "@/lib/utils";
+import { cx, homeworkStatusGlyph, homeworkStatusMeta } from "@/lib/utils";
 
 // Итог урока → цвет светофора; подписи и стили кнопок — те же, что у статусов в проверке ДЗ.
 const options = [
@@ -39,7 +39,7 @@ export function ResultToggle({
               active ? meta.buttonClassName : "ui-status-button"
             )}
           >
-            {meta.shortLabel}
+            <span aria-hidden="true">{homeworkStatusGlyph[option.status]}</span> {meta.shortLabel}
           </button>
         );
       })}

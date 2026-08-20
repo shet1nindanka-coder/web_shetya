@@ -1,7 +1,7 @@
 import { HomeworkNumberStatus } from "@prisma/client";
 import Link from "next/link";
 import { HomeworkDoneBadge, HomeworkOverdueBadge } from "@/components/deadline-list";
-import { cx, formatDate, homeworkStatusMeta, isHomeworkOverdue } from "@/lib/utils";
+import { cx, formatDate, homeworkStatusGlyph, homeworkStatusMeta, isHomeworkOverdue } from "@/lib/utils";
 
 type SubmissionAssignment = {
   id: string;
@@ -72,7 +72,9 @@ function HomeworkCard({ assignment }: { assignment: SubmissionAssignment }) {
           {assignment.numbers.map((number) => (
             <span
               key={number.homeworkNumberId}
-              title={number.status ? homeworkStatusMeta[number.status].label : "Номер ещё не отмечен"}
+              aria-label={`№ ${number.number} — ${
+                number.status ? homeworkStatusMeta[number.status].label : "номер ещё не отмечен"
+              }`}
               className={cx(
                 "rounded-[8px] border px-3.5 py-2 text-sm font-bold",
                 number.status
@@ -80,6 +82,9 @@ function HomeworkCard({ assignment }: { assignment: SubmissionAssignment }) {
                   : "border-[var(--theme-border)] bg-[var(--theme-surface-strong)] text-[var(--theme-text-default)]"
               )}
             >
+              {number.status ? (
+                <span aria-hidden="true">{homeworkStatusGlyph[number.status]} </span>
+              ) : null}
               № {number.number}
             </span>
           ))}
