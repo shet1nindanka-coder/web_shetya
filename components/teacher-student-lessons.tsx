@@ -438,7 +438,7 @@ export function TeacherStudentLessons({
                   <>
                     <div className="mb-1.5 mt-2 flex flex-wrap items-baseline justify-between gap-2 px-3.5">
                       <span
-                        className="text-[11px] font-bold uppercase tracking-[1.2px]"
+                        className="text-[12px] font-bold uppercase tracking-[1.2px]"
                         style={{ color: "var(--shbz-kicker)" }}
                       >
                         Основная часть
@@ -455,7 +455,7 @@ export function TeacherStudentLessons({
                   <>
                     <div className="mb-1.5 mt-3.5 px-3.5">
                       <span
-                        className="text-[11px] font-bold uppercase tracking-[1.2px]"
+                        className="text-[12px] font-bold uppercase tracking-[1.2px]"
                         style={{ color: "var(--shbz-kicker)" }}
                       >
                         Дополнительно — если успел

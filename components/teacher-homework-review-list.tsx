@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { Badge } from "@/components/badge";
 import { DeleteButton } from "@/components/delete-button";
 import { HomeworkStatusBadge } from "@/components/homework-status-badge";
-import { cx, homeworkStatusMeta } from "@/lib/utils";
+import { cx, formatDateTime as formatDateTimeUtil, homeworkStatusMeta } from "@/lib/utils";
 import { ProgressBar } from "@/components/progress-bar";
 
 type CheckVerdict = "CORRECT" | "INCORRECT" | "UNCERTAIN";
@@ -89,23 +89,13 @@ const verdictMeta: Record<
   }
 };
 
+// Тонкая обёртка над общим форматтером из lib/utils вместо локального дубля.
 function formatDateTime(value: string | null) {
-  if (!value) {
+  if (!value || Number.isNaN(new Date(value).getTime())) {
     return null;
   }
 
-  const date = new Date(value);
-
-  if (Number.isNaN(date.getTime())) {
-    return null;
-  }
-
-  return new Intl.DateTimeFormat("ru-RU", {
-    day: "2-digit",
-    month: "long",
-    hour: "2-digit",
-    minute: "2-digit"
-  }).format(date);
+  return formatDateTimeUtil(value);
 }
 
 function formatRunDateTime(value: string | null) {

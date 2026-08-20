@@ -167,7 +167,9 @@ html[data-density="compact"] input:not([type="checkbox"]):not([type="radio"]):no
 html[data-density="compact"] textarea,
 html[data-density="compact"] select,
 html[data-density="compact"] input[type="file"] {
-  border-radius: var(--radius-md) !important;
+  /* Лестница радиусов: инпут 12 (--radius-lg) рядом с кнопкой 12 и карточкой 16;
+     8 px ломал лестницу в компактной плотности. */
+  border-radius: var(--radius-lg) !important;
   padding-top: 0.55rem !important;
   padding-bottom: 0.55rem !important;
 }
@@ -1483,7 +1485,9 @@ html[data-theme="dark"] .student-virtual-scroll::-webkit-scrollbar-thumb {
 /* ───────────────────────────────────────────────
    Teacher cards
    ─────────────────────────────────────────────── */
-.teacher-topic-card { content-visibility: auto; contain-intrinsic-size: 700px; background: var(--theme-surface-soft); border-color: var(--theme-border-soft); }
+/* Реальная высота карточки ДЗ с фото и историей проверок ~1585 px:
+   заниженная оценка заставляла скроллбар прыгать. */
+.teacher-topic-card { content-visibility: auto; contain-intrinsic-size: 1600px; background: var(--theme-surface-soft); border-color: var(--theme-border-soft); }
 .teacher-number-grid { content-visibility: auto; contain-intrinsic-size: 800px; }
 .teacher-number-card {
   content-visibility: auto;

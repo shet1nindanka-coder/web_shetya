@@ -45,7 +45,7 @@ export function StudentWeeklyActivity({ streak }: StudentWeeklyActivityProps) {
             >
               <div className="flex items-start justify-between gap-3">
                 <div
-                  className="text-[11px] font-bold uppercase tracking-[1.2px]"
+                  className="text-[12px] font-bold uppercase tracking-[1.2px]"
                   style={{ color: "var(--shbz-streak-text)" }}
                 >
                   Огонёк
@@ -70,7 +70,7 @@ export function StudentWeeklyActivity({ streak }: StudentWeeklyActivityProps) {
 
             <div className="grid grid-cols-1 gap-3.5 sm:grid-cols-2">
               <div className="shbz-panel-soft px-5 py-[18px]">
-                <div className="text-[11px] font-bold uppercase tracking-[1px]" style={{ color: "var(--shbz-kicker)" }}>
+                <div className="text-[12px] font-bold uppercase tracking-[1px]" style={{ color: "var(--shbz-kicker)" }}>
                   Сегодня сделано
                 </div>
                 <div className="mt-2 text-[17px] font-extrabold leading-[1.25]" style={{ color: "var(--shbz-text-strong)" }}>
@@ -78,10 +78,10 @@ export function StudentWeeklyActivity({ streak }: StudentWeeklyActivityProps) {
                 </div>
               </div>
               <div className="shbz-panel-soft px-5 py-[18px]">
-                <div className="text-[11px] font-bold uppercase tracking-[1px]" style={{ color: "var(--shbz-kicker)" }}>
+                <div className="text-[12px] font-bold uppercase tracking-[1px]" style={{ color: "var(--shbz-kicker)" }}>
                   Следующая цель
                 </div>
-                <div className="mt-2 text-[22px] font-extrabold" style={{ color: "var(--shbz-text-strong)" }}>
+                <div className="mt-2 text-[23px] font-extrabold" style={{ color: "var(--shbz-text-strong)" }}>
                   {goalTitle}
                 </div>
                 {goalHint ? (
@@ -97,7 +97,7 @@ export function StudentWeeklyActivity({ streak }: StudentWeeklyActivityProps) {
             className="flex flex-col rounded-2xl border p-6"
             style={{ background: "var(--shbz-panel-bg)", borderColor: "var(--shbz-soft-border)" }}
           >
-            <div className="text-[11px] font-bold uppercase tracking-[1.2px]" style={{ color: "var(--shbz-kicker)" }}>
+            <div className="text-[12px] font-bold uppercase tracking-[1.2px]" style={{ color: "var(--shbz-kicker)" }}>
               За неделю
             </div>
             <div className="mt-2 text-[15px]" style={{ color: "var(--shbz-label)" }}>

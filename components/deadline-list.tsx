@@ -110,7 +110,7 @@ export function DeadlineList({ items, emptyMessage = "На эту дату де�
             <div className="mb-[18px] flex items-start justify-between gap-4">
               <div className="min-w-0 flex-1">
                 <div className="flex flex-wrap items-center gap-2">
-                  <span className="text-[19px] font-extrabold tracking-[-0.3px]" style={{ color: "var(--shbz-text-strong)" }}>
+                  <span className="text-[17px] font-extrabold tracking-[-0.3px]" style={{ color: "var(--shbz-text-strong)" }}>
                     {item.label}
                   </span>
                   {item.status === "DONE" ? <HomeworkDoneBadge /> : null}

@@ -451,14 +451,15 @@ export function TeacherLessonBoard({ prefix, aiAvailable, lesson, bank }: Teache
                 style={{ background: "var(--shbz-card-bg)" }}
               >
                 <div>
-                  <h3 className="text-[16px] font-bold" style={{ color: "var(--shbz-text-strong)" }}>
+                  {/* H2 после H1 страницы: пропуск уровня H1→H3 ломал структуру для скринридера. */}
+                  <h2 className="text-[16px] font-bold" style={{ color: "var(--shbz-text-strong)" }}>
                     {participant.studentName}
                     {participant.items.length > 0 ? (
                       <span className="ml-2.5 text-[13px] font-semibold" style={{ color: "var(--shbz-kicker)" }}>
                         отмечено {markedCount} из {participant.items.length}
                       </span>
                     ) : null}
-                  </h3>
+                  </h2>
                   <p className="mt-0.5 text-xs" style={{ color: "var(--shbz-text-muted)" }}>
                     скорость: {participant.speed ?? "не указана"} · основных: {mainItems.length}
                     {extraItems.length > 0 ? ` · доп.: ${extraItems.length}` : ""}
@@ -588,7 +589,7 @@ export function TeacherLessonBoard({ prefix, aiAvailable, lesson, bank }: Teache
               {extraItems.length > 0 ? (
                 <div className="mt-4">
                   <p
-                    className="mb-2 text-[11px] font-bold uppercase tracking-[1.2px]"
+                    className="mb-2 text-[12px] font-bold uppercase tracking-[1.2px]"
                     style={{ color: "var(--shbz-kicker)" }}
                   >
                     Дополнительно — если основная часть решена

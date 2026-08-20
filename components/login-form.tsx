@@ -66,7 +66,7 @@ export function LoginForm({ error, rateLimitedMinutes, helpContact }: LoginFormP
     <div className="w-full max-w-[416px]">
       <div className="mb-[30px] text-center">
         <div
-          className="inline-flex items-baseline gap-2 text-[30px] font-extrabold tracking-[-0.8px]"
+          className="inline-flex items-baseline gap-2 text-[clamp(26px,5vw,30px)] font-extrabold tracking-[-0.8px]"
           style={{ color: "var(--shbz-text-strong)" }}
         >
           <span>Вход</span>

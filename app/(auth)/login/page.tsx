@@ -39,7 +39,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
         <div className="text-[26px] font-black leading-none tracking-[-1.2px]" style={{ color: "var(--shbz-text-strong)" }}>
           ШБЗ
         </div>
-        <div className="text-[11px] font-semibold tracking-[0.2px]" style={{ color: "var(--shbz-text-soft)" }}>
+        <div className="text-[12px] font-semibold tracking-[0.2px]" style={{ color: "var(--shbz-text-soft)" }}>
           Школа Базовых Знаний
         </div>
       </div>
