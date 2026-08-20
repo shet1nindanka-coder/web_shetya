@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { notFound } from "next/navigation";
 import { UserRole } from "@prisma/client";
 import { ShbzNumberSearch } from "@/components/shbz-number-search";
@@ -50,7 +51,74 @@ export default async function LessonNewPage({ searchParams }: LessonNewPageProps
     kicker = student.name;
     members = [{ id: student.id, name: student.name, speed: student.studentProfile?.speed ?? null }];
   } else {
-    notFound();
+    // Без параметров — выбор, кому составляется урок: группа или один ученик.
+    const teacherScope = user.role === UserRole.TEACHER ? { teacherId: user.id } : {};
+    const [groups, students] = await Promise.all([
+      prisma.studentGroup.findMany({
+        where: teacherScope,
+        orderBy: { name: "asc" },
+        select: { id: true, name: true, _count: { select: { members: true } } }
+      }),
+      prisma.user.findMany({
+        where: { role: UserRole.STUDENT, ...teacherScope },
+        orderBy: { name: "asc" },
+        select: { id: true, name: true }
+      })
+    ]);
+
+    return (
+      <div>
+        <ShbzPageHeader
+          kicker="Занятия"
+          title="Новый урок"
+          aside={<ShbzNumberSearch endpoint="/api/teacher/topics/find-number" />}
+        />
+
+        <div className="space-y-9">
+          <section>
+            <h2 className="shbz-section-title">Для группы</h2>
+            {groups.length === 0 ? (
+              <p className="text-sm" style={{ color: "var(--shbz-text-muted)" }}>
+                Групп пока нет — создайте её в разделе «группы».
+              </p>
+            ) : (
+              <div className="flex flex-wrap gap-2.5">
+                {groups.map((group) => (
+                  <Link
+                    key={group.id}
+                    href={`${prefix}/lessons/new?groupId=${group.id}`}
+                    className="shbz-btn-outline inline-block no-underline"
+                  >
+                    {group.name} · {group._count.members}
+                  </Link>
+                ))}
+              </div>
+            )}
+          </section>
+
+          <section>
+            <h2 className="shbz-section-title">Для одного ученика</h2>
+            {students.length === 0 ? (
+              <p className="text-sm" style={{ color: "var(--shbz-text-muted)" }}>
+                Учеников пока нет — создайте аккаунт в разделе «ученики».
+              </p>
+            ) : (
+              <div className="flex flex-wrap gap-2.5">
+                {students.map((student) => (
+                  <Link
+                    key={student.id}
+                    href={`${prefix}/lessons/new?studentId=${student.id}`}
+                    className="shbz-btn-outline inline-block no-underline"
+                  >
+                    {student.name}
+                  </Link>
+                ))}
+              </div>
+            )}
+          </section>
+        </div>
+      </div>
+    );
   }
 
   const [topics, settings] = await Promise.all([

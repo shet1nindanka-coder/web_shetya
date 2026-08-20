@@ -49,7 +49,21 @@ export default async function TeacherLessonsPage() {
 
   return (
     <div>
-      <ShbzPageHeader kicker="Уроки" title="Уроки с ИИ-подбором" aside={<ShbzNumberSearch endpoint="/api/teacher/topics/find-number" />} />
+      <ShbzPageHeader
+        kicker="Уроки"
+        title="Уроки с ИИ-подбором"
+        aside={
+          <div className="flex flex-wrap items-center gap-2.5">
+            <Link
+              href={`${prefix}/lessons/new`}
+              className="shbz-btn-primary inline-block px-[22px] py-[12px] text-[14.5px] no-underline"
+            >
+              Составить урок
+            </Link>
+            <ShbzNumberSearch endpoint="/api/teacher/topics/find-number" />
+          </div>
+        }
+      />
 
       {lessons.length === 0 ? (
         <div className="shbz-card px-6 py-10 text-center">
@@ -57,10 +71,13 @@ export default async function TeacherLessonsPage() {
             Уроков пока нет.
           </p>
           <p className="mt-1.5 text-sm" style={{ color: "var(--shbz-text-muted)" }}>
-            Откройте группу и нажмите «Составить урок» — ИИ соберёт персональный набор задач каждому ученику. Урок для одного ученика собирается во вкладке «Составить занятие» на его странице.
+            Нажмите «Составить урок», выберите группу или ученика — ИИ соберёт персональный набор задач каждому.
           </p>
-          <Link href={`${prefix}/groups`} className="shbz-btn-primary mt-5 inline-block px-[26px] py-[13px] text-[15px] no-underline">
-            К группам
+          <Link
+            href={`${prefix}/lessons/new`}
+            className="shbz-btn-primary mt-5 inline-block px-[26px] py-[13px] text-[15px] no-underline"
+          >
+            Составить урок
           </Link>
         </div>
       ) : (
