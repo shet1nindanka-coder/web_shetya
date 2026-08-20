@@ -1679,9 +1679,6 @@ html[data-theme="dark"] .student-virtual-scroll::-webkit-scrollbar-thumb {
   --shbz-dropzone-bg: #fbfcfd;
   --shbz-accent-grad: linear-gradient(90deg, #5ac8ea 0%, #36e0a4 100%);
   --shbz-accent-grad-diag: linear-gradient(135deg, #5ac8ea, #36e0a4);
-  /* Градиент кнопок: те же брендовые оттенки, но глубже — белая подпись
-     даёт 4.97:1 / 4.89:1 (AA). Декоративные элементы остаются на ярком. */
-  --shbz-accent-grad-btn: linear-gradient(90deg, #1a789e 0%, #0b8158 100%);
   --shbz-accent-shadow: rgba(54, 224, 164, 0.3);
   --shbz-accent-shadow-hover: rgba(54, 224, 164, 0.42);
   --shbz-danger-bg: #fceded;
@@ -1749,7 +1746,9 @@ html[data-theme="dark"] {
 .shbz-btn-primary {
   border: none;
   border-radius: 12px;
-  background: var(--shbz-accent-grad-btn);
+  /* Решение владельца (2026-08-20): исходный яркий градиент с белой подписью,
+     несмотря на контраст ниже AA — не менять без его отмашки. */
+  background: var(--shbz-accent-grad);
   color: #ffffff;
   font-family: inherit;
   font-weight: 700;
