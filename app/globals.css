@@ -3118,6 +3118,12 @@ html[data-theme="dark"] .shbz-search input:not([type="checkbox"]):not([type="rad
     box-shadow 220ms cubic-bezier(0.22, 1, 0.36, 1);
 }
 
+/* Клавиатурный фокус: скрытый file-input внутри зоны фокусируем, кольцо носит зона */
+.shbz-dropzone:focus-within {
+  outline: 2px solid var(--shbz-accent-solid);
+  outline-offset: 2px;
+}
+
 /* hover: едва заметный подъём — только на устройствах с курсором и вне drag/success */
 @media (hover: hover) {
   .shbz-dropzone--enabled[data-state="idle"]:hover {

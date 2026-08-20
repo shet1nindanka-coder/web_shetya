@@ -187,7 +187,10 @@ export function StudentHomeworkPhotos({ assignmentId, maxPhotos = MAX_PHOTOS, ph
           accept="image/png,image/jpeg"
           multiple
           disabled={isUploading || atLimit}
-          className="hidden"
+          aria-label="Загрузить фото решения"
+          // Визуально скрыт, но остаётся в таб-порядке: display:none выбрасывал
+          // input из фокуса, и сдать ДЗ с клавиатуры было нельзя.
+          className="sr-only"
           onChange={(event) => {
             const files = event.target.files;
 
