@@ -49,27 +49,27 @@ export default async function GroupDetailPage({ params, searchParams }: GroupDet
 
   return (
     <div>
+      {/* Правило владельца: поиск в шапке стоит один, кнопки рядом с ним не ставим. */}
       <ShbzPageHeader
         kicker="Группа"
         title={group.name}
-        aside={
-          <div className="flex flex-wrap items-center gap-2.5">
-            <Link
-              href={`${prefix}/homework-plans/new?groupId=${group.id}`}
-              className="shbz-btn-outline shbz-btn-outline--lg inline-block no-underline"
-            >
-              Выдать ДЗ группе
-            </Link>
-            <Link
-              href={`${prefix}/lessons/new?groupId=${group.id}`}
-              className="shbz-btn-primary inline-block px-[26px] py-[13px] text-[15px] no-underline"
-            >
-              Составить урок
-            </Link>
-            <ShbzNumberSearch endpoint="/api/teacher/topics/find-number" />
-          </div>
-        }
+        aside={<ShbzNumberSearch endpoint="/api/teacher/topics/find-number" />}
       />
+
+      <div className="mb-8 flex flex-wrap items-center gap-2.5">
+        <Link
+          href={`${prefix}/lessons/new?groupId=${group.id}`}
+          className="shbz-btn-primary inline-block px-[26px] py-[13px] text-[15px] no-underline"
+        >
+          Составить урок
+        </Link>
+        <Link
+          href={`${prefix}/homework-plans/new?groupId=${group.id}`}
+          className="shbz-btn-outline shbz-btn-outline--lg inline-block no-underline"
+        >
+          Выдать ДЗ группе
+        </Link>
+      </div>
 
       {notice ? (
         <div

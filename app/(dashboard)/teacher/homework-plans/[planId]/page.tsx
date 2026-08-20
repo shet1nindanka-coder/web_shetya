@@ -59,20 +59,20 @@ export default async function HomeworkPlanDetailPage({ params }: HomeworkPlanDet
 
   return (
     <div>
+      {/* Правило владельца: поиск в шапке стоит один, кнопки рядом с ним не ставим. */}
       <ShbzPageHeader
         kicker={`${topic.title} · ${deadlineLabel}${plan.group ? ` · ${plan.group.name}` : ""}`}
         title={plan.title}
-        aside={
-          <div className="flex flex-wrap items-center gap-3">
-            {sourceLesson ? (
-              <Link href={`${prefix}/lessons/${sourceLesson.id}`} className="shbz-btn-outline inline-block no-underline">
-                По итогам занятия «{sourceLesson.title}»
-              </Link>
-            ) : null}
-            <ShbzNumberSearch endpoint="/api/teacher/topics/find-number" />
-          </div>
-        }
+        aside={<ShbzNumberSearch endpoint="/api/teacher/topics/find-number" />}
       />
+
+      {sourceLesson ? (
+        <div className="mb-7">
+          <Link href={`${prefix}/lessons/${sourceLesson.id}`} className="shbz-btn-outline inline-block no-underline">
+            По итогам занятия «{sourceLesson.title}»
+          </Link>
+        </div>
+      ) : null}
 
       <TeacherHomeworkPlanBoard
         prefix={prefix}

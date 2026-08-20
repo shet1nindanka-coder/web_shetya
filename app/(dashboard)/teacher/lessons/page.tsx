@@ -49,21 +49,23 @@ export default async function TeacherLessonsPage() {
 
   return (
     <div>
+      {/* Правило владельца: поиск в шапке стоит один, кнопки рядом с ним не ставим. */}
       <ShbzPageHeader
         kicker="Уроки"
         title="Уроки с ИИ-подбором"
-        aside={
-          <div className="flex flex-wrap items-center gap-2.5">
-            <Link
-              href={`${prefix}/lessons/new`}
-              className="shbz-btn-primary inline-block px-[22px] py-[12px] text-[14.5px] no-underline"
-            >
-              Составить урок
-            </Link>
-            <ShbzNumberSearch endpoint="/api/teacher/topics/find-number" />
-          </div>
-        }
+        aside={<ShbzNumberSearch endpoint="/api/teacher/topics/find-number" />}
       />
+
+      {lessons.length > 0 ? (
+        <div className="mb-7">
+          <Link
+            href={`${prefix}/lessons/new`}
+            className="shbz-btn-primary inline-block px-[22px] py-[12px] text-[14.5px] no-underline"
+          >
+            Составить урок
+          </Link>
+        </div>
+      ) : null}
 
       {lessons.length === 0 ? (
         <div className="shbz-card px-6 py-10 text-center">
