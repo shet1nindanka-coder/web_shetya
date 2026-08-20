@@ -8,6 +8,14 @@ import { ResultToggle } from "@/components/lesson-result-toggle";
 
 const STALE_PLAN_MS = 15 * 60_000;
 const POLL_INTERVAL_MS = 2000;
+const UNDO_REMOVE_MS = 5000;
+
+// Горячие клавиши отметки итога на строке набора.
+const RESULT_HOTKEYS: Record<string, string> = {
+  "1": "SOLVED",
+  "2": "PARTIAL",
+  "3": "NOT_SOLVED"
+};
 
 type LessonBoardItem = {
   id: string;
@@ -79,8 +87,26 @@ export function TeacherLessonBoard({ prefix, aiAvailable, lesson, bank }: Teache
   const [notice, setNotice] = useState<{ tone: "success" | "error"; text: string } | null>(null);
   const [busyParticipantId, setBusyParticipantId] = useState<string | null>(null);
   const [now, setNow] = useState(() => Date.now());
+  // Ошибка сохранения итога — в строке номера, а не наверху доски.
+  const [itemErrors, setItemErrors] = useState<Record<string, string>>({});
+  // Тост «№ N убран» с 5-секундной отменой удаления из набора.
+  const [undoState, setUndoState] = useState<{
+    participantId: string;
+    mainIds: string[];
+    extraIds: string[];
+    label: string;
+  } | null>(null);
+  const undoTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [, startTransition] = useTransition();
   const lastSignature = useRef("");
+
+  useEffect(() => {
+    return () => {
+      if (undoTimer.current) {
+        clearTimeout(undoTimer.current);
+      }
+    };
+  }, []);
 
   useEffect(() => {
     setParticipants(lesson.participants);
@@ -177,6 +203,16 @@ export function TeacherLessonBoard({ prefix, aiAvailable, lesson, bank }: Teache
             : participant
         )
       );
+      setItemErrors((current) => {
+        if (!(itemId in current)) {
+          return current;
+        }
+
+        const next = { ...current };
+        delete next[itemId];
+
+        return next;
+      });
 
       try {
         const response = await fetch(
@@ -195,11 +231,39 @@ export function TeacherLessonBoard({ prefix, aiAvailable, lesson, bank }: Teache
 
         startTransition(() => router.refresh());
       } catch (error) {
-        setNotice({ tone: "error", text: error instanceof Error ? error.message : "Не удалось сохранить итог." });
+        setItemErrors((current) => ({
+          ...current,
+          [itemId]: error instanceof Error ? error.message : "Не удалось сохранить итог."
+        }));
         startTransition(() => router.refresh());
       }
     },
     [lesson.id, router]
+  );
+
+  // 1/2/3 — отметить итог, ↑/↓ — перейти между строками набора.
+  const handleItemKeyDown = useCallback(
+    (event: React.KeyboardEvent<HTMLLIElement>, participantId: string, item: LessonBoardItem) => {
+      if (event.target !== event.currentTarget) {
+        return;
+      }
+
+      const hotkeyResult = RESULT_HOTKEYS[event.key];
+
+      if (hotkeyResult) {
+        event.preventDefault();
+        void setResult(participantId, item.id, item.result === hotkeyResult ? null : hotkeyResult);
+        return;
+      }
+
+      if (event.key === "ArrowDown" || event.key === "ArrowUp") {
+        event.preventDefault();
+        const rows = Array.from(document.querySelectorAll<HTMLLIElement>("[data-lesson-item]"));
+        const index = rows.indexOf(event.currentTarget);
+        rows[index + (event.key === "ArrowDown" ? 1 : -1)]?.focus();
+      }
+    },
+    [setResult]
   );
 
   const regenerate = useCallback(
@@ -247,32 +311,77 @@ export function TeacherLessonBoard({ prefix, aiAvailable, lesson, bank }: Teache
   return (
     <div>
       <div className="mb-6 flex flex-wrap items-center gap-2.5">
-        <a
-          href={`${prefix}/lessons/${lesson.id}/pdf`}
-          className="shbz-btn-primary inline-block px-[22px] py-[11px] text-[14px] no-underline"
-        >
-          Скачать PDF
-        </a>
-        <a
-          href={`${prefix}/lessons/${lesson.id}/print`}
-          target="_blank"
-          rel="noreferrer"
-          className="shbz-btn-outline inline-block no-underline"
-        >
-          Версия для печати
-        </a>
-        <a
-          href={`${prefix}/lessons/${lesson.id}/pdf?answers=1`}
-          className="shbz-btn-outline inline-block no-underline"
-        >
-          Ответы (PDF)
-        </a>
-        <a
-          href={`${prefix}/homework-plans/new?lessonId=${lesson.id}`}
-          className="shbz-btn-outline inline-block no-underline"
-        >
-          Выдать ДЗ по итогам занятия
-        </a>
+        {/* Экран во время урока — чек-лист отметок; печать, выдача ДЗ и удаление
+            собраны в одно меню «до и после урока». */}
+        <details className="relative">
+          <summary className="shbz-btn-outline inline-flex cursor-pointer list-none items-center gap-2 [&::-webkit-details-marker]:hidden">
+            До и после урока
+            <svg
+              width="12"
+              height="12"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+            >
+              <path d="M6 9l6 6 6-6" />
+            </svg>
+          </summary>
+          <div
+            className="absolute left-0 top-full z-20 mt-2 flex w-max min-w-[220px] flex-col gap-1 rounded-[12px] border p-2 shadow-lg"
+            style={{ background: "var(--shbz-card-bg)", borderColor: "var(--shbz-card-border)" }}
+          >
+            <a
+              href={`${prefix}/lessons/${lesson.id}/pdf`}
+              className="rounded-[8px] px-3 py-2 text-sm font-semibold no-underline transition hover:bg-[var(--shbz-tab-hover)]"
+              style={{ color: "var(--shbz-text-strong)" }}
+            >
+              Скачать PDF
+            </a>
+            <a
+              href={`${prefix}/lessons/${lesson.id}/print`}
+              target="_blank"
+              rel="noreferrer"
+              className="rounded-[8px] px-3 py-2 text-sm font-semibold no-underline transition hover:bg-[var(--shbz-tab-hover)]"
+              style={{ color: "var(--shbz-text-strong)" }}
+            >
+              Версия для печати
+            </a>
+            <a
+              href={`${prefix}/lessons/${lesson.id}/pdf?answers=1`}
+              className="rounded-[8px] px-3 py-2 text-sm font-semibold no-underline transition hover:bg-[var(--shbz-tab-hover)]"
+              style={{ color: "var(--shbz-text-strong)" }}
+            >
+              Ответы (PDF)
+            </a>
+            <a
+              href={`${prefix}/homework-plans/new?lessonId=${lesson.id}`}
+              className="rounded-[8px] px-3 py-2 text-sm font-semibold no-underline transition hover:bg-[var(--shbz-tab-hover)]"
+              style={{ color: "var(--shbz-text-strong)" }}
+            >
+              Выдать ДЗ по итогам занятия
+            </a>
+            <div className="my-1 border-t" style={{ borderColor: "var(--shbz-soft-border)" }} />
+            <div className="px-1 py-1">
+              <DeleteButton
+                variant="sm"
+                label="Удалить урок"
+                title="Удалить урок?"
+                description="Занятие и все подобранные наборы задач будут удалены. Это действие нельзя отменить."
+                onConfirm={deleteLesson}
+                onError={(error) =>
+                  setNotice({ tone: "error", text: error instanceof Error ? error.message : "Не удалось удалить урок." })
+                }
+              />
+            </div>
+          </div>
+        </details>
+        <span className="text-xs" style={{ color: "var(--shbz-kicker)" }}>
+          Отметки: клавиши 1/2/3, переход — ↓
+        </span>
         {pendingCount > 0 ? (
           <span
             role="status"
@@ -283,18 +392,6 @@ export function TeacherLessonBoard({ prefix, aiAvailable, lesson, bank }: Teache
             Готово {readyCount} из {participants.length}…
           </span>
         ) : null}
-        <span className="ml-auto">
-          <DeleteButton
-            variant="sm"
-            label="Удалить урок"
-            title="Удалить урок?"
-            description="Занятие и все подобранные наборы задач будут удалены. Это действие нельзя отменить."
-            onConfirm={deleteLesson}
-            onError={(error) =>
-              setNotice({ tone: "error", text: error instanceof Error ? error.message : "Не удалось удалить урок." })
-            }
-          />
-        </span>
       </div>
 
       {!aiAvailable ? (
@@ -325,19 +422,42 @@ export function TeacherLessonBoard({ prefix, aiAvailable, lesson, bank }: Teache
           const mainIds = mainItems.map((item) => item.homeworkNumberId);
           const extraIds = extraItems.map((item) => item.homeworkNumberId);
           const totalMinutes = mainItems.reduce((sum, item) => sum + (item.minutes ?? 0), 0);
-          const removeItem = (target: LessonBoardItem) =>
+          const markedCount = participant.items.filter((item) => item.result !== null).length;
+          const removeItem = (target: LessonBoardItem) => {
+            // Сохраняем состав до удаления — тост даёт 5 секунд на отмену.
+            if (undoTimer.current) {
+              clearTimeout(undoTimer.current);
+            }
+
+            setUndoState({
+              participantId: participant.id,
+              mainIds: [...mainIds],
+              extraIds: [...extraIds],
+              label: `№ ${target.number} убран из набора`
+            });
+            undoTimer.current = setTimeout(() => setUndoState(null), UNDO_REMOVE_MS);
+
             void saveItems(
               participant.id,
               mainIds.filter((id) => id !== target.homeworkNumberId),
               extraIds.filter((id) => id !== target.homeworkNumberId)
             );
+          };
 
           return (
             <article key={participant.id} className="shbz-card p-6">
-              <div className="flex flex-wrap items-center justify-between gap-3">
+              <div
+                className="sticky top-2 z-10 -mx-2 flex flex-wrap items-center justify-between gap-3 rounded-[12px] px-2 py-1.5"
+                style={{ background: "var(--shbz-card-bg)" }}
+              >
                 <div>
                   <h3 className="text-[16px] font-bold" style={{ color: "var(--shbz-text-strong)" }}>
                     {participant.studentName}
+                    {participant.items.length > 0 ? (
+                      <span className="ml-2.5 text-[13px] font-semibold" style={{ color: "var(--shbz-kicker)" }}>
+                        отмечено {markedCount} из {participant.items.length}
+                      </span>
+                    ) : null}
                   </h3>
                   <p className="mt-0.5 text-xs" style={{ color: "var(--shbz-text-muted)" }}>
                     скорость: {participant.speed ?? "не указана"} · основных: {mainItems.length}
@@ -400,6 +520,9 @@ export function TeacherLessonBoard({ prefix, aiAvailable, lesson, bank }: Teache
                     return (
                       <li
                         key={item.id}
+                        tabIndex={0}
+                        data-lesson-item
+                        onKeyDown={(event) => handleItemKeyDown(event, participant.id, item)}
                         className="flex flex-wrap items-center gap-x-3 gap-y-1.5 rounded-[12px] border px-3.5 py-2.5"
                         style={{ borderColor: "var(--shbz-soft-border)", background: "var(--shbz-soft-bg)" }}
                       >
@@ -432,6 +555,7 @@ export function TeacherLessonBoard({ prefix, aiAvailable, lesson, bank }: Teache
                         ) : null}
                         <ResultToggle
                           className="ml-auto"
+                          size="lg"
                           value={item.result}
                           disabled={busy}
                           onChange={(next) => void setResult(participant.id, item.id, next)}
@@ -441,11 +565,16 @@ export function TeacherLessonBoard({ prefix, aiAvailable, lesson, bank }: Teache
                           disabled={busy}
                           aria-label={`Убрать № ${item.number}`}
                           onClick={() => removeItem(item)}
-                          className="text-[16px] leading-none opacity-60 transition hover:opacity-100"
+                          className="ml-1.5 flex h-8 w-8 items-center justify-center rounded-[8px] text-[18px] leading-none opacity-60 transition hover:opacity-100"
                           style={{ color: "var(--shbz-danger-text)" }}
                         >
                           ×
                         </button>
+                        {itemErrors[item.id] ? (
+                          <span className="w-full text-xs font-semibold" style={{ color: "var(--shbz-danger-text)" }}>
+                            {itemErrors[item.id]}
+                          </span>
+                        ) : null}
                       </li>
                     );
                   })}
@@ -471,6 +600,9 @@ export function TeacherLessonBoard({ prefix, aiAvailable, lesson, bank }: Teache
                       return (
                         <li
                           key={item.id}
+                          tabIndex={0}
+                          data-lesson-item
+                          onKeyDown={(event) => handleItemKeyDown(event, participant.id, item)}
                           className="flex flex-wrap items-center gap-x-3 gap-y-1.5 rounded-[12px] border border-dashed px-3.5 py-2.5"
                           style={{ borderColor: "var(--shbz-soft-border)" }}
                         >
@@ -498,6 +630,7 @@ export function TeacherLessonBoard({ prefix, aiAvailable, lesson, bank }: Teache
                           ) : null}
                           <ResultToggle
                             className="ml-auto"
+                            size="lg"
                             value={item.result}
                             disabled={busy}
                             onChange={(next) => void setResult(participant.id, item.id, next)}
@@ -507,11 +640,16 @@ export function TeacherLessonBoard({ prefix, aiAvailable, lesson, bank }: Teache
                             disabled={busy}
                             aria-label={`Убрать № ${item.number}`}
                             onClick={() => removeItem(item)}
-                            className="text-[16px] leading-none opacity-60 transition hover:opacity-100"
+                            className="ml-1.5 flex h-8 w-8 items-center justify-center rounded-[8px] text-[18px] leading-none opacity-60 transition hover:opacity-100"
                             style={{ color: "var(--shbz-danger-text)" }}
                           >
                             ×
                           </button>
+                          {itemErrors[item.id] ? (
+                            <span className="w-full text-xs font-semibold" style={{ color: "var(--shbz-danger-text)" }}>
+                              {itemErrors[item.id]}
+                            </span>
+                          ) : null}
                         </li>
                       );
                     })}
@@ -535,6 +673,36 @@ export function TeacherLessonBoard({ prefix, aiAvailable, lesson, bank }: Teache
           );
         })}
       </div>
+
+      {undoState ? (
+        <div
+          role="status"
+          className="fixed bottom-6 left-1/2 z-40 flex -translate-x-1/2 items-center gap-3 rounded-[12px] border px-4 py-3 text-sm font-semibold shadow-lg"
+          style={{
+            background: "var(--shbz-card-bg)",
+            borderColor: "var(--shbz-card-border)",
+            color: "var(--shbz-text-strong)"
+          }}
+        >
+          {undoState.label}
+          <button
+            type="button"
+            className="font-bold underline"
+            style={{ color: "var(--shbz-accent-solid)" }}
+            onClick={() => {
+              if (undoTimer.current) {
+                clearTimeout(undoTimer.current);
+                undoTimer.current = null;
+              }
+
+              void saveItems(undoState.participantId, undoState.mainIds, undoState.extraIds);
+              setUndoState(null);
+            }}
+          >
+            Отменить
+          </button>
+        </div>
+      ) : null}
     </div>
   );
 }
