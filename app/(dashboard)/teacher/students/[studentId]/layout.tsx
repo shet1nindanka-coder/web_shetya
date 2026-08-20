@@ -8,7 +8,7 @@ import { PageHeader } from "@/components/page-header";
 import { ShbzNumberSearch } from "@/components/shbz-number-search";
 import { TeacherStudentTabs } from "@/components/teacher-student-tabs";
 import { requireUser } from "@/lib/auth";
-import { getTeacherStudentDetail } from "@/lib/platform-data";
+import { getTeacherStudentDetail, getTeacherStudentHomeworks } from "@/lib/platform-data";
 
 type TeacherStudentLayoutProps = {
   children: ReactNode;
@@ -32,6 +32,14 @@ export default async function TeacherStudentLayout({ children, params }: Teacher
     throw error;
   }
 
+  // Тот же кэшированный запрос читает и вкладка «Проверка ДЗ» — новых запросов нет.
+  const homeworks = await getTeacherStudentHomeworks(user, studentId);
+  const activeHomeworksCount = homeworks.assignmentsEnabled
+    ? homeworks.assignments.filter(
+        (assignment) =>
+          !(assignment.numbers.length > 0 && assignment.solvedCount === assignment.numbers.length)
+      ).length
+    : 0;
 
   return (
     <div className="space-y-6">
@@ -41,6 +49,15 @@ export default async function TeacherStudentLayout({ children, params }: Teacher
         eyebrow="Ученик"
         title={data.student.name}
         description={data.student.email}
+        metrics={[
+          {
+            label: "Отмечено",
+            value: `${data.stats.totalMarked} из ${data.stats.totalNumbers} · ${data.stats.markedPercent}%`
+          },
+          { label: "Зелёные", value: data.stats.totalGreen, tone: "success" },
+          { label: "Жёлтые", value: data.stats.totalYellow, tone: "warning" },
+          { label: "Красные", value: data.stats.totalRed, tone: "danger" }
+        ]}
         aside={<ShbzNumberSearch endpoint="/api/teacher/topics/find-number" />}
         actions={
           <>
@@ -83,7 +100,7 @@ export default async function TeacherStudentLayout({ children, params }: Teacher
         }
       />
 
-      <TeacherStudentTabs studentId={data.student.id} />
+      <TeacherStudentTabs studentId={data.student.id} activeHomeworksCount={activeHomeworksCount} />
 
       {children}
     </div>

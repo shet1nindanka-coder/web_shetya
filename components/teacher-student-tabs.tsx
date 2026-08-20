@@ -5,15 +5,21 @@ import { usePathname } from "next/navigation";
 
 type TeacherStudentTabsProps = {
   studentId: string;
+  /** Счётчик активных ДЗ в подписи вкладки «Проверка ДЗ». */
+  activeHomeworksCount?: number;
 };
 
-export function TeacherStudentTabs({ studentId }: TeacherStudentTabsProps) {
+export function TeacherStudentTabs({ studentId, activeHomeworksCount }: TeacherStudentTabsProps) {
   const pathname = usePathname();
   const prefix = pathname.startsWith("/developer") ? "/developer" : "/teacher";
   const base = `${prefix}/students/${studentId}`;
 
   const items = [
-    { href: base, label: "Проверка ДЗ", isActive: pathname === base },
+    {
+      href: base,
+      label: activeHomeworksCount ? `Проверка ДЗ · ${activeHomeworksCount}` : "Проверка ДЗ",
+      isActive: pathname === base
+    },
     { href: `${base}/assign`, label: "Выдать ДЗ", isActive: pathname.startsWith(`${base}/assign`) },
     // «Занятия» — список проведённых, «Составить занятие» — сборка нового.
     // Порядок проверок важен: /lessons/new не должен подсвечивать список.
