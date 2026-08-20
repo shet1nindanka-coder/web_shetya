@@ -331,7 +331,7 @@ export function TeacherLessonBoard({ prefix, aiAvailable, lesson, bank }: Teache
             </svg>
           </summary>
           <div
-            className="absolute left-0 top-full z-20 mt-2 flex w-max min-w-[220px] flex-col gap-1 rounded-[12px] border p-2 shadow-lg"
+            className="shbz-dropdown-panel absolute left-0 top-full z-20 mt-2 flex w-max min-w-[220px] flex-col gap-1 rounded-[12px] border p-2 shadow-lg"
             style={{ background: "var(--shbz-card-bg)", borderColor: "var(--shbz-card-border)" }}
           >
             <a
@@ -676,9 +676,12 @@ export function TeacherLessonBoard({ prefix, aiAvailable, lesson, bank }: Teache
       </div>
 
       {undoState ? (
+        // Центрирование на внешнем слое: вход ui-pop-in анимирует transform
+        // и не должен конфликтовать с translate-центровкой.
+        <div className="pointer-events-none fixed bottom-6 left-0 right-0 z-40 flex justify-center">
         <div
           role="status"
-          className="fixed bottom-6 left-1/2 z-40 flex -translate-x-1/2 items-center gap-3 rounded-[12px] border px-4 py-3 text-sm font-semibold shadow-lg"
+          className="ui-pop-in pointer-events-auto flex items-center gap-3 rounded-[12px] border px-4 py-3 text-sm font-semibold shadow-lg"
           style={{
             background: "var(--shbz-card-bg)",
             borderColor: "var(--shbz-card-border)",
@@ -702,6 +705,7 @@ export function TeacherLessonBoard({ prefix, aiAvailable, lesson, bank }: Teache
           >
             Отменить
           </button>
+        </div>
         </div>
       ) : null}
     </div>

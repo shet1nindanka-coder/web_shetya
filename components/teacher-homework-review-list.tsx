@@ -908,24 +908,28 @@ export function TeacherHomeworkReviewList({ studentId, assignments }: TeacherHom
       ) : null}
 
       {acceptUndo ? (
-        <div
-          role="status"
-          className="fixed bottom-6 left-1/2 z-40 flex -translate-x-1/2 items-center gap-3 rounded-[12px] border px-4 py-3 text-sm font-semibold shadow-lg"
-          style={{
-            background: "var(--shbz-card-bg)",
-            borderColor: "var(--shbz-card-border)",
-            color: "var(--shbz-text-strong)"
-          }}
-        >
-          {acceptUndo.label}
-          <button
-            type="button"
-            className="font-bold underline"
-            style={{ color: "var(--shbz-accent-solid)" }}
-            onClick={() => void undoAcceptAiVerdicts()}
+        // Центрирование на внешнем слое: вход ui-pop-in анимирует transform
+        // и не должен конфликтовать с translate-центровкой.
+        <div className="pointer-events-none fixed bottom-6 left-0 right-0 z-40 flex justify-center">
+          <div
+            role="status"
+            className="ui-pop-in pointer-events-auto flex items-center gap-3 rounded-[12px] border px-4 py-3 text-sm font-semibold shadow-lg"
+            style={{
+              background: "var(--shbz-card-bg)",
+              borderColor: "var(--shbz-card-border)",
+              color: "var(--shbz-text-strong)"
+            }}
           >
-            Отменить
-          </button>
+            {acceptUndo.label}
+            <button
+              type="button"
+              className="font-bold underline"
+              style={{ color: "var(--shbz-accent-solid)" }}
+              onClick={() => void undoAcceptAiVerdicts()}
+            >
+              Отменить
+            </button>
+          </div>
         </div>
       ) : null}
     </div>

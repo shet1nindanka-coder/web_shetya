@@ -8,7 +8,7 @@ export function LessonComposeCard({ href, hint }: { href: string; hint: string }
   return (
     <Link
       href={href}
-      className="flex items-center gap-3.5 rounded-[16px] border-[1.5px] border-dashed px-5 py-4 no-underline transition hover:bg-[var(--shbz-tab-hover)]"
+      className="ui-pressable flex items-center gap-3.5 rounded-[16px] border-[1.5px] border-dashed px-5 py-4 no-underline transition hover:bg-[var(--shbz-tab-hover)]"
       style={{ borderColor: "var(--shbz-input-border)" }}
     >
       <span

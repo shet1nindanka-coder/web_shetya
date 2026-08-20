@@ -131,7 +131,7 @@ export default async function GroupDetailPage({ params, searchParams }: GroupDet
           {groupLessons.length > 0 ? (
             <Link
               href={`${prefix}/lessons`}
-              className="mt-4 inline-block text-sm font-semibold no-underline"
+              className="mt-4 inline-block text-sm font-semibold no-underline transition hover:opacity-75"
               style={{ color: "var(--shbz-accent-solid)" }}
             >
               Все занятия →

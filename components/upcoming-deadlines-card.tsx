@@ -33,7 +33,7 @@ export function UpcomingDeadlinesCard({
       {showHero && next ? (
         <>
           <h2 className="shbz-section-title">Что дальше</h2>
-          <Link href={next.href} className="block no-underline">
+          <Link href={next.href} className="ui-pressable block rounded-[12px] no-underline">
             <DeadlineList items={[next]} compact />
           </Link>
         </>
