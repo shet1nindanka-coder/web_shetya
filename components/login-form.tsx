@@ -14,8 +14,27 @@ const errorMap: Record<string, string> = {
   rateLimited: "Слишком много попыток входа. Подождите несколько минут и попробуйте снова."
 };
 
+function formatMinutes(minutes: number) {
+  const mod10 = minutes % 10;
+  const mod100 = minutes % 100;
+
+  if (mod10 === 1 && mod100 !== 11) {
+    return `${minutes} минуту`;
+  }
+
+  if (mod10 >= 2 && mod10 <= 4 && (mod100 < 12 || mod100 > 14)) {
+    return `${minutes} минуты`;
+  }
+
+  return `${minutes} минут`;
+}
+
 type LoginFormProps = {
   error?: string;
+  /** Реальное окно блокировки в минутах — из редиректа ?error=rateLimited&min=N. */
+  rateLimitedMinutes?: number;
+  /** Контакт преподавателя из SiteSetting; пусто — строка помощи скрыта. */
+  helpContact?: string;
 };
 
 // Пока server action входа выполняется, кнопка блокируется: двойное нажатие
@@ -34,8 +53,14 @@ function LoginSubmitButton() {
   );
 }
 
-export function LoginForm({ error }: LoginFormProps) {
+export function LoginForm({ error, rateLimitedMinutes, helpContact }: LoginFormProps) {
   const [showPassword, setShowPassword] = useState(false);
+  const errorText =
+    error === "rateLimited" && rateLimitedMinutes
+      ? `Слишком много попыток входа. Попробуйте снова через ${formatMinutes(rateLimitedMinutes)}.`
+      : error
+        ? errorMap[error]
+        : undefined;
 
   return (
     <div className="w-full max-w-[416px]">
@@ -61,6 +86,7 @@ export function LoginForm({ error }: LoginFormProps) {
             <input
               type="text"
               name="login"
+              inputMode="email"
               placeholder="teacher@example.com"
               className="shbz-input"
               required
@@ -99,15 +125,21 @@ export function LoginForm({ error }: LoginFormProps) {
             </div>
           </label>
 
-          {error && errorMap[error] ? (
+          {errorText ? (
             <div className="shbz-notice-error px-4 py-3 text-sm font-medium" aria-live="polite">
-              {errorMap[error]}
+              {errorText}
             </div>
           ) : null}
 
           <LoginSubmitButton />
         </form>
       </div>
+
+      {helpContact ? (
+        <p className="mt-5 text-center text-sm" style={{ color: "var(--shbz-text-muted)" }}>
+          Не получается войти? Напишите преподавателю: <span className="font-semibold">{helpContact}</span>
+        </p>
+      ) : null}
     </div>
   );
 }

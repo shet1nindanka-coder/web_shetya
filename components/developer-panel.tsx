@@ -432,6 +432,18 @@ function SettingsForm({ settings }: { settings: SiteSettings }) {
             className="shbz-input mt-auto"
           />
         </label>
+        <label className="flex flex-col">
+          <FieldLabel hint="Показывается на странице входа; пусто — строка скрыта">
+            Контакт для «не получается войти»
+          </FieldLabel>
+          <input
+            type="text"
+            name="loginHelpContact"
+            defaultValue={settings.loginHelpContact}
+            maxLength={200}
+            className="shbz-input mt-auto"
+          />
+        </label>
       </div>
 
       <div className="mt-[26px] flex flex-wrap items-center gap-3.5">

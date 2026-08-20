@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { LoginForm } from "@/components/login-form";
 import { tryGetCurrentUser } from "@/lib/auth";
+import { getSiteSettings } from "@/lib/site-settings";
 import { roleHome } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
@@ -18,6 +19,12 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
 
   const resolvedSearchParams = (await searchParams) ?? {};
   const error = typeof resolvedSearchParams.error === "string" ? resolvedSearchParams.error : undefined;
+  const rateLimitedMinutesRaw = Number(resolvedSearchParams.min);
+  const rateLimitedMinutes =
+    Number.isFinite(rateLimitedMinutesRaw) && rateLimitedMinutesRaw > 0
+      ? Math.min(60, Math.ceil(rateLimitedMinutesRaw))
+      : undefined;
+  const { loginHelpContact } = await getSiteSettings();
 
   return (
     <main
@@ -37,7 +44,7 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
         </div>
       </div>
 
-      <LoginForm error={error} />
+      <LoginForm error={error} rateLimitedMinutes={rateLimitedMinutes} helpContact={loginHelpContact} />
     </main>
   );
 }

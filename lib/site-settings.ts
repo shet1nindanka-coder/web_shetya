@@ -21,6 +21,8 @@ export type SiteSettings = {
   homeworkPlanEnabled: boolean;
   homeworkPlanMaxItems: number;
   homeworkPlanShortlistSize: number;
+  // Контакт для «Не получается войти?» на странице входа; пусто — строка скрыта.
+  loginHelpContact: string;
 };
 
 const REASONING_EFFORTS: ReasoningEffort[] = ["low", "medium", "high"];
@@ -82,7 +84,8 @@ export function getSiteSettingsDefaults(): SiteSettings {
     lessonPlanConcurrency: 3,
     homeworkPlanEnabled: Boolean(process.env.AI_CHECK_API_KEY?.trim() && process.env.AI_CHECK_MODEL?.trim()),
     homeworkPlanMaxItems: 40,
-    homeworkPlanShortlistSize: 60
+    homeworkPlanShortlistSize: 60,
+    loginHelpContact: process.env.LOGIN_HELP_CONTACT?.trim() ?? ""
   };
 }
 
@@ -147,6 +150,9 @@ export function applySettingRows(
       case "homeworkPlanShortlistSize":
         result.homeworkPlanShortlistSize = clampInt(value, 20, 150, defaults.homeworkPlanShortlistSize);
         break;
+      case "loginHelpContact":
+        result.loginHelpContact = value.trim().slice(0, 200);
+        break;
       default:
         break;
     }
@@ -172,7 +178,8 @@ export function serializeSiteSettings(values: SiteSettings): Array<{ key: string
     { key: "lessonPlanConcurrency", value: String(values.lessonPlanConcurrency) },
     { key: "homeworkPlanEnabled", value: String(values.homeworkPlanEnabled) },
     { key: "homeworkPlanMaxItems", value: String(values.homeworkPlanMaxItems) },
-    { key: "homeworkPlanShortlistSize", value: String(values.homeworkPlanShortlistSize) }
+    { key: "homeworkPlanShortlistSize", value: String(values.homeworkPlanShortlistSize) },
+    { key: "loginHelpContact", value: values.loginHelpContact }
   ];
 }
 
@@ -193,7 +200,8 @@ export function parseSiteSettingsForm(formData: FormData): SiteSettings {
     { key: "lessonPlanConcurrency", value: String(formData.get("lessonPlanConcurrency") ?? "") },
     { key: "homeworkPlanEnabled", value: formData.get("homeworkPlanEnabled") === "on" ? "true" : "false" },
     { key: "homeworkPlanMaxItems", value: String(formData.get("homeworkPlanMaxItems") ?? "") },
-    { key: "homeworkPlanShortlistSize", value: String(formData.get("homeworkPlanShortlistSize") ?? "") }
+    { key: "homeworkPlanShortlistSize", value: String(formData.get("homeworkPlanShortlistSize") ?? "") },
+    { key: "loginHelpContact", value: String(formData.get("loginHelpContact") ?? "") }
   ];
 
   return applySettingRows(getSiteSettingsDefaults(), rows);

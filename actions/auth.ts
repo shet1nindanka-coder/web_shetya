@@ -11,6 +11,7 @@ import {
 import {
   assertRateLimit,
   getClientIpFromHeaders,
+  getRetryAfterSeconds,
   RateLimitExceededError,
   resetRateLimit
 } from "@/lib/rate-limit";
@@ -18,6 +19,13 @@ import { MAX_PASSWORD_LENGTH } from "@/lib/password-policy";
 import { MAX_LOGIN_LENGTH, normalizeLoginInput, roleHome } from "@/lib/utils";
 
 const PERSISTENT_LOGIN_RATE_LIMIT_SCOPE = "login:login";
+
+// Система знает точное окно блокировки — показываем его, а не «несколько минут».
+function rateLimitedRedirectUrl(retryAfterMs: number) {
+  const minutes = Math.max(1, Math.ceil(getRetryAfterSeconds(retryAfterMs) / 60));
+
+  return `/login?error=rateLimited&min=${minutes}`;
+}
 
 export async function loginAction(formData: FormData) {
   const login = normalizeLoginInput(String(formData.get("login") ?? formData.get("email") ?? ""));
@@ -59,7 +67,7 @@ export async function loginAction(formData: FormData) {
         error,
         "Login request was rate limited."
       );
-      redirect("/login?error=rateLimited");
+      redirect(rateLimitedRedirectUrl(error.retryAfterMs));
     }
 
     throw error;
@@ -94,7 +102,7 @@ export async function loginAction(formData: FormData) {
       undefined,
       "Login request was rate limited by the persistent account limit."
     );
-    redirect("/login?error=rateLimited");
+    redirect(rateLimitedRedirectUrl(persistentRateLimit.retryAfterMs));
   }
 
   let user = null;

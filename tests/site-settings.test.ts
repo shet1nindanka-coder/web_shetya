@@ -106,3 +106,20 @@ test("applySettingRows handles homework plan keys with clamps", () => {
   assert.equal(result.homeworkPlanMaxItems, 3);
   assert.equal(result.homeworkPlanShortlistSize, 150);
 });
+
+test("loginHelpContact применяется, обрезается и попадает в сериализацию", () => {
+  const defaults = getSiteSettingsDefaults();
+  const result = applySettingRows(defaults, [
+    { key: "loginHelpContact", value: "  +7 900 000-00-00 (Telegram: @teacher)  " }
+  ]);
+
+  assert.equal(result.loginHelpContact, "+7 900 000-00-00 (Telegram: @teacher)");
+
+  const longValue = "a".repeat(500);
+  const clipped = applySettingRows(defaults, [{ key: "loginHelpContact", value: longValue }]);
+  assert.equal(clipped.loginHelpContact.length, 200);
+
+  const serialized = serializeSiteSettings(result);
+  const row = serialized.find((entry) => entry.key === "loginHelpContact");
+  assert.equal(row?.value, "+7 900 000-00-00 (Telegram: @teacher)");
+});

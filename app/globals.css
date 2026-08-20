@@ -1716,7 +1716,8 @@ html[data-theme="dark"] {
   height: 52px;
   padding: 0 16px;
   font-family: inherit;
-  font-size: 15px;
+  /* ≥16px: Safari на iOS зумит страницу при фокусе на инпуте с меньшим кеглем. */
+  font-size: 16px;
   color: var(--shbz-text-strong);
   background: var(--shbz-input-bg);
   border: 1.5px solid var(--shbz-input-border);
