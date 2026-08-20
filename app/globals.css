@@ -2203,7 +2203,7 @@ html[data-density="compact"] .shbz-section-pad { padding: 20px; }
 }
 
 /* Компактная плотность для shbz-поверхностей: раньше 52 правила compact
-   адресовали только ui-*/app-*, и настройка была no-op на новых экранах
+   адресовали только классы ui- и app-, и настройка была no-op на новых экранах
    (обязательство PRODUCT.md: каждая поверхность работает во всех комбинациях). */
 html[data-density="compact"] .shbz-input { height: 44px; }
 html[data-density="compact"] .shbz-search { height: 40px; }
