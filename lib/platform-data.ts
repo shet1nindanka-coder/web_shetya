@@ -1939,6 +1939,7 @@ export async function getTeacherLessons(viewer: TeacherViewer) {
       status: lesson.status,
       durationMinutes: lesson.durationMinutes,
       createdAt: lesson.createdAt,
+      groupId: lesson.group?.id ?? null,
       groupName: lesson.group?.name ?? null,
       // Для индивидуального урока в списке вместо группы показывается имя ученика.
       soloStudentName:

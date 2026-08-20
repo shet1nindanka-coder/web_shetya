@@ -20,8 +20,7 @@ type DashboardNavProps = {
   } | null;
 };
 
-// Уроки и ДЗ-черновики — общие для «учеников» и «групп»: вкладку выбирает контекст.
-// Создание/страницы с ?studentId= остаются в «учениках», остальное живёт в «группах».
+// Уроки и ДЗ-черновики живут в собственном разделе «занятия».
 function isPlannerPath(pathname: string, prefix: string) {
   return pathname.startsWith(`${prefix}/lessons`) || pathname.startsWith(`${prefix}/homework-plans`);
 }
@@ -56,14 +55,19 @@ const teacherItems = [
   {
     href: "/teacher/students",
     label: "ученики",
-    match: (p: string, sp: URLSearchParams) =>
-      p.startsWith("/teacher/students") || (isPlannerPath(p, "/teacher") && sp.has("studentId"))
+    match: (p: string, _sp: URLSearchParams) => p.startsWith("/teacher/students")
   },
   {
     href: "/teacher/groups",
     label: "группы",
-    match: (p: string, sp: URLSearchParams) =>
-      p.startsWith("/teacher/groups") || (isPlannerPath(p, "/teacher") && !sp.has("studentId"))
+    match: (p: string, _sp: URLSearchParams) => p.startsWith("/teacher/groups")
+  },
+  {
+    // Раньше раздел был сиротой: групповое занятие после закрытия вкладки
+    // было достижимо только по прямому URL.
+    href: "/teacher/lessons",
+    label: "занятия",
+    match: (p: string, _sp: URLSearchParams) => isPlannerPath(p, "/teacher")
   },
   {
     href: "/teacher/settings",

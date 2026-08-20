@@ -15,10 +15,31 @@ const statusLabels: Record<string, string> = {
   FINISHED: "Завершён"
 };
 
+function isSameCalendarDay(left: Date, right: Date) {
+  return (
+    left.getFullYear() === right.getFullYear() &&
+    left.getMonth() === right.getMonth() &&
+    left.getDate() === right.getDate()
+  );
+}
+
 export default async function TeacherLessonsPage() {
   const user = await requireUser([UserRole.TEACHER, UserRole.DEVELOPER]);
   const prefix = user.role === UserRole.DEVELOPER ? "/developer" : "/teacher";
   const lessons = await getTeacherLessons(user);
+
+  // Секции по актуальности: сегодняшние занятия сверху, затем незакрытые, затем прошедшие.
+  const now = new Date();
+  const todayLessons = lessons.filter((lesson) => isSameCalendarDay(new Date(lesson.createdAt), now));
+  const upcomingLessons = lessons.filter(
+    (lesson) => !todayLessons.includes(lesson) && lesson.status !== "FINISHED"
+  );
+  const pastLessons = lessons.filter((lesson) => !todayLessons.includes(lesson) && lesson.status === "FINISHED");
+  const sections = [
+    { key: "today", title: "Сегодня", items: todayLessons },
+    { key: "upcoming", title: "Ближайшие", items: upcomingLessons },
+    { key: "past", title: "Прошедшие", items: pastLessons }
+  ].filter((section) => section.items.length > 0);
 
   return (
     <div>
@@ -37,8 +58,14 @@ export default async function TeacherLessonsPage() {
           </Link>
         </div>
       ) : (
-        <div className="space-y-3.5">
-          {lessons.map((lesson) => (
+        <div className="space-y-9">
+          {sections.map((section) => (
+            <section key={section.key}>
+              <h2 className="shbz-section-title">
+                {section.title} · {section.items.length}
+              </h2>
+              <div className="space-y-3.5">
+                {section.items.map((lesson) => (
             <article key={lesson.id} className="shbz-card flex flex-wrap items-center justify-between gap-4 px-6 py-5">
               <div className="min-w-0">
                 <h3 className="truncate text-[16px] font-bold" style={{ color: "var(--shbz-text-strong)" }}>
@@ -82,6 +109,9 @@ export default async function TeacherLessonsPage() {
                 <LessonDeleteButton lessonId={lesson.id} />
               </div>
             </article>
+                ))}
+              </div>
+            </section>
           ))}
         </div>
       )}

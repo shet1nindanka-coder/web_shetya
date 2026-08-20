@@ -7,7 +7,8 @@ import { GroupMembersManager } from "@/components/group-members-manager";
 import { ShbzNumberSearch } from "@/components/shbz-number-search";
 import { ShbzPageHeader } from "@/components/shbz-page-header";
 import { requireUser } from "@/lib/auth";
-import { getGroupDetail } from "@/lib/platform-data";
+import { getGroupDetail, getTeacherLessons } from "@/lib/platform-data";
+import { formatDateTime } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
@@ -33,6 +34,8 @@ export default async function GroupDetailPage({ params, searchParams }: GroupDet
   if (!group) {
     notFound();
   }
+
+  const groupLessons = (await getTeacherLessons(user)).filter((lesson) => lesson.groupId === groupId);
 
   const noticeKey =
     typeof resolvedSearchParams.groupCreated === "string"
@@ -96,6 +99,44 @@ export default async function GroupDetailPage({ params, searchParams }: GroupDet
             }))}
             allStudents={group.allStudents}
           />
+        </div>
+      </section>
+
+      <section className="mt-11">
+        <h2 className="shbz-section-title">Занятия группы · {groupLessons.length}</h2>
+        <div className="shbz-card shbz-section-pad">
+          {groupLessons.length === 0 ? (
+            <p className="text-sm" style={{ color: "var(--shbz-text-muted)" }}>
+              Занятий у группы пока нет — соберите первое кнопкой «Составить урок».
+            </p>
+          ) : (
+            <ul className="space-y-2.5">
+              {groupLessons.slice(0, 3).map((lesson) => (
+                <li key={lesson.id} className="flex flex-wrap items-center gap-3">
+                  <div className="min-w-0 flex-1">
+                    <span className="block truncate text-sm font-bold" style={{ color: "var(--shbz-text-strong)" }}>
+                      {lesson.title}
+                    </span>
+                    <span className="text-xs" style={{ color: "var(--shbz-text-muted)" }}>
+                      {formatDateTime(lesson.createdAt)} · итоги {lesson.resultsMarked} / {lesson.resultsTotal}
+                    </span>
+                  </div>
+                  <Link href={`${prefix}/lessons/${lesson.id}`} className="shbz-btn-outline inline-block no-underline">
+                    Открыть
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          )}
+          {groupLessons.length > 0 ? (
+            <Link
+              href={`${prefix}/lessons`}
+              className="mt-4 inline-block text-sm font-semibold no-underline"
+              style={{ color: "var(--shbz-accent-solid)" }}
+            >
+              Все занятия →
+            </Link>
+          ) : null}
         </div>
       </section>
 
