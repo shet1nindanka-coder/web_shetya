@@ -595,7 +595,7 @@ export function TeacherHomeworkReviewList({ studentId, assignments }: TeacherHom
                 >
                   Принять вердикты ИИ
                 </button>
-                <span className="ml-2.5 text-xs" style={{ color: "var(--shbz-kicker)" }}>
+                <span className="ui-hint ml-2.5 text-xs" style={{ color: "var(--shbz-kicker)" }}>
                   Верно → Зеленый, Ошибка → Красный; «на проверке» не трогаем.
                 </span>
               </div>

@@ -172,7 +172,7 @@ export function TeacherLessonCreateForm({ prefix, groupId, members, topics }: Te
               изменено: {changedParamsCount}
             </span>
           ) : (
-            <span className="text-xs font-normal" style={{ color: "var(--shbz-text-muted)" }}>
+            <span className="ui-hint text-xs font-normal" style={{ color: "var(--shbz-text-muted)" }}>
               по умолчанию: 60 минут, все ученики, темы и сложность выберет ИИ
             </span>
           )}

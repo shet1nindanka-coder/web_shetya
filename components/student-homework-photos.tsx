@@ -176,7 +176,7 @@ export function StudentHomeworkPhotos({ assignmentId, maxPhotos = MAX_PHOTOS, ph
           </svg>
         }
         subtitle={
-          <span className="text-[12.5px]" style={{ color: "var(--shbz-kicker)" }}>
+          <span className="ui-hint text-[12.5px]" style={{ color: "var(--shbz-kicker)" }}>
             {`До ${maxPhotos} фото · PNG или JPG`}
           </span>
         }

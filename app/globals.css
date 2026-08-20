@@ -2198,6 +2198,16 @@ html[data-density="compact"] .shbz-section-pad { padding: 20px; }
   .shbz-section-pad { padding: 18px; }
 }
 
+/* Компактная плотность для shbz-поверхностей: раньше 52 правила compact
+   адресовали только ui-*/app-*, и настройка была no-op на новых экранах
+   (обязательство PRODUCT.md: каждая поверхность работает во всех комбинациях). */
+html[data-density="compact"] .shbz-input { height: 44px; }
+html[data-density="compact"] .shbz-search { height: 40px; }
+html[data-density="compact"] .shbz-section-title { margin-bottom: 12px; font-size: 18px; }
+html[data-density="compact"] .shbz-card { border-radius: 12px; }
+html[data-density="compact"] .shbz-topbar > .mx-auto { padding-top: 8px; padding-bottom: 8px; }
+html[data-density="compact"] .shbz-btn-primary { box-shadow: none; }
+
 .shbz-notice-success {
   border: 1px solid var(--shbz-green-soft);
   background: var(--shbz-green-soft);

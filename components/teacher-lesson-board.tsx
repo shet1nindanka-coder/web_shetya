@@ -379,7 +379,7 @@ export function TeacherLessonBoard({ prefix, aiAvailable, lesson, bank }: Teache
             </div>
           </div>
         </details>
-        <span className="text-xs" style={{ color: "var(--shbz-kicker)" }}>
+        <span className="ui-hint text-xs" style={{ color: "var(--shbz-kicker)" }}>
           Отметки: клавиши 1/2/3, переход — ↓
         </span>
         {pendingCount > 0 ? (

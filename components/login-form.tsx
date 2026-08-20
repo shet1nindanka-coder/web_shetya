@@ -72,7 +72,7 @@ export function LoginForm({ error, rateLimitedMinutes, helpContact }: LoginFormP
           <span>Вход</span>
           <span className="shbz-dot h-[9px] w-[9px] self-center" />
         </div>
-        <div className="mt-2 text-sm" style={{ color: "var(--shbz-text-muted)" }}>
+        <div className="ui-hint mt-2 text-sm" style={{ color: "var(--shbz-text-muted)" }}>
           Войдите в личный кабинет платформы
         </div>
       </div>

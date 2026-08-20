@@ -85,7 +85,7 @@ export function StudentWeeklyActivity({ streak }: StudentWeeklyActivityProps) {
                   {goalTitle}
                 </div>
                 {goalHint ? (
-                  <div className="mt-1 text-xs" style={{ color: "var(--shbz-text-muted)" }}>
+                  <div className="ui-hint mt-1 text-xs" style={{ color: "var(--shbz-text-muted)" }}>
                     {goalHint}
                   </div>
                 ) : null}

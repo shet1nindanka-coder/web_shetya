@@ -443,7 +443,7 @@ export function TeacherStudentLessons({
                       >
                         Основная часть
                       </span>
-                      <span className="text-xs" style={{ color: "var(--shbz-text-muted)" }}>
+                      <span className="ui-hint text-xs" style={{ color: "var(--shbz-text-muted)" }}>
                         Как решил на уроке?
                       </span>
                     </div>

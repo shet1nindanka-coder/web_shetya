@@ -130,7 +130,7 @@ export function TeacherLessonComposeBoard({ studentId, topics }: TeacherLessonCo
           <span
             className="rounded-[8px] px-3 py-1 text-[12.5px] font-bold"
             style={{
-              background: selectedCount > 0 ? "var(--theme-accent-soft)" : "var(--shbz-tab-hover)",
+              background: selectedCount > 0 ? "var(--shbz-green-soft)" : "var(--shbz-tab-hover)",
               color: selectedCount > 0 ? "var(--shbz-green-text)" : "var(--shbz-kicker)"
             }}
           >
@@ -193,7 +193,7 @@ export function TeacherLessonComposeBoard({ studentId, topics }: TeacherLessonCo
               onClick={() => toggleNumber(number.id)}
               className={cx(
                 "teacher-number-card ui-pressable rounded-[16px] border px-4 py-4 text-left transition",
-                isSelected && "ring-2 ring-[var(--theme-accent-border)]"
+                isSelected && "ring-2 ring-[var(--shbz-accent-solid)]"
               )}
             >
               <div className="flex items-center justify-between gap-3">
@@ -201,8 +201,8 @@ export function TeacherLessonComposeBoard({ studentId, topics }: TeacherLessonCo
                   className={cx(
                     "inline-flex h-5 w-5 items-center justify-center rounded border text-xs font-bold",
                     isSelected
-                      ? "border-[var(--theme-accent-border)] bg-[var(--theme-accent-soft)] text-[var(--theme-accent-text)]"
-                      : "border-[var(--theme-border)] text-transparent"
+                      ? "border-[var(--shbz-accent-solid)] bg-[var(--shbz-green-soft)] text-[var(--shbz-green-text)]"
+                      : "border-[var(--shbz-input-border)] text-transparent"
                   )}
                   aria-hidden="true"
                 >
@@ -210,7 +210,7 @@ export function TeacherLessonComposeBoard({ studentId, topics }: TeacherLessonCo
                 </span>
                 <HomeworkStatusBadge status={number.status} />
               </div>
-              <p className="teacher-number-title mt-3 text-lg font-semibold text-[var(--theme-text-strong)]">
+              <p className="teacher-number-title mt-3 text-lg font-semibold text-[var(--shbz-text-strong)]">
                 № {number.number}
               </p>
               {number.inLesson ? <p className="ui-copy-muted mt-2 text-xs leading-5">Уже был на занятии</p> : null}

@@ -309,7 +309,7 @@ export function StudentHomeworkCheck({ assignmentId, hasPhotos, initialCheck }: 
                       >
                         Перерешать № {result.number}
                       </button>
-                      <span className="text-xs" style={{ color: "var(--shbz-kicker)" }}>
+                      <span className="ui-hint text-xs" style={{ color: "var(--shbz-kicker)" }}>
                         Затем замените фото с решением и запустите проверку ещё раз.
                       </span>
                     </div>
