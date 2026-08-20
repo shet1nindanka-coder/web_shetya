@@ -115,11 +115,13 @@ export default async function TeacherLessonsPage() {
                     итоги {lesson.resultsMarked} / {lesson.resultsTotal}
                   </span>
                 ) : null}
-                <span
-                  className={`shbz-chip ${lesson.readyCount === lesson.participantsCount ? "shbz-chip-green" : "shbz-chip-yellow"}`}
-                >
-                  готово {lesson.readyCount} / {lesson.participantsCount}
-                </span>
+                {/* Чип «готово X/Y» показывается только пока подбор не завершён:
+                    постоянное «готово 1/1» не несло информации (фидбек владельца). */}
+                {lesson.readyCount < lesson.participantsCount ? (
+                  <span className="shbz-chip shbz-chip-yellow">
+                    подбор идёт {lesson.readyCount} / {lesson.participantsCount}
+                  </span>
+                ) : null}
                 <span className="shbz-chip" style={{ background: "var(--shbz-tab-hover)", color: "var(--shbz-kicker)" }}>
                   {statusLabels[lesson.status] ?? lesson.status}
                 </span>
