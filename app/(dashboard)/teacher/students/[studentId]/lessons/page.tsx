@@ -43,7 +43,7 @@ export default async function TeacherStudentLessonsPage({ params }: TeacherStude
           participantId: lesson.participantId,
           title: lesson.title,
           status: lesson.status,
-          createdAtLabel: formatDateTime(lesson.createdAt),
+          createdAtLabel: formatDateTime(lesson.startsAt ?? lesson.createdAt),
           durationMinutes: lesson.durationMinutes,
           groupName: lesson.groupName,
           planPending: lesson.planPending,

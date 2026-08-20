@@ -28,13 +28,19 @@ export default async function TeacherLessonsPage() {
   const prefix = user.role === UserRole.DEVELOPER ? "/developer" : "/teacher";
   const lessons = await getTeacherLessons(user);
 
-  // Секции по актуальности: сегодняшние занятия сверху, затем незакрытые, затем прошедшие.
+  // Секции по расписанию: статус производный от startsAt+durationMinutes,
+  // день берётся из startsAt (у уроков без даты — из createdAt).
   const now = new Date();
-  const todayLessons = lessons.filter((lesson) => isSameCalendarDay(new Date(lesson.createdAt), now));
-  const upcomingLessons = lessons.filter(
-    (lesson) => !todayLessons.includes(lesson) && lesson.status !== "FINISHED"
-  );
-  const pastLessons = lessons.filter((lesson) => !todayLessons.includes(lesson) && lesson.status === "FINISHED");
+  const lessonDate = (lesson: (typeof lessons)[number]) => new Date(lesson.startsAt ?? lesson.createdAt);
+  const todayLessons = lessons
+    .filter((lesson) => isSameCalendarDay(lessonDate(lesson), now))
+    .sort((left, right) => lessonDate(left).getTime() - lessonDate(right).getTime());
+  const upcomingLessons = lessons
+    .filter((lesson) => !todayLessons.includes(lesson) && lesson.status !== "FINISHED")
+    .sort((left, right) => lessonDate(left).getTime() - lessonDate(right).getTime());
+  const pastLessons = lessons
+    .filter((lesson) => !todayLessons.includes(lesson) && lesson.status === "FINISHED")
+    .sort((left, right) => lessonDate(right).getTime() - lessonDate(left).getTime());
   const sections = [
     { key: "today", title: "Сегодня", items: todayLessons },
     { key: "upcoming", title: "Ближайшие", items: upcomingLessons },
@@ -72,7 +78,7 @@ export default async function TeacherLessonsPage() {
                   {lesson.title}
                 </h3>
                 <p className="mt-1 text-xs" style={{ color: "var(--shbz-text-muted)" }}>
-                  {formatDateTime(lesson.createdAt)}
+                  {formatDateTime(lesson.startsAt ?? lesson.createdAt)}
                   {lesson.groupName ? ` · ${lesson.groupName}` : lesson.soloStudentName ? ` · ${lesson.soloStudentName}` : ""} · {lesson.durationMinutes} мин ·{" "}
                   {lesson.participantsCount}{" "}
                   {lesson.participantsCount === 1 ? "ученик" : lesson.participantsCount < 5 ? "ученика" : "учеников"}

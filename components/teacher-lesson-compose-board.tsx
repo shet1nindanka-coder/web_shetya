@@ -4,6 +4,7 @@ import { HomeworkNumberStatus } from "@prisma/client";
 import { useMemo, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { HomeworkStatusBadge } from "@/components/homework-status-badge";
+import { ShbzDateTimePicker } from "@/components/shbz-datetime-picker";
 import { ShbzSelect } from "@/components/shbz-select";
 import { cx } from "@/lib/utils";
 
@@ -37,6 +38,7 @@ export function TeacherLessonComposeBoard({ studentId, topics }: TeacherLessonCo
   const [selectedTopicId, setSelectedTopicId] = useState<string>(topics[0]?.id ?? "");
   const [selectedNumberIds, setSelectedNumberIds] = useState<ReadonlySet<string>>(new Set());
   const [duration, setDuration] = useState("60");
+  const [startsAt, setStartsAt] = useState("");
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -83,6 +85,7 @@ export function TeacherLessonComposeBoard({ studentId, topics }: TeacherLessonCo
         body: JSON.stringify({
           studentIds: [studentId],
           durationMinutes: Number(duration) || 60,
+          startsAt: startsAt || undefined,
           topicIds: [],
           targetDifficulty: null,
           teacherNote: "",
@@ -148,6 +151,14 @@ export function TeacherLessonComposeBoard({ studentId, topics }: TeacherLessonCo
               placeholder="Длительность, мин"
               aria-label="Длительность занятия в минутах"
               className="ui-input h-12 w-full rounded-[8px] px-3 text-sm"
+            />
+          </div>
+          <div className="w-full min-w-[200px] sm:w-auto">
+            <ShbzDateTimePicker
+              value={startsAt}
+              onChange={setStartsAt}
+              disabled={isSaving}
+              placeholder="Дата и время урока"
             />
           </div>
           <button

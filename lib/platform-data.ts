@@ -9,6 +9,7 @@ import {
   UserRole
 } from "@prisma/client";
 import { sortHomeworksByAttention } from "@/lib/homework-attention";
+import { deriveLessonStatus } from "@/lib/lesson-status";
 import { logWarnEvent } from "@/lib/logger";
 import { ERROR_KIND_GROUP, type ErrorKind } from "@/lib/solution-check-parse";
 import { PLATFORM_DATA_TAGS } from "@/lib/platform-data-cache";
@@ -1920,6 +1921,7 @@ export async function getTeacherLessons(viewer: TeacherViewer) {
         status: true,
         durationMinutes: true,
         createdAt: true,
+        startsAt: true,
         group: { select: { id: true, name: true } },
         participants: {
           select: {
@@ -1936,9 +1938,11 @@ export async function getTeacherLessons(viewer: TeacherViewer) {
     return lessons.map((lesson) => ({
       id: lesson.id,
       title: lesson.title,
-      status: lesson.status,
+      // Статус — производная от расписания; хранимый нужен как фолбэк без даты.
+      status: deriveLessonStatus(lesson),
       durationMinutes: lesson.durationMinutes,
       createdAt: lesson.createdAt,
+      startsAt: lesson.startsAt,
       groupId: lesson.group?.id ?? null,
       groupName: lesson.group?.name ?? null,
       // Для индивидуального урока в списке вместо группы показывается имя ученика.
@@ -1979,6 +1983,7 @@ export async function getTeacherStudentLessons(viewer: TeacherViewer, studentId:
             status: true,
             durationMinutes: true,
             createdAt: true,
+            startsAt: true,
             group: { select: { name: true } }
           }
         },
@@ -2001,9 +2006,10 @@ export async function getTeacherStudentLessons(viewer: TeacherViewer, studentId:
       id: participant.lesson.id,
       participantId: participant.id,
       title: participant.lesson.title,
-      status: participant.lesson.status,
+      status: deriveLessonStatus(participant.lesson),
       durationMinutes: participant.lesson.durationMinutes,
       createdAt: participant.lesson.createdAt,
+      startsAt: participant.lesson.startsAt,
       groupName: participant.lesson.group?.name ?? null,
       planPending: !participant.planGeneratedAt && !participant.planError,
       planError: participant.planError,

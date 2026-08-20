@@ -48,6 +48,8 @@ export async function POST(request: Request) {
         topicIds?: string[];
         targetDifficulty?: number | null;
         teacherNote?: string;
+        /** Дата и время начала урока — от них считается статус (запланирован/идёт/завершён). */
+        startsAt?: string;
         /** Собрать урок вручную: не звать ИИ-подбор. */
         skipPlan?: boolean;
         /** Номера, выбранные учителем руками (только вместе со skipPlan). */
@@ -115,6 +117,20 @@ export async function POST(request: Request) {
   });
   const title = params.title || `Занятие от ${formatDate(new Date())}`;
 
+  // Дата и время урока: необязательны; при наличии от них считается статус.
+  const startsAtRaw = String(body?.startsAt ?? "").trim();
+  let startsAt: Date | null = null;
+
+  if (startsAtRaw) {
+    const parsed = new Date(startsAtRaw);
+
+    if (Number.isNaN(parsed.getTime())) {
+      return NextResponse.json({ error: "Некорректные дата и время урока." }, { status: 400 });
+    }
+
+    startsAt = parsed;
+  }
+
   // Индивидуальные переопределения скорости приходят вместе со studentIds.
   const speedOverrides = new Map<string, number | null>();
 
@@ -134,6 +150,7 @@ export async function POST(request: Request) {
         teacherId: user.id,
         groupId: resolvedGroup?.id ?? null,
         durationMinutes: params.durationMinutes,
+        startsAt,
         planParams: {
           title,
           durationMinutes: params.durationMinutes,

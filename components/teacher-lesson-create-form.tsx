@@ -2,6 +2,7 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState, useTransition } from "react";
+import { ShbzDateTimePicker } from "@/components/shbz-datetime-picker";
 import { ShbzSelect } from "@/components/shbz-select";
 
 type TeacherLessonCreateFormProps = {
@@ -28,6 +29,7 @@ const SPEED_OPTIONS = [
 export function TeacherLessonCreateForm({ prefix, groupId, members, topics }: TeacherLessonCreateFormProps) {
   const router = useRouter();
   const [title, setTitle] = useState("");
+  const [startsAt, setStartsAt] = useState("");
   const [duration, setDuration] = useState("60");
   const [selectedTopicIds, setSelectedTopicIds] = useState<string[]>([]);
   const [topicQuery, setTopicQuery] = useState("");
@@ -116,6 +118,7 @@ export function TeacherLessonCreateForm({ prefix, groupId, members, topics }: Te
             groupId: groupId || undefined,
             studentIds: selectedStudentIds,
             title: title.trim() || undefined,
+            startsAt: startsAt || undefined,
             durationMinutes: Number(duration) || 60,
             topicIds: selectedTopicIds,
             targetDifficulty: targetDifficulty === "" ? null : Number(targetDifficulty),
@@ -158,6 +161,18 @@ export function TeacherLessonCreateForm({ prefix, groupId, members, topics }: Te
           {error}
         </div>
       ) : null}
+
+      {/* Дата и время — видимое поле: от них живёт статус урока
+          (запланирован → идёт → завершён), без даты статус не меняется. */}
+      <div className="max-w-[340px]">
+        <span className="mb-[9px] block text-[13px] font-semibold" style={{ color: "var(--shbz-label)" }}>
+          Дата и время урока
+        </span>
+        <ShbzDateTimePicker value={startsAt} onChange={setStartsAt} placeholder="Выбрать дату и время" />
+        <p className="ui-hint mt-2 text-xs" style={{ color: "var(--shbz-text-muted)" }}>
+          Статус урока сменится сам: до начала — «Запланирован», во время — «Идёт», после — «Завершён».
+        </p>
+      </div>
 
       {/* Одно видимое решение — «Подобрать задания»; всё остальное — параметры
           подбора со здравыми дефолтами, свёрнутые в блок с бейджем изменений. */}
