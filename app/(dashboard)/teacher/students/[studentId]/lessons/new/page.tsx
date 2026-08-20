@@ -32,7 +32,7 @@ export default async function TeacherStudentLessonComposePage({ params }: Teache
   }
 
   // Номера, которые уже были у этого ученика на занятиях: помечаем, чтобы не выдать повторно.
-  const [usedInLessons, profile, settings] = await Promise.all([
+  const [usedInLessons, profile, settings, conditions] = await Promise.all([
     prisma.lessonAssignmentItem
       .findMany({
         where: { participant: { studentId } },
@@ -40,9 +40,14 @@ export default async function TeacherStudentLessonComposePage({ params }: Teache
       })
       .catch(() => []),
     prisma.studentProfile.findUnique({ where: { userId: studentId }, select: { speed: true } }).catch(() => null),
-    getSiteSettingsUncached()
+    getSiteSettingsUncached(),
+    // Условия задач для карточек ручного выбора; .catch — колонки может не быть до миграции.
+    prisma.topicHomeworkNumber
+      .findMany({ select: { id: true, conditionLatex: true } })
+      .catch(() => [] as Array<{ id: string; conditionLatex: string | null }>)
   ]);
   const usedNumberIds = new Set(usedInLessons.map((item) => item.homeworkNumberId));
+  const conditionById = new Map(conditions.map((entry) => [entry.id, entry.conditionLatex]));
   const aiAvailable = Boolean(settings.aiEnabled && settings.lessonPlanEnabled && getAiCheckConfig(settings));
 
   return (
@@ -68,7 +73,8 @@ export default async function TeacherStudentLessonComposePage({ params }: Teache
               id: number.id,
               number: number.number,
               status: number.studentStatus?.status ?? null,
-              inLesson: usedNumberIds.has(number.id)
+              inLesson: usedNumberIds.has(number.id),
+              conditionLatex: conditionById.get(number.id) ?? null
             }))
           }))}
         />

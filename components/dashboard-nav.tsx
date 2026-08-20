@@ -188,12 +188,8 @@ export function DashboardNav({ user, studentStreak }: DashboardNavProps) {
               prefetch
               aria-label="Настройки"
               aria-current={settingsActive ? "page" : undefined}
-              className="flex h-10 w-10 items-center justify-center rounded-full border-[1.5px] transition-colors"
-              style={{
-                borderColor: settingsActive ? "var(--shbz-text-strong)" : "var(--shbz-outline-border)",
-                color: "var(--shbz-text-strong)",
-                background: settingsActive ? "var(--shbz-tab-hover)" : undefined
-              }}
+              data-active={settingsActive}
+              className="shbz-icon-circle"
             >
               <svg
                 width="18"

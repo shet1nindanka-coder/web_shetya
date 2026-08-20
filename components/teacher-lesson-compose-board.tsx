@@ -4,6 +4,7 @@ import { HomeworkNumberStatus } from "@prisma/client";
 import { useMemo, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { HomeworkStatusBadge } from "@/components/homework-status-badge";
+import { LatexAnswerPreview } from "@/components/latex-answer-preview";
 import { ShbzDateTimePicker } from "@/components/shbz-datetime-picker";
 import { ShbzSelect } from "@/components/shbz-select";
 import { cx } from "@/lib/utils";
@@ -23,6 +24,7 @@ type ComposeBoardTopic = {
     number: string;
     status: HomeworkNumberStatus | null;
     inLesson: boolean;
+    conditionLatex?: string | null;
   }>;
 };
 
@@ -224,6 +226,12 @@ export function TeacherLessonComposeBoard({ studentId, topics }: TeacherLessonCo
               <p className="teacher-number-title mt-3 text-lg font-semibold text-[var(--shbz-text-strong)]">
                 № {number.number}
               </p>
+              {number.conditionLatex ? (
+                // Содержание задания, чтобы выбирать не вслепую; длинные условия обрезаются.
+                <div className="mt-2 max-h-32 overflow-hidden text-left text-sm">
+                  <LatexAnswerPreview value={number.conditionLatex} />
+                </div>
+              ) : null}
               {number.inLesson ? <p className="ui-copy-muted mt-2 text-xs leading-5">Уже был на занятии</p> : null}
             </button>
           );

@@ -1936,6 +1936,27 @@ html[data-theme="dark"] {
   flex-shrink: 0;
 }
 
+/* Круглая иконка-кнопка в шапке (шестерёнка настроек): hover затемняет рамку,
+   как у shbz-btn-outline, чтобы не выбиваться из ряда с «Выйти». */
+.shbz-icon-circle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 999px;
+  border: 1.5px solid var(--shbz-outline-border);
+  color: var(--shbz-text-strong);
+  transition: border-color var(--duration-fast), background var(--duration-fast);
+}
+.shbz-icon-circle:hover {
+  border-color: var(--shbz-outline-hover);
+}
+.shbz-icon-circle[data-active="true"] {
+  border-color: var(--shbz-text-strong);
+  background: var(--shbz-tab-hover);
+}
+
 .shbz-btn-outline {
   padding: 9px 16px;
   border: 1.5px solid var(--shbz-outline-border);
