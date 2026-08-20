@@ -28,16 +28,6 @@ function isCompleted(assignment: SubmissionAssignment) {
   return assignment.totalNumbers > 0 && assignment.solvedCount === assignment.totalNumbers;
 }
 
-function isDeadlinePassed(deadlineAt: string | null) {
-  if (!deadlineAt) {
-    return false;
-  }
-
-  const deadline = new Date(deadlineAt);
-
-  return !Number.isNaN(deadline.getTime()) && deadline.getTime() < Date.now();
-}
-
 function HomeworkCard({ assignment }: { assignment: SubmissionAssignment }) {
   const completed = isCompleted(assignment);
 
@@ -99,12 +89,9 @@ function HomeworkCard({ assignment }: { assignment: SubmissionAssignment }) {
 }
 
 export function StudentHomeworkSubmissions({ assignments }: StudentHomeworkSubmissionsProps) {
-  const archived = assignments.filter(
-    (assignment) => isCompleted(assignment) && isDeadlinePassed(assignment.deadlineAt)
-  );
-  const active = assignments.filter(
-    (assignment) => !(isCompleted(assignment) && isDeadlinePassed(assignment.deadlineAt))
-  );
+  // Выполненные не занимают слот в активном списке: схлопнуты в сводку с раскрытием.
+  const archived = assignments.filter(isCompleted);
+  const active = assignments.filter((assignment) => !isCompleted(assignment));
 
   return (
     <div className="space-y-4">

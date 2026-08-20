@@ -222,11 +222,14 @@ export function TeacherHomeworkReviewList({ studentId, assignments }: TeacherHom
     router.refresh();
   };
 
-  return (
-    <div className="space-y-4">
-      {error ? <div className="ui-notice-error rounded-[8px] px-4 py-3 text-sm">{error}</div> : null}
+  // Выполненные ДЗ схлопнуты в сводку с раскрытием, чтобы просроченное
+  // не оказывалось на экране ниже выполненного.
+  const completedAssignments = assignments.filter(
+    (assignment) => assignment.totalNumbers > 0 && assignment.solvedCount === assignment.totalNumbers
+  );
+  const activeAssignments = assignments.filter((assignment) => !completedAssignments.includes(assignment));
 
-      {assignments.map((assignment) => {
+  const renderAssignmentCard = (assignment: ReviewAssignment) => {
         const deadlineLabel = formatDateTime(assignment.deadlineAt);
         const createdLabel = formatDateTime(assignment.createdAt);
         const isCompleted = assignment.totalNumbers > 0 && assignment.solvedCount === assignment.totalNumbers;
@@ -635,7 +638,39 @@ export function TeacherHomeworkReviewList({ studentId, assignments }: TeacherHom
             ) : null}
           </article>
         );
-      })}
+  };
+
+  return (
+    <div className="space-y-4">
+      {error ? <div className="ui-notice-error rounded-[8px] px-4 py-3 text-sm">{error}</div> : null}
+
+      {activeAssignments.map((assignment) => renderAssignmentCard(assignment))}
+
+      {completedAssignments.length > 0 ? (
+        <details className="group pt-2">
+          <summary
+            className="ui-pressable inline-flex cursor-pointer list-none items-center gap-2 rounded-[12px] px-5 py-2.5 text-sm font-bold [&::-webkit-details-marker]:hidden"
+            style={{ background: "var(--shbz-tab-hover)", color: "var(--shbz-kicker)" }}
+          >
+            Выполненные ДЗ ({completedAssignments.length})
+            <svg
+              className="h-3.5 w-3.5 transition-transform duration-[180ms] ease-[var(--ease-in-out)] group-open:rotate-180"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              aria-hidden="true"
+            >
+              <path d="M6 9l6 6 6-6" />
+            </svg>
+          </summary>
+          <div className="mt-4 space-y-4">
+            {completedAssignments.map((assignment) => renderAssignmentCard(assignment))}
+          </div>
+        </details>
+      ) : null}
     </div>
   );
 }

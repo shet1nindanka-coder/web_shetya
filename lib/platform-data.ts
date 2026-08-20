@@ -8,6 +8,7 @@ import {
   SolutionVerdict,
   UserRole
 } from "@prisma/client";
+import { sortHomeworksByAttention } from "@/lib/homework-attention";
 import { logWarnEvent } from "@/lib/logger";
 import { ERROR_KIND_GROUP, type ErrorKind } from "@/lib/solution-check-parse";
 import { PLATFORM_DATA_TAGS } from "@/lib/platform-data-cache";
@@ -1431,7 +1432,9 @@ async function getTeacherStudentHomeworksUncached(viewer: TeacherViewer, student
     };
   });
 
-  return { assignmentsEnabled: true as const, notesEnabled, assignments: mapped.reverse() };
+  // Порядок — по требуемому вниманию (просрочено → вердикты → неотмеченные →
+  // срок скоро → остальное → выполненные), а не по дате создания.
+  return { assignmentsEnabled: true as const, notesEnabled, assignments: sortHomeworksByAttention(mapped) };
 }
 
 // Кэш с коротким TTL: вердикты ИИ пишет фоновая очередь, которая не может надёжно
