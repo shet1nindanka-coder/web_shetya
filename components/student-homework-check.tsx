@@ -126,6 +126,20 @@ export function StudentHomeworkCheck({ assignmentId, hasPhotos, initialCheck }: 
     };
   }, [isRunning, poll]);
 
+  // «Перерешать №N»: ведёт к карточке номера ниже на странице — там условие
+  // и заметка; после замены фото проверку можно запустить заново.
+  const scrollToNumber = (number: string) => {
+    const target = document.getElementById(`number-${number}`);
+
+    if (!target) {
+      return;
+    }
+
+    target.scrollIntoView({ behavior: "smooth", block: "start" });
+    target.setAttribute("tabindex", "-1");
+    target.focus({ preventScroll: true });
+  };
+
   const startCheck = async () => {
     setIsStarting(true);
     setError(null);
@@ -285,6 +299,20 @@ export function StudentHomeworkCheck({ assignmentId, hasPhotos, initialCheck }: 
                     <p className="mt-1.5 text-sm leading-6" style={{ color: "var(--shbz-text-muted)" }}>
                       {result.comment}
                     </p>
+                  ) : null}
+                  {result.verdict === "INCORRECT" ? (
+                    <div className="mt-2.5 flex flex-wrap items-center gap-2.5">
+                      <button
+                        type="button"
+                        onClick={() => scrollToNumber(result.number)}
+                        className="shbz-btn-outline"
+                      >
+                        Перерешать № {result.number}
+                      </button>
+                      <span className="text-xs" style={{ color: "var(--shbz-kicker)" }}>
+                        Затем замените фото с решением и запустите проверку ещё раз.
+                      </span>
+                    </div>
                   ) : null}
                 </div>
               );
