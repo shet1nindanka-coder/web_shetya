@@ -21,17 +21,12 @@ export function TeacherStudentTabs({ studentId, activeHomeworksCount }: TeacherS
       isActive: pathname === base
     },
     { href: `${base}/assign`, label: "Выдать ДЗ", isActive: pathname.startsWith(`${base}/assign`) },
-    // «Занятия» — список проведённых, «Составить занятие» — сборка нового.
-    // Порядок проверок важен: /lessons/new не должен подсвечивать список.
+    // Отдельной вкладки «Составить занятие» нет: сборка нового урока живёт
+    // внутри «Занятий» (карточка пустого занятия первой в списке).
     {
       href: `${base}/lessons`,
       label: "Занятия",
-      isActive: pathname === `${base}/lessons`
-    },
-    {
-      href: `${base}/lessons/new`,
-      label: "Составить занятие",
-      isActive: pathname.startsWith(`${base}/lessons/new`)
+      isActive: pathname.startsWith(`${base}/lessons`)
     }
   ];
 

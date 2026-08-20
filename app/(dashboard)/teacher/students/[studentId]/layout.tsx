@@ -42,11 +42,13 @@ export default async function TeacherStudentLayout({ children, params }: Teacher
     : 0;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
+      {/* Без кикера «Ученик» (контекст и так ясен) и с ужатым зазором до вкладок —
+          фидбек владельца: шапка была перегружена и разрежена. */}
       <PageHeader
+        className="!mb-0"
         backHref="/teacher/students"
         backLabel="← Ко всем ученикам"
-        eyebrow="Ученик"
         title={data.student.name}
         description={data.student.email}
         aside={<ShbzNumberSearch endpoint="/api/teacher/topics/find-number" />}
