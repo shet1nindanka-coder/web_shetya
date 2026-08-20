@@ -549,7 +549,6 @@ html[data-theme="dark"] .ui-toolbar-shell {
   transition-duration: 60ms;
 }
 .ui-pressable:focus-visible {
-  outline: none;
   box-shadow: 0 0 0 3px rgba(54, 224, 164, 0.15);
 }
 @media (hover: hover) and (pointer: fine) {
@@ -1672,7 +1671,7 @@ html[data-theme="dark"] .student-virtual-scroll::-webkit-scrollbar-thumb {
   --shbz-input-border: #e4e5e7;
   --shbz-input-border-focus: #0a0a0a;
   --shbz-input-ring: rgba(54, 224, 164, 0.15);
-  --shbz-placeholder: #abaeb3;
+  --shbz-placeholder: #6d7076;
   --shbz-dropzone-bg: #fbfcfd;
   --shbz-accent-grad: linear-gradient(90deg, #5ac8ea 0%, #36e0a4 100%);
   --shbz-accent-grad-diag: linear-gradient(135deg, #5ac8ea, #36e0a4);
@@ -1680,7 +1679,7 @@ html[data-theme="dark"] .student-virtual-scroll::-webkit-scrollbar-thumb {
   --shbz-accent-shadow-hover: rgba(54, 224, 164, 0.42);
   --shbz-danger-bg: #fceded;
   --shbz-danger-border: #f3c7c9;
-  --shbz-danger-text: #d64550;
+  --shbz-danger-text: #b3202c;
 }
 
 html[data-theme="dark"] {
@@ -1738,7 +1737,7 @@ html[data-theme="dark"] {
   border: none;
   border-radius: 12px;
   background: var(--shbz-accent-grad);
-  color: #ffffff;
+  color: var(--shbz-text-strong);
   font-family: inherit;
   font-weight: 700;
   cursor: pointer;
@@ -1769,9 +1768,16 @@ html[data-theme="dark"] {
   border-radius: 12px;
 }
 
+/* Глобальный индикатор клавиатурного фокуса: единое правило вместо
+   трёх точечных, контраст кольца задаёт токен акцента. */
+:focus-visible {
+  outline: 2px solid var(--shbz-accent-solid);
+  outline-offset: 2px;
+}
+
 /* ШБЗ: расширенные токены */
 :root {
-  --shbz-kicker: #9aa0a6;
+  --shbz-kicker: #63676d;
   --shbz-soft-bg: #f8f9fa;
   --shbz-soft-border: #f0f0f1;
   --shbz-panel-bg: #fbfbfc;
@@ -1789,11 +1795,11 @@ html[data-theme="dark"] {
   --shbz-progress-track: #efeff1;
   --shbz-accent-solid: #16b07e;
   --shbz-green-soft: #eaf7ef;
-  --shbz-green-text: #1b9e63;
+  --shbz-green-text: #127a4c;
   --shbz-yellow-soft: #fef4e3;
-  --shbz-yellow-text: #c98a1e;
+  --shbz-yellow-text: #8a5d05;
   --shbz-red-soft: #fceded;
-  --shbz-red-text: #d64550;
+  --shbz-red-text: #b3202c;
   --shbz-cal-ok-bg: #fff7ea;
   --shbz-cal-ok-border: #f5dfb8;
   --shbz-cal-ok-mark: #f2a93b;
@@ -2010,7 +2016,6 @@ html[data-theme="dark"] {
 }
 .shbz-search input {
   border: none;
-  outline: none;
   background: transparent;
   font-family: inherit;
   font-size: 14px;
