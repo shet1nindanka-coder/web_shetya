@@ -20,9 +20,13 @@ export function StudentWeeklyActivity({ streak }: StudentWeeklyActivityProps) {
     currentStreak.solvedToday > 0
       ? `${currentStreak.solvedToday} ${formatSolvedLabel(currentStreak.solvedToday)}`
       : "Без закрытых номеров";
-  const goalTitle = streakColorMeta.nextThreshold
-    ? `${streakColorMeta.nextThreshold} ${formatDaysLabel(streakColorMeta.nextThreshold)}`
+  // Не статичный порог, а сколько осталось: «ещё 4 дня» мотивирует сильнее «50 дней».
+  const goalTitle = streakColorMeta.daysToNextThreshold
+    ? `Ещё ${streakColorMeta.daysToNextThreshold} ${formatDaysLabel(streakColorMeta.daysToNextThreshold)}`
     : "Максимальный цвет";
+  const goalHint = streakColorMeta.nextThreshold
+    ? `до нового цвета огонька (${streakColorMeta.nextThreshold} ${formatDaysLabel(streakColorMeta.nextThreshold)})`
+    : null;
   const streakHeadline =
     currentStreak.currentStreak > 0
       ? `${currentStreak.currentStreak} ${formatDaysLabel(currentStreak.currentStreak)} подряд`
@@ -34,7 +38,11 @@ export function StudentWeeklyActivity({ streak }: StudentWeeklyActivityProps) {
       <div className="shbz-card shbz-section-pad">
         <div className="grid items-stretch gap-6 lg:grid-cols-[minmax(280px,380px)_1fr]">
           <div className="flex flex-col gap-3.5">
-            <div className="shbz-streak-hero px-6 py-[22px]" data-animate={motionState ?? undefined}>
+            <div
+              className="shbz-streak-hero px-6 py-[22px]"
+              data-animate={motionState ?? undefined}
+              data-streak-tier={streakColorMeta.tier}
+            >
               <div className="flex items-start justify-between gap-3">
                 <div
                   className="text-[11px] font-bold uppercase tracking-[1.2px]"
@@ -76,6 +84,11 @@ export function StudentWeeklyActivity({ streak }: StudentWeeklyActivityProps) {
                 <div className="mt-2 text-[22px] font-extrabold" style={{ color: "var(--shbz-text-strong)" }}>
                   {goalTitle}
                 </div>
+                {goalHint ? (
+                  <div className="mt-1 text-xs" style={{ color: "var(--shbz-text-muted)" }}>
+                    {goalHint}
+                  </div>
+                ) : null}
               </div>
             </div>
           </div>

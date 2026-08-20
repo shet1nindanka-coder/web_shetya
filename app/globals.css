@@ -2163,6 +2163,29 @@ html[data-theme="dark"] {
   box-shadow: 0 1px 2px rgba(10, 10, 10, 0.1);
 }
 
+/* Лестница цветовых тиров огонька: тир приходит из getStudentStreakColorMeta
+   через data-streak-tier. Starter оставляет дефолтную (оранжевую) палитру;
+   производные строятся от акцента тира, поэтому работают в обеих темах. */
+.shbz-streak-hero[data-streak-tier="ember"] { --shbz-streak-accent: #f2922e; }
+.shbz-streak-hero[data-streak-tier="amber"] { --shbz-streak-accent: #e0a80c; }
+.shbz-streak-hero[data-streak-tier="lime"] { --shbz-streak-accent: #7cb818; }
+.shbz-streak-hero[data-streak-tier="emerald"] { --shbz-streak-accent: #16a878; }
+.shbz-streak-hero[data-streak-tier="cyan"] { --shbz-streak-accent: #0aa8c4; }
+.shbz-streak-hero[data-streak-tier="blue"] { --shbz-streak-accent: #3b82f6; }
+.shbz-streak-hero[data-streak-tier="violet"] { --shbz-streak-accent: #8b5cf6; }
+.shbz-streak-hero[data-streak-tier="rose"] { --shbz-streak-accent: #ef4667; }
+.shbz-streak-hero[data-streak-tier="gold"] { --shbz-streak-accent: #c9a227; }
+.shbz-streak-hero[data-streak-tier]:not([data-streak-tier="starter"]) {
+  --shbz-streak-bg: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--shbz-streak-accent) 16%, var(--shbz-card-bg)),
+    color-mix(in srgb, var(--shbz-streak-accent) 7%, var(--shbz-card-bg))
+  );
+  --shbz-streak-border: color-mix(in srgb, var(--shbz-streak-accent) 38%, var(--shbz-card-bg));
+  --shbz-streak-text: color-mix(in srgb, var(--shbz-streak-accent) 45%, var(--shbz-text-strong));
+  --shbz-streak-flame: var(--shbz-streak-accent);
+}
+
 .shbz-streak-hero {
   background: var(--shbz-streak-bg);
   border: 1px solid var(--shbz-streak-border);
