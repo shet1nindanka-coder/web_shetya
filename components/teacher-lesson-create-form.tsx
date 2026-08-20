@@ -93,6 +93,17 @@ export function TeacherLessonCreateForm({ prefix, groupId, members, topics }: Te
     return () => document.removeEventListener("mousedown", onOutsideClick);
   }, []);
 
+  // Бейдж на свёрнутом блоке: сколько параметров отличается от дефолтов.
+  const changedParamsCount = [
+    title.trim() !== "",
+    duration !== "60",
+    targetDifficulty !== "",
+    selectedTopicIds.length > 0,
+    teacherNote.trim() !== "",
+    selectedStudentIds.length !== members.length,
+    members.some((member) => (speeds[member.id] ?? "") !== (member.speed ? String(member.speed) : ""))
+  ].filter(Boolean).length;
+
   const submit = () => {
     setError(null);
 
@@ -148,6 +159,39 @@ export function TeacherLessonCreateForm({ prefix, groupId, members, topics }: Te
         </div>
       ) : null}
 
+      {/* Одно видимое решение — «Подобрать задания»; всё остальное — параметры
+          подбора со здравыми дефолтами, свёрнутые в блок с бейджем изменений. */}
+      <details className="rounded-[16px] border" style={{ borderColor: "var(--shbz-soft-border)" }}>
+        <summary
+          className="flex cursor-pointer list-none flex-wrap items-center gap-2.5 px-5 py-4 text-sm font-bold [&::-webkit-details-marker]:hidden"
+          style={{ color: "var(--shbz-text-strong)" }}
+        >
+          Параметры подбора
+          {changedParamsCount > 0 ? (
+            <span className="shbz-chip" style={{ background: "var(--shbz-green-soft)", color: "var(--shbz-green-text)", padding: "3px 9px" }}>
+              изменено: {changedParamsCount}
+            </span>
+          ) : (
+            <span className="text-xs font-normal" style={{ color: "var(--shbz-text-muted)" }}>
+              по умолчанию: 60 минут, все ученики, темы и сложность выберет ИИ
+            </span>
+          )}
+          <svg
+            className="ml-auto h-3.5 w-3.5"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            style={{ color: "var(--shbz-kicker)" }}
+            aria-hidden="true"
+          >
+            <path d="M6 9l6 6 6-6" />
+          </svg>
+        </summary>
+
+        <div className="space-y-7 px-5 pb-5">
       <div className="grid gap-5" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))" }}>
         <label className="block">
           <span className="mb-[9px] block text-[13px] font-semibold" style={{ color: "var(--shbz-label)" }}>
@@ -192,9 +236,6 @@ export function TeacherLessonCreateForm({ prefix, groupId, members, topics }: Te
       <div ref={topicBoxRef} className="relative">
         <span className="mb-[9px] block text-[13px] font-semibold" style={{ color: "var(--shbz-label)" }}>
           Темы занятия
-          <span className="ml-2 font-normal" style={{ color: "var(--shbz-text-muted)" }}>
-            ничего не выбрано — ИИ решит сам
-          </span>
         </span>
 
         <input
@@ -315,6 +356,8 @@ export function TeacherLessonCreateForm({ prefix, groupId, members, topics }: Te
           })}
         </div>
       </div>
+        </div>
+      </details>
 
       <button
         type="submit"
