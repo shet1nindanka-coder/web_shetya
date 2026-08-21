@@ -638,7 +638,7 @@ export function TeacherLessonBoard({
                     className="mb-2 text-[12px] font-bold uppercase tracking-[1.2px]"
                     style={{ color: "var(--shbz-kicker)" }}
                   >
-                    Осн. задание
+                    Осн. задания
                   </p>
                   <ol className="space-y-2">
                     {mainItems.map((item, index) => {
@@ -754,7 +754,7 @@ export function TeacherLessonBoard({
                     className="mb-2 text-[12px] font-bold uppercase tracking-[1.2px]"
                     style={{ color: "var(--shbz-kicker)" }}
                   >
-                    Доп. задание
+                    Доп. задания
                   </p>
                   <ol className="space-y-2">
                     {extraItems.map((item) => {
