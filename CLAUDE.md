@@ -4,7 +4,7 @@ Guidance for AI agents working in this repository. Keep it current when architec
 
 ## What this project is
 
-**TutorFlow MVP** — a full-stack tutoring platform with a Russian-language UI. A teacher publishes
+**ШБЗ Школа** (кодовое имя — TutorFlow MVP) — a full-stack tutoring platform with a Russian-language UI. A teacher publishes
 **shared topics** (each with a theory file, a homework file, and a list of numbered problems). Each
 **student** tracks their own per-problem progress with a traffic-light status, personal notes, and
 deadlines. The teacher monitors every student's progress, sets deadlines, and can attach LaTeX

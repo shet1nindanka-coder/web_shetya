@@ -6,9 +6,15 @@ type ThemeMode = "system" | "light" | "dark";
 type HintsMode = "on" | "off";
 type DensityMode = "comfortable" | "compact";
 
-const THEME_STORAGE_KEY = "tutorflow-theme";
-const HINTS_STORAGE_KEY = "tutorflow-hints";
-const DENSITY_STORAGE_KEY = "tutorflow-density";
+const THEME_STORAGE_KEY = "shbz-theme";
+const HINTS_STORAGE_KEY = "shbz-hints";
+const DENSITY_STORAGE_KEY = "shbz-density";
+
+// Старые ключи tutorflow-* читаются как фолбэк: переезд бренда не должен
+// сбрасывать выбранную тему/плотность. Первое сохранение пишет уже в новые.
+function readPreference(key: string) {
+  return window.localStorage.getItem(key) ?? window.localStorage.getItem(key.replace(/^shbz-/, "tutorflow-"));
+}
 
 function getPreferredTheme(themeMode: ThemeMode) {
   if (themeMode !== "system") {
@@ -58,9 +64,9 @@ export function InterfaceSettingsPanel() {
   const [densityMode, setDensityMode] = useState<DensityMode>("comfortable");
 
   useEffect(() => {
-    const storedTheme = window.localStorage.getItem(THEME_STORAGE_KEY);
-    const storedHints = window.localStorage.getItem(HINTS_STORAGE_KEY);
-    const storedDensity = window.localStorage.getItem(DENSITY_STORAGE_KEY);
+    const storedTheme = readPreference(THEME_STORAGE_KEY);
+    const storedHints = readPreference(HINTS_STORAGE_KEY);
+    const storedDensity = readPreference(DENSITY_STORAGE_KEY);
 
     const nextTheme =
       storedTheme === "light" || storedTheme === "dark" || storedTheme === "system" ? storedTheme : "system";

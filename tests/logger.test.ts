@@ -19,7 +19,7 @@ test("serializeError normalizes Error instances with common metadata", () => {
 test("getHeadersLogContext extracts request metadata and ignores empty values", () => {
   const headers = new Headers({
     "x-forwarded-for": "203.0.113.1, 203.0.113.2",
-    "user-agent": "TutorFlow Test",
+    "user-agent": "SHBZ School Test",
     "x-request-id": "req-42"
   });
 
@@ -31,7 +31,7 @@ test("getHeadersLogContext extracts request metadata and ignores empty values", 
     // первый элемент контролирует клиент (см. getClientIpFromHeaders).
     clientIp: "203.0.113.2",
     requestId: "req-42",
-    userAgent: "TutorFlow Test"
+    userAgent: "SHBZ School Test"
   });
 });
 

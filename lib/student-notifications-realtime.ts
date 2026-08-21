@@ -1,4 +1,4 @@
-export const STUDENT_NOTIFICATIONS_REALTIME_EVENT = "tutorflow:student-notifications-changed";
+export const STUDENT_NOTIFICATIONS_REALTIME_EVENT = "shbz:student-notifications-changed";
 
 export function notifyStudentNotificationsChanged() {
   if (typeof window === "undefined") return;

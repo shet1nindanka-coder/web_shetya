@@ -1,4 +1,4 @@
-# TutorFlow MVP
+# ШБЗ Школа (TutorFlow MVP)
 
 Full-stack платформа для репетитора на `Next.js`, `TypeScript`, `Tailwind CSS`, `PostgreSQL` и `Prisma`.
 

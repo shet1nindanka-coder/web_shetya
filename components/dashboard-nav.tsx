@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { Logo } from "@/components/logo";
 import { useState, useCallback, useEffect } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
 import { UserRole } from "@prisma/client";
@@ -171,15 +172,7 @@ export function DashboardNav({ user, studentStreak }: DashboardNavProps) {
     <header className="shbz-topbar">
       <div className="mx-auto flex w-full max-w-[1180px] flex-wrap items-center justify-between gap-x-7 gap-y-5 px-4 py-3.5 sm:px-8">
         {/* Логотип */}
-        <Link href="/" className="flex shrink-0 items-center gap-3">
-          <span className="text-2xl font-black leading-none tracking-[-1.2px]" style={{ color: "var(--shbz-text-strong)" }}>
-            ШБЗ
-          </span>
-          <span className="hidden h-[22px] w-px sm:block" style={{ background: "var(--shbz-divider)" }} />
-          <span className="hidden text-[13px] font-semibold sm:block" style={{ color: "var(--shbz-text-soft)" }}>
-            Школа Базовых Знаний
-          </span>
-        </Link>
+        <Logo href="/" size={24} className="shrink-0" />
 
         {/* Таббар */}
         {tabbarItems.length > 0 ? (

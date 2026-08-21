@@ -113,7 +113,7 @@ async function callPlannerModelOnce(
         Authorization: `Bearer ${config.apiKey}`,
         "Content-Type": "application/json",
         "HTTP-Referer": "https://shetya.ru",
-        "X-Title": "TutorFlow"
+        "X-Title": "SHBZ School"
       },
       body: JSON.stringify({
         model: config.model,

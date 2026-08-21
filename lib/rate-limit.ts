@@ -27,15 +27,15 @@ const RATE_LIMIT_SWEEP_INTERVAL_MS = 5 * 60 * 1000;
 const RATE_LIMIT_RETENTION_MS = 60 * 60 * 1000;
 
 declare global {
-  var __tutorFlowRateLimitStore__: Map<string, RateLimitEntry> | undefined;
-  var __tutorFlowRateLimitLastSweep__: number | undefined;
+  var __shbzRateLimitStore__: Map<string, RateLimitEntry> | undefined;
+  var __shbzRateLimitLastSweep__: number | undefined;
 }
 
-const rateLimitStore = global.__tutorFlowRateLimitStore__ ?? new Map<string, RateLimitEntry>();
-global.__tutorFlowRateLimitStore__ = rateLimitStore;
+const rateLimitStore = global.__shbzRateLimitStore__ ?? new Map<string, RateLimitEntry>();
+global.__shbzRateLimitStore__ = rateLimitStore;
 
 function maybeSweepRateLimitStore(now: number) {
-  const lastSweep = global.__tutorFlowRateLimitLastSweep__ ?? 0;
+  const lastSweep = global.__shbzRateLimitLastSweep__ ?? 0;
 
   if (now - lastSweep < RATE_LIMIT_SWEEP_INTERVAL_MS) {
     return;
@@ -49,7 +49,7 @@ function maybeSweepRateLimitStore(now: number) {
     }
   }
 
-  global.__tutorFlowRateLimitLastSweep__ = now;
+  global.__shbzRateLimitLastSweep__ = now;
 }
 
 export function buildRateLimitKey(scope: string, identifier: string) {

@@ -3,7 +3,7 @@
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 
-const STUDENT_TOPICS_REFRESH_KEY = "tutorflow:student-topics-needs-refresh";
+const STUDENT_TOPICS_REFRESH_KEY = "shbz:student-topics-needs-refresh";
 
 export function markStudentTopicsNeedsRefresh() {
   if (typeof window === "undefined") {

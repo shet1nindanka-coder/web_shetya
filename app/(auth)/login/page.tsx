@@ -1,5 +1,6 @@
 import { redirect } from "next/navigation";
 import { LoginForm } from "@/components/login-form";
+import { Logo } from "@/components/logo";
 import { tryGetCurrentUser } from "@/lib/auth";
 import { getSiteSettings } from "@/lib/site-settings";
 import { roleHome } from "@/lib/utils";
@@ -35,13 +36,8 @@ export default async function LoginPage({ searchParams }: LoginPageProps) {
         backgroundImage: "var(--shbz-page-glow)"
       }}
     >
-      <div className="absolute left-9 top-8 flex flex-col gap-1">
-        <div className="text-[26px] font-black leading-none tracking-[-1.2px]" style={{ color: "var(--shbz-text-strong)" }}>
-          ШБЗ
-        </div>
-        <div className="text-[12px] font-semibold tracking-[0.2px]" style={{ color: "var(--shbz-text-soft)" }}>
-          Школа Базовых Знаний
-        </div>
+      <div className="absolute left-9 top-8">
+        <Logo size={26} />
       </div>
 
       <LoginForm error={error} rateLimitedMinutes={rateLimitedMinutes} helpContact={loginHelpContact} />

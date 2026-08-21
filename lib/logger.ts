@@ -102,7 +102,7 @@ export const logger = pino({
   base: {
     hostname: loggerHostname,
     pid: process.pid,
-    service: "tutorflow",
+    service: "shbz-school",
     env: process.env.NODE_ENV ?? "development"
   },
   messageKey: "message",

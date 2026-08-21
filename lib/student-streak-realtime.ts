@@ -1,4 +1,4 @@
-export const STUDENT_STREAK_REALTIME_EVENT = "tutorflow:student-streak-changed";
+export const STUDENT_STREAK_REALTIME_EVENT = "shbz:student-streak-changed";
 
 /**
  * Fire-and-forget signal that the student's streak might have changed and needs

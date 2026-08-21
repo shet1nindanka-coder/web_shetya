@@ -103,6 +103,7 @@ export type WeeklyPdfInput = {
 // каждом холодном старте, и при недоступности сети отчёт падал 500: обещанного
 // фолбэка на Helvetica по факту не было (и кириллицы в ней тоже нет).
 const FONT_DIR = path.join(process.cwd(), "assets", "fonts", "onest");
+const LOGO_FONT_PATH = path.join(process.cwd(), "assets", "fonts", "montserrat", "Montserrat-Black.ttf");
 
 let fontsRegistered: boolean | null = null;
 
@@ -115,6 +116,8 @@ function registerFonts() {
         { src: path.join(FONT_DIR, "Onest-Bold.ttf"), fontWeight: 700 }
       ]
     });
+    // Шрифт логотипа «ШБЗШкола» — Montserrat 900 (assets/fonts/montserrat).
+    Font.register({ family: "Montserrat", fonts: [{ src: LOGO_FONT_PATH, fontWeight: 900 }] });
     Font.registerHyphenationCallback((word) => [word]);
     return true;
   } catch (error) {
@@ -160,18 +163,21 @@ const styles = StyleSheet.create({
   },
   headerRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start" },
   brandRow: { flexDirection: "row", alignItems: "center" },
+  // Иконка лока: буква Ш на фирменной плашке (радиус ≈ 22 %, кегль ≈ 60 %).
   brandBadge: {
     width: 28,
     height: 28,
-    borderRadius: 7,
-    backgroundColor: "#0a0a0a",
+    borderRadius: 6,
+    backgroundColor: "#16c79f",
     alignItems: "center",
     justifyContent: "center",
     marginRight: 8
   },
-  brandBadgeText: { color: "#ffffff", fontSize: 9, fontWeight: 700, letterSpacing: 0.3 },
-  brand: { fontSize: 10.5, fontWeight: 700, color: "#0a0a0a" },
-  brandSub: { fontSize: 7.5, color: colors.soft },
+  brandBadgeText: { color: "#ffffff", fontFamily: "Montserrat", fontWeight: 900, fontSize: 17, lineHeight: 1 },
+  // Лок «ШБЗШкола» в мелком кегле: приписка уходит в --brand-deep.
+  brandLock: { flexDirection: "row", alignItems: "flex-end" },
+  brand: { fontFamily: "Montserrat", fontWeight: 900, fontSize: 13, letterSpacing: -0.2, color: "#0a0a0a" },
+  brandSub: { fontFamily: "Montserrat", fontWeight: 900, fontSize: 13, letterSpacing: -0.2, color: "#0e9b80" },
   kicker: { fontSize: 9, fontWeight: 700, letterSpacing: 1.6, color: "#0a0a0a", textAlign: "right" },
   kickerAccent: {
     height: 3,
@@ -243,16 +249,16 @@ function WeeklyReportDocument({ input }: { input: WeeklyPdfInput }) {
   const topicColumns = [0.32, 0.14, 0.12, 0.12, 0.12, 0.18];
 
   return (
-    <Document title={`${input.reportTitle} — ${input.studentName}`} author="ШБЗ · Школа Базовых Знаний">
+    <Document title={`${input.reportTitle} — ${input.studentName}`} author="ШБЗ Школа">
       <Page size="A4" style={styles.page}>
         <View style={styles.headerRow}>
           <View style={styles.brandRow}>
             <View style={styles.brandBadge}>
               <Text style={styles.brandBadgeText}>ШБЗ</Text>
             </View>
-            <View>
+            <View style={styles.brandLock}>
               <Text style={styles.brand}>ШБЗ</Text>
-              <Text style={styles.brandSub}>Школа Базовых Знаний</Text>
+              <Text style={styles.brandSub}>Школа</Text>
             </View>
           </View>
           <View>
@@ -454,7 +460,7 @@ function WeeklyReportDocument({ input }: { input: WeeklyPdfInput }) {
         )}
 
         <View style={styles.footer} fixed>
-          <Text style={styles.footerText}>ШБЗ · Школа Базовых Знаний</Text>
+          <Text style={styles.footerText}>ШБЗ Школа</Text>
           <Text
             style={styles.footerText}
             render={({ pageNumber, totalPages }: { pageNumber: number; totalPages: number }) =>

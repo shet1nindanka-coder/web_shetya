@@ -1,4 +1,4 @@
-# TutorFlow: project-specific handoff rules
+# ШБЗ Школа: project-specific handoff rules
 
 After every task that changes project files, always end the user-facing response with a short, copy-pasteable section named `Как применить на сайте`.
 

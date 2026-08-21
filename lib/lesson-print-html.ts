@@ -208,7 +208,7 @@ function buildDocMeta(lesson: LessonPrintData): DocMeta {
 
 function buildHeadRow(docLabel: string, rightHtml: string): string {
   return `<div class="doc-head-line">
-  <div class="doc-brand">ШБЗ · ${docLabel}</div>
+  <div class="doc-brand"><span class="logo">ШБЗ<span class="logo__sub">Школа</span></span> · ${docLabel}</div>
   <div class="doc-meta">${rightHtml}</div>
 </div>`;
 }
@@ -228,6 +228,9 @@ const PRINT_CSS = `
     border-bottom: 1.8pt solid #0a0a0a; padding-bottom: 6pt;
   }
   .doc-brand { font-size: 11pt; font-weight: 800; color: #0a0a0a; letter-spacing: -0.2px; white-space: nowrap; }
+  /* Лок «ШБЗШкола», мелкая/печатная версия: приписка в --brand-deep. */
+  .doc-brand .logo { font-family: "Montserrat", Helvetica, Arial, sans-serif; font-weight: 900; font-size: 12pt; letter-spacing: -0.015em; color: #0a0a0a; }
+  .doc-brand .logo__sub { color: #0e9b80; }
   .doc-meta { font-size: 8pt; color: #6a6e75; text-align: right; }
   .doc-meta b { color: #0a0a0a; font-weight: 700; }
   .task { padding: 10pt 0 9pt; border-bottom: 0.75pt solid #ececee; break-inside: avoid; }

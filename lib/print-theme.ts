@@ -26,6 +26,34 @@ function loadKatexCss(): string | null {
   );
 }
 
+let cachedLogoFontCss: string | null | undefined;
+
+/* @font-face логотипа «ШБЗШкола»: Montserrat 900 зашивается base64, чтобы
+   раздатка не зависела от шрифтов на машине с Chromium. */
+function loadLogoFontCss(): string {
+  const fontPath = path.join(process.cwd(), "assets", "fonts", "montserrat", "Montserrat-Black.ttf");
+  const fontData = readFileSync(fontPath).toString("base64");
+  return `@font-face{font-family:"Montserrat";font-weight:900;font-style:normal;src:url(data:font/ttf;base64,${fontData}) format("truetype")}`;
+}
+
+export function getInlineLogoFontCss(): string {
+  if (cachedLogoFontCss === undefined) {
+    try {
+      cachedLogoFontCss = loadLogoFontCss();
+    } catch (error) {
+      cachedLogoFontCss = null;
+      logWarnEvent(
+        "lesson_pdf.logo_font_failed",
+        {},
+        error instanceof Error ? error : undefined,
+        "Failed to inline the logo font for print documents."
+      );
+    }
+  }
+
+  return cachedLogoFontCss ?? "";
+}
+
 export function getInlineKatexCss(): string {
   if (cachedKatexCss === undefined) {
     try {
@@ -46,7 +74,7 @@ export function getInlineKatexCss(): string {
 
 /** Вставляет инлайн-CSS KaTeX в HTML раздатки (маркер в <head>). */
 export function embedKatexAssets(html: string): string {
-  const css = getInlineKatexCss();
+  const css = [getInlineKatexCss(), getInlineLogoFontCss()].filter(Boolean).join("\n");
 
   return html.replace(KATEX_CSS_MARKER, css ? `<style>${css}</style>` : "");
 }
