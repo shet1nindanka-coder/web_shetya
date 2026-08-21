@@ -1,7 +1,14 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from "react";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  useTransition,
+} from "react";
 import { DeleteButton } from "@/components/delete-button";
 import { LessonManualAdd } from "@/components/lesson-manual-add";
 import { ResultToggle } from "@/components/lesson-result-toggle";
@@ -15,7 +22,7 @@ const RESULT_HOTKEYS: Record<string, string> = {
   "1": "SOLVED",
   "2": "PARTIAL",
   "3": "NOT_SOLVED",
-  "4": "SKIPPED"
+  "4": "SKIPPED",
 };
 
 type LessonBoardItem = {
@@ -60,16 +67,46 @@ type TeacherLessonBoardProps = {
 
 // Причина подбора — не статус: нейтральная палитра, чтобы в одной строке
 // не стояли два одинаковых по форме чипа из статусной палитры («Правило светофора», DESIGN.md).
-const reasonMeta: Record<string, { label: string; background: string; color: string }> = {
-  GAP: { label: "Пробел", background: "var(--shbz-tab-hover)", color: "var(--shbz-kicker)" },
-  REVIEW: { label: "Повторение", background: "var(--shbz-tab-hover)", color: "var(--shbz-kicker)" },
-  NEW: { label: "Новое", background: "var(--shbz-tab-hover)", color: "var(--shbz-kicker)" }
+const reasonMeta: Record<
+  string,
+  { label: string; background: string; color: string }
+> = {
+  GAP: {
+    label: "Пробел",
+    background: "var(--shbz-tab-hover)",
+    color: "var(--shbz-kicker)",
+  },
+  REVIEW: {
+    label: "Повторение",
+    background: "var(--shbz-tab-hover)",
+    color: "var(--shbz-kicker)",
+  },
+  NEW: {
+    label: "Новое",
+    background: "var(--shbz-tab-hover)",
+    color: "var(--shbz-kicker)",
+  },
 };
 
-const statusMeta: Record<string, { label: string; background: string; color: string }> = {
-  GREEN: { label: "решено", background: "var(--shbz-green-soft)", color: "var(--shbz-green-text)" },
-  YELLOW: { label: "с ошибками", background: "var(--shbz-yellow-soft)", color: "var(--shbz-yellow-text)" },
-  RED: { label: "не решено", background: "var(--shbz-danger-bg)", color: "var(--shbz-danger-text)" }
+const statusMeta: Record<
+  string,
+  { label: string; background: string; color: string }
+> = {
+  GREEN: {
+    label: "решено",
+    background: "var(--shbz-green-soft)",
+    color: "var(--shbz-green-text)",
+  },
+  YELLOW: {
+    label: "с ошибками",
+    background: "var(--shbz-yellow-soft)",
+    color: "var(--shbz-yellow-text)",
+  },
+  RED: {
+    label: "не решено",
+    background: "var(--shbz-danger-bg)",
+    color: "var(--shbz-danger-text)",
+  },
 };
 
 function isParticipantPending(participant: LessonBoardParticipant) {
@@ -79,14 +116,27 @@ function isParticipantPending(participant: LessonBoardParticipant) {
 // «Сейчас» приходит параметром из тикающего состояния: без него зависший
 // участник никогда не перерисуется и stale не наступит.
 function isParticipantStale(participant: LessonBoardParticipant, now: number) {
-  return isParticipantPending(participant) && now - new Date(participant.createdAt).getTime() > STALE_PLAN_MS;
+  return (
+    isParticipantPending(participant) &&
+    now - new Date(participant.createdAt).getTime() > STALE_PLAN_MS
+  );
 }
 
-export function TeacherLessonBoard({ prefix, aiAvailable, lesson, bank }: TeacherLessonBoardProps) {
+export function TeacherLessonBoard({
+  prefix,
+  aiAvailable,
+  lesson,
+  bank,
+}: TeacherLessonBoardProps) {
   const router = useRouter();
   const [participants, setParticipants] = useState(lesson.participants);
-  const [notice, setNotice] = useState<{ tone: "success" | "error"; text: string } | null>(null);
-  const [busyParticipantId, setBusyParticipantId] = useState<string | null>(null);
+  const [notice, setNotice] = useState<{
+    tone: "success" | "error";
+    text: string;
+  } | null>(null);
+  const [busyParticipantId, setBusyParticipantId] = useState<string | null>(
+    null,
+  );
   const [now, setNow] = useState(() => Date.now());
   // Ошибка сохранения итога — в строке номера, а не наверху доски.
   const [itemErrors, setItemErrors] = useState<Record<string, string>>({});
@@ -122,11 +172,16 @@ export function TeacherLessonBoard({ prefix, aiAvailable, lesson, bank }: Teache
 
   const pendingCount = useMemo(
     () =>
-      participants.filter((participant) => isParticipantPending(participant) && !isParticipantStale(participant, now))
-        .length,
-    [participants, now]
+      participants.filter(
+        (participant) =>
+          isParticipantPending(participant) &&
+          !isParticipantStale(participant, now),
+      ).length,
+    [participants, now],
   );
-  const readyCount = participants.filter((participant) => participant.planGeneratedAt).length;
+  const readyCount = participants.filter(
+    (participant) => participant.planGeneratedAt,
+  ).length;
 
   // Поллинг статуса генерации, пока есть незавершённые ученики.
   useEffect(() => {
@@ -136,7 +191,10 @@ export function TeacherLessonBoard({ prefix, aiAvailable, lesson, bank }: Teache
 
     const timer = setInterval(async () => {
       try {
-        const response = await fetch(`/api/teacher/lessons/${lesson.id}/status`, { cache: "no-store" });
+        const response = await fetch(
+          `/api/teacher/lessons/${lesson.id}/status`,
+          { cache: "no-store" },
+        );
 
         if (!response.ok) {
           return;
@@ -144,11 +202,19 @@ export function TeacherLessonBoard({ prefix, aiAvailable, lesson, bank }: Teache
 
         const status = (await response.json()) as {
           pending: number;
-          participants: Array<{ participantId: string; planGeneratedAt: string | null; planError: string | null; itemsCount: number }>;
+          participants: Array<{
+            participantId: string;
+            planGeneratedAt: string | null;
+            planError: string | null;
+            itemsCount: number;
+          }>;
         };
 
         const signature = status.participants
-          .map((participant) => `${participant.participantId}:${participant.planGeneratedAt ?? ""}:${participant.planError ?? ""}`)
+          .map(
+            (participant) =>
+              `${participant.participantId}:${participant.planGeneratedAt ?? ""}:${participant.planError ?? ""}`,
+          )
           .join("|");
 
         if (signature !== lastSignature.current) {
@@ -165,17 +231,26 @@ export function TeacherLessonBoard({ prefix, aiAvailable, lesson, bank }: Teache
   }, [pendingCount, lesson.id, router]);
 
   const saveItems = useCallback(
-    async (participantId: string, homeworkNumberIds: string[], extraHomeworkNumberIds: string[]) => {
+    async (
+      participantId: string,
+      homeworkNumberIds: string[],
+      extraHomeworkNumberIds: string[],
+    ) => {
       setBusyParticipantId(participantId);
       setNotice(null);
 
       try {
-        const response = await fetch(`/api/teacher/lessons/${lesson.id}/participants/${participantId}/items`, {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ homeworkNumberIds, extraHomeworkNumberIds })
-        });
-        const result = (await response.json().catch(() => null)) as { error?: string } | null;
+        const response = await fetch(
+          `/api/teacher/lessons/${lesson.id}/participants/${participantId}/items`,
+          {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ homeworkNumberIds, extraHomeworkNumberIds }),
+          },
+        );
+        const result = (await response.json().catch(() => null)) as {
+          error?: string;
+        } | null;
 
         if (!response.ok) {
           throw new Error(result?.error || "Не удалось сохранить набор.");
@@ -183,12 +258,18 @@ export function TeacherLessonBoard({ prefix, aiAvailable, lesson, bank }: Teache
 
         startTransition(() => router.refresh());
       } catch (error) {
-        setNotice({ tone: "error", text: error instanceof Error ? error.message : "Не удалось сохранить набор." });
+        setNotice({
+          tone: "error",
+          text:
+            error instanceof Error
+              ? error.message
+              : "Не удалось сохранить набор.",
+        });
       } finally {
         setBusyParticipantId(null);
       }
     },
-    [lesson.id, router]
+    [lesson.id, router],
   );
 
   const setResult = useCallback(
@@ -199,10 +280,12 @@ export function TeacherLessonBoard({ prefix, aiAvailable, lesson, bank }: Teache
           participant.id === participantId
             ? {
                 ...participant,
-                items: participant.items.map((item) => (item.id === itemId ? { ...item, result } : item))
+                items: participant.items.map((item) =>
+                  item.id === itemId ? { ...item, result } : item,
+                ),
               }
-            : participant
-        )
+            : participant,
+        ),
       );
       setItemErrors((current) => {
         if (!(itemId in current)) {
@@ -221,12 +304,14 @@ export function TeacherLessonBoard({ prefix, aiAvailable, lesson, bank }: Teache
           {
             method: "PATCH",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ result })
-          }
+            body: JSON.stringify({ result }),
+          },
         );
 
         if (!response.ok) {
-          const payload = (await response.json().catch(() => null)) as { error?: string } | null;
+          const payload = (await response.json().catch(() => null)) as {
+            error?: string;
+          } | null;
           throw new Error(payload?.error || "Не удалось сохранить итог.");
         }
 
@@ -234,17 +319,24 @@ export function TeacherLessonBoard({ prefix, aiAvailable, lesson, bank }: Teache
       } catch (error) {
         setItemErrors((current) => ({
           ...current,
-          [itemId]: error instanceof Error ? error.message : "Не удалось сохранить итог."
+          [itemId]:
+            error instanceof Error
+              ? error.message
+              : "Не удалось сохранить итог.",
         }));
         startTransition(() => router.refresh());
       }
     },
-    [lesson.id, router]
+    [lesson.id, router],
   );
 
   // 1/2/3 — отметить итог, ↑/↓ — перейти между строками набора.
   const handleItemKeyDown = useCallback(
-    (event: React.KeyboardEvent<HTMLLIElement>, participantId: string, item: LessonBoardItem) => {
+    (
+      event: React.KeyboardEvent<HTMLLIElement>,
+      participantId: string,
+      item: LessonBoardItem,
+    ) => {
       if (event.target !== event.currentTarget) {
         return;
       }
@@ -253,18 +345,24 @@ export function TeacherLessonBoard({ prefix, aiAvailable, lesson, bank }: Teache
 
       if (hotkeyResult) {
         event.preventDefault();
-        void setResult(participantId, item.id, item.result === hotkeyResult ? null : hotkeyResult);
+        void setResult(
+          participantId,
+          item.id,
+          item.result === hotkeyResult ? null : hotkeyResult,
+        );
         return;
       }
 
       if (event.key === "ArrowDown" || event.key === "ArrowUp") {
         event.preventDefault();
-        const rows = Array.from(document.querySelectorAll<HTMLLIElement>("[data-lesson-item]"));
+        const rows = Array.from(
+          document.querySelectorAll<HTMLLIElement>("[data-lesson-item]"),
+        );
         const index = rows.indexOf(event.currentTarget);
         rows[index + (event.key === "ArrowDown" ? 1 : -1)]?.focus();
       }
     },
-    [setResult]
+    [setResult],
   );
 
   const regenerate = useCallback(
@@ -273,10 +371,15 @@ export function TeacherLessonBoard({ prefix, aiAvailable, lesson, bank }: Teache
       setNotice(null);
 
       try {
-        const response = await fetch(`/api/teacher/lessons/${lesson.id}/participants/${participantId}/regenerate`, {
-          method: "POST"
-        });
-        const result = (await response.json().catch(() => null)) as { error?: string } | null;
+        const response = await fetch(
+          `/api/teacher/lessons/${lesson.id}/participants/${participantId}/regenerate`,
+          {
+            method: "POST",
+          },
+        );
+        const result = (await response.json().catch(() => null)) as {
+          error?: string;
+        } | null;
 
         if (!response.ok) {
           throw new Error(result?.error || "Не удалось запустить пересборку.");
@@ -285,24 +388,39 @@ export function TeacherLessonBoard({ prefix, aiAvailable, lesson, bank }: Teache
         setParticipants((current) =>
           current.map((participant) =>
             participant.id === participantId
-              ? { ...participant, planGeneratedAt: null, planError: null, createdAt: new Date().toISOString() }
-              : participant
-          )
+              ? {
+                  ...participant,
+                  planGeneratedAt: null,
+                  planError: null,
+                  createdAt: new Date().toISOString(),
+                }
+              : participant,
+          ),
         );
       } catch (error) {
-        setNotice({ tone: "error", text: error instanceof Error ? error.message : "Не удалось запустить пересборку." });
+        setNotice({
+          tone: "error",
+          text:
+            error instanceof Error
+              ? error.message
+              : "Не удалось запустить пересборку.",
+        });
       } finally {
         setBusyParticipantId(null);
       }
     },
-    [lesson.id]
+    [lesson.id],
   );
 
   const deleteLesson = useCallback(async () => {
-    const response = await fetch(`/api/teacher/lessons/${lesson.id}`, { method: "DELETE" });
+    const response = await fetch(`/api/teacher/lessons/${lesson.id}`, {
+      method: "DELETE",
+    });
 
     if (!response.ok) {
-      const result = (await response.json().catch(() => null)) as { error?: string } | null;
+      const result = (await response.json().catch(() => null)) as {
+        error?: string;
+      } | null;
       throw new Error(result?.error || "Не удалось удалить урок.");
     }
 
@@ -328,13 +446,22 @@ export function TeacherLessonBoard({ prefix, aiAvailable, lesson, bank }: Teache
         >
           Версия для печати
         </a>
-        <a href={`${prefix}/lessons/${lesson.id}/pdf?answers=1`} className="shbz-btn-outline inline-block no-underline">
+        <a
+          href={`${prefix}/lessons/${lesson.id}/pdf?answers=1`}
+          className="shbz-btn-outline inline-block no-underline"
+        >
           Ответы (PDF)
         </a>
-        <a href={`${prefix}/homework-plans/new?lessonId=${lesson.id}`} className="shbz-btn-outline inline-block no-underline">
+        <a
+          href={`${prefix}/homework-plans/new?lessonId=${lesson.id}`}
+          className="shbz-btn-outline inline-block no-underline"
+        >
           Выдать ДЗ по итогам занятия
         </a>
-        <span className="ui-hint text-xs" style={{ color: "var(--shbz-kicker)" }}>
+        <span
+          className="ui-hint text-xs"
+          style={{ color: "var(--shbz-kicker)" }}
+        >
           Отметки: клавиши 1/2/3, переход — ↓
         </span>
         {pendingCount > 0 ? (
@@ -343,7 +470,11 @@ export function TeacherLessonBoard({ prefix, aiAvailable, lesson, bank }: Teache
             className="inline-flex items-center gap-2 text-sm font-semibold"
             style={{ color: "var(--shbz-text-muted)" }}
           >
-            <span className="shbz-spinner" style={{ color: "var(--shbz-accent-solid)" }} aria-hidden />
+            <span
+              className="shbz-spinner"
+              style={{ color: "var(--shbz-accent-solid)" }}
+              aria-hidden
+            />
             Готово {readyCount} из {participants.length}…
           </span>
         ) : null}
@@ -354,7 +485,13 @@ export function TeacherLessonBoard({ prefix, aiAvailable, lesson, bank }: Teache
             description="Занятие и все подобранные наборы задач будут удалены. Это действие нельзя отменить."
             onConfirm={deleteLesson}
             onError={(error) =>
-              setNotice({ tone: "error", text: error instanceof Error ? error.message : "Не удалось удалить урок." })
+              setNotice({
+                tone: "error",
+                text:
+                  error instanceof Error
+                    ? error.message
+                    : "Не удалось удалить урок.",
+              })
             }
           />
         </span>
@@ -363,9 +500,14 @@ export function TeacherLessonBoard({ prefix, aiAvailable, lesson, bank }: Teache
       {!aiAvailable ? (
         <div
           className="mb-5 rounded-[12px] border px-5 py-4 text-sm font-medium"
-          style={{ background: "var(--shbz-yellow-soft)", borderColor: "var(--shbz-yellow-text)", color: "var(--shbz-yellow-text)" }}
+          style={{
+            background: "var(--shbz-yellow-soft)",
+            borderColor: "var(--shbz-yellow-text)",
+            color: "var(--shbz-yellow-text)",
+          }}
         >
-          ИИ-подбор недоступен, соберите урок вручную: добавляйте номера в карточках учеников.
+          ИИ-подбор недоступен, соберите урок вручную: добавляйте номера в
+          карточках учеников.
         </div>
       ) : null}
 
@@ -380,7 +522,9 @@ export function TeacherLessonBoard({ prefix, aiAvailable, lesson, bank }: Teache
 
       <div className="space-y-5">
         {participants.map((participant) => {
-          const pending = isParticipantPending(participant) && !isParticipantStale(participant, now);
+          const pending =
+            isParticipantPending(participant) &&
+            !isParticipantStale(participant, now);
           const stale = isParticipantStale(participant, now);
           const busy = busyParticipantId === participant.id;
           const mainItems = participant.items.filter((item) => !item.isExtra);
@@ -397,14 +541,17 @@ export function TeacherLessonBoard({ prefix, aiAvailable, lesson, bank }: Teache
               participantId: participant.id,
               mainIds: [...mainIds],
               extraIds: [...extraIds],
-              label: `№ ${target.number} убран из набора`
+              label: `№ ${target.number} убран из набора`,
             });
-            undoTimer.current = setTimeout(() => setUndoState(null), UNDO_REMOVE_MS);
+            undoTimer.current = setTimeout(
+              () => setUndoState(null),
+              UNDO_REMOVE_MS,
+            );
 
             void saveItems(
               participant.id,
               mainIds.filter((id) => id !== target.homeworkNumberId),
-              extraIds.filter((id) => id !== target.homeworkNumberId)
+              extraIds.filter((id) => id !== target.homeworkNumberId),
             );
           };
 
@@ -418,7 +565,10 @@ export function TeacherLessonBoard({ prefix, aiAvailable, lesson, bank }: Teache
                   {/* H2 после H1 страницы: пропуск уровня H1→H3 ломал структуру для скринридера. */}
                   {/* Только имя: счётчик отметок и строка «скорость · основных · доп. ·
                       минуты по оценке ИИ» убраны — перегружали шапку (решение владельца). */}
-                  <h2 className="text-[16px] font-bold" style={{ color: "var(--shbz-text-strong)" }}>
+                  <h2
+                    className="text-[16px] font-bold"
+                    style={{ color: "var(--shbz-text-strong)" }}
+                  >
                     {participant.studentName}
                   </h2>
                 </div>
@@ -428,16 +578,28 @@ export function TeacherLessonBoard({ prefix, aiAvailable, lesson, bank }: Teache
               </div>
 
               {pending ? (
-                <p className="mt-4 inline-flex items-center gap-2.5 text-sm font-medium" style={{ color: "var(--shbz-text-muted)" }}>
-                  <span className="shbz-spinner" style={{ color: "var(--shbz-accent-solid)" }} aria-hidden />
+                <p
+                  className="mt-4 inline-flex items-center gap-2.5 text-sm font-medium"
+                  style={{ color: "var(--shbz-text-muted)" }}
+                >
+                  <span
+                    className="shbz-spinner"
+                    style={{ color: "var(--shbz-accent-solid)" }}
+                    aria-hidden
+                  />
                   ИИ подбирает задания…
                 </p>
               ) : null}
 
               {stale ? (
                 <div className="shbz-notice-error mt-4 px-4 py-3 text-sm">
-                  План не собрался: задача потерялась при перезапуске сервера. Нажмите «Повторить» — соберём заново.{" "}
-                  <button type="button" className="font-bold underline" onClick={() => void regenerate(participant.id)}>
+                  План не собрался: задача потерялась при перезапуске сервера.
+                  Нажмите «Повторить» — соберём заново.{" "}
+                  <button
+                    type="button"
+                    className="font-bold underline"
+                    onClick={() => void regenerate(participant.id)}
+                  >
                     Повторить
                   </button>
                 </div>
@@ -447,7 +609,11 @@ export function TeacherLessonBoard({ prefix, aiAvailable, lesson, bank }: Teache
                 <div className="shbz-notice-error mt-4 px-4 py-3 text-sm">
                   {participant.planError}{" "}
                   {aiAvailable ? (
-                    <button type="button" className="font-bold underline" onClick={() => void regenerate(participant.id)}>
+                    <button
+                      type="button"
+                      className="font-bold underline"
+                      onClick={() => void regenerate(participant.id)}
+                    >
                       Повторить
                     </button>
                   ) : null}
@@ -457,74 +623,127 @@ export function TeacherLessonBoard({ prefix, aiAvailable, lesson, bank }: Teache
               {participant.planSummary ? (
                 <p
                   className="mt-4 rounded-[12px] px-4 py-3 text-sm leading-6"
-                  style={{ background: "var(--shbz-soft-bg)", color: "var(--shbz-text-muted)" }}
+                  style={{
+                    background: "var(--shbz-soft-bg)",
+                    color: "var(--shbz-text-muted)",
+                  }}
                 >
                   {participant.planSummary}
                 </p>
               ) : null}
 
               {mainItems.length > 0 ? (
-                <ol className="mt-4 space-y-2">
-                  {mainItems.map((item, index) => {
-                    const reason = reasonMeta[item.reason] ?? reasonMeta.NEW;
-                    const status = item.studentStatus ? statusMeta[item.studentStatus] : null;
+                <div className="mt-4">
+                  <p
+                    className="mb-2 text-[12px] font-bold uppercase tracking-[1.2px]"
+                    style={{ color: "var(--shbz-kicker)" }}
+                  >
+                    Осн. задание
+                  </p>
+                  <ol className="space-y-2">
+                    {mainItems.map((item, index) => {
+                      const reason = reasonMeta[item.reason] ?? reasonMeta.NEW;
+                      const status = item.studentStatus
+                        ? statusMeta[item.studentStatus]
+                        : null;
 
-                    return (
-                      <li
-                        key={item.id}
-                        tabIndex={0}
-                        data-lesson-item
-                        onKeyDown={(event) => handleItemKeyDown(event, participant.id, item)}
-                        className="flex flex-wrap items-center gap-x-3 gap-y-1.5 rounded-[12px] border px-3.5 py-2.5"
-                        style={{ borderColor: "var(--shbz-soft-border)", background: "var(--shbz-soft-bg)" }}
-                      >
-                        <span className="text-xs font-bold" style={{ color: "var(--shbz-kicker)" }}>
-                          {index + 1}.
-                        </span>
-                        <span className="text-sm font-bold" style={{ color: "var(--shbz-text-strong)" }}>
-                          № {item.number}
-                        </span>
-                        {item.difficulty ? (
-                          <span className="shbz-chip" style={{ background: "var(--shbz-tab-hover)", color: "var(--shbz-kicker)", padding: "3px 9px" }}>
-                            сложн. {item.difficulty}
-                          </span>
-                        ) : null}
-                        <span className="shbz-chip" style={{ background: reason.background, color: reason.color, padding: "3px 9px" }}>
-                          {reason.label}
-                        </span>
-                        {status && !item.result ? (
-                          <span className="shbz-chip" style={{ background: status.background, color: status.color, padding: "3px 9px" }}>
-                            {status.label}
-                          </span>
-                        ) : null}
-                        <ResultToggle
-                          className="ml-auto"
-                          size="lg"
-                          value={item.result}
-                          disabled={busy}
-                          onChange={(next) => void setResult(participant.id, item.id, next)}
-                        />
-                        <button
-                          type="button"
-                          disabled={busy}
-                          aria-label={`Убрать № ${item.number}`}
-                          onClick={() => removeItem(item)}
-                          className="ml-1.5 flex h-8 w-8 items-center justify-center rounded-[8px] text-[18px] leading-none opacity-60 transition hover:opacity-100"
-                          style={{ color: "var(--shbz-danger-text)" }}
+                      return (
+                        <li
+                          key={item.id}
+                          tabIndex={0}
+                          data-lesson-item
+                          onKeyDown={(event) =>
+                            handleItemKeyDown(event, participant.id, item)
+                          }
+                          className="flex flex-wrap items-center gap-x-3 gap-y-1.5 rounded-[12px] border px-3.5 py-2.5"
+                          style={{
+                            borderColor: "var(--shbz-soft-border)",
+                            background: "var(--shbz-soft-bg)",
+                          }}
                         >
-                          ×
-                        </button>
-                        {itemErrors[item.id] ? (
-                          <span className="w-full text-xs font-semibold" style={{ color: "var(--shbz-danger-text)" }}>
-                            {itemErrors[item.id]}
+                          <span
+                            className="text-xs font-bold"
+                            style={{ color: "var(--shbz-kicker)" }}
+                          >
+                            {index + 1}.
                           </span>
-                        ) : null}
-                      </li>
-                    );
-                  })}
-                </ol>
+                          <span
+                            className="text-sm font-bold"
+                            style={{ color: "var(--shbz-text-strong)" }}
+                          >
+                            № {item.number}
+                          </span>
+                          {item.difficulty ? (
+                            <span
+                              className="shbz-chip"
+                              style={{
+                                background: "var(--shbz-tab-hover)",
+                                color: "var(--shbz-kicker)",
+                                padding: "3px 9px",
+                              }}
+                            >
+                              сложн. {item.difficulty}
+                            </span>
+                          ) : null}
+                          <span
+                            className="shbz-chip"
+                            style={{
+                              background: reason.background,
+                              color: reason.color,
+                              padding: "3px 9px",
+                            }}
+                          >
+                            {reason.label}
+                          </span>
+                          {status && !item.result ? (
+                            <span
+                              className="shbz-chip"
+                              style={{
+                                background: status.background,
+                                color: status.color,
+                                padding: "3px 9px",
+                              }}
+                            >
+                              {status.label}
+                            </span>
+                          ) : null}
+                          <ResultToggle
+                            className="ml-auto"
+                            size="lg"
+                            value={item.result}
+                            disabled={busy}
+                            onChange={(next) =>
+                              void setResult(participant.id, item.id, next)
+                            }
+                          />
+                          <button
+                            type="button"
+                            disabled={busy}
+                            aria-label={`Убрать № ${item.number}`}
+                            onClick={() => removeItem(item)}
+                            className="ml-1.5 flex h-8 w-8 items-center justify-center rounded-[8px] text-[18px] leading-none opacity-60 transition hover:opacity-100"
+                            style={{ color: "var(--shbz-danger-text)" }}
+                          >
+                            ×
+                          </button>
+                          {itemErrors[item.id] ? (
+                            <span
+                              className="w-full text-xs font-semibold"
+                              style={{ color: "var(--shbz-danger-text)" }}
+                            >
+                              {itemErrors[item.id]}
+                            </span>
+                          ) : null}
+                        </li>
+                      );
+                    })}
+                  </ol>
+                </div>
               ) : !pending ? (
-                <p className="mt-4 text-sm" style={{ color: "var(--shbz-text-muted)" }}>
+                <p
+                  className="mt-4 text-sm"
+                  style={{ color: "var(--shbz-text-muted)" }}
+                >
                   Задач пока нет — добавьте вручную или запустите подбор.
                 </p>
               ) : null}
@@ -546,22 +765,38 @@ export function TeacherLessonBoard({ prefix, aiAvailable, lesson, bank }: Teache
                           key={item.id}
                           tabIndex={0}
                           data-lesson-item
-                          onKeyDown={(event) => handleItemKeyDown(event, participant.id, item)}
+                          onKeyDown={(event) =>
+                            handleItemKeyDown(event, participant.id, item)
+                          }
                           className="flex flex-wrap items-center gap-x-3 gap-y-1.5 rounded-[12px] border border-dashed px-3.5 py-2.5"
                           style={{ borderColor: "var(--shbz-soft-border)" }}
                         >
-                          <span className="text-sm font-bold" style={{ color: "var(--shbz-text-strong)" }}>
+                          <span
+                            className="text-sm font-bold"
+                            style={{ color: "var(--shbz-text-strong)" }}
+                          >
                             № {item.number}
                           </span>
                           {item.difficulty ? (
                             <span
                               className="shbz-chip"
-                              style={{ background: "var(--shbz-tab-hover)", color: "var(--shbz-kicker)", padding: "3px 9px" }}
+                              style={{
+                                background: "var(--shbz-tab-hover)",
+                                color: "var(--shbz-kicker)",
+                                padding: "3px 9px",
+                              }}
                             >
                               сложн. {item.difficulty}
                             </span>
                           ) : null}
-                          <span className="shbz-chip" style={{ background: reason.background, color: reason.color, padding: "3px 9px" }}>
+                          <span
+                            className="shbz-chip"
+                            style={{
+                              background: reason.background,
+                              color: reason.color,
+                              padding: "3px 9px",
+                            }}
+                          >
                             {reason.label}
                           </span>
                           <ResultToggle
@@ -569,7 +804,9 @@ export function TeacherLessonBoard({ prefix, aiAvailable, lesson, bank }: Teache
                             size="lg"
                             value={item.result}
                             disabled={busy}
-                            onChange={(next) => void setResult(participant.id, item.id, next)}
+                            onChange={(next) =>
+                              void setResult(participant.id, item.id, next)
+                            }
                           />
                           <button
                             type="button"
@@ -582,7 +819,10 @@ export function TeacherLessonBoard({ prefix, aiAvailable, lesson, bank }: Teache
                             ×
                           </button>
                           {itemErrors[item.id] ? (
-                            <span className="w-full text-xs font-semibold" style={{ color: "var(--shbz-danger-text)" }}>
+                            <span
+                              className="w-full text-xs font-semibold"
+                              style={{ color: "var(--shbz-danger-text)" }}
+                            >
                               {itemErrors[item.id]}
                             </span>
                           ) : null}
@@ -596,12 +836,14 @@ export function TeacherLessonBoard({ prefix, aiAvailable, lesson, bank }: Teache
               <LessonManualAdd
                 bank={bank}
                 busy={busy}
-                existingIds={participant.items.map((item) => item.homeworkNumberId)}
+                existingIds={participant.items.map(
+                  (item) => item.homeworkNumberId,
+                )}
                 onAdd={(homeworkNumberId, toExtra) =>
                   void saveItems(
                     participant.id,
                     toExtra ? mainIds : [...mainIds, homeworkNumberId],
-                    toExtra ? [...extraIds, homeworkNumberId] : extraIds
+                    toExtra ? [...extraIds, homeworkNumberId] : extraIds,
                   )
                 }
               />
@@ -614,36 +856,39 @@ export function TeacherLessonBoard({ prefix, aiAvailable, lesson, bank }: Teache
         // Центрирование на внешнем слое: вход ui-pop-in анимирует transform
         // и не должен конфликтовать с translate-центровкой.
         <div className="pointer-events-none fixed bottom-6 left-0 right-0 z-40 flex justify-center">
-        <div
-          role="status"
-          className="ui-pop-in pointer-events-auto flex items-center gap-3 rounded-[12px] border px-4 py-3 text-sm font-semibold shadow-lg"
-          style={{
-            background: "var(--shbz-card-bg)",
-            borderColor: "var(--shbz-card-border)",
-            color: "var(--shbz-text-strong)"
-          }}
-        >
-          {undoState.label}
-          <button
-            type="button"
-            className="font-bold underline"
-            style={{ color: "var(--shbz-accent-solid)" }}
-            onClick={() => {
-              if (undoTimer.current) {
-                clearTimeout(undoTimer.current);
-                undoTimer.current = null;
-              }
-
-              void saveItems(undoState.participantId, undoState.mainIds, undoState.extraIds);
-              setUndoState(null);
+          <div
+            role="status"
+            className="ui-pop-in pointer-events-auto flex items-center gap-3 rounded-[12px] border px-4 py-3 text-sm font-semibold shadow-lg"
+            style={{
+              background: "var(--shbz-card-bg)",
+              borderColor: "var(--shbz-card-border)",
+              color: "var(--shbz-text-strong)",
             }}
           >
-            Отменить
-          </button>
-        </div>
+            {undoState.label}
+            <button
+              type="button"
+              className="font-bold underline"
+              style={{ color: "var(--shbz-accent-solid)" }}
+              onClick={() => {
+                if (undoTimer.current) {
+                  clearTimeout(undoTimer.current);
+                  undoTimer.current = null;
+                }
+
+                void saveItems(
+                  undoState.participantId,
+                  undoState.mainIds,
+                  undoState.extraIds,
+                );
+                setUndoState(null);
+              }}
+            >
+              Отменить
+            </button>
+          </div>
         </div>
       ) : null}
     </div>
   );
 }
-
