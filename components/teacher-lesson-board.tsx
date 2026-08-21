@@ -534,9 +534,6 @@ export function TeacherLessonBoard({ prefix, aiAvailable, lesson, bank }: Teache
                         <span className="text-sm font-bold" style={{ color: "var(--shbz-text-strong)" }}>
                           № {item.number}
                         </span>
-                        <span className="text-xs" style={{ color: "var(--shbz-text-muted)" }}>
-                          {item.topicTitle}
-                        </span>
                         {item.difficulty ? (
                           <span className="shbz-chip" style={{ background: "var(--shbz-tab-hover)", color: "var(--shbz-kicker)", padding: "3px 9px" }}>
                             сложн. {item.difficulty}
@@ -548,11 +545,6 @@ export function TeacherLessonBoard({ prefix, aiAvailable, lesson, bank }: Teache
                         {status && !item.result ? (
                           <span className="shbz-chip" style={{ background: status.background, color: status.color, padding: "3px 9px" }}>
                             {status.label}
-                          </span>
-                        ) : null}
-                        {item.comment ? (
-                          <span className="min-w-0 flex-1 truncate text-xs" style={{ color: "var(--shbz-text-muted)" }}>
-                            {item.comment}
                           </span>
                         ) : null}
                         <ResultToggle
@@ -611,9 +603,6 @@ export function TeacherLessonBoard({ prefix, aiAvailable, lesson, bank }: Teache
                           <span className="text-sm font-bold" style={{ color: "var(--shbz-text-strong)" }}>
                             № {item.number}
                           </span>
-                          <span className="text-xs" style={{ color: "var(--shbz-text-muted)" }}>
-                            {item.topicTitle}
-                          </span>
                           {item.difficulty ? (
                             <span
                               className="shbz-chip"
@@ -625,11 +614,6 @@ export function TeacherLessonBoard({ prefix, aiAvailable, lesson, bank }: Teache
                           <span className="shbz-chip" style={{ background: reason.background, color: reason.color, padding: "3px 9px" }}>
                             {reason.label}
                           </span>
-                          {item.comment ? (
-                            <span className="min-w-0 flex-1 truncate text-xs" style={{ color: "var(--shbz-text-muted)" }}>
-                              {item.comment}
-                            </span>
-                          ) : null}
                           <ResultToggle
                             className="ml-auto"
                             size="lg"

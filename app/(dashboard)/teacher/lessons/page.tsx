@@ -98,14 +98,14 @@ export default async function TeacherLessonsPage() {
                     ошибок: {lesson.failedCount}
                   </span>
                 ) : null}
-                {/* Чип итогов показывается всегда (решение владельца); пустое
-                    занятие 0/0 — нейтральным, а не «зелёным». */}
+                {/* Чип итогов показывается всегда и одним размером; зелёный —
+                    только когда всё отмечено, пустое 0/0 — жёлтым (решение владельца). */}
                 <span
-                  className={
-                    lesson.resultsTotal === 0
-                      ? "shbz-badge-muted"
-                      : `shbz-chip ${lesson.resultsMarked === lesson.resultsTotal ? "shbz-chip-green" : "shbz-chip-yellow"}`
-                  }
+                  className={`shbz-chip ${
+                    lesson.resultsTotal > 0 && lesson.resultsMarked === lesson.resultsTotal
+                      ? "shbz-chip-green"
+                      : "shbz-chip-yellow"
+                  }`}
                 >
                   итоги {lesson.resultsMarked} / {lesson.resultsTotal}
                 </span>

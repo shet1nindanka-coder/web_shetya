@@ -337,10 +337,13 @@ export function TeacherStudentLessons({
             <span className="text-sm font-bold" style={{ color: "var(--shbz-text-strong)" }}>
               № {item.number}
             </span>
-            <span className="min-w-0 flex-1 truncate text-xs" style={{ color: "var(--shbz-text-muted)" }}>
-              {item.topicTitle}
-              {item.difficulty ? ` · сложн. ${item.difficulty}` : ""}
-            </span>
+            {item.difficulty ? (
+              <span className="min-w-0 flex-1 truncate text-xs" style={{ color: "var(--shbz-text-muted)" }}>
+                сложн. {item.difficulty}
+              </span>
+            ) : (
+              <span className="min-w-0 flex-1" />
+            )}
             <ResultToggle
               value={item.result}
               disabled={busy}
@@ -397,13 +400,11 @@ export function TeacherStudentLessons({
                   {statusLabels[lesson.status] ?? lesson.status}
                 </p>
               </div>
-              {/* Чип итогов показывается всегда; пустое занятие 0/0 — нейтральным. */}
+              {/* Чип итогов показывается всегда и одним размером; 0/0 — жёлтым. */}
               <span
-                className={
-                  lesson.items.length === 0
-                    ? "shbz-badge-muted"
-                    : `shbz-chip ${marked === lesson.items.length ? "shbz-chip-green" : "shbz-chip-yellow"}`
-                }
+                className={`shbz-chip ${
+                  lesson.items.length > 0 && marked === lesson.items.length ? "shbz-chip-green" : "shbz-chip-yellow"
+                }`}
               >
                 итоги {marked} / {lesson.items.length}
               </span>
