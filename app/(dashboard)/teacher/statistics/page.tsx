@@ -5,8 +5,10 @@ import { TeacherProgressTimelineFilter } from "@/components/teacher-progress-tim
 import { ShbzNumberSearch } from "@/components/shbz-number-search";
 import { ShbzPageHeader } from "@/components/shbz-page-header";
 import { TeacherStatisticsDrilldown } from "@/components/teacher-statistics-drilldown";
+import { TeacherStatsSection } from "@/components/teacher-stats-section";
 import { requireUser } from "@/lib/auth";
 import { getDeveloperStatistics, getProgressTimeline, getTeacherTopicsOverview } from "@/lib/platform-data";
+import { getTeacherStatistics } from "@/lib/teacher-statistics";
 import { completionPercent, toIsoDateTimeString } from "@/lib/utils";
 
 type TeacherTopicsOverview = Awaited<ReturnType<typeof getTeacherTopicsOverview>>;
@@ -48,6 +50,7 @@ type TeacherStatisticsPageProps = {
 
 const statisticsViews = [
   { key: "teacher", label: "Прогресс учеников", href: "/teacher/statistics" },
+  { key: "teachers", label: "По учителям", href: "/teacher/statistics?view=teachers" },
   { key: "developer", label: "Метрики платформы", href: "/teacher/statistics?view=developer" }
 ] as const;
 
@@ -58,8 +61,9 @@ export default async function TeacherStatisticsPage({ searchParams }: TeacherSta
   const requestedView = typeof resolvedSearchParams.view === "string" ? resolvedSearchParams.view : undefined;
   const requestedStudentId =
     typeof resolvedSearchParams.studentId === "string" ? resolvedSearchParams.studentId : undefined;
-  const view = requestedView === "developer" ? "developer" : "teacher";
+  const view = requestedView === "developer" ? "developer" : requestedView === "teachers" ? "teachers" : "teacher";
   const data = await getTeacherTopicsOverview(user);
+  const teacherStatistics = view === "teachers" ? await getTeacherStatistics() : null;
   const selectedTimelineStudent =
     data.students.find((student) => student.id === requestedStudentId) ?? null;
   const totalStatusSlots = data.stats.totalStudents * data.stats.totalNumbers;
@@ -420,6 +424,8 @@ export default async function TeacherStatisticsPage({ searchParams }: TeacherSta
             <TeacherStatisticsDrilldown topics={drilldownTopics} students={drilldownStudents} />
           </section>
         </div>
+      ) : view === "teachers" && teacherStatistics ? (
+        <TeacherStatsSection statistics={teacherStatistics} />
       ) : (
         <div className="flex flex-col gap-6">
           <div className="grid grid-cols-2 gap-3.5 xl:grid-cols-4">
