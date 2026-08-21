@@ -25,6 +25,35 @@ function isPlannerPath(pathname: string, prefix: string) {
   return pathname.startsWith(`${prefix}/lessons`) || pathname.startsWith(`${prefix}/homework-plans`);
 }
 
+/** Кружок с шестерёнкой — вход в настройки на десктопе и телефоне. */
+function SettingsGearLink({ href, active }: { href: string; active: boolean }) {
+  return (
+    <Link
+      href={href}
+      prefetch
+      aria-label="Настройки"
+      aria-current={active ? "page" : undefined}
+      data-active={active}
+      className="shbz-icon-circle shrink-0"
+    >
+      <svg
+        width="18"
+        height="18"
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        strokeWidth="1.7"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        aria-hidden="true"
+      >
+        <circle cx="12" cy="12" r="3.2" />
+        <path d="M19.4 15a1.7 1.7 0 0 0 .34 1.87l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.7 1.7 0 0 0-1.87-.34 1.7 1.7 0 0 0-1.03 1.56V21a2 2 0 1 1-4 0v-.09a1.7 1.7 0 0 0-1.11-1.56 1.7 1.7 0 0 0-1.87.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.7 1.7 0 0 0 .34-1.87 1.7 1.7 0 0 0-1.56-1.03H3a2 2 0 1 1 0-4h.09a1.7 1.7 0 0 0 1.56-1.11 1.7 1.7 0 0 0-.34-1.87l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.7 1.7 0 0 0 1.87.34h.01A1.7 1.7 0 0 0 10 3.09V3a2 2 0 1 1 4 0v.09a1.7 1.7 0 0 0 1.03 1.56 1.7 1.7 0 0 0 1.87-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.7 1.7 0 0 0-.34 1.87v.01A1.7 1.7 0 0 0 20.91 10H21a2 2 0 1 1 0 4h-.09a1.7 1.7 0 0 0-1.51 1z" />
+      </svg>
+    </Link>
+  );
+}
+
 const studentItems = [
   { href: "/student", label: "обзор", match: (p: string, _sp: URLSearchParams) => p === "/student" },
   { href: "/student/homeworks", label: "дз", match: (p: string, _sp: URLSearchParams) => p.startsWith("/student/homeworks") },
@@ -111,8 +140,8 @@ export function DashboardNav({ user, studentStreak }: DashboardNavProps) {
   const liveStreak = useStudentStreak();
   const streakValue = liveStreak?.streak ?? studentStreak;
   const items = isStudent ? studentItems : user.role === UserRole.DEVELOPER ? developerItems : teacherItems;
-  // На десктопе «настройки» живут в кружке с шестерёнкой у профиля,
-  // освобождая слот в таббаре; в мобильном меню остаются пунктом списка.
+  // «Настройки» живут в кружке с шестерёнкой (десктоп — у профиля, телефон —
+  // рядом с колокольчиком и меню), освобождая слот в таббаре и мобильном списке.
   const settingsItem = items.find((item) => item.href.endsWith("/settings")) ?? null;
   const tabbarItems = items.filter((item) => item !== settingsItem);
   const settingsActive = settingsItem ? settingsItem.match(pathname, searchParams) : false;
@@ -182,31 +211,7 @@ export function DashboardNav({ user, studentStreak }: DashboardNavProps) {
             </div>
           </div>
           {isStudent ? <StudentNotificationsBell /> : null}
-          {settingsItem ? (
-            <Link
-              href={settingsItem.href}
-              prefetch
-              aria-label="Настройки"
-              aria-current={settingsActive ? "page" : undefined}
-              data-active={settingsActive}
-              className="shbz-icon-circle"
-            >
-              <svg
-                width="18"
-                height="18"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1.7"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                aria-hidden="true"
-              >
-                <circle cx="12" cy="12" r="3.2" />
-                <path d="M19.4 15a1.7 1.7 0 0 0 .34 1.87l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.7 1.7 0 0 0-1.87-.34 1.7 1.7 0 0 0-1.03 1.56V21a2 2 0 1 1-4 0v-.09a1.7 1.7 0 0 0-1.11-1.56 1.7 1.7 0 0 0-1.87.34l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.7 1.7 0 0 0 .34-1.87 1.7 1.7 0 0 0-1.56-1.03H3a2 2 0 1 1 0-4h.09a1.7 1.7 0 0 0 1.56-1.11 1.7 1.7 0 0 0-.34-1.87l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.7 1.7 0 0 0 1.87.34h.01A1.7 1.7 0 0 0 10 3.09V3a2 2 0 1 1 4 0v.09a1.7 1.7 0 0 0 1.03 1.56 1.7 1.7 0 0 0 1.87-.34l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.7 1.7 0 0 0-.34 1.87v.01A1.7 1.7 0 0 0 20.91 10H21a2 2 0 1 1 0 4h-.09a1.7 1.7 0 0 0-1.51 1z" />
-              </svg>
-            </Link>
-          ) : null}
+          {settingsItem ? <SettingsGearLink href={settingsItem.href} active={settingsActive} /> : null}
           <form action={logoutAction}>
             <button type="submit" className="shbz-btn-outline">
               Выйти
@@ -217,6 +222,7 @@ export function DashboardNav({ user, studentStreak }: DashboardNavProps) {
         {/* Мобильное меню */}
         <div className="flex items-center gap-2 md:hidden">
           {isStudent ? <StudentNotificationsBell /> : null}
+          {settingsItem ? <SettingsGearLink href={settingsItem.href} active={settingsActive} /> : null}
         <button
           type="button"
           onClick={() => setMobileOpen(!mobileOpen)}
@@ -250,9 +256,9 @@ export function DashboardNav({ user, studentStreak }: DashboardNavProps) {
             className="absolute left-0 right-0 top-full z-40 border-b p-4 md:hidden"
             style={{ background: "var(--shbz-card-bg)", borderColor: "var(--shbz-header-border)" }}
           >
-            {items.length > 0 ? (
+            {tabbarItems.length > 0 ? (
               <nav className="mb-4 flex flex-col gap-1" aria-label="Разделы">
-                {items.map((item) => (
+                {tabbarItems.map((item) => (
                   <Link
                     key={item.href}
                     href={item.href}

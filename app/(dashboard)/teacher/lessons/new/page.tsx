@@ -3,9 +3,10 @@ import { notFound } from "next/navigation";
 import { UserRole } from "@prisma/client";
 import { ShbzNumberSearch } from "@/components/shbz-number-search";
 import { ShbzPageHeader } from "@/components/shbz-page-header";
+import { TeacherLessonComposeSwitch } from "@/components/teacher-lesson-compose-switch";
 import { TeacherLessonCreateForm } from "@/components/teacher-lesson-create-form";
 import { requireUser } from "@/lib/auth";
-import { getGroupDetail } from "@/lib/platform-data";
+import { getGroupDetail, getTeacherStudentDetail } from "@/lib/platform-data";
 import { prisma } from "@/lib/prisma";
 import { getSiteSettingsUncached } from "@/lib/site-settings";
 import { getAiCheckConfig } from "@/lib/solution-check";
@@ -26,6 +27,8 @@ export default async function LessonNewPage({ searchParams }: LessonNewPageProps
   let kicker = "";
   let members: Array<{ id: string; name: string; speed: number | null }> = [];
   let formGroupId: string | undefined;
+  // Индивидуальный урок: сетка ручного выбора номеров для переключателя «ИИ / вручную».
+  let soloBoardTopics: Parameters<typeof TeacherLessonComposeSwitch>[0]["boardTopics"] | null = null;
 
   if (groupId) {
     const group = await getGroupDetail(user, groupId);
@@ -50,6 +53,44 @@ export default async function LessonNewPage({ searchParams }: LessonNewPageProps
 
     kicker = student.name;
     members = [{ id: student.id, name: student.name, speed: student.studentProfile?.speed ?? null }];
+
+    // Данные для ручного режима: статусы номеров ученика, повторы и условия задач.
+    let detail: Awaited<ReturnType<typeof getTeacherStudentDetail>> | null = null;
+
+    try {
+      detail = await getTeacherStudentDetail(user, student.id);
+    } catch {
+      detail = null;
+    }
+
+    if (detail) {
+      const [usedInLessons, conditions] = await Promise.all([
+        prisma.lessonAssignmentItem
+          .findMany({
+            where: { participant: { studentId: student.id } },
+            select: { homeworkNumberId: true }
+          })
+          .catch(() => []),
+        prisma.topicHomeworkNumber
+          .findMany({ select: { id: true, conditionLatex: true } })
+          .catch(() => [] as Array<{ id: string; conditionLatex: string | null }>)
+      ]);
+      const usedNumberIds = new Set(usedInLessons.map((item) => item.homeworkNumberId));
+      const conditionById = new Map(conditions.map((entry) => [entry.id, entry.conditionLatex]));
+
+      soloBoardTopics = detail.topics.map((topic) => ({
+        id: topic.id,
+        title: topic.title,
+        totalNumbers: topic.totalNumbers,
+        numbers: topic.numbers.map((number) => ({
+          id: number.id,
+          number: number.number,
+          status: number.studentStatus?.status ?? null,
+          inLesson: usedNumberIds.has(number.id),
+          conditionLatex: conditionById.get(number.id) ?? null
+        }))
+      }));
+    }
   } else {
     // Без параметров — выбор, кому составляется урок: группа или один ученик.
     const teacherScope = user.role === UserRole.TEACHER ? { teacherId: user.id } : {};
@@ -150,7 +191,19 @@ export default async function LessonNewPage({ searchParams }: LessonNewPageProps
       ) : null}
 
       <div className="shbz-card shbz-section-pad">
-        <TeacherLessonCreateForm prefix={prefix} groupId={formGroupId} members={members} topics={topics} />
+        {soloBoardTopics && members.length === 1 ? (
+          // Индивидуальный урок: тот же переключатель «ИИ-подбор / вручную»,
+          // что и во вкладке «Составить занятие» ученика.
+          <TeacherLessonComposeSwitch
+            prefix={prefix}
+            aiAvailable={aiAvailable}
+            student={members[0]}
+            formTopics={topics}
+            boardTopics={soloBoardTopics}
+          />
+        ) : (
+          <TeacherLessonCreateForm prefix={prefix} groupId={formGroupId} members={members} topics={topics} />
+        )}
       </div>
     </div>
   );
