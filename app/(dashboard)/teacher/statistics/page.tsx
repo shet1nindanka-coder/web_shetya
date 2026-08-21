@@ -62,8 +62,40 @@ export default async function TeacherStatisticsPage({ searchParams }: TeacherSta
   const requestedStudentId =
     typeof resolvedSearchParams.studentId === "string" ? resolvedSearchParams.studentId : undefined;
   const view = requestedView === "developer" ? "developer" : requestedView === "teachers" ? "teachers" : "teacher";
+
+  // Вид «По учителям» не пользуется банком статусов и таймлайном — выходим
+  // раньше, чтобы не выполнять тяжёлые запросы двух других вкладок впустую.
+  if (view === "teachers") {
+    const teacherStatistics = await getTeacherStatistics();
+
+    return (
+      <div>
+        <ShbzPageHeader
+          kicker="Статистика"
+          title="Статистика занятий"
+          aside={<ShbzNumberSearch endpoint="/api/teacher/topics/find-number" />}
+        />
+
+        <nav className="shbz-seg mb-7" aria-label="Режим статистики">
+          {statisticsViews.map((item) => (
+            <Link
+              key={item.key}
+              href={item.href}
+              className="shbz-seg-btn shbz-seg-btn--plain"
+              data-active={item.key === view}
+              aria-current={item.key === view ? "page" : undefined}
+            >
+              {item.label}
+            </Link>
+          ))}
+        </nav>
+
+        <TeacherStatsSection statistics={teacherStatistics} />
+      </div>
+    );
+  }
+
   const data = await getTeacherTopicsOverview(user);
-  const teacherStatistics = view === "teachers" ? await getTeacherStatistics() : null;
   const selectedTimelineStudent =
     data.students.find((student) => student.id === requestedStudentId) ?? null;
   const totalStatusSlots = data.stats.totalStudents * data.stats.totalNumbers;
@@ -424,8 +456,6 @@ export default async function TeacherStatisticsPage({ searchParams }: TeacherSta
             <TeacherStatisticsDrilldown topics={drilldownTopics} students={drilldownStudents} />
           </section>
         </div>
-      ) : view === "teachers" && teacherStatistics ? (
-        <TeacherStatsSection statistics={teacherStatistics} />
       ) : (
         <div className="flex flex-col gap-6">
           <div className="grid grid-cols-2 gap-3.5 xl:grid-cols-4">

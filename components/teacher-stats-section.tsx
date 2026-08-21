@@ -270,11 +270,31 @@ export function TeacherStatsSection({ statistics }: { statistics: TeacherStatist
     );
   }
 
+  const unattributed = statistics.unattributed;
+  const hasUnattributed =
+    unattributed.students > 0 || unattributed.homework > 0 || unattributed.calls > 0 || unattributed.lessons > 0;
+
   return (
     <div className="flex flex-col gap-6">
       {statistics.teachers.map((entry) => (
         <TeacherCard key={entry.teacherId} entry={entry} weekStarts={statistics.weekStarts} />
       ))}
+      {hasUnattributed ? (
+        // Чтобы суммы не расходились молча: ученики без владельца, звонки
+        // удалённых учителей, занятия, созданные разработчиком.
+        <p className="text-[13px]" style={{ color: "var(--shbz-text-muted)" }}>
+          Вне карточек учителей:{" "}
+          {[
+            unattributed.students > 0 ? `учеников без учителя — ${unattributed.students}` : null,
+            unattributed.homework > 0 ? `ДЗ — ${unattributed.homework}` : null,
+            unattributed.calls > 0 ? `созвонов — ${unattributed.calls}` : null,
+            unattributed.lessons > 0 ? `занятий — ${unattributed.lessons}` : null
+          ]
+            .filter(Boolean)
+            .join(", ")}
+          .
+        </p>
+      ) : null}
     </div>
   );
 }
