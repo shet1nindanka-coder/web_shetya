@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import {
   PARENT_CALL_DUE_DAYS,
   PARENT_CALL_OVERDUE_DAYS,
+  calendarDaysBetween,
   resolveParentCallReminder,
   shouldCreateParentCallNotification
 } from "../lib/parent-call-state";
@@ -83,41 +84,87 @@ test("граница 29/30/44/45 дней", () => {
   assert.equal(at(45), "overdue");
 });
 
-test("часы внутри суток не влияют: неполный день не считается", () => {
-  const now = new Date("2026-08-21T12:00:00+03:00");
+test("дни считаются календарно: вчерашний вечерний звонок — «1 день назад»", () => {
+  // Звонок 20 августа 23:00, взгляд 21 августа 09:00 — прошло 10 часов,
+  // но по календарю это вчера: показываем 1 день, а не «сегодня».
+  const now = new Date("2026-08-21T09:00:00+03:00");
   const reminder = resolveParentCallReminder({
-    lastReachedAt: new Date(now.getTime() - (PARENT_CALL_DUE_DAYS * DAY_MS - 60_000)),
-    studentCreatedAt: daysAgo(400, now),
+    lastReachedAt: new Date("2026-08-20T23:00:00+03:00"),
+    studentCreatedAt: new Date("2025-09-01T10:00:00+03:00"),
     now
   });
 
-  assert.equal(reminder.state, "ok");
-  assert.equal(reminder.daysSinceAnchor, PARENT_CALL_DUE_DAYS - 1);
+  assert.equal(reminder.daysSinceAnchor, 1);
 });
 
-test("уведомление создаётся один раз за период задолженности", () => {
+test("calendarDaysBetween игнорирует время внутри суток", () => {
+  assert.equal(
+    calendarDaysBetween(new Date("2026-08-20T23:59:00+03:00"), new Date("2026-08-21T00:01:00+03:00")),
+    1
+  );
+  assert.equal(
+    calendarDaysBetween(new Date("2026-08-21T00:01:00+03:00"), new Date("2026-08-21T23:59:00+03:00")),
+    0
+  );
+});
+
+test("уведомления: одно на «пора», плюс эскалация на «просрочено»", () => {
   const anchor = new Date("2026-07-01T10:00:00+03:00");
+  const overdueAt = new Date(anchor.getTime() + PARENT_CALL_OVERDUE_DAYS * DAY_MS);
 
-  assert.equal(
-    shouldCreateParentCallNotification({ reminderState: "due", anchorAt: anchor, lastNotificationCreatedAt: null }),
-    true
-  );
-
-  // Уведомление уже создано после якоря — новое не нужно.
-  assert.equal(
-    shouldCreateParentCallNotification({
-      reminderState: "overdue",
-      anchorAt: anchor,
-      lastNotificationCreatedAt: new Date("2026-08-05T10:00:00+03:00")
-    }),
-    false
-  );
-
-  // Старое уведомление относится к прошлому периоду (создано до якоря) — нужно новое.
+  // Первый вход в «пора» — уведомление нужно.
   assert.equal(
     shouldCreateParentCallNotification({
       reminderState: "due",
       anchorAt: anchor,
+      overdueAt,
+      lastNotificationCreatedAt: null
+    }),
+    true
+  );
+
+  // Уведомление о «пора» уже есть — второе в той же фазе не нужно.
+  const dueNotification = new Date("2026-08-01T10:00:00+03:00");
+  assert.equal(
+    shouldCreateParentCallNotification({
+      reminderState: "due",
+      anchorAt: anchor,
+      overdueAt,
+      lastNotificationCreatedAt: dueNotification
+    }),
+    false
+  );
+
+  // Состояние стало «просрочено», а уведомление было только про «пора» —
+  // эскалация нужна.
+  assert.equal(
+    shouldCreateParentCallNotification({
+      reminderState: "overdue",
+      anchorAt: anchor,
+      overdueAt,
+      lastNotificationCreatedAt: dueNotification
+    }),
+    true
+  );
+
+  // Эскалационное уведомление уже создано — больше ничего не шлём.
+  const overdueNotification = new Date(overdueAt.getTime() + DAY_MS);
+  assert.equal(
+    shouldCreateParentCallNotification({
+      reminderState: "overdue",
+      anchorAt: anchor,
+      overdueAt,
+      lastNotificationCreatedAt: overdueNotification
+    }),
+    false
+  );
+
+  // Уведомление прошлого периода (до якоря) не считается.
+  assert.equal(
+    shouldCreateParentCallNotification({
+      reminderState: "due",
+      anchorAt: anchor,
+      overdueAt,
       lastNotificationCreatedAt: new Date("2026-06-01T10:00:00+03:00")
     }),
     true
@@ -125,7 +172,12 @@ test("уведомление создаётся один раз за перио�
 
   // Состояние ok — уведомление не создаётся никогда.
   assert.equal(
-    shouldCreateParentCallNotification({ reminderState: "ok", anchorAt: anchor, lastNotificationCreatedAt: null }),
+    shouldCreateParentCallNotification({
+      reminderState: "ok",
+      anchorAt: anchor,
+      overdueAt,
+      lastNotificationCreatedAt: null
+    }),
     false
   );
 });

@@ -22,8 +22,9 @@ export const runtime = "nodejs";
 const MAX_COMMENT_LENGTH = 4000;
 
 function revalidateCallRoutes() {
+  // /developer/calls — rewrite-алиас этого же маршрута, отдельная инвалидация
+  // ему не нужна (реальный файловый маршрут один).
   revalidatePath("/teacher/calls");
-  revalidatePath("/developer/calls");
   revalidatePath("/teacher");
 }
 
@@ -50,7 +51,8 @@ export async function GET(request: Request) {
 
   const calls = await prisma.parentCallLog.findMany({
     where: { studentId },
-    orderBy: { calledAt: "desc" },
+    orderBy: [{ calledAt: "desc" }, { id: "desc" }],
+    take: 100,
     select: {
       id: true,
       outcome: true,

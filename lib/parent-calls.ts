@@ -1,6 +1,8 @@
 import { ParentCallOutcome, UserRole } from "@prisma/client";
 import { createNotification } from "@/lib/notifications";
 import {
+  PARENT_CALL_OVERDUE_DAYS,
+  calendarDaysBetween,
   resolveParentCallReminder,
   shouldCreateParentCallNotification,
   type ParentCallReminder
@@ -14,6 +16,11 @@ import { prisma } from "@/lib/prisma";
  */
 
 export const PARENT_CALL_NOTIFICATION_TYPE = "parent_call_due";
+
+/** История в развёртке ограничена: журнал append-only и растёт бесконечно. */
+export const PARENT_CALL_HISTORY_LIMIT = 20;
+
+const DAY_MS = 24 * 60 * 60 * 1000;
 
 export type ParentCallEntry = {
   id: string;
@@ -31,14 +38,20 @@ export type ParentCallStudentOverview = {
   reminder: ParentCallReminder;
   studentCreatedAt: string;
   lastReachedAt: string | null;
-  lastAttemptAt: string | null;
   /** Была ли неудачная попытка позже последнего успешного звонка. */
   attemptAfterLastReached: boolean;
+  /** Календарных дней с последней неудачной попытки (для меты), если она есть. */
+  attemptDaysAgo: number | null;
   totalCalls: number;
+  /** Последние записи (новые сверху), не больше PARENT_CALL_HISTORY_LIMIT. */
   history: ParentCallEntry[];
 };
 
 type OverviewViewer = { id: string; role: UserRole };
+
+// Стабильный порядок при совпадении calledAt (двойная отправка в одну секунду):
+// cuid монотонен по времени создания.
+const CALL_ORDER = [{ calledAt: "desc" }, { id: "desc" }] as const;
 
 /** Ученики, чьи звонки видит пользователь: учитель — своих, разработчик — всех. */
 function studentScope(viewer: OverviewViewer) {
@@ -62,8 +75,10 @@ export async function getParentCallOverview(viewer: OverviewViewer): Promise<Par
       createdAt: true,
       teacherId: true,
       teacher: { select: { name: true } },
+      _count: { select: { parentCallsAsStudent: true } },
       parentCallsAsStudent: {
-        orderBy: { calledAt: "desc" },
+        orderBy: [...CALL_ORDER],
+        take: PARENT_CALL_HISTORY_LIMIT,
         select: {
           id: true,
           outcome: true,
@@ -76,18 +91,44 @@ export async function getParentCallOverview(viewer: OverviewViewer): Promise<Par
     orderBy: { name: "asc" }
   });
 
+  // Последний успешный звонок может быть старше PARENT_CALL_HISTORY_LIMIT
+  // попыток — берём его отдельным групповым запросом, а не из среза истории.
+  const lastReachedByStudent = new Map<string, Date>();
+
+  if (students.length > 0) {
+    const grouped = await prisma.parentCallLog.groupBy({
+      by: ["studentId"],
+      where: {
+        outcome: ParentCallOutcome.REACHED,
+        studentId: { in: students.map((student) => student.id) }
+      },
+      _max: { calledAt: true }
+    });
+
+    for (const entry of grouped) {
+      if (entry._max.calledAt) {
+        lastReachedByStudent.set(entry.studentId, entry._max.calledAt);
+      }
+    }
+  }
+
   const now = new Date();
 
   const overviews = students.map((student) => {
     const calls = student.parentCallsAsStudent;
-    const lastReached = calls.find((call) => call.outcome === ParentCallOutcome.REACHED) ?? null;
+    const lastReachedAt = lastReachedByStudent.get(student.id) ?? null;
     const lastAttempt = calls[0] ?? null;
 
     const reminder = resolveParentCallReminder({
-      lastReachedAt: lastReached?.calledAt ?? null,
+      lastReachedAt,
       studentCreatedAt: student.createdAt,
       now
     });
+
+    const attemptAfterLastReached =
+      lastAttempt !== null &&
+      lastAttempt.outcome === ParentCallOutcome.NO_ANSWER &&
+      (lastReachedAt === null || lastAttempt.calledAt.getTime() > lastReachedAt.getTime());
 
     return {
       studentId: student.id,
@@ -96,13 +137,11 @@ export async function getParentCallOverview(viewer: OverviewViewer): Promise<Par
       teacherName: student.teacher?.name ?? null,
       reminder,
       studentCreatedAt: student.createdAt.toISOString(),
-      lastReachedAt: lastReached ? lastReached.calledAt.toISOString() : null,
-      lastAttemptAt: lastAttempt ? lastAttempt.calledAt.toISOString() : null,
-      attemptAfterLastReached:
-        lastAttempt !== null &&
-        lastAttempt.outcome === ParentCallOutcome.NO_ANSWER &&
-        (lastReached === null || lastAttempt.calledAt.getTime() > lastReached.calledAt.getTime()),
-      totalCalls: calls.length,
+      lastReachedAt: lastReachedAt ? lastReachedAt.toISOString() : null,
+      attemptAfterLastReached,
+      attemptDaysAgo:
+        attemptAfterLastReached && lastAttempt ? Math.max(0, calendarDaysBetween(lastAttempt.calledAt, now)) : null,
+      totalCalls: student._count.parentCallsAsStudent,
       history: calls.map((call) => ({
         id: call.id,
         outcome: call.outcome,
@@ -125,6 +164,55 @@ export async function getParentCallOverview(viewer: OverviewViewer): Promise<Par
 
     return b.reminder.daysSinceAnchor - a.reminder.daysSinceAnchor;
   });
+}
+
+/**
+ * Лёгкая сводка для виджета обзора: только счётчики, без историй и комментариев
+ * (комментарии — персональные данные, и виджету они не нужны).
+ */
+export async function getParentCallCounts(viewer: OverviewViewer): Promise<{ due: number; overdue: number }> {
+  if (viewer.role !== UserRole.TEACHER && viewer.role !== UserRole.DEVELOPER) {
+    return { due: 0, overdue: 0 };
+  }
+
+  const students = await prisma.user.findMany({
+    where: studentScope(viewer),
+    select: { id: true, createdAt: true }
+  });
+
+  if (students.length === 0) {
+    return { due: 0, overdue: 0 };
+  }
+
+  const grouped = await prisma.parentCallLog.groupBy({
+    by: ["studentId"],
+    where: {
+      outcome: ParentCallOutcome.REACHED,
+      studentId: { in: students.map((student) => student.id) }
+    },
+    _max: { calledAt: true }
+  });
+
+  const lastReachedByStudent = new Map(grouped.map((entry) => [entry.studentId, entry._max.calledAt]));
+  const now = new Date();
+  let due = 0;
+  let overdue = 0;
+
+  for (const student of students) {
+    const reminder = resolveParentCallReminder({
+      lastReachedAt: lastReachedByStudent.get(student.id) ?? null,
+      studentCreatedAt: student.createdAt,
+      now
+    });
+
+    if (reminder.state === "due") {
+      due += 1;
+    } else if (reminder.state === "overdue") {
+      overdue += 1;
+    }
+  }
+
+  return { due, overdue };
 }
 
 /** Может ли пользователь видеть/фиксировать звонки этого ученика. */
@@ -152,12 +240,36 @@ export async function canAccessStudentParentCalls(
   return { allowed: false, student: null };
 }
 
+// Генерация напоминаний дёргается с каждого маунта колокольчика (их в шапке
+// два: десктоп + мобильный) и со входа в раздел. Троттлим и дедупим по
+// учителю: параллельные вызовы ждут один общий прогон, повторные — не чаще
+// раза в минуту. In-memory — корректно на одном инстансе, как и весь realtime.
+const ENSURE_THROTTLE_MS = 60_000;
+const ensureRuns = new Map<string, { at: number; promise: Promise<void> }>();
+
 /**
- * Ленивая генерация уведомлений «пора созвониться» для учителя: вызывается при
- * обращении к уведомлениям или разделу звонков. Дедупликация — не больше одного
- * уведомления на ученика за период задолженности (createdAt > якоря).
+ * Ленивая генерация уведомлений «пора созвониться» для учителя. Дедупликация:
+ * за период задолженности не больше двух уведомлений на ученика — «пора
+ * позвонить» и эскалация «просрочено».
  */
-export async function ensureParentCallDueNotifications(teacherId: string): Promise<void> {
+export function ensureParentCallDueNotifications(teacherId: string): Promise<void> {
+  const existing = ensureRuns.get(teacherId);
+  const now = Date.now();
+
+  if (existing && now - existing.at < ENSURE_THROTTLE_MS) {
+    return existing.promise;
+  }
+
+  const promise = runEnsureParentCallDueNotifications(teacherId).finally(() => {
+    // Метка времени остаётся — троттлинг продолжает действовать после завершения.
+  });
+
+  ensureRuns.set(teacherId, { at: now, promise });
+
+  return promise;
+}
+
+async function runEnsureParentCallDueNotifications(teacherId: string): Promise<void> {
   const students = await prisma.user.findMany({
     where: { role: UserRole.STUDENT, teacherId },
     select: {
@@ -166,7 +278,7 @@ export async function ensureParentCallDueNotifications(teacherId: string): Promi
       createdAt: true,
       parentCallsAsStudent: {
         where: { outcome: ParentCallOutcome.REACHED },
-        orderBy: { calledAt: "desc" },
+        orderBy: [...CALL_ORDER],
         take: 1,
         select: { calledAt: true }
       }
@@ -195,6 +307,7 @@ export async function ensureParentCallDueNotifications(teacherId: string): Promi
     const needed = shouldCreateParentCallNotification({
       reminderState: reminder.state,
       anchorAt,
+      overdueAt: new Date(anchorAt.getTime() + PARENT_CALL_OVERDUE_DAYS * DAY_MS),
       lastNotificationCreatedAt: lastNotification?.createdAt ?? null
     });
 

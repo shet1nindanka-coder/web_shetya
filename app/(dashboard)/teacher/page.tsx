@@ -4,15 +4,14 @@ import { ShbzNavCard } from "@/components/shbz-nav-card";
 import { ShbzNumberSearch } from "@/components/shbz-number-search";
 import { ShbzPageHeader } from "@/components/shbz-page-header";
 import { requireUser } from "@/lib/auth";
-import { getParentCallOverview } from "@/lib/parent-calls";
+import { getParentCallCounts } from "@/lib/parent-calls";
 import { getTeacherTopicsOverview } from "@/lib/platform-data";
 
 export default async function TeacherPage() {
   const user = await requireUser(UserRole.TEACHER);
-  const data = await getTeacherTopicsOverview(user);
-  const callOverview = await getParentCallOverview(user);
-  const callsDue = callOverview.filter((entry) => entry.reminder.state === "due").length;
-  const callsOverdue = callOverview.filter((entry) => entry.reminder.state === "overdue").length;
+  const [data, callCounts] = await Promise.all([getTeacherTopicsOverview(user), getParentCallCounts(user)]);
+  const callsDue = callCounts.due;
+  const callsOverdue = callCounts.overdue;
 
   const cards = [
     {

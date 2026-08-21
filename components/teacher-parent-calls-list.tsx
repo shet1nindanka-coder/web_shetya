@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useEffect, useRef, useState, useTransition } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { cx } from "@/lib/utils";
@@ -18,6 +18,8 @@ type TeacherParentCallsListProps = {
   /** DEVELOPER видит всех учеников с колонкой учителя и не фиксирует звонки. */
   isDeveloper: boolean;
   studentsHref: string;
+  /** Ученик из уведомления (?studentId=…): строка подсвечивается и прокручивается в вид. */
+  highlightStudentId?: string | null;
 };
 
 const DATE_FORMAT = new Intl.DateTimeFormat("ru-RU", { day: "numeric", month: "long", timeZone: "Europe/Moscow" });
@@ -53,12 +55,12 @@ function metaFor(student: ParentCallStudentOverview) {
     parts.push(`Звонков ещё не было · ученик добавлен ${DATE_FORMAT.format(new Date(student.studentCreatedAt))}`);
   }
 
-  if (student.attemptAfterLastReached && student.lastAttemptAt) {
-    const attemptDays = Math.max(
-      0,
-      Math.floor((Date.now() - new Date(student.lastAttemptAt).getTime()) / (24 * 60 * 60 * 1000))
+  // Дни считаются на сервере (календарно, Мск) — в рендере часов нет,
+  // иначе SSR и гидрация могли бы разойтись на границе суток.
+  if (student.attemptAfterLastReached && student.attemptDaysAgo !== null) {
+    parts.push(
+      `Пытались дозвониться ${student.attemptDaysAgo === 0 ? "сегодня" : `${student.attemptDaysAgo} дн. назад`}`
     );
-    parts.push(`Пытались дозвониться ${attemptDays === 0 ? "сегодня" : `${attemptDays} дн. назад`}`);
   }
 
   return parts.join(" · ");
@@ -88,12 +90,19 @@ function CallForm({ studentId, onClose, onSaved }: CallFormProps) {
       });
 
       if (!response.ok) {
-        throw new Error();
+        // Сервер отвечает осмысленным русским текстом (лимит, «ученик не
+        // найден» и т.п.) — показываем его, а не общую фразу про соединение.
+        const payload = (await response.json().catch(() => null)) as { error?: string } | null;
+        throw new Error(payload?.error || "Не удалось сохранить звонок. Проверьте соединение и попробуйте ещё раз.");
       }
 
       onSaved();
-    } catch {
-      setError("Не удалось сохранить звонок. Проверьте соединение и попробуйте ещё раз.");
+    } catch (submitError) {
+      setError(
+        submitError instanceof Error && submitError.message
+          ? submitError.message
+          : "Не удалось сохранить звонок. Проверьте соединение и попробуйте ещё раз."
+      );
       setIsSaving(false);
     }
   };
@@ -204,11 +213,24 @@ function CallHistory({ student, isDeveloper }: { student: ParentCallStudentOverv
   );
 }
 
-export function TeacherParentCallsList({ students, isDeveloper, studentsHref }: TeacherParentCallsListProps) {
+export function TeacherParentCallsList({
+  students,
+  isDeveloper,
+  studentsHref,
+  highlightStudentId = null
+}: TeacherParentCallsListProps) {
   const router = useRouter();
-  const [, startTransition] = useTransition();
+  const [isRefreshing, startTransition] = useTransition();
   // Развёртка: на строку открыта максимум одна (форма ИЛИ история).
   const [openPanel, setOpenPanel] = useState<{ studentId: string; panel: "form" | "history" } | null>(null);
+  const highlightRef = useRef<HTMLDivElement | null>(null);
+
+  // Переход из уведомления: прокручиваем подсвеченную строку в вид.
+  useEffect(() => {
+    if (highlightStudentId) {
+      highlightRef.current?.scrollIntoView({ block: "center" });
+    }
+  }, [highlightStudentId]);
 
   const overdueCount = students.filter((s) => s.reminder.state === "overdue").length;
   const dueCount = students.filter((s) => s.reminder.state === "due").length;
@@ -280,10 +302,13 @@ export function TeacherParentCallsList({ students, isDeveloper, studentsHref }: 
         {students.map((student, index) => {
           const isLast = index === students.length - 1;
           const open = openPanel && openPanel.studentId === student.studentId ? openPanel.panel : null;
+          const isHighlighted = highlightStudentId === student.studentId;
 
           return (
             <div
               key={student.studentId}
+              ref={isHighlighted ? highlightRef : undefined}
+              className={cx(isHighlighted && "rounded-[12px] ring-2 ring-[var(--shbz-accent-solid)]")}
               style={!isLast ? { borderBottom: "1px solid var(--shbz-row-border)" } : undefined}
             >
               <div
@@ -312,9 +337,10 @@ export function TeacherParentCallsList({ students, isDeveloper, studentsHref }: 
                   {!isDeveloper ? (
                     <button
                       type="button"
+                      disabled={isRefreshing}
                       onClick={() => togglePanel(student.studentId, "form")}
                       aria-expanded={open === "form"}
-                      className="shbz-btn-primary px-5 py-[11px] text-sm"
+                      className="shbz-btn-primary px-5 py-[11px] text-sm disabled:cursor-not-allowed"
                       style={{ boxShadow: "0 5px 14px var(--shbz-accent-shadow)" }}
                     >
                       Записать звонок
