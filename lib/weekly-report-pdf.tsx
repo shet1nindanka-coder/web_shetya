@@ -98,26 +98,25 @@ export type WeeklyPdfInput = {
   rows: WeeklyPdfRow[];
 };
 
-// Шрифт вшит в репозиторий (assets/fonts/onest) и грузится с диска — без запроса к
+// Шрифт вшит в репозиторий (assets/fonts/montserrat) и грузится с диска — без запроса к
 // Google Fonts в рантайме. Раньше registerFonts() тянул fonts.googleapis.com на
 // каждом холодном старте, и при недоступности сети отчёт падал 500: обещанного
 // фолбэка на Helvetica по факту не было (и кириллицы в ней тоже нет).
-const FONT_DIR = path.join(process.cwd(), "assets", "fonts", "onest");
-const LOGO_FONT_PATH = path.join(process.cwd(), "assets", "fonts", "montserrat", "Montserrat-Black.ttf");
+const FONT_DIR = path.join(process.cwd(), "assets", "fonts", "montserrat");
 
 let fontsRegistered: boolean | null = null;
 
 function registerFonts() {
   try {
+    // Единая гарнитура — Montserrat; вес 900 использует логотип «ШБЗШкола».
     Font.register({
-      family: "Onest",
+      family: "Montserrat",
       fonts: [
-        { src: path.join(FONT_DIR, "Onest-Regular.ttf"), fontWeight: 400 },
-        { src: path.join(FONT_DIR, "Onest-Bold.ttf"), fontWeight: 700 }
+        { src: path.join(FONT_DIR, "Montserrat-Regular.ttf"), fontWeight: 400 },
+        { src: path.join(FONT_DIR, "Montserrat-Bold.ttf"), fontWeight: 700 },
+        { src: path.join(FONT_DIR, "Montserrat-Black.ttf"), fontWeight: 900 }
       ]
     });
-    // Шрифт логотипа «ШБЗШкола» — Montserrat 900 (assets/fonts/montserrat).
-    Font.register({ family: "Montserrat", fonts: [{ src: LOGO_FONT_PATH, fontWeight: 900 }] });
     Font.registerHyphenationCallback((word) => [word]);
     return true;
   } catch (error) {
@@ -125,7 +124,7 @@ function registerFonts() {
       "student.export.pdf_fonts_failed",
       {},
       error instanceof Error ? error : undefined,
-      "Failed to register bundled Onest fonts for PDF export."
+      "Failed to register bundled Montserrat fonts for PDF export."
     );
     return false;
   }
@@ -159,7 +158,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 38,
     fontSize: 9,
     color: colors.text,
-    fontFamily: "Onest"
+    fontFamily: "Montserrat"
   },
   headerRow: { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start" },
   brandRow: { flexDirection: "row", alignItems: "center" },

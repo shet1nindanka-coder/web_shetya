@@ -1,12 +1,12 @@
 import type { ReactNode } from "react";
 import type { Metadata } from "next";
-import { Montserrat, Onest } from "next/font/google";
+import { Montserrat } from "next/font/google";
 import "katex/dist/katex.min.css";
 import "./globals.css";
 
-const onest = Onest({ subsets: ["latin", "cyrillic"] });
-// Шрифт логотипа «ШБЗШкола»: только вес 900, отдаётся CSS-переменной --font-logo.
-const montserrat = Montserrat({ subsets: ["latin", "cyrillic"], weight: "900", variable: "--font-logo" });
+// Единая гарнитура сайта — Montserrat (variable font, все веса). Логотип
+// «ШБЗШкола» берёт её же через --font-logo с весом 900.
+const montserrat = Montserrat({ subsets: ["latin", "cyrillic"], variable: "--font-logo" });
 
 export const metadata: Metadata = {
   title: {
@@ -55,7 +55,7 @@ export default function RootLayout({ children }: Readonly<{ children: ReactNode 
           }}
         />
       </head>
-      <body className={`${onest.className} ${montserrat.variable}`}>{children}</body>
+      <body className={`${montserrat.className} ${montserrat.variable}`}>{children}</body>
     </html>
   );
 }

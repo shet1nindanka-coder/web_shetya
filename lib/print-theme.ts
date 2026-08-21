@@ -28,12 +28,22 @@ function loadKatexCss(): string | null {
 
 let cachedLogoFontCss: string | null | undefined;
 
-/* @font-face логотипа «ШБЗШкола»: Montserrat 900 зашивается base64, чтобы
-   раздатка не зависела от шрифтов на машине с Chromium. */
+/* @font-face гарнитуры Montserrat (текст раздатки + логотип «ШБЗШкола» в 900):
+   файлы зашиваются base64, чтобы раздатка не зависела от шрифтов на машине с Chromium. */
+const PRINT_FONT_FACES: Array<[string, number]> = [
+  ["Montserrat-Regular.ttf", 400],
+  ["Montserrat-Medium.ttf", 500],
+  ["Montserrat-SemiBold.ttf", 600],
+  ["Montserrat-Bold.ttf", 700],
+  ["Montserrat-Black.ttf", 900]
+];
+
 function loadLogoFontCss(): string {
-  const fontPath = path.join(process.cwd(), "assets", "fonts", "montserrat", "Montserrat-Black.ttf");
-  const fontData = readFileSync(fontPath).toString("base64");
-  return `@font-face{font-family:"Montserrat";font-weight:900;font-style:normal;src:url(data:font/ttf;base64,${fontData}) format("truetype")}`;
+  const fontDir = path.join(process.cwd(), "assets", "fonts", "montserrat");
+  return PRINT_FONT_FACES.map(([file, weight]) => {
+    const fontData = readFileSync(path.join(fontDir, file)).toString("base64");
+    return `@font-face{font-family:"Montserrat";font-weight:${weight};font-style:normal;src:url(data:font/ttf;base64,${fontData}) format("truetype")}`;
+  }).join("");
 }
 
 export function getInlineLogoFontCss(): string {

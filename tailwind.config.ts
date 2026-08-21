@@ -9,8 +9,8 @@ const config: Config = {
   theme: {
     extend: {
       fontFamily: {
-        sans: ["Inter", "system-ui", "-apple-system", "sans-serif"],
-        display: ["Inter", "system-ui", "-apple-system", "sans-serif"],
+        sans: ["var(--font-logo)", "Montserrat", "system-ui", "-apple-system", "sans-serif"],
+        display: ["var(--font-logo)", "Montserrat", "system-ui", "-apple-system", "sans-serif"],
         mono: ["JetBrains Mono", "ui-monospace", "monospace"]
       },
       colors: {

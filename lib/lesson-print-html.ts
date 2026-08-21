@@ -218,7 +218,7 @@ const PRINT_CSS = `
   * { box-sizing: border-box; }
   body {
     margin: 0;
-    font-family: "Onest", -apple-system, "Segoe UI", Roboto, sans-serif;
+    font-family: "Montserrat", -apple-system, "Segoe UI", Roboto, sans-serif;
     font-size: 11pt;
     line-height: 1.5;
     color: #2c2e33;
@@ -283,8 +283,6 @@ function buildPrintDocument(title: string, body: string): string {
 <head>
 <meta charset="utf-8"/>
 <title>${escapeHtml(title)}</title>
-<link rel="preconnect" href="https://fonts.googleapis.com"/>
-<link href="https://fonts.googleapis.com/css2?family=Onest:wght@400;600;700;800&display=swap" rel="stylesheet"/>
 ${KATEX_CSS_MARKER}
 <style>${PRINT_CSS}</style>
 </head>
