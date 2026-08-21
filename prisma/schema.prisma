@@ -68,6 +68,12 @@ enum LessonItemResult {
   NOT_SOLVED // не решил / не успели → RED, номер возвращается в кандидаты подбора
 }
 
+// Исход звонка родителям: напоминание закрывает только состоявшийся разговор.
+enum ParentCallOutcome {
+  REACHED // дозвонился, поговорил
+  NO_ANSWER // попытка была, не дозвонился — якорь напоминания не двигается
+}
+
 model User {
   id                   String                     @id @default(cuid())
   name                 String
@@ -92,8 +98,28 @@ model User {
   testAttempts         TestAttempt[]
   topicMasteries       TopicMastery[]
   homeworkAssignments  HomeworkAssignment[]       @relation("StudentHomeworkAssignments")
+  parentCallsAsStudent ParentCallLog[]            @relation("StudentParentCalls")
+  parentCallsMade      ParentCallLog[]            @relation("TeacherParentCalls")
 
   @@index([teacherId])
+}
+
+// Журнал звонков родителям: append-only история по каждому ученику.
+// Комментарий — персональные данные: виден только учителю и разработчику,
+// в логи не пишется, ученику не отдаётся нигде.
+model ParentCallLog {
+  id        String            @id @default(cuid())
+  studentId String
+  teacherId String?
+  outcome   ParentCallOutcome
+  comment   String?
+  calledAt  DateTime          @default(now())
+  createdAt DateTime          @default(now())
+  student   User              @relation("StudentParentCalls", fields: [studentId], references: [id], onDelete: Cascade)
+  teacher   User?             @relation("TeacherParentCalls", fields: [teacherId], references: [id], onDelete: SetNull)
+
+  @@index([studentId, calledAt])
+  @@index([teacherId, calledAt])
 }
 
 model Session {

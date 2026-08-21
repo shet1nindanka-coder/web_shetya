@@ -69,6 +69,7 @@ const studentItems = [
 const developerItems = [
   { href: "/developer/topics", label: "темы", match: (p: string, _sp: URLSearchParams) => p.startsWith("/developer/topics") },
   { href: "/developer/accounts", label: "аккаунты", match: (p: string, _sp: URLSearchParams) => p.startsWith("/developer/accounts") },
+  { href: "/developer/calls", label: "звонки", match: (p: string, _sp: URLSearchParams) => p.startsWith("/developer/calls") },
   { href: "/developer/statistics", label: "статистика", match: (p: string, _sp: URLSearchParams) => p.startsWith("/developer/statistics") },
   { href: "/developer/panel", label: "дев-панель", match: (p: string, _sp: URLSearchParams) => p.startsWith("/developer/panel") },
   {
@@ -97,6 +98,11 @@ const teacherItems = [
     href: "/teacher/lessons",
     label: "занятия",
     match: (p: string, _sp: URLSearchParams) => isPlannerPath(p, "/teacher")
+  },
+  {
+    href: "/teacher/calls",
+    label: "звонки",
+    match: (p: string, _sp: URLSearchParams) => p.startsWith("/teacher/calls")
   },
   {
     href: "/teacher/settings",

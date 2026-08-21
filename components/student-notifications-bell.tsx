@@ -34,7 +34,16 @@ function formatNotificationTime(value: string) {
   return `${new Intl.DateTimeFormat("ru-RU", { day: "numeric", month: "long" }).format(date)}, ${time}`;
 }
 
-export function StudentNotificationsBell() {
+type StudentNotificationsBellProps = {
+  /**
+   * Маршрут API уведомлений. По умолчанию — студенческий; учительский
+   * колокольчик передаёт общий /api/notifications (он же лениво создаёт
+   * напоминания «пора созвониться с родителями»).
+   */
+  endpoint?: string;
+};
+
+export function StudentNotificationsBell({ endpoint = "/api/student/notifications" }: StudentNotificationsBellProps) {
   const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
   const [notifications, setNotifications] = useState<StudentNotification[]>([]);
@@ -45,7 +54,7 @@ export function StudentNotificationsBell() {
 
   const load = useCallback(async () => {
     try {
-      const response = await fetch("/api/student/notifications", { cache: "no-store" });
+      const response = await fetch(endpoint, { cache: "no-store" });
 
       if (!response.ok) {
         return;
@@ -61,7 +70,7 @@ export function StudentNotificationsBell() {
     } catch {
       // сеть могла прерваться — показываем прошлые данные
     }
-  }, []);
+  }, [endpoint]);
 
   useEffect(() => {
     void load();
@@ -141,7 +150,7 @@ export function StudentNotificationsBell() {
     );
 
     try {
-      await fetch("/api/student/notifications", {
+      await fetch(endpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({})
@@ -149,7 +158,7 @@ export function StudentNotificationsBell() {
     } catch {
       // не критично
     }
-  }, []);
+  }, [endpoint]);
 
   const openNotification = useCallback(
     async (notification: StudentNotification) => {
@@ -164,7 +173,7 @@ export function StudentNotificationsBell() {
         );
 
         try {
-          await fetch("/api/student/notifications", {
+          await fetch(endpoint, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ notificationId: notification.id })
@@ -178,7 +187,7 @@ export function StudentNotificationsBell() {
         router.push(notification.href);
       }
     },
-    [router]
+    [endpoint, router]
   );
 
   return (
