@@ -118,6 +118,16 @@ Postgres service.
   `difficulty`, `estimatedMinutes` и `answerFile` импорт не трогает — сложность ставит батч
   из дев-панели.
 
+- **Звонки родителям** — раздел `/teacher/calls` (разработчик — `/developer/calls`, все ученики,
+  read-only). Журнал `ParentCallLog` append-only; напоминание считается от последнего звонка с
+  исходом REACHED (иначе от `createdAt` ученика): 30 дней — «пора позвонить», 45 — «просрочено»
+  (календарные дни Мск, `lib/parent-call-state.ts` — чистая логика с тестами). Чтение и ленивые
+  уведомления — `lib/parent-calls.ts` (троттлинг per-teacher in-memory; максимум два уведомления
+  за период: «пора» + эскалация «просрочено»); запись — `POST /api/teacher/parent-calls`
+  (только TEACHER-владелец; DEVELOPER читает). Колокольчик учителя/разработчика ходит в общий
+  `/api/notifications` (GET у учителя заодно генерирует напоминания). **Комментарии звонков —
+  персональные данные:** видны только учителю-владельцу и DEVELOPER, в pino-логи не пишутся,
+  в уведомления не попадают, ученику не отдаются нигде.
 - **Runtime settings** — `lib/site-settings.ts`: ключ-значение в таблице `SiteSetting` (raw SQL),
   15s in-memory cache, дефолты из env. Управляются из дев-панели (`/developer/panel`).
 - **Logging** — `lib/logger.ts` (pino). Use `logInfoEvent` / `logWarnEvent` / `logErrorEvent(event,
@@ -174,6 +184,8 @@ Postgres service.
   назначения проверяется) и `issuedAt`. Элементы набора: `order`/`reason`/`minutes`/`comment`/`isExtra`.
 - `TopicMastery`, `Test*` — таблицы созданы миграцией для соответствия схеме; код под тесты ещё
   не написан.
+- `ParentCallLog` — append-only журнал звонков родителям: `studentId` (Cascade), `teacherId`
+  (nullable, SetNull), `outcome: REACHED | NO_ANSWER`, `comment` (персональные данные), `calledAt`.
 - `SiteSetting` — key-value рантайм-настройки (см. `lib/site-settings.ts`).
 
 `prisma/migrations/` reflects the feature history: init → shared topics/files → answer files →
