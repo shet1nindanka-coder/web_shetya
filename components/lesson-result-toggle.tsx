@@ -5,17 +5,21 @@ import { cx, homeworkStatusMeta } from "@/lib/utils";
 // Итог урока — отдельный словарь: «решил при мне» семантически не равен
 // «зелёному» статусу домашнего ДЗ. Общий homeworkStatusMeta не меняется
 // (решение владельца), отсюда переиспользуются только классы кнопок.
+// Глифы (✓ ↻ !) убраны по решению владельца — подписи только словами.
+// «Не успел» — до номера на уроке не дошли: статус ученика не меняется,
+// номер остаётся обычным кандидатом подбора.
 export const lessonResultMeta = {
-  SOLVED: { label: "решил", glyph: "✓", buttonClassName: homeworkStatusMeta.GREEN.buttonClassName },
-  PARTIAL: { label: "с ошибками", glyph: "↻", buttonClassName: homeworkStatusMeta.YELLOW.buttonClassName },
-  NOT_SOLVED: { label: "не решил", glyph: "!", buttonClassName: homeworkStatusMeta.RED.buttonClassName }
+  SOLVED: { label: "решил", buttonClassName: homeworkStatusMeta.GREEN.buttonClassName },
+  PARTIAL: { label: "с ошибками", buttonClassName: homeworkStatusMeta.YELLOW.buttonClassName },
+  NOT_SOLVED: { label: "не решил", buttonClassName: homeworkStatusMeta.RED.buttonClassName },
+  SKIPPED: { label: "не успел", buttonClassName: "ui-status-option ui-status-neutral" }
 } as const;
 
 export type LessonResultValue = keyof typeof lessonResultMeta;
 
 const options = Object.keys(lessonResultMeta) as LessonResultValue[];
 
-/** Кнопки итога урока «решил / с ошибками / не решил»: повторный клик по активной снимает отметку. */
+/** Кнопки итога урока «решил / с ошибками / не решил / не успел»: повторный клик по активной снимает отметку. */
 export function ResultToggle({
   value,
   disabled,
@@ -49,7 +53,7 @@ export function ResultToggle({
               active ? meta.buttonClassName : "ui-status-button"
             )}
           >
-            <span aria-hidden="true">{meta.glyph}</span> {meta.label}
+            {meta.label}
           </button>
         );
       })}

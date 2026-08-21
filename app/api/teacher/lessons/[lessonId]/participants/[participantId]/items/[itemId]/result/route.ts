@@ -11,8 +11,9 @@ import { prisma } from "@/lib/prisma";
 export const runtime = "nodejs";
 
 // Итог урока → статус ученика: решил — зелёный, с ошибками — жёлтый, не решил — красный
-// (красный возвращает номер в кандидаты будущих подборов).
-const RESULT_TO_STATUS: Record<LessonItemResult, HomeworkNumberStatus> = {
+// (красный возвращает номер в кандидаты будущих подборов). «Не успел» (SKIPPED)
+// статус не трогает: до номера не дошли, и домашний прогресс по нему остаётся каким был.
+const RESULT_TO_STATUS: Partial<Record<LessonItemResult, HomeworkNumberStatus>> = {
   [LessonItemResult.SOLVED]: HomeworkNumberStatus.GREEN,
   [LessonItemResult.PARTIAL]: HomeworkNumberStatus.YELLOW,
   [LessonItemResult.NOT_SOLVED]: HomeworkNumberStatus.RED
@@ -61,6 +62,7 @@ export async function PATCH(
     },
     select: {
       id: true,
+      result: true,
       homeworkNumberId: true,
       participant: { select: { studentId: true } },
       homeworkNumber: { select: { topicId: true } }
@@ -71,8 +73,13 @@ export async function PATCH(
     return NextResponse.json({ error: "Задача урока не найдена." }, { status: 404 });
   }
 
-  const status = result === null ? null : RESULT_TO_STATUS[result];
   const studentId = item.participant.studentId;
+  // Статус зеркалится только для итогов, у которых он есть; снятие итога
+  // очищает статус лишь если прежний итог его выставлял (после «не успел»
+  // чистить нечего — иначе стёрли бы домашний прогресс ученика).
+  const status = result === null ? null : (RESULT_TO_STATUS[result] ?? null);
+  const touchesStatus =
+    result === null ? item.result !== null && item.result !== LessonItemResult.SKIPPED : status !== null;
 
   try {
     await prisma.$transaction([
@@ -82,11 +89,15 @@ export async function PATCH(
       }),
       // Зеркало в статус ученика — как у выдачи ДЗ с дедлайнами: кабинет ученика,
       // карта тем и подбор видят итог урока сразу.
-      prisma.studentTopicNumberStatus.upsert({
-        where: { studentId_homeworkNumberId: { studentId, homeworkNumberId: item.homeworkNumberId } },
-        update: { status, statusChangedAt: new Date() },
-        create: { studentId, homeworkNumberId: item.homeworkNumberId, status, statusChangedAt: new Date() }
-      })
+      ...(touchesStatus
+        ? [
+            prisma.studentTopicNumberStatus.upsert({
+              where: { studentId_homeworkNumberId: { studentId, homeworkNumberId: item.homeworkNumberId } },
+              update: { status, statusChangedAt: new Date() },
+              create: { studentId, homeworkNumberId: item.homeworkNumberId, status, statusChangedAt: new Date() }
+            })
+          ]
+        : [])
     ]);
   } catch (error) {
     logErrorEvent(

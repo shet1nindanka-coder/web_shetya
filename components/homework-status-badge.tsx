@@ -1,6 +1,6 @@
 import { HomeworkNumberStatus } from "@prisma/client";
 import { Badge } from "@/components/badge";
-import { homeworkStatusGlyph, homeworkStatusMeta } from "@/lib/utils";
+import { homeworkStatusMeta } from "@/lib/utils";
 
 type HomeworkStatusBadgeProps = {
   status: HomeworkNumberStatus | null;
@@ -15,7 +15,7 @@ export function HomeworkStatusBadge({ status }: HomeworkStatusBadgeProps) {
 
   return (
     <Badge className={meta.subtleClassName}>
-      <span aria-hidden="true">{homeworkStatusGlyph[status]}</span> {meta.shortLabel}
+      {meta.shortLabel}
     </Badge>
   );
 }

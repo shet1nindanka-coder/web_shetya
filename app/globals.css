@@ -933,6 +933,8 @@ html[data-theme="dark"] .ui-button-danger:disabled {
 .ui-status-surface,
 .ui-status-option { border-width: 1px; }
 .ui-status-option { border-radius: 12px; }
+/* Нейтральный активный итог «не успел» — без цвета светофора. */
+.ui-status-option.ui-status-neutral { background: var(--shbz-tab-hover); color: var(--shbz-text-strong); border-color: var(--shbz-text-strong); }
 .ui-status-button {
   border-width: 1px;
   border-color: var(--theme-border-soft);

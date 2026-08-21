@@ -2268,13 +2268,14 @@ export async function getLessonPlanContext(studentId: string, topicIds?: string[
 
   const excludedNumberIds = new Set<string>();
   // Итог урока «не решил» (NOT_SOLVED) возвращает номер в кандидаты подбора;
+  // «не успел» (SKIPPED) — до номера не дошли, он остаётся обычным кандидатом;
   // остальные выданные на уроках номера исключаются, как раньше.
   const attemptedInLessonIds = new Set<string>();
 
   for (const item of lessonItems) {
     if (item.result === LessonItemResult.NOT_SOLVED) {
       attemptedInLessonIds.add(item.homeworkNumberId);
-    } else {
+    } else if (item.result !== LessonItemResult.SKIPPED) {
       excludedNumberIds.add(item.homeworkNumberId);
     }
   }
@@ -2348,6 +2349,7 @@ export async function getLessonPlanContext(studentId: string, topicIds?: string[
       solved: number;
       partial: number;
       notSolved: number;
+      skipped: number;
       unmarked: number;
     }
   >();
@@ -2367,6 +2369,7 @@ export async function getLessonPlanContext(studentId: string, topicIds?: string[
       solved: 0,
       partial: 0,
       notSolved: 0,
+      skipped: 0,
       unmarked: 0
     };
 
@@ -2376,6 +2379,7 @@ export async function getLessonPlanContext(studentId: string, topicIds?: string[
     if (item.result === LessonItemResult.SOLVED) entry.solved += 1;
     else if (item.result === LessonItemResult.PARTIAL) entry.partial += 1;
     else if (item.result === LessonItemResult.NOT_SOLVED) entry.notSolved += 1;
+    else if (item.result === LessonItemResult.SKIPPED) entry.skipped += 1;
     else entry.unmarked += 1;
 
     lessonHistoryMap.set(lesson.id, entry);
@@ -2392,6 +2396,7 @@ export async function getLessonPlanContext(studentId: string, topicIds?: string[
       solved: entry.solved,
       partial: entry.partial,
       notSolved: entry.notSolved,
+      skipped: entry.skipped,
       unmarked: entry.unmarked
     }));
 

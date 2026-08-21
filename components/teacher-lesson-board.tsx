@@ -14,7 +14,8 @@ const UNDO_REMOVE_MS = 5000;
 const RESULT_HOTKEYS: Record<string, string> = {
   "1": "SOLVED",
   "2": "PARTIAL",
-  "3": "NOT_SOLVED"
+  "3": "NOT_SOLVED",
+  "4": "SKIPPED"
 };
 
 type LessonBoardItem = {
@@ -66,9 +67,9 @@ const reasonMeta: Record<string, { label: string; background: string; color: str
 };
 
 const statusMeta: Record<string, { label: string; background: string; color: string }> = {
-  GREEN: { label: "✓ решено", background: "var(--shbz-green-soft)", color: "var(--shbz-green-text)" },
-  YELLOW: { label: "↻ с ошибками", background: "var(--shbz-yellow-soft)", color: "var(--shbz-yellow-text)" },
-  RED: { label: "! не решено", background: "var(--shbz-danger-bg)", color: "var(--shbz-danger-text)" }
+  GREEN: { label: "решено", background: "var(--shbz-green-soft)", color: "var(--shbz-green-text)" },
+  YELLOW: { label: "с ошибками", background: "var(--shbz-yellow-soft)", color: "var(--shbz-yellow-text)" },
+  RED: { label: "не решено", background: "var(--shbz-danger-bg)", color: "var(--shbz-danger-text)" }
 };
 
 function isParticipantPending(participant: LessonBoardParticipant) {

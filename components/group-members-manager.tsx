@@ -100,7 +100,7 @@ export function GroupMembersManager({ groupId, members, allStudents }: GroupMemb
             transition: "opacity 0.2s"
           }}
         >
-          {isPending ? "Сохраняем…" : flash === "saved" ? "Сохранено ✓" : flash === "error" ? "Ошибка" : ""}
+          {isPending ? "Сохраняем…" : flash === "saved" ? "Сохранено" : flash === "error" ? "Ошибка" : ""}
         </span>
       </div>
 

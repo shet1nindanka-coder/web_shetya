@@ -236,7 +236,6 @@ export function StudentHomeworkCheck({ assignmentId, hasPhotos, initialCheck }: 
                 className="rounded-[8px] px-2.5 py-1 text-[12.5px] font-bold"
                 style={{ background: "var(--shbz-green-soft)", color: "var(--shbz-green-text)" }}
               >
-                <span aria-hidden="true">✓ </span>
                 Верно {correctCount}
               </span>
             ) : null}

@@ -91,7 +91,7 @@ export function GroupMemberEditor({ studentId, speed, aiNote }: GroupMemberEdito
           transition: "opacity 0.2s"
         }}
       >
-        {isPending ? "Сохраняем…" : flash === "saved" ? "Сохранено ✓" : flash === "error" ? "Ошибка" : ""}
+        {isPending ? "Сохраняем…" : flash === "saved" ? "Сохранено" : flash === "error" ? "Ошибка" : ""}
       </span>
     </div>
   );

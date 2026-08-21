@@ -264,13 +264,15 @@ async function handleGet(
       const solved = participant.items.filter((item) => item.result === LessonItemResult.SOLVED).length;
       const partial = participant.items.filter((item) => item.result === LessonItemResult.PARTIAL).length;
       const notSolved = participant.items.filter((item) => item.result === LessonItemResult.NOT_SOLVED).length;
-      const unmarked = total - solved - partial - notSolved;
+      const skipped = participant.items.filter((item) => item.result === LessonItemResult.SKIPPED).length;
+      const unmarked = total - solved - partial - notSolved - skipped;
 
       const parts: string[] = [];
 
       if (solved > 0) parts.push(`${solved} решил`);
       if (partial > 0) parts.push(`${partial} с ошибками`);
       if (notSolved > 0) parts.push(`${notSolved} не решил`);
+      if (skipped > 0) parts.push(`${skipped} не успел`);
       if (unmarked > 0) parts.push(`${unmarked} без отметки`);
 
       return {

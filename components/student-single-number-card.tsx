@@ -150,7 +150,7 @@ export function StudentSingleNumberCard({
                     <span className="ui-copy-muted text-xs font-medium">Сохраняем...</span>
                   ) : noteSavedFlash ? (
                     <span className="text-xs font-semibold" style={{ color: "var(--shbz-green-text)" }}>
-                      Сохранено ✓
+                      Сохранено
                     </span>
                   ) : null}
                 </div>
