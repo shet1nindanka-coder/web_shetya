@@ -422,14 +422,9 @@ export function TeacherLessonBoard({ prefix, aiAvailable, lesson, bank }: Teache
                     {participant.studentName}
                   </h2>
                 </div>
-                <button
-                  type="button"
-                  disabled={busy || pending || !aiAvailable}
-                  onClick={() => void regenerate(participant.id)}
-                  className="shbz-btn-outline disabled:cursor-not-allowed disabled:opacity-50"
-                >
-                  Пересобрать для этого ученика
-                </button>
+                {/* Кнопки «Пересобрать» нет: промпт и вводные те же, результат
+                    почти всегда тот же (решение владельца). Повтор остаётся
+                    только как «Попробовать снова» при ошибке генерации. */}
               </div>
 
               {pending ? (

@@ -509,21 +509,6 @@ export function TeacherStudentLessons({
                     >
                       {manualAddIds.has(lesson.id) ? "Скрыть добавление" : "Добавить номер"}
                     </button>
-                    <DeleteButton
-                      variant="sm"
-                      label="Пересобрать ИИ"
-                      title="Пересобрать набор?"
-                      description="Текущий набор задач и отмеченные итоги этого занятия будут заменены новым подбором ИИ. Это действие нельзя отменить."
-                      confirmLabel="Пересобрать"
-                      pendingLabel="Запускаем…"
-                      disabled={busy || pending}
-                      onConfirm={() => regenerate(lesson)}
-                      onError={(confirmError) =>
-                        setError(
-                          confirmError instanceof Error ? confirmError.message : "Не удалось запустить пересборку."
-                        )
-                      }
-                    />
                   </span>
                 </div>
 
