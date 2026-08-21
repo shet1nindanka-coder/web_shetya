@@ -273,7 +273,7 @@ export function TeacherParentCallsList({
         <div
           className={cx(
             "hidden items-center gap-5 border-b py-[18px] md:grid",
-            isDeveloper ? "md:grid-cols-[1fr_176px_128px]" : "md:grid-cols-[1fr_176px_296px]"
+            isDeveloper ? "md:grid-cols-[1fr_208px_140px]" : "md:grid-cols-[1fr_208px_336px]"
           )}
           style={{ borderColor: "var(--shbz-soft-border)" }}
         >
@@ -310,7 +310,7 @@ export function TeacherParentCallsList({
               <div
                 className={cx(
                   "flex flex-col gap-3 py-5 md:grid md:items-center md:gap-5",
-                  isDeveloper ? "md:grid-cols-[1fr_176px_128px]" : "md:grid-cols-[1fr_176px_296px]"
+                  isDeveloper ? "md:grid-cols-[1fr_208px_140px]" : "md:grid-cols-[1fr_208px_336px]"
                 )}
               >
                 <div className="min-w-0">
@@ -327,7 +327,7 @@ export function TeacherParentCallsList({
                   ) : null}
                 </div>
 
-                {/* Фиксированная колонка статуса + одинаковая ширина «История» —
+                {/* Фиксированные колонки (ширины под Montserrat, подписи nowrap):
                     строки-сетки независимы, иначе кнопки гуляют по горизонтали. */}
                 <div className="md:text-right">{chipFor(student.reminder.state)}</div>
 

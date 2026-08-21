@@ -7,8 +7,6 @@ import { usePathname, useSearchParams } from "next/navigation";
 import { UserRole } from "@prisma/client";
 import { logoutAction } from "@/actions/auth";
 import { StudentNotificationsBell } from "@/components/student-notifications-bell";
-import { useStudentStreak } from "@/components/student-streak-provider";
-import { useStreakMotion } from "@/components/use-streak-motion";
 
 type DashboardNavProps = {
   user: {
@@ -16,9 +14,6 @@ type DashboardNavProps = {
     email: string;
     role: UserRole;
   };
-  studentStreak?: {
-    currentStreak: number;
-  } | null;
 };
 
 // Уроки и ДЗ-черновики живут в собственном разделе «занятия».
@@ -123,29 +118,12 @@ function initialsOf(name: string) {
     .join("");
 }
 
-function StreakFlame({ days }: { days: number }) {
-  const motionState = useStreakMotion(days);
-
-  return (
-    <span className="shbz-streak-flame flex items-center gap-[5px]" data-animate={motionState ?? undefined}>
-      <svg width="12" height="12" viewBox="0 0 24 24" fill="var(--shbz-streak-flame)" aria-hidden="true">
-        <path d="M12 2c1 3-1.5 4.5-1.5 7A3.5 3.5 0 0 0 14 12c0-2 1.5-3 1.5-3 1 4 .5 5-.5 7a4 4 0 1 1-7-3.5C9.5 9 11 7 12 2z" />
-      </svg>
-      <span className="shbz-streak-count font-bold" style={{ color: "var(--shbz-streak-text)" }}>
-        {days} дн.
-      </span>
-    </span>
-  );
-}
-
-export function DashboardNav({ user, studentStreak }: DashboardNavProps) {
+export function DashboardNav({ user }: DashboardNavProps) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const isStudent = user.role === UserRole.STUDENT;
   const roleLabel = isStudent ? "Ученик" : user.role === UserRole.DEVELOPER ? "Разработчик" : "Преподаватель";
-  const liveStreak = useStudentStreak();
-  const streakValue = liveStreak?.streak ?? studentStreak;
   const items = isStudent ? studentItems : user.role === UserRole.DEVELOPER ? developerItems : teacherItems;
   // «Настройки» живут в кружке с шестерёнкой (десктоп — у профиля, телефон —
   // рядом с колокольчиком и меню), освобождая слот в таббаре и мобильном списке.
@@ -194,24 +172,17 @@ export function DashboardNav({ user, studentStreak }: DashboardNavProps) {
 
         {/* Профиль */}
         <div className="hidden shrink-0 items-center gap-3.5 md:flex">
-          {/* У учителя/разработчика на xl таббар, профиль и колокольчик делят
-              одну строку с лого: аватар и текст имени прячутся (решение
-              владельца — аватар без имени смысла не несёт), чтобы шапка
-              влезала в контейнер 1180 и была симметричной. У ученика вкладок
-              меньше — аватар, имя и стрик остаются. */}
-          <div className={isStudent ? "shbz-avatar" : "shbz-avatar xl:hidden"}>{initialsOf(user.name)}</div>
-          <div className={isStudent ? "leading-[1.3]" : "leading-[1.3] xl:hidden"}>
+          {/* На xl таббар, профиль и колокольчик делят одну строку с лого:
+              аватар и имя прячутся у всех ролей (решение владельца — аватар
+              без имени смысла не несёт), чтобы таббар стоял по центру, а шапка
+              влезала в контейнер 1180. Стрик ученика живёт только на главной. */}
+          <div className="shbz-avatar xl:hidden">{initialsOf(user.name)}</div>
+          <div className="leading-[1.3] xl:hidden">
             <div className="text-sm font-bold" style={{ color: "var(--shbz-text-strong)" }}>
               {user.name}
             </div>
-            <div className="mt-0.5 flex items-center gap-[5px] text-xs" style={{ color: "var(--shbz-text-soft)" }}>
-              <span>{roleLabel}</span>
-              {isStudent && streakValue ? (
-                <>
-                  <span style={{ color: "var(--shbz-divider)" }}>·</span>
-                  <StreakFlame days={streakValue.currentStreak} />
-                </>
-              ) : null}
+            <div className="mt-0.5 text-xs" style={{ color: "var(--shbz-text-soft)" }}>
+              {roleLabel}
             </div>
           </div>
           {isStudent ? <StudentNotificationsBell /> : <StudentNotificationsBell endpoint="/api/notifications" />}
@@ -281,14 +252,8 @@ export function DashboardNav({ user, studentStreak }: DashboardNavProps) {
                 <div className="truncate text-sm font-bold" style={{ color: "var(--shbz-text-strong)" }}>
                   {user.name}
                 </div>
-                <div className="mt-0.5 flex items-center gap-[5px] text-xs" style={{ color: "var(--shbz-text-soft)" }}>
-                  <span>{roleLabel}</span>
-                  {isStudent && streakValue ? (
-                    <>
-                      <span style={{ color: "var(--shbz-divider)" }}>·</span>
-                      <StreakFlame days={streakValue.currentStreak} />
-                    </>
-                  ) : null}
+                <div className="mt-0.5 text-xs" style={{ color: "var(--shbz-text-soft)" }}>
+                  {roleLabel}
                 </div>
               </div>
               <form action={logoutAction}>

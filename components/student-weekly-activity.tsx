@@ -73,7 +73,7 @@ export function StudentWeeklyActivity({ streak }: StudentWeeklyActivityProps) {
                 <div className="text-[12px] font-bold uppercase tracking-[1px]" style={{ color: "var(--shbz-kicker)" }}>
                   Сегодня сделано
                 </div>
-                <div className="mt-2 text-[17px] font-extrabold leading-[1.25]" style={{ color: "var(--shbz-text-strong)" }}>
+                <div className="mt-2 text-[19px] font-extrabold leading-[1.25] tracking-[-0.2px]" style={{ color: "var(--shbz-text-strong)" }}>
                   {solvedTodayLabel}
                 </div>
               </div>
@@ -81,7 +81,7 @@ export function StudentWeeklyActivity({ streak }: StudentWeeklyActivityProps) {
                 <div className="text-[12px] font-bold uppercase tracking-[1px]" style={{ color: "var(--shbz-kicker)" }}>
                   Следующая цель
                 </div>
-                <div className="mt-2 text-[23px] font-extrabold" style={{ color: "var(--shbz-text-strong)" }}>
+                <div className="mt-2 text-[19px] font-extrabold leading-[1.25] tracking-[-0.2px]" style={{ color: "var(--shbz-text-strong)" }}>
                   {goalTitle}
                 </div>
                 {goalHint ? (

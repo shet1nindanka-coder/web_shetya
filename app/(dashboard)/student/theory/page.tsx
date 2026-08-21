@@ -4,7 +4,6 @@ import { ShbzNumberSearch } from "@/components/shbz-number-search";
 import { ShbzPageHeader } from "@/components/shbz-page-header";
 import { requireUser } from "@/lib/auth";
 import { getStudentTheoryLibrary } from "@/lib/platform-data";
-import { formatDateTime, formatFileSize } from "@/lib/utils";
 
 /*
  * Вкладка «Теория» у ученика (заменила «Общую инфу» 15.08.2026): файлы теории
@@ -39,21 +38,12 @@ export default async function StudentTheoryPage() {
         <div className="grid gap-5" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))" }}>
           {topics.map((topic) => (
             <article key={topic.id} className="shbz-card flex flex-col gap-4 shbz-section-pad">
+              {/* Решение владельца: в карточке только название темы и кнопка —
+                  кикер, описание, размер и дата файла убраны. */}
               <div className="min-w-0">
-                <p className="shbz-kicker">Теория</p>
-                <h3 className="mt-1 break-words text-[17px] font-bold" style={{ color: "var(--shbz-text-strong)" }}>
+                <h3 className="break-words text-[17px] font-bold" style={{ color: "var(--shbz-text-strong)" }}>
                   {topic.title}
                 </h3>
-                {/* Описание темы — контент, а не подсказка интерфейса: настройка
-                    «Подсказки» его не прячет. */}
-                {topic.description ? (
-                  <p className="mt-1.5 text-sm leading-6" style={{ color: "var(--shbz-text-muted)" }}>
-                    {topic.description}
-                  </p>
-                ) : null}
-                <p className="mt-2 text-[12.5px]" style={{ color: "var(--shbz-kicker)" }}>
-                  {formatFileSize(topic.theoryFile!.size)} · {formatDateTime(topic.theoryFile!.uploadedAt)}
-                </p>
               </div>
               <div className="mt-auto">
                 <FileFullscreenPreview fileId={topic.theoryFile!.id} fileName={topic.title} />
