@@ -273,7 +273,7 @@ export function TeacherParentCallsList({
         <div
           className={cx(
             "hidden items-center gap-5 border-b py-[18px] md:grid",
-            "md:grid-cols-[1fr_176px_auto]"
+            isDeveloper ? "md:grid-cols-[1fr_176px_128px]" : "md:grid-cols-[1fr_176px_296px]"
           )}
           style={{ borderColor: "var(--shbz-soft-border)" }}
         >
@@ -310,7 +310,7 @@ export function TeacherParentCallsList({
               <div
                 className={cx(
                   "flex flex-col gap-3 py-5 md:grid md:items-center md:gap-5",
-                  "md:grid-cols-[1fr_176px_auto]"
+                  isDeveloper ? "md:grid-cols-[1fr_176px_128px]" : "md:grid-cols-[1fr_176px_296px]"
                 )}
               >
                 <div className="min-w-0">
