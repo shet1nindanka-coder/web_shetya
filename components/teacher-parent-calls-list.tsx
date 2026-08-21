@@ -346,16 +346,15 @@ export function TeacherParentCallsList({
                       Записать звонок
                     </button>
                   ) : null}
-                  {student.totalCalls > 0 ? (
-                    <button
-                      type="button"
-                      onClick={() => togglePanel(student.studentId, "history")}
-                      aria-expanded={open === "history"}
-                      className="shbz-btn-outline"
-                    >
-                      История ({student.totalCalls})
-                    </button>
-                  ) : null}
+                  <button
+                    type="button"
+                    disabled={student.totalCalls === 0}
+                    onClick={() => togglePanel(student.studentId, "history")}
+                    aria-expanded={open === "history"}
+                    className="shbz-btn-outline disabled:cursor-not-allowed disabled:opacity-55"
+                  >
+                    История ({student.totalCalls > 0 ? student.totalCalls : "—"})
+                  </button>
                 </div>
               </div>
 
