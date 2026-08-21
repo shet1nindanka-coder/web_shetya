@@ -3,11 +3,9 @@
 import { HomeworkNumberStatus } from "@prisma/client";
 import { useMemo, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
-import { HomeworkStatusBadge } from "@/components/homework-status-badge";
-import { NumberConditionClamp } from "@/components/number-condition-clamp";
+import { NumberSelectCard } from "@/components/number-select-card";
 import { ShbzDateTimePicker } from "@/components/shbz-datetime-picker";
 import { ShbzSelect } from "@/components/shbz-select";
-import { cx } from "@/lib/utils";
 
 type AssignBoardTopic = {
   id: string;
@@ -221,50 +219,16 @@ export function TeacherHomeworkAssignBoard({ studentId, topics }: TeacherHomewor
           const isSelected = selectedNumberIds.has(number.id);
 
           return (
-            <div
+            <NumberSelectCard
               key={number.id}
-              className={cx(
-                "teacher-number-card ui-pressable relative rounded-[16px] border px-4 py-4 text-left transition",
-                isSelected && "ring-2 ring-[var(--theme-accent-border)]"
-              )}
-            >
-              {/* Кнопка-выбор растянута на всю карточку и лежит под контентом,
-                  чтобы «Показать целиком» у условия не переключал выбор. */}
-              <button
-                type="button"
-                aria-pressed={isSelected}
-                aria-label={`Выбрать № ${number.number}`}
-                onClick={() => toggleNumber(number.id)}
-                className="absolute inset-0 rounded-[16px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--theme-accent-border)]"
-              />
-              <div className="pointer-events-none relative">
-                <div className="flex items-center justify-between gap-3">
-                  <span
-                    className={cx(
-                      "inline-flex h-5 w-5 items-center justify-center rounded border text-xs font-bold",
-                      isSelected
-                        ? "border-[var(--theme-accent-border)] bg-[var(--theme-accent-soft)] text-[var(--theme-accent-text)]"
-                        : "border-[var(--theme-border)] text-transparent"
-                    )}
-                    aria-hidden="true"
-                  >
-                    ✓
-                  </span>
-                  <HomeworkStatusBadge status={number.status} />
-                </div>
-                <p className="teacher-number-title mt-3 text-lg font-semibold text-[var(--theme-text-strong)]">
-                  № {number.number}
-                </p>
-                {number.conditionLatex ? (
-                  // Содержание задания, чтобы выдавать не вслепую; длинные условия
-                  // сворачиваются с фейдом и кнопкой «Показать целиком».
-                  <NumberConditionClamp value={number.conditionLatex} />
-                ) : null}
-                {number.deadlineAt ? (
-                  <p className="ui-copy-muted mt-2 text-xs leading-5">Уже в ДЗ с дедлайном</p>
-                ) : null}
-              </div>
-            </div>
+              number={number.number}
+              status={number.status}
+              isSelected={isSelected}
+              onToggle={() => toggleNumber(number.id)}
+              conditionLatex={number.conditionLatex}
+              footnote={number.deadlineAt ? "Уже в ДЗ с дедлайном" : null}
+              accent="theme"
+            />
           );
         })}
       </div>

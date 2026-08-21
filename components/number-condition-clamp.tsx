@@ -1,17 +1,21 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useId, useRef, useState } from "react";
 import { LatexAnswerPreview } from "@/components/latex-answer-preview";
+import { cx } from "@/lib/utils";
 
 /*
  * Условие задачи в карточке выбора номера (ручное составление занятия и выдача ДЗ).
- * Свёрнуто: компактная математика, ограничение по высоте, фейд вместо жёсткого
- * обреза и кнопка «Показать целиком». Развёрнуто: полный рендер, как в чер-
- * новиках ИИ. Кнопка живёт вне кнопки-выбора карточки, поэтому клик по ней
- * не трогает выбор номера.
+ * Свёрнуто: компактная математика, ограничение по высоте и фейд-маска вместо
+ * жёсткого обреза; при переполнении — кнопка «Показать целиком». Развёрнуто:
+ * полный рендер, как в черновиках ИИ. Фейд сделан CSS-маской: содержимое само
+ * растворяется в фон карточки, поэтому не зависит от токенов темы.
  */
 
+// Держать в синхроне с max-h-32 (8rem) на контейнере обрезки.
 const COLLAPSED_MAX_PX = 128;
+
+const FADE_MASK = "linear-gradient(to bottom, rgb(0 0 0) calc(100% - 44px), rgb(0 0 0 / 0))";
 
 type NumberConditionClampProps = {
   value: string;
@@ -19,11 +23,10 @@ type NumberConditionClampProps = {
 
 export function NumberConditionClamp({ value }: NumberConditionClampProps) {
   const contentRef = useRef<HTMLDivElement | null>(null);
+  const regionId = useId();
   const [expanded, setExpanded] = useState(false);
   const [overflowing, setOverflowing] = useState(false);
 
-  // KaTeX-шрифты доезжают позже первого рендера и меняют высоту — меряем
-  // содержимое наблюдателем, а не один раз на маунте.
   useEffect(() => {
     const element = contentRef.current;
 
@@ -31,48 +34,50 @@ export function NumberConditionClamp({ value }: NumberConditionClampProps) {
       return;
     }
 
-    const measure = () => {
-      setOverflowing(element.scrollHeight > COLLAPSED_MAX_PX + 2);
-    };
+    // Замер только из колбэка ResizeObserver: он приходит после layout (и сам
+    // доставляет первый замер), поэтому не форсит рефлоу поддеревьев, которые
+    // content-visibility: auto пропустил. Пропущенная карточка отдаёт нулевую
+    // высоту — её не трактуем как «влезло», а ждём замера при попадании в
+    // вьюпорт. Заодно ловим горизонтальное переполнение неразрывных формул.
+    const observer = new ResizeObserver((entries) => {
+      const height = entries[entries.length - 1]?.contentRect.height ?? 0;
 
-    measure();
+      if (height === 0) {
+        return;
+      }
 
-    const observer = new ResizeObserver(measure);
+      const heightOverflow = element.scrollHeight > COLLAPSED_MAX_PX;
+      const widthOverflow = element.scrollWidth > element.clientWidth + 1;
+
+      setOverflowing(heightOverflow || widthOverflow);
+    });
+
     observer.observe(element);
 
     return () => observer.disconnect();
-  }, [value]);
+  }, []);
 
   const clamped = !expanded;
+  const showFade = clamped && overflowing;
 
   return (
     <div className="mt-2 text-left text-sm">
       <div
-        className="relative overflow-hidden"
-        style={clamped ? { maxHeight: `${COLLAPSED_MAX_PX}px` } : undefined}
+        id={regionId}
+        className={cx("relative", clamped && "max-h-32 overflow-hidden")}
+        style={showFade ? { WebkitMaskImage: FADE_MASK, maskImage: FADE_MASK } : undefined}
       >
         <div ref={contentRef}>
           <LatexAnswerPreview value={value} compact={clamped} />
         </div>
-        {clamped && overflowing ? (
-          <div
-            aria-hidden="true"
-            className="pointer-events-none absolute inset-x-0 bottom-0 h-12 rounded-b-2xl"
-            style={{
-              background: "linear-gradient(to bottom, transparent, var(--theme-surface-soft))"
-            }}
-          />
-        ) : null}
       </div>
       {overflowing || expanded ? (
         <button
           type="button"
           aria-expanded={expanded}
-          onClick={(event) => {
-            event.stopPropagation();
-            setExpanded((current) => !current);
-          }}
-          className="pointer-events-auto relative z-[1] mt-1.5 text-[12.5px] font-semibold transition hover:opacity-75"
+          aria-controls={regionId}
+          onClick={() => setExpanded((current) => !current)}
+          className="mt-1.5 text-[12.5px] font-semibold transition hover:opacity-75"
           style={{ color: "var(--shbz-accent-solid)" }}
         >
           {expanded ? "Скрыть" : "Показать целиком"}

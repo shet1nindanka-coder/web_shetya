@@ -11,6 +11,14 @@ type LatexAnswerPreviewProps = {
   compact?: boolean;
 };
 
+function renderInlineMathError(error: Error) {
+  return (
+    <code className="rounded bg-[var(--theme-danger-soft)] px-1 py-0.5 text-[var(--theme-danger-text)]">
+      {error.name}
+    </code>
+  );
+}
+
 function renderInlineLine(line: string, lineKey: string) {
   const parts = line.split(/(\$[^$]+\$)/g).filter(Boolean);
 
@@ -18,17 +26,7 @@ function renderInlineLine(line: string, lineKey: string) {
     if (part.startsWith("$") && part.endsWith("$") && part.length > 2) {
       const math = part.slice(1, -1);
 
-      return (
-        <InlineMath
-          key={`math-${lineKey}-${partIndex}`}
-          math={math}
-          renderError={(error) => (
-            <code className="rounded bg-[var(--theme-danger-soft)] px-1 py-0.5 text-[var(--theme-danger-text)]">
-              {error.name}
-            </code>
-          )}
-        />
-      );
+      return <InlineMath key={`math-${lineKey}-${partIndex}`} math={math} renderError={renderInlineMathError} />;
     }
 
     return <Fragment key={`text-${lineKey}-${partIndex}`}>{part}</Fragment>;
@@ -55,25 +53,24 @@ export function LatexAnswerPreview({ value, compact = false }: LatexAnswerPrevie
 
         if (isDisplayMath) {
           const math = block.slice(2, -2).trim();
+          const mathItems = splitMathIntoItems(math);
 
           // В компактном режиме дисплейная формула заняла бы половину карточки —
-          // рендерим её текстовым размером по левому краю, как инлайн.
+          // рендерим текстовым размером по левому краю, сохраняя разбиение на
+          // пункты «А) … Б) …», чтобы они переносились, а не уезжали за край.
           if (compact) {
+            const compactItems = mathItems.labeled && mathItems.items.length > 1 ? mathItems.items : [math];
+
             return (
-              <div key={`block-${blockIndex}`} className="min-w-0 max-w-full">
-                <InlineMath
-                  math={math}
-                  renderError={(error) => (
-                    <code className="rounded bg-[var(--theme-danger-soft)] px-1 py-0.5 text-[var(--theme-danger-text)]">
-                      {error.name}
-                    </code>
-                  )}
-                />
+              <div key={`block-${blockIndex}`} className="flex min-w-0 max-w-full flex-wrap items-baseline gap-x-7 gap-y-2">
+                {compactItems.map((item, itemIndex) => (
+                  <span key={`compact-item-${blockIndex}-${itemIndex}`} className="inline-block max-w-full py-0.5">
+                    <InlineMath math={item} renderError={renderInlineMathError} />
+                  </span>
+                ))}
               </div>
             );
           }
-
-          const mathItems = splitMathIntoItems(math);
 
           // Формула с пунктами «А) … Б) …» на верхнем уровне: каждый пункт —
           // отдельная формула, переносится на новую строку целиком.
@@ -83,14 +80,7 @@ export function LatexAnswerPreview({ value, compact = false }: LatexAnswerPrevie
                 <div className="flex flex-wrap items-center gap-x-7 gap-y-3">
                   {mathItems.items.map((item, itemIndex) => (
                     <span key={`math-item-${blockIndex}-${itemIndex}`} className="inline-block max-w-full py-0.5">
-                      <InlineMath
-                        math={`\\displaystyle ${item}`}
-                        renderError={(error) => (
-                          <code className="rounded bg-[var(--theme-danger-soft)] px-1 py-0.5 text-[var(--theme-danger-text)]">
-                            {error.name}
-                          </code>
-                        )}
-                      />
+                      <InlineMath math={`\\displaystyle ${item}`} renderError={renderInlineMathError} />
                     </span>
                   ))}
                 </div>

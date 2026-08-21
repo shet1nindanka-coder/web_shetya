@@ -29,6 +29,9 @@ const securityHeaders = [
 
 const nextConfig: NextConfig = {
   poweredByHeader: false,
+  // Кастомный каталог сборки для параллельного dev-сервера: два next dev на
+  // одном .next портят друг другу RSC-манифесты. Прод не задаёт эту переменную.
+  distDir: process.env.NEXT_DIST_DIR || ".next",
   // Не бандлим puppeteer-core: он ставится только на сервере, грузится динамически.
   serverExternalPackages: ["puppeteer-core"],
   experimental: {
