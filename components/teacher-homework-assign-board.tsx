@@ -214,7 +214,7 @@ export function TeacherHomeworkAssignBoard({ studentId, topics }: TeacherHomewor
         </p>
       </div>
 
-      <div className="teacher-number-grid grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+      <div className="teacher-number-grid grid gap-4 sm:grid-cols-2">
         {selectedTopic.numbers.map((number) => {
           const isSelected = selectedNumberIds.has(number.id);
 

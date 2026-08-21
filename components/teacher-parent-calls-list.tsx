@@ -234,7 +234,6 @@ export function TeacherParentCallsList({
 
   const overdueCount = students.filter((s) => s.reminder.state === "overdue").length;
   const dueCount = students.filter((s) => s.reminder.state === "due").length;
-  const allRecent = students.length > 0 && overdueCount === 0 && dueCount === 0;
 
   const togglePanel = (studentId: string, panel: "form" | "history") => {
     setOpenPanel((current) =>
@@ -270,21 +269,11 @@ export function TeacherParentCallsList({
         Просрочено: {overdueCount} · Пора позвонить: {dueCount} · Всего учеников: {students.length}
       </p>
 
-      {allRecent ? (
-        <div
-          className="rounded-[12px] border px-5 py-4 text-[14px] leading-[1.5]"
-          style={{ background: "var(--shbz-soft-bg)", borderColor: "var(--shbz-soft-border)", color: "var(--shbz-text-muted)" }}
-        >
-          Все звонки сделаны недавно. Когда подойдёт срок, ученик поднимется наверх, а в колокольчике появится
-          напоминание.
-        </div>
-      ) : null}
-
       <div className="shbz-card px-7 py-2">
         <div
           className={cx(
             "hidden items-center gap-5 border-b py-[18px] md:grid",
-            isDeveloper ? "md:grid-cols-[1.6fr_auto_auto]" : "md:grid-cols-[1.4fr_auto_auto]"
+            "md:grid-cols-[1fr_176px_auto]"
           )}
           style={{ borderColor: "var(--shbz-soft-border)" }}
         >
@@ -320,7 +309,7 @@ export function TeacherParentCallsList({
               <div
                 className={cx(
                   "flex flex-col gap-3 py-5 md:grid md:items-center md:gap-5",
-                  isDeveloper ? "md:grid-cols-[1.6fr_auto_auto]" : "md:grid-cols-[1.4fr_auto_auto]"
+                  "md:grid-cols-[1fr_176px_auto]"
                 )}
               >
                 <div className="min-w-0">
@@ -337,7 +326,9 @@ export function TeacherParentCallsList({
                   ) : null}
                 </div>
 
-                <div>{chipFor(student.reminder.state)}</div>
+                {/* Фиксированная колонка статуса + одинаковая ширина «История» —
+                    строки-сетки независимы, иначе кнопки гуляют по горизонтали. */}
+                <div className="md:text-right">{chipFor(student.reminder.state)}</div>
 
                 <div className="flex flex-wrap items-center gap-2.5 md:justify-end">
                   {!isDeveloper ? (
@@ -357,7 +348,7 @@ export function TeacherParentCallsList({
                     disabled={student.totalCalls === 0}
                     onClick={() => togglePanel(student.studentId, "history")}
                     aria-expanded={open === "history"}
-                    className="shbz-btn-outline disabled:cursor-not-allowed disabled:opacity-55"
+                    className="shbz-btn-outline min-w-[128px] text-center disabled:cursor-not-allowed disabled:opacity-55"
                   >
                     История ({student.totalCalls > 0 ? student.totalCalls : "—"})
                   </button>
