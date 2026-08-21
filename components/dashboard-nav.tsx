@@ -201,13 +201,12 @@ export function DashboardNav({ user, studentStreak }: DashboardNavProps) {
 
         {/* Профиль */}
         <div className="hidden shrink-0 items-center gap-3.5 md:flex">
-          <div className="shbz-avatar" title={`${user.name} · ${roleLabel}`}>
-            {initialsOf(user.name)}
-          </div>
           {/* У учителя/разработчика на xl таббар, профиль и колокольчик делят
-              одну строку с лого: текст имени прячется (аватар с подсказкой
-              остаётся), чтобы шапка влезала в контейнер 1180 и была
-              симметричной. У ученика вкладок меньше — имя и стрик остаются. */}
+              одну строку с лого: аватар и текст имени прячутся (решение
+              владельца — аватар без имени смысла не несёт), чтобы шапка
+              влезала в контейнер 1180 и была симметричной. У ученика вкладок
+              меньше — аватар, имя и стрик остаются. */}
+          <div className={isStudent ? "shbz-avatar" : "shbz-avatar xl:hidden"}>{initialsOf(user.name)}</div>
           <div className={isStudent ? "leading-[1.3]" : "leading-[1.3] xl:hidden"}>
             <div className="text-sm font-bold" style={{ color: "var(--shbz-text-strong)" }}>
               {user.name}
