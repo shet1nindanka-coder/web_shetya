@@ -1497,11 +1497,6 @@ html[data-theme="dark"] .student-virtual-scroll::-webkit-scrollbar-thumb {
   border-color: var(--theme-border-soft);
   box-shadow: 0 1px 4px rgba(15, 23, 42, 0.02);
 }
-/* Нажатие на «Показать целиком» внутри карточки не должно проигрывать
-   press-отклик выбора номера: :active всплывает на предка с ui-pressable. */
-.teacher-number-card:has(button[aria-expanded]:active) {
-  transform: none;
-}
 
 .student-note-panel,
 .student-answer-panel,

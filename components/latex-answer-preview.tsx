@@ -4,11 +4,6 @@ import { splitLineIntoItems, splitMathIntoItems } from "@/lib/latex-line-items";
 
 type LatexAnswerPreviewProps = {
   value: string;
-  /**
-   * Компактный режим для тесных карточек: блочные формулы ($$…$$) рендерятся
-   * в текстовом размере и по левому краю, а не крупным центрированным дисплеем.
-   */
-  compact?: boolean;
 };
 
 function renderInlineMathError(error: Error) {
@@ -33,7 +28,7 @@ function renderInlineLine(line: string, lineKey: string) {
   });
 }
 
-export function LatexAnswerPreview({ value, compact = false }: LatexAnswerPreviewProps) {
+export function LatexAnswerPreview({ value }: LatexAnswerPreviewProps) {
   const blocks = value
     .trim()
     .split(/\n{2,}/)
@@ -54,23 +49,6 @@ export function LatexAnswerPreview({ value, compact = false }: LatexAnswerPrevie
         if (isDisplayMath) {
           const math = block.slice(2, -2).trim();
           const mathItems = splitMathIntoItems(math);
-
-          // В компактном режиме дисплейная формула заняла бы половину карточки —
-          // рендерим текстовым размером по левому краю, сохраняя разбиение на
-          // пункты «А) … Б) …», чтобы они переносились, а не уезжали за край.
-          if (compact) {
-            const compactItems = mathItems.labeled && mathItems.items.length > 1 ? mathItems.items : [math];
-
-            return (
-              <div key={`block-${blockIndex}`} className="flex min-w-0 max-w-full flex-wrap items-baseline gap-x-7 gap-y-2">
-                {compactItems.map((item, itemIndex) => (
-                  <span key={`compact-item-${blockIndex}-${itemIndex}`} className="inline-block max-w-full py-0.5">
-                    <InlineMath math={item} renderError={renderInlineMathError} />
-                  </span>
-                ))}
-              </div>
-            );
-          }
 
           // Формула с пунктами «А) … Б) …» на верхнем уровне: каждый пункт —
           // отдельная формула, переносится на новую строку целиком.

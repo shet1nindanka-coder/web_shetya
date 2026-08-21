@@ -2,15 +2,16 @@
 
 import { HomeworkNumberStatus } from "@prisma/client";
 import { HomeworkStatusBadge } from "@/components/homework-status-badge";
-import { NumberConditionClamp } from "@/components/number-condition-clamp";
+import { LatexAnswerPreview } from "@/components/latex-answer-preview";
 import { cx } from "@/lib/utils";
 
 /*
  * Карточка выбора номера в сетках «Составить занятие вручную» и «Выдать ДЗ».
  * Кнопка-выбор растянута на всю карточку и лежит под контентом; блок условия
- * интерактивен (выделение текста, скролл широкой формулы, «Показать целиком»),
- * поэтому клики по нему не переключают выбор. Фокус-кольцо рисуется внутрь
- * карточки: contain: paint на .teacher-number-card обрезал бы внешний outline.
+ * интерактивен (выделение текста, скролл широкой формулы), поэтому клики по
+ * нему не переключают выбор. Условие показывается целиком всегда — решение
+ * владельца. Фокус-кольцо рисуется внутрь карточки: contain: paint на
+ * .teacher-number-card обрезал бы внешний outline.
  *
  * Акцентные токены двух досок исторически разные (--shbz-* и --theme-*) —
  * карточка принимает вариант снаружи, чтобы не менять инкумбентный вид.
@@ -92,8 +93,8 @@ export function NumberSelectCard({
         {conditionLatex ? (
           // Содержание задания, чтобы выбирать не вслепую. Блок интерактивный:
           // текст можно выделять, широкую формулу — скроллить.
-          <div className="pointer-events-auto">
-            <NumberConditionClamp value={conditionLatex} />
+          <div className="pointer-events-auto mt-2 text-left text-sm">
+            <LatexAnswerPreview value={conditionLatex} />
           </div>
         ) : null}
         {footnote ? <p className="ui-copy-muted mt-2 text-xs leading-5">{footnote}</p> : null}

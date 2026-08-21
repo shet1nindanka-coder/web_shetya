@@ -175,8 +175,10 @@ export function DashboardNav({ user, studentStreak }: DashboardNavProps) {
           <span className="text-2xl font-black leading-none tracking-[-1.2px]" style={{ color: "var(--shbz-text-strong)" }}>
             ШБЗ
           </span>
-          <span className="hidden h-[22px] w-px sm:block" style={{ background: "var(--shbz-divider)" }} />
-          <span className="hidden text-[13px] font-semibold sm:block" style={{ color: "var(--shbz-text-soft)" }}>
+          {/* На xl таббар и профиль (с колокольчиком) встают в одну строку с лого —
+              подпись школы перестаёт влезать в контейнер 1180 и прячется. */}
+          <span className="hidden h-[22px] w-px sm:block xl:hidden" style={{ background: "var(--shbz-divider)" }} />
+          <span className="hidden text-[13px] font-semibold sm:block xl:hidden" style={{ color: "var(--shbz-text-soft)" }}>
             Школа Базовых Знаний
           </span>
         </Link>
