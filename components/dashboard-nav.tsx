@@ -216,7 +216,7 @@ export function DashboardNav({ user, studentStreak }: DashboardNavProps) {
               ) : null}
             </div>
           </div>
-          {isStudent ? <StudentNotificationsBell /> : null}
+          {isStudent ? <StudentNotificationsBell /> : <StudentNotificationsBell endpoint="/api/notifications" />}
           {settingsItem ? <SettingsGearLink href={settingsItem.href} active={settingsActive} /> : null}
           <form action={logoutAction}>
             <button type="submit" className="shbz-btn-outline">
@@ -227,7 +227,7 @@ export function DashboardNav({ user, studentStreak }: DashboardNavProps) {
 
         {/* Мобильное меню */}
         <div className="flex items-center gap-2 md:hidden">
-          {isStudent ? <StudentNotificationsBell /> : null}
+          {isStudent ? <StudentNotificationsBell /> : <StudentNotificationsBell endpoint="/api/notifications" />}
           {settingsItem ? <SettingsGearLink href={settingsItem.href} active={settingsActive} /> : null}
         <button
           type="button"

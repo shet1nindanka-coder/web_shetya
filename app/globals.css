@@ -2105,6 +2105,7 @@ html[data-theme="dark"] {
 }
 .shbz-chip-green { background: var(--shbz-green-soft); color: var(--shbz-green-text); }
 .shbz-chip-yellow { background: var(--shbz-yellow-soft); color: var(--shbz-yellow-text); }
+.shbz-chip-red { background: var(--shbz-red-soft); color: var(--shbz-red-text); }
 
 /* ШБЗ: переключатель-свитч (функционально круглый — 999px легален) */
 .shbz-switch {

@@ -4,11 +4,15 @@ import { ShbzNavCard } from "@/components/shbz-nav-card";
 import { ShbzNumberSearch } from "@/components/shbz-number-search";
 import { ShbzPageHeader } from "@/components/shbz-page-header";
 import { requireUser } from "@/lib/auth";
+import { getParentCallOverview } from "@/lib/parent-calls";
 import { getTeacherTopicsOverview } from "@/lib/platform-data";
 
 export default async function TeacherPage() {
   const user = await requireUser(UserRole.TEACHER);
   const data = await getTeacherTopicsOverview(user);
+  const callOverview = await getParentCallOverview(user);
+  const callsDue = callOverview.filter((entry) => entry.reminder.state === "due").length;
+  const callsOverdue = callOverview.filter((entry) => entry.reminder.state === "overdue").length;
 
   const cards = [
     {
@@ -27,6 +31,15 @@ export default async function TeacherPage() {
       stats: [
         { label: "Ученики", value: data.stats.totalStudents },
         { label: "Файлы", value: data.stats.totalFiles }
+      ]
+    },
+    {
+      kicker: "Звонки",
+      title: "Связь с родителями",
+      href: "/teacher/calls",
+      stats: [
+        { label: "Пора позвонить", value: callsDue },
+        { label: "Просрочено", value: callsOverdue }
       ]
     }
   ];

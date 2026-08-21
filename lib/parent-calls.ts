@@ -29,6 +29,7 @@ export type ParentCallStudentOverview = {
   teacherId: string | null;
   teacherName: string | null;
   reminder: ParentCallReminder;
+  studentCreatedAt: string;
   lastReachedAt: string | null;
   lastAttemptAt: string | null;
   /** Была ли неудачная попытка позже последнего успешного звонка. */
@@ -94,6 +95,7 @@ export async function getParentCallOverview(viewer: OverviewViewer): Promise<Par
       teacherId: student.teacherId,
       teacherName: student.teacher?.name ?? null,
       reminder,
+      studentCreatedAt: student.createdAt.toISOString(),
       lastReachedAt: lastReached ? lastReached.calledAt.toISOString() : null,
       lastAttemptAt: lastAttempt ? lastAttempt.calledAt.toISOString() : null,
       attemptAfterLastReached:
@@ -200,14 +202,15 @@ export async function ensureParentCallDueNotifications(teacherId: string): Promi
       continue;
     }
 
+    // Тексты — из утверждённого UI-контракта (02-UI-SPEC.md); комментарии
+    // звонков в уведомления не попадают никогда.
     await createNotification({
       userId: teacherId,
       type: PARENT_CALL_NOTIFICATION_TYPE,
-      title: `Пора созвониться с родителями: ${student.name}`,
-      body:
-        reminder.hasReachedCall
-          ? `С последнего разговора прошло ${reminder.daysSinceAnchor} дн.`
-          : "С родителями этого ученика ещё не созванивались.",
+      title: reminder.state === "overdue" ? "Звонок родителям просрочен" : "Пора позвонить родителям",
+      body: reminder.hasReachedCall
+        ? `${student.name}: последний звонок был ${reminder.daysSinceAnchor} дн. назад.`
+        : `${student.name}: успешных звонков ещё не было.`,
       href: studentHref
     });
   }
