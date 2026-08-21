@@ -349,7 +349,6 @@ export function TeacherLessonBoard({ prefix, aiAvailable, lesson, bank }: Teache
         ) : null}
         <span className="ml-auto">
           <DeleteButton
-            variant="sm"
             label="Удалить урок"
             title="Удалить урок?"
             description="Занятие и все подобранные наборы задач будут удалены. Это действие нельзя отменить."
@@ -388,8 +387,6 @@ export function TeacherLessonBoard({ prefix, aiAvailable, lesson, bank }: Teache
           const extraItems = participant.items.filter((item) => item.isExtra);
           const mainIds = mainItems.map((item) => item.homeworkNumberId);
           const extraIds = extraItems.map((item) => item.homeworkNumberId);
-          const totalMinutes = mainItems.reduce((sum, item) => sum + (item.minutes ?? 0), 0);
-          const markedCount = participant.items.filter((item) => item.result !== null).length;
           const removeItem = (target: LessonBoardItem) => {
             // Сохраняем состав до удаления — тост даёт 5 секунд на отмену.
             if (undoTimer.current) {
@@ -419,19 +416,11 @@ export function TeacherLessonBoard({ prefix, aiAvailable, lesson, bank }: Teache
               >
                 <div>
                   {/* H2 после H1 страницы: пропуск уровня H1→H3 ломал структуру для скринридера. */}
+                  {/* Только имя: счётчик отметок и строка «скорость · основных · доп. ·
+                      минуты по оценке ИИ» убраны — перегружали шапку (решение владельца). */}
                   <h2 className="text-[16px] font-bold" style={{ color: "var(--shbz-text-strong)" }}>
                     {participant.studentName}
-                    {participant.items.length > 0 ? (
-                      <span className="ml-2.5 text-[13px] font-semibold" style={{ color: "var(--shbz-kicker)" }}>
-                        отмечено {markedCount} из {participant.items.length}
-                      </span>
-                    ) : null}
                   </h2>
-                  <p className="mt-0.5 text-xs" style={{ color: "var(--shbz-text-muted)" }}>
-                    скорость: {participant.speed ?? "не указана"} · основных: {mainItems.length}
-                    {extraItems.length > 0 ? ` · доп.: ${extraItems.length}` : ""}
-                    {totalMinutes > 0 ? ` · ~${totalMinutes} мин по оценке ИИ (это оценка, не расчёт)` : ""}
-                  </p>
                 </div>
                 <button
                   type="button"
@@ -551,7 +540,7 @@ export function TeacherLessonBoard({ prefix, aiAvailable, lesson, bank }: Teache
                     className="mb-2 text-[12px] font-bold uppercase tracking-[1.2px]"
                     style={{ color: "var(--shbz-kicker)" }}
                   >
-                    Дополнительно — если основная часть решена
+                    Доп. задание
                   </p>
                   <ol className="space-y-2">
                     {extraItems.map((item) => {
