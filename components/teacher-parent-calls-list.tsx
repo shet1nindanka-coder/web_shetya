@@ -280,7 +280,8 @@ export function TeacherParentCallsList({
           <div className="text-[11px] font-bold uppercase tracking-[1.2px]" style={{ color: "var(--shbz-kicker)" }}>
             Ученик
           </div>
-          <div className="text-[11px] font-bold uppercase tracking-[1.2px]" style={{ color: "var(--shbz-kicker)" }}>
+          {/* Чипы статуса в строках прижаты вправо — подпись колонки тоже. */}
+          <div className="md:text-right text-[11px] font-bold uppercase tracking-[1.2px]" style={{ color: "var(--shbz-kicker)" }}>
             Статус
           </div>
           <div className="text-right text-[11px] font-bold uppercase tracking-[1.2px]" style={{ color: "var(--shbz-kicker)" }}>

@@ -312,74 +312,28 @@ export function TeacherLessonBoard({ prefix, aiAvailable, lesson, bank }: Teache
   return (
     <div>
       <div className="mb-6 flex flex-wrap items-center gap-2.5">
-        {/* Экран во время урока — чек-лист отметок; печать, выдача ДЗ и удаление
-            собраны в одно меню «до и после урока». */}
-        <details className="relative">
-          <summary className="shbz-btn-outline inline-flex cursor-pointer list-none items-center gap-2 [&::-webkit-details-marker]:hidden">
-            До и после урока
-            <svg
-              width="12"
-              height="12"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              aria-hidden="true"
-            >
-              <path d="M6 9l6 6 6-6" />
-            </svg>
-          </summary>
-          <div
-            className="shbz-dropdown-panel absolute left-0 top-full z-20 mt-2 flex w-max min-w-[220px] flex-col gap-1 rounded-[12px] border p-2 shadow-lg"
-            style={{ background: "var(--shbz-card-bg)", borderColor: "var(--shbz-card-border)" }}
-          >
-            <a
-              href={`${prefix}/lessons/${lesson.id}/pdf`}
-              className="rounded-[8px] px-3 py-2 text-sm font-semibold no-underline transition hover:bg-[var(--shbz-tab-hover)]"
-              style={{ color: "var(--shbz-text-strong)" }}
-            >
-              Скачать PDF
-            </a>
-            <a
-              href={`${prefix}/lessons/${lesson.id}/print`}
-              target="_blank"
-              rel="noreferrer"
-              className="rounded-[8px] px-3 py-2 text-sm font-semibold no-underline transition hover:bg-[var(--shbz-tab-hover)]"
-              style={{ color: "var(--shbz-text-strong)" }}
-            >
-              Версия для печати
-            </a>
-            <a
-              href={`${prefix}/lessons/${lesson.id}/pdf?answers=1`}
-              className="rounded-[8px] px-3 py-2 text-sm font-semibold no-underline transition hover:bg-[var(--shbz-tab-hover)]"
-              style={{ color: "var(--shbz-text-strong)" }}
-            >
-              Ответы (PDF)
-            </a>
-            <a
-              href={`${prefix}/homework-plans/new?lessonId=${lesson.id}`}
-              className="rounded-[8px] px-3 py-2 text-sm font-semibold no-underline transition hover:bg-[var(--shbz-tab-hover)]"
-              style={{ color: "var(--shbz-text-strong)" }}
-            >
-              Выдать ДЗ по итогам занятия
-            </a>
-            <div className="my-1 border-t" style={{ borderColor: "var(--shbz-soft-border)" }} />
-            <div className="px-1 py-1">
-              <DeleteButton
-                variant="sm"
-                label="Удалить урок"
-                title="Удалить урок?"
-                description="Занятие и все подобранные наборы задач будут удалены. Это действие нельзя отменить."
-                onConfirm={deleteLesson}
-                onError={(error) =>
-                  setNotice({ tone: "error", text: error instanceof Error ? error.message : "Не удалось удалить урок." })
-                }
-              />
-            </div>
-          </div>
-        </details>
+        {/* Действия «до и после урока» — обычные кнопки в одну строку,
+            в едином стиле платформы (меню-дропдаун выбивалось — решение владельца). */}
+        <a
+          href={`${prefix}/lessons/${lesson.id}/pdf`}
+          className="shbz-btn-primary inline-block px-[22px] py-[11px] text-[14px] no-underline"
+        >
+          Скачать PDF
+        </a>
+        <a
+          href={`${prefix}/lessons/${lesson.id}/print`}
+          target="_blank"
+          rel="noreferrer"
+          className="shbz-btn-outline inline-block no-underline"
+        >
+          Версия для печати
+        </a>
+        <a href={`${prefix}/lessons/${lesson.id}/pdf?answers=1`} className="shbz-btn-outline inline-block no-underline">
+          Ответы (PDF)
+        </a>
+        <a href={`${prefix}/homework-plans/new?lessonId=${lesson.id}`} className="shbz-btn-outline inline-block no-underline">
+          Выдать ДЗ по итогам занятия
+        </a>
         <span className="ui-hint text-xs" style={{ color: "var(--shbz-kicker)" }}>
           Отметки: клавиши 1/2/3, переход — ↓
         </span>
@@ -393,6 +347,18 @@ export function TeacherLessonBoard({ prefix, aiAvailable, lesson, bank }: Teache
             Готово {readyCount} из {participants.length}…
           </span>
         ) : null}
+        <span className="ml-auto">
+          <DeleteButton
+            variant="sm"
+            label="Удалить урок"
+            title="Удалить урок?"
+            description="Занятие и все подобранные наборы задач будут удалены. Это действие нельзя отменить."
+            onConfirm={deleteLesson}
+            onError={(error) =>
+              setNotice({ tone: "error", text: error instanceof Error ? error.message : "Не удалось удалить урок." })
+            }
+          />
+        </span>
       </div>
 
       {!aiAvailable ? (
