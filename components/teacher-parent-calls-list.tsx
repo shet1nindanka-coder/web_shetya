@@ -58,7 +58,7 @@ function metaFor(student: ParentCallStudentOverview) {
       0,
       Math.floor((Date.now() - new Date(student.lastAttemptAt).getTime()) / (24 * 60 * 60 * 1000))
     );
-    parts.push(`Попытка недозвона ${attemptDays === 0 ? "сегодня" : `${attemptDays} дн. назад`}`);
+    parts.push(`Пытались дозвониться ${attemptDays === 0 ? "сегодня" : `${attemptDays} дн. назад`}`);
   }
 
   return parts.join(" · ");
@@ -112,7 +112,7 @@ function CallForm({ studentId, onClose, onSaved }: CallFormProps) {
           onClick={() => setOutcome("REACHED")}
           className="shbz-seg-btn shbz-seg-btn--plain disabled:cursor-not-allowed"
         >
-          Дозвонился
+          Дозвонились
         </button>
         <button
           type="button"
@@ -122,7 +122,7 @@ function CallForm({ studentId, onClose, onSaved }: CallFormProps) {
           onClick={() => setOutcome("NO_ANSWER")}
           className="shbz-seg-btn shbz-seg-btn--plain disabled:cursor-not-allowed"
         >
-          Не дозвонился
+          Не дозвонились
         </button>
       </div>
 
@@ -187,7 +187,7 @@ function CallHistory({ student, isDeveloper }: { student: ParentCallStudentOverv
               className={cx(call.outcome === "REACHED" ? "font-semibold" : "font-medium")}
               style={{ color: call.outcome === "REACHED" ? "var(--shbz-text-strong)" : "var(--shbz-text-muted)" }}
             >
-              {call.outcome === "REACHED" ? "Дозвонился" : "Не дозвонился"}
+              {call.outcome === "REACHED" ? "Дозвонились" : "Не дозвонились"}
             </span>
             {isDeveloper && call.teacherName ? (
               <span style={{ color: "var(--shbz-text-soft)" }}>— {call.teacherName}</span>
