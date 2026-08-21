@@ -308,8 +308,14 @@ export function TeacherParentCallsList({
             <div
               key={student.studentId}
               ref={isHighlighted ? highlightRef : undefined}
-              className={cx(isHighlighted && "rounded-[12px] ring-2 ring-[var(--shbz-accent-solid)]")}
-              style={!isLast ? { borderBottom: "1px solid var(--shbz-row-border)" } : undefined}
+              // Подсветка строки из уведомления: мягкая мятная заливка на всю
+              // ширину карточки (компенсируем её px-7), а не кольцо вокруг
+              // контента — кольцо резало соседние строки и выходило за рамку.
+              className={cx(isHighlighted && "-mx-7 px-7")}
+              style={{
+                ...(isHighlighted ? { background: "var(--theme-accent-soft)" } : null),
+                ...(!isLast ? { borderBottom: "1px solid var(--shbz-row-border)" } : null)
+              }}
             >
               <div
                 className={cx(
