@@ -4,7 +4,7 @@ import { HomeworkNumberStatus } from "@prisma/client";
 import { useMemo, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import { HomeworkStatusBadge } from "@/components/homework-status-badge";
-import { LatexAnswerPreview } from "@/components/latex-answer-preview";
+import { NumberConditionClamp } from "@/components/number-condition-clamp";
 import { ShbzDateTimePicker } from "@/components/shbz-datetime-picker";
 import { ShbzSelect } from "@/components/shbz-select";
 import { cx } from "@/lib/utils";
@@ -199,41 +199,48 @@ export function TeacherLessonComposeBoard({ studentId, topics }: TeacherLessonCo
           const isSelected = selectedNumberIds.has(number.id);
 
           return (
-            <button
+            <div
               key={number.id}
-              type="button"
-              aria-pressed={isSelected}
-              onClick={() => toggleNumber(number.id)}
               className={cx(
-                "teacher-number-card ui-pressable rounded-[16px] border px-4 py-4 text-left transition",
+                "teacher-number-card ui-pressable relative rounded-[16px] border px-4 py-4 text-left transition",
                 isSelected && "ring-2 ring-[var(--shbz-accent-solid)]"
               )}
             >
-              <div className="flex items-center justify-between gap-3">
-                <span
-                  className={cx(
-                    "inline-flex h-5 w-5 items-center justify-center rounded border text-xs font-bold",
-                    isSelected
-                      ? "border-[var(--shbz-accent-solid)] bg-[var(--shbz-green-soft)] text-[var(--shbz-green-text)]"
-                      : "border-[var(--shbz-input-border)] text-transparent"
-                  )}
-                  aria-hidden="true"
-                >
-                  ✓
-                </span>
-                <HomeworkStatusBadge status={number.status} />
-              </div>
-              <p className="teacher-number-title mt-3 text-lg font-semibold text-[var(--shbz-text-strong)]">
-                № {number.number}
-              </p>
-              {number.conditionLatex ? (
-                // Содержание задания, чтобы выбирать не вслепую; длинные условия обрезаются.
-                <div className="mt-2 max-h-32 overflow-hidden text-left text-sm">
-                  <LatexAnswerPreview value={number.conditionLatex} />
+              {/* Кнопка-выбор растянута на всю карточку и лежит под контентом,
+                  чтобы «Показать целиком» у условия не переключал выбор. */}
+              <button
+                type="button"
+                aria-pressed={isSelected}
+                aria-label={`Выбрать № ${number.number}`}
+                onClick={() => toggleNumber(number.id)}
+                className="absolute inset-0 rounded-[16px] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[var(--shbz-accent-solid)]"
+              />
+              <div className="pointer-events-none relative">
+                <div className="flex items-center justify-between gap-3">
+                  <span
+                    className={cx(
+                      "inline-flex h-5 w-5 items-center justify-center rounded border text-xs font-bold",
+                      isSelected
+                        ? "border-[var(--shbz-accent-solid)] bg-[var(--shbz-green-soft)] text-[var(--shbz-green-text)]"
+                        : "border-[var(--shbz-input-border)] text-transparent"
+                    )}
+                    aria-hidden="true"
+                  >
+                    ✓
+                  </span>
+                  <HomeworkStatusBadge status={number.status} />
                 </div>
-              ) : null}
-              {number.inLesson ? <p className="ui-copy-muted mt-2 text-xs leading-5">Уже был на занятии</p> : null}
-            </button>
+                <p className="teacher-number-title mt-3 text-lg font-semibold text-[var(--shbz-text-strong)]">
+                  № {number.number}
+                </p>
+                {number.conditionLatex ? (
+                  // Содержание задания, чтобы выбирать не вслепую; длинные условия
+                  // сворачиваются с фейдом и кнопкой «Показать целиком».
+                  <NumberConditionClamp value={number.conditionLatex} />
+                ) : null}
+                {number.inLesson ? <p className="ui-copy-muted mt-2 text-xs leading-5">Уже был на занятии</p> : null}
+              </div>
+            </div>
           );
         })}
       </div>

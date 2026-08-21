@@ -4,6 +4,11 @@ import { splitLineIntoItems, splitMathIntoItems } from "@/lib/latex-line-items";
 
 type LatexAnswerPreviewProps = {
   value: string;
+  /**
+   * Компактный режим для тесных карточек: блочные формулы ($$…$$) рендерятся
+   * в текстовом размере и по левому краю, а не крупным центрированным дисплеем.
+   */
+  compact?: boolean;
 };
 
 function renderInlineLine(line: string, lineKey: string) {
@@ -30,7 +35,7 @@ function renderInlineLine(line: string, lineKey: string) {
   });
 }
 
-export function LatexAnswerPreview({ value }: LatexAnswerPreviewProps) {
+export function LatexAnswerPreview({ value, compact = false }: LatexAnswerPreviewProps) {
   const blocks = value
     .trim()
     .split(/\n{2,}/)
@@ -50,6 +55,24 @@ export function LatexAnswerPreview({ value }: LatexAnswerPreviewProps) {
 
         if (isDisplayMath) {
           const math = block.slice(2, -2).trim();
+
+          // В компактном режиме дисплейная формула заняла бы половину карточки —
+          // рендерим её текстовым размером по левому краю, как инлайн.
+          if (compact) {
+            return (
+              <div key={`block-${blockIndex}`} className="min-w-0 max-w-full">
+                <InlineMath
+                  math={math}
+                  renderError={(error) => (
+                    <code className="rounded bg-[var(--theme-danger-soft)] px-1 py-0.5 text-[var(--theme-danger-text)]">
+                      {error.name}
+                    </code>
+                  )}
+                />
+              </div>
+            );
+          }
+
           const mathItems = splitMathIntoItems(math);
 
           // Формула с пунктами «А) … Б) …» на верхнем уровне: каждый пункт —
