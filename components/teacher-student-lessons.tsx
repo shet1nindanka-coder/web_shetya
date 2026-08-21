@@ -397,13 +397,16 @@ export function TeacherStudentLessons({
                   {statusLabels[lesson.status] ?? lesson.status}
                 </p>
               </div>
-              {lesson.items.length > 0 ? (
-                <span
-                  className={`shbz-chip ${marked === lesson.items.length ? "shbz-chip-green" : "shbz-chip-yellow"}`}
-                >
-                  итоги {marked} / {lesson.items.length}
-                </span>
-              ) : null}
+              {/* Чип итогов показывается всегда; пустое занятие 0/0 — нейтральным. */}
+              <span
+                className={
+                  lesson.items.length === 0
+                    ? "shbz-badge-muted"
+                    : `shbz-chip ${marked === lesson.items.length ? "shbz-chip-green" : "shbz-chip-yellow"}`
+                }
+              >
+                итоги {marked} / {lesson.items.length}
+              </span>
             </div>
 
             {!expanded ? null : (

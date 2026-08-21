@@ -98,13 +98,17 @@ export default async function TeacherLessonsPage() {
                     ошибок: {lesson.failedCount}
                   </span>
                 ) : null}
-                {lesson.resultsTotal > 0 ? (
-                  <span
-                    className={`shbz-chip ${lesson.resultsMarked === lesson.resultsTotal ? "shbz-chip-green" : "shbz-chip-yellow"}`}
-                  >
-                    итоги {lesson.resultsMarked} / {lesson.resultsTotal}
-                  </span>
-                ) : null}
+                {/* Чип итогов показывается всегда (решение владельца); пустое
+                    занятие 0/0 — нейтральным, а не «зелёным». */}
+                <span
+                  className={
+                    lesson.resultsTotal === 0
+                      ? "shbz-badge-muted"
+                      : `shbz-chip ${lesson.resultsMarked === lesson.resultsTotal ? "shbz-chip-green" : "shbz-chip-yellow"}`
+                  }
+                >
+                  итоги {lesson.resultsMarked} / {lesson.resultsTotal}
+                </span>
                 {/* Чип «готово X/Y» показывается только пока подбор не завершён:
                     постоянное «готово 1/1» не несло информации (фидбек владельца). */}
                 {lesson.readyCount < lesson.participantsCount ? (
