@@ -175,10 +175,8 @@ export function DashboardNav({ user, studentStreak }: DashboardNavProps) {
           <span className="text-2xl font-black leading-none tracking-[-1.2px]" style={{ color: "var(--shbz-text-strong)" }}>
             ШБЗ
           </span>
-          {/* На xl таббар и профиль (с колокольчиком) встают в одну строку с лого —
-              подпись школы перестаёт влезать в контейнер 1180 и прячется. */}
-          <span className="hidden h-[22px] w-px sm:block xl:hidden" style={{ background: "var(--shbz-divider)" }} />
-          <span className="hidden text-[13px] font-semibold sm:block xl:hidden" style={{ color: "var(--shbz-text-soft)" }}>
+          <span className="hidden h-[22px] w-px sm:block" style={{ background: "var(--shbz-divider)" }} />
+          <span className="hidden text-[13px] font-semibold sm:block" style={{ color: "var(--shbz-text-soft)" }}>
             Школа Базовых Знаний
           </span>
         </Link>
@@ -203,8 +201,14 @@ export function DashboardNav({ user, studentStreak }: DashboardNavProps) {
 
         {/* Профиль */}
         <div className="hidden shrink-0 items-center gap-3.5 md:flex">
-          <div className="shbz-avatar">{initialsOf(user.name)}</div>
-          <div className="leading-[1.3]">
+          <div className="shbz-avatar" title={`${user.name} · ${roleLabel}`}>
+            {initialsOf(user.name)}
+          </div>
+          {/* У учителя/разработчика на xl таббар, профиль и колокольчик делят
+              одну строку с лого: текст имени прячется (аватар с подсказкой
+              остаётся), чтобы шапка влезала в контейнер 1180 и была
+              симметричной. У ученика вкладок меньше — имя и стрик остаются. */}
+          <div className={isStudent ? "leading-[1.3]" : "leading-[1.3] xl:hidden"}>
             <div className="text-sm font-bold" style={{ color: "var(--shbz-text-strong)" }}>
               {user.name}
             </div>

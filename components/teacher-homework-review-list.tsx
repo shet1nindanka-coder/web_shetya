@@ -162,6 +162,22 @@ const statusOptions = [HomeworkNumberStatus.GREEN, HomeworkNumberStatus.YELLOW, 
 
 const ACCEPT_UNDO_MS = 10_000;
 
+function ChevronIcon({ expanded }: { expanded: boolean }) {
+  return (
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 16 16"
+      fill="none"
+      aria-hidden
+      className="shrink-0 transition-transform duration-[180ms] ease-[var(--ease-in-out)]"
+      style={{ color: "var(--shbz-kicker)", transform: expanded ? "rotate(90deg)" : "none" }}
+    >
+      <path d="M6 4l4 4-4 4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+    </svg>
+  );
+}
+
 export function TeacherHomeworkReviewList({ studentId, assignments }: TeacherHomeworkReviewListProps) {
   const router = useRouter();
   const [savingStatusId, setSavingStatusId] = useState<string | null>(null);
@@ -169,6 +185,23 @@ export function TeacherHomeworkReviewList({ studentId, assignments }: TeacherHom
   // Режим урока: ноутбук повёрнут к ученику — служебная диагностика
   // (списывание, инъекции) временно прячется целиком.
   const [lessonMode, setLessonMode] = useState(false);
+  // Каждое ДЗ по умолчанию свёрнуто до шапки со сводкой — раскрывается кликом
+  // по шапке (как занятия во вкладке «Занятия»).
+  const [expandedIds, setExpandedIds] = useState<Set<string>>(() => new Set());
+
+  const toggleExpanded = (assignmentId: string) => {
+    setExpandedIds((current) => {
+      const next = new Set(current);
+
+      if (next.has(assignmentId)) {
+        next.delete(assignmentId);
+      } else {
+        next.add(assignmentId);
+      }
+
+      return next;
+    });
+  };
 
   const hasDiagnostics = assignments.some((assignment) =>
     assignment.checks.some((check) =>
@@ -400,6 +433,7 @@ export function TeacherHomeworkReviewList({ studentId, assignments }: TeacherHom
         const aiByNumber = new Map(latestDone?.results.map((result) => [result.number, result]) ?? []);
         const lastCheckedLabel = formatDateTime(latestDone?.checkedAt ?? null);
         const injectionResults = latestDone?.results.filter((result) => result.injectionSuspected) ?? [];
+        const expanded = expandedIds.has(assignment.id);
 
         return (
           <article key={assignment.id} className="teacher-topic-card rounded-[16px] border p-5 sm:p-6">
@@ -446,8 +480,21 @@ export function TeacherHomeworkReviewList({ studentId, assignments }: TeacherHom
               </div>
             ) : null}
             <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
-              <div className="min-w-0 space-y-1.5">
+              <div
+                role="button"
+                tabIndex={0}
+                aria-expanded={expanded}
+                onClick={() => toggleExpanded(assignment.id)}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter" || event.key === " ") {
+                    event.preventDefault();
+                    toggleExpanded(assignment.id);
+                  }
+                }}
+                className="min-w-0 flex-1 cursor-pointer select-none space-y-1.5"
+              >
                 <div className="flex flex-wrap items-center gap-2">
+                  <ChevronIcon expanded={expanded} />
                   <h3 className="teacher-topic-title font-display text-xl font-semibold text-[var(--theme-text-strong)]">
                     {assignment.label}
                   </h3>
@@ -541,6 +588,8 @@ export function TeacherHomeworkReviewList({ studentId, assignments }: TeacherHom
               <ProgressBar value={assignment.solvedPercent} size="sm" />
             </div>
 
+            {!expanded ? null : (
+              <>
             {assignment.photos.length > 0 ? (
               <div className="mt-4 flex flex-wrap items-center gap-3">
                 <div className="flex flex-wrap gap-2">
@@ -858,6 +907,8 @@ export function TeacherHomeworkReviewList({ studentId, assignments }: TeacherHom
                 </div>
               </details>
             ) : null}
+              </>
+            )}
           </article>
         );
   };
