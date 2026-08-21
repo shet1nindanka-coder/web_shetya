@@ -1,6 +1,6 @@
 import Image from "next/image";
 import { PdfPreview } from "@/components/pdf-preview";
-import { formatDateTime, formatFileSize, isImageMime, isOfficeMime, isPdfMime } from "@/lib/utils";
+import { isImageMime, isOfficeMime, isPdfMime } from "@/lib/utils";
 
 type FileResource = {
   id: string;
@@ -29,47 +29,45 @@ export function FileResourceCard({
 
   return (
     <article className="ui-file-card ui-fade-slide ui-surface rounded-[16px] border p-4 sm:rounded-[16px] sm:p-5">
-      <div className="ui-file-card-header flex flex-col gap-4 border-b pb-5">
-        <div className="space-y-1.5">
+      {/* Шапка без имени файла, веса и даты — решение владельца: карточка
+          нужна ради предпросмотра, метаданные только отнимали у него место. */}
+      <div className="ui-file-card-header flex flex-wrap items-center justify-between gap-3">
+        <div className="min-w-0 space-y-1">
           <p className="ui-kicker">{title}</p>
-          <h3 className="ui-file-card-title font-display text-[1.35rem] font-semibold text-[var(--theme-text-strong)] sm:text-[1.45rem] lg:text-[1.6rem]">
-            {file ? file.originalName : "Файл не загружен"}
-          </h3>
+          {!showPreview && file ? (
+            <p className="ui-copy-muted truncate text-sm" title={file.originalName}>
+              {file.originalName}
+            </p>
+          ) : null}
           {description ? <p className="ui-hint ui-copy-muted text-sm leading-6">{description}</p> : null}
         </div>
 
         {file ? (
-          <div className="ui-file-card-meta ui-copy-muted flex flex-wrap items-center gap-x-4 gap-y-1 text-sm">
-            <span>{formatFileSize(file.size)}</span>
-            <span>Загружен {formatDateTime(file.uploadedAt)}</span>
-            <span>{file.mimeType}</span>
-          </div>
-        ) : null}
-      </div>
-
-      {!file ? (
-        <div className="ui-card-soft ui-hint ui-copy-muted mt-5 rounded-[16px] border border-dashed px-4 py-6 text-sm leading-6">
-          Файл пока не загружен.
-        </div>
-      ) : (
-        <div className="mt-5 space-y-5">
-          <div className="ui-file-card-actions flex flex-wrap gap-3">
+          <div className="ui-file-card-actions flex flex-wrap gap-2.5">
             <a
               href={`/files/${file.id}`}
               target="_blank"
               rel="noreferrer"
-              className="ui-pressable ui-button-primary inline-flex w-full justify-center rounded-[12px] px-4 py-2 text-sm font-semibold transition sm:w-auto"
+              className="ui-pressable ui-button-primary inline-flex justify-center rounded-[12px] px-4 py-2 text-sm font-semibold transition"
             >
               Открыть в браузере
             </a>
             <a
               href={`/files/${file.id}?download=1`}
-              className="ui-pressable ui-button-secondary inline-flex w-full justify-center rounded-[12px] px-4 py-2 text-sm font-semibold transition sm:w-auto"
+              className="ui-pressable ui-button-secondary inline-flex justify-center rounded-[12px] px-4 py-2 text-sm font-semibold transition"
             >
               Скачать файл
             </a>
           </div>
+        ) : null}
+      </div>
 
+      {!file ? (
+        <div className="ui-card-soft ui-hint ui-copy-muted mt-4 rounded-[16px] border border-dashed px-4 py-6 text-sm leading-6">
+          Файл пока не загружен.
+        </div>
+      ) : (
+        <div className="mt-4">
           {!showPreview ? (
             <div className="ui-card-soft ui-hint ui-copy-muted rounded-[16px] px-4 py-5 text-sm leading-6">
               Предпросмотр скрыт. Файл можно открыть или скачать.
@@ -81,7 +79,7 @@ export function FileResourceCard({
               <PdfPreview
                 fileId={file.id}
                 fileName={file.originalName}
-                maxHeightClassName={isExpanded ? "max-h-[380px] sm:max-h-[520px] lg:max-h-[760px]" : "max-h-[300px] sm:max-h-[380px] lg:max-h-[420px]"}
+                maxHeightClassName={isExpanded ? "max-h-[480px] sm:max-h-[640px] lg:max-h-[900px]" : "max-h-[420px] sm:max-h-[560px] lg:max-h-[680px]"}
               />
             </div>
           ) : null}
@@ -96,8 +94,8 @@ export function FileResourceCard({
                 unoptimized
                 className={
                   isExpanded
-                    ? "max-h-[380px] h-auto w-full rounded-[12px] object-contain sm:max-h-[520px] lg:max-h-[760px]"
-                    : "max-h-[300px] h-auto w-full rounded-[12px] object-contain sm:max-h-[380px] lg:max-h-[420px]"
+                    ? "max-h-[480px] h-auto w-full rounded-[12px] object-contain sm:max-h-[640px] lg:max-h-[900px]"
+                    : "max-h-[420px] h-auto w-full rounded-[12px] object-contain sm:max-h-[560px] lg:max-h-[680px]"
                 }
               />
             </div>

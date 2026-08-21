@@ -146,7 +146,6 @@ html[data-hints="off"] .ui-hint { display: none !important; }
 html[data-hints="off"] .page-header-panel { padding-top: 1rem !important; padding-bottom: 1rem !important; }
 html[data-hints="off"] .ui-page-header { padding-top: 1rem !important; padding-bottom: 1rem !important; }
 html[data-hints="off"] .ui-section-card-header,
-html[data-hints="off"] .ui-file-card-header { gap: 0.5rem; margin-bottom: 0.75rem; padding-bottom: 0.75rem; }
 html[data-hints="off"] .ui-settings-card { min-height: 0; }
 
 /* ───────────────────────────────────────────────
@@ -181,7 +180,6 @@ html[data-density="compact"] .text-base.leading-7,
 html[data-density="compact"] .text-base.leading-8,
 html[data-density="compact"] .text-sm.leading-6 { line-height: 1.4 !important; }
 html[data-density="compact"] .ui-section-card-header,
-html[data-density="compact"] .ui-file-card-header { margin-bottom: 0.75rem !important; padding-bottom: 0.75rem !important; }
 html[data-density="compact"] .ui-section-card-title,
 html[data-density="compact"] .ui-file-card-title { font-size: 1.15rem !important; }
 html[data-density="compact"] .ui-stat-card { padding: 0.75rem !important; }
