@@ -3,12 +3,10 @@
 import { useState } from "react";
 import { useTabIndicator } from "@/lib/animation-hooks";
 import {
-  EGE_PROFILE_MAX_PRIMARY,
   EGE_PROFILE_MIN_PRIMARY,
   EGE_PROFILE_SCALE,
   EGE_PROFILE_TASKS,
   OGE_GRADES,
-  OGE_MAX_PRIMARY,
   OGE_TASKS
 } from "@/lib/exam-scores";
 import type { GradeRow, TaskScoringRow } from "@/lib/exam-scores";
@@ -92,10 +90,6 @@ function EgeContent() {
       <section className="mb-11">
         <h2 className="shbz-section-title">Первичные → тестовые</h2>
         <div className="shbz-card shbz-section-pad">
-          <p className="mb-5 text-sm" style={{ color: "var(--shbz-text-muted)" }}>
-            Профильная математика, максимум {EGE_PROFILE_MAX_PRIMARY} первичных балла. Порог «сдал» —{" "}
-            {EGE_PROFILE_MIN_PRIMARY} первичных ({EGE_PROFILE_SCALE[EGE_PROFILE_MIN_PRIMARY - 1].secondary} тестовых).
-          </p>
           <div className="grid gap-2.5" style={{ gridTemplateColumns: "repeat(auto-fill, minmax(120px, 1fr))" }}>
             {EGE_PROFILE_SCALE.map(({ primary, secondary }) => (
               <div
@@ -147,9 +141,6 @@ function OgeContent() {
       <section className="mb-11">
         <h2 className="shbz-section-title">Сколько даёт каждое задание</h2>
         <div className="shbz-card shbz-section-pad">
-          <p className="mb-5 text-sm" style={{ color: "var(--shbz-text-muted)" }}>
-            25 заданий, максимум {OGE_MAX_PRIMARY} первичный балл.
-          </p>
           <TaskScoringList items={OGE_TASKS} />
         </div>
       </section>
