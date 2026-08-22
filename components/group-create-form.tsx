@@ -38,7 +38,7 @@ export function GroupCreateForm() {
         <button
           type="submit"
           disabled={!name.trim()}
-          className="shbz-btn-primary inline-flex h-[52px] items-center px-[26px] text-[15px] leading-none"
+          className="shbz-btn-primary shbz-btn-field px-[26px]"
         >
           Создать группу
         </button>

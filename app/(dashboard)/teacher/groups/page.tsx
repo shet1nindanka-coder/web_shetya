@@ -5,7 +5,7 @@ import { ShbzNumberSearch } from "@/components/shbz-number-search";
 import { ShbzPageHeader } from "@/components/shbz-page-header";
 import { requireUser } from "@/lib/auth";
 import { getTeacherGroups } from "@/lib/platform-data";
-import { formatDate } from "@/lib/utils";
+import { formatShortDate } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
@@ -81,8 +81,9 @@ export default async function TeacherGroupsPage({ searchParams }: GroupsPageProp
                     <h3 className="truncate text-[17px] font-bold" style={{ color: "var(--shbz-text-strong)" }}>
                       {group.name}
                     </h3>
+                    {/* Короткая дата без «г.» — иначе год уезжал на отдельную строку. */}
                     <p className="mt-1 text-xs" style={{ color: "var(--shbz-text-muted)" }}>
-                      {group.grade ? `${group.grade} класс · ` : ""}создана {formatDate(group.createdAt)}
+                      {group.grade ? `${group.grade} класс · ` : ""}создана {formatShortDate(group.createdAt)}
                     </p>
                   </div>
                   <span className="shbz-chip shbz-chip-green shrink-0">
@@ -91,9 +92,15 @@ export default async function TeacherGroupsPage({ searchParams }: GroupsPageProp
                   </span>
                 </div>
 
+                {/* Не перечисляем всех: первые три имени и «+N», чтобы карточка
+                    не растягивалась у больших групп. */}
                 {group.members.length > 0 ? (
-                  <p className="mt-3 line-clamp-2 text-sm" style={{ color: "var(--shbz-text-muted)" }}>
-                    {group.members.map((member) => member.name).join(", ")}
+                  <p className="mt-3 truncate text-sm" style={{ color: "var(--shbz-text-muted)" }}>
+                    {group.members
+                      .slice(0, 3)
+                      .map((member) => member.name)
+                      .join(", ")}
+                    {group.members.length > 3 ? ` и ещё ${group.members.length - 3}` : ""}
                   </p>
                 ) : (
                   <p className="mt-3 text-sm" style={{ color: "var(--shbz-text-muted)" }}>

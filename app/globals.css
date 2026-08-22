@@ -1681,6 +1681,7 @@ html[data-theme="dark"] .student-virtual-scroll::-webkit-scrollbar-thumb {
    Шрифт Montserrat 900 подключён через next/font → --font-logo.
    ─────────────────────────────────────────────── */
 :root {
+  --shbz-field-h: 52px;    /* высота полей ввода и парных к ним кнопок */
   --brand: #16c79f;        /* фирменный цвет, основной */
   --brand-deep: #0e9b80;   /* тот же цвет для мелкого кегля и печати */
   --ink: #0a0a0a;          /* знак ШБЗ */
@@ -1800,7 +1801,7 @@ html[data-theme="dark"] {
 
 .shbz-input {
   width: 100%;
-  height: 52px;
+  height: var(--shbz-field-h);
   padding: 0 16px;
   font-family: inherit;
   /* ≥16px: Safari на iOS зумит страницу при фокусе на инпуте с меньшим кеглем. */
@@ -2064,11 +2065,17 @@ html[data-theme="dark"] {
   font-size: 15px;
 }
 
-/* Кнопка в одну строку с .shbz-input: та же высота 52px и тот же кегль */
-.shbz-btn-outline--field {
-  height: 52px;
+/* Кнопка в одну строку с .shbz-input: та же высота (--shbz-field-h) и кегль.
+   Высота — переменная, чтобы компактная плотность ужимала поле и кнопку вместе. */
+.shbz-btn-outline--field,
+.shbz-btn-field {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: var(--shbz-field-h);
   padding: 0 24px;
   font-size: 15px;
+  line-height: 1;
 }
 .shbz-btn-outline:disabled {
   opacity: 0.6;
@@ -2332,7 +2339,7 @@ html[data-density="compact"] .shbz-section-pad { padding: 20px; }
 /* Компактная плотность для shbz-поверхностей: раньше 52 правила compact
    адресовали только классы ui- и app-, и настройка была no-op на новых экранах
    (обязательство PRODUCT.md: каждая поверхность работает во всех комбинациях). */
-html[data-density="compact"] .shbz-input { height: 44px; }
+html[data-density="compact"] { --shbz-field-h: 44px; }
 html[data-density="compact"] .shbz-search { height: 40px; }
 html[data-density="compact"] .shbz-section-title { margin-bottom: 12px; font-size: 18px; }
 html[data-density="compact"] .shbz-card { border-radius: 12px; }

@@ -10,6 +10,13 @@ const dateFormatter = new Intl.DateTimeFormat("ru-RU", {
   month: "long",
   year: "numeric"
 });
+// Дата без года-суффикса «г.»: для подписей в карточках, где «г.» переносился
+// на отдельную строку.
+const shortDateFormatter = new Intl.DateTimeFormat("ru-RU", {
+  day: "numeric",
+  month: "long",
+  year: "numeric"
+});
 const dateTimeFormatter = new Intl.DateTimeFormat("ru-RU", {
   day: "2-digit",
   month: "2-digit",
@@ -113,6 +120,16 @@ export function matchesAccountSearch(query: string, ...fields: Array<string | nu
     .toLowerCase();
 
   return words.every((word) => haystack.includes(word));
+}
+
+export function formatShortDate(value?: Date | string | null) {
+  if (!value) {
+    return "Без даты";
+  }
+
+  const date = value instanceof Date ? value : new Date(value);
+
+  return shortDateFormatter.format(date).replace(/\s*г\.$/, "");
 }
 
 export function formatDate(value?: Date | string | null) {

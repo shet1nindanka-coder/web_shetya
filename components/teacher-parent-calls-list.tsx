@@ -33,14 +33,14 @@ const DATE_TIME_FORMAT = new Intl.DateTimeFormat("ru-RU", {
 
 function chipFor(state: ParentCallStudentOverview["reminder"]["state"]) {
   if (state === "overdue") {
-    return <span className="shbz-chip shbz-chip-red">Просрочено</span>;
+    return <span className="shbz-chip shbz-chip-red inline-flex h-11 items-center">Просрочено</span>;
   }
 
   if (state === "due") {
-    return <span className="shbz-chip shbz-chip-yellow">Пора позвонить</span>;
+    return <span className="shbz-chip shbz-chip-yellow inline-flex h-11 items-center">Пора позвонить</span>;
   }
 
-  return <span className="shbz-badge-muted">Созвонились недавно</span>;
+  return <span className="shbz-badge-muted inline-flex h-11 items-center">Созвонились недавно</span>;
 }
 
 function metaFor(student: ParentCallStudentOverview) {

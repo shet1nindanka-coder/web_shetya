@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import { HomeworkNumberStatus, UserRole } from "@prisma/client";
 import {
   compareHomeworkNumbers,
+  formatShortDate,
   cx,
   completionPercent,
   findHomeworkNumberTwins,
@@ -203,3 +204,8 @@ test("matchesAccountSearch ищет по словам без учёта реги
   assert.equal(matchesAccountSearch("анна", "Анна", null, undefined), true);
 });
 
+
+test("formatShortDate drops the trailing «г.» suffix", () => {
+  assert.equal(formatShortDate(new Date("2026-08-18T12:00:00+03:00")), "18 августа 2026");
+  assert.equal(formatShortDate(null), "Без даты");
+});

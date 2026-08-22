@@ -242,7 +242,7 @@ export function AccountCreateForm({ teachers }: AccountCreateFormProps) {
           <span className="mb-[9px] block text-[13px] font-semibold opacity-0" aria-hidden="true">
             {"\u00A0"}
           </span>
-          <button type="submit" disabled={isSubmitDisabled} className="shbz-btn-primary inline-flex h-[52px] items-center px-[26px] text-[15px] leading-none">
+          <button type="submit" disabled={isSubmitDisabled} className="shbz-btn-primary shbz-btn-field px-[26px]">
             {isPending ? "Создаём..." : role === "TEACHER" ? "Создать учителя" : "Создать ученика"}
           </button>
         </div>
