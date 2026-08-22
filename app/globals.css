@@ -4112,6 +4112,7 @@ html[data-theme="dark"] .ui-skeleton::after {
   box-sizing: border-box;
   height: var(--shbz-btn-h);
   padding: 0 16px;
+  border-radius: 12px; /* тот же радиус, что у .shbz-btn-* */
   font-size: 14px;
   font-weight: 600;
   line-height: 1;

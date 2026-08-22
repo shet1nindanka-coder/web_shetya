@@ -33,14 +33,14 @@ const DATE_TIME_FORMAT = new Intl.DateTimeFormat("ru-RU", {
 
 function chipFor(state: ParentCallStudentOverview["reminder"]["state"]) {
   if (state === "overdue") {
-    return <span className="shbz-chip shbz-chip--row shbz-chip-red">Просрочено</span>;
+    return <span className="shbz-chip shbz-chip--row shbz-chip-red md:w-full">Просрочено</span>;
   }
 
   if (state === "due") {
-    return <span className="shbz-chip shbz-chip--row shbz-chip-yellow">Пора позвонить</span>;
+    return <span className="shbz-chip shbz-chip--row shbz-chip-yellow md:w-full">Пора позвонить</span>;
   }
 
-  return <span className="shbz-badge-muted shbz-chip--row">Созвонились недавно</span>;
+  return <span className="shbz-badge-muted shbz-chip--row md:w-full">Созвонились недавно</span>;
 }
 
 function metaFor(student: ParentCallStudentOverview) {
@@ -272,8 +272,8 @@ export function TeacherParentCallsList({
       <div className="ui-enter shbz-card px-7 py-2">
         <div
           className={cx(
-            "hidden items-center gap-6 border-b py-[18px] md:grid",
-            isDeveloper ? "md:grid-cols-[1fr_180px_128px]" : "md:grid-cols-[1fr_180px_312px]"
+            "hidden items-center gap-3 border-b py-[18px] md:grid",
+            isDeveloper ? "md:grid-cols-[1fr_200px_128px]" : "md:grid-cols-[1fr_200px_308px]"
           )}
           style={{ borderColor: "var(--shbz-soft-border)" }}
         >
@@ -284,7 +284,8 @@ export function TeacherParentCallsList({
           <div className="text-[11px] font-bold uppercase tracking-[1.2px]" style={{ color: "var(--shbz-kicker)" }}>
             Статус
           </div>
-          <div className="text-right text-[11px] font-bold uppercase tracking-[1.2px]" style={{ color: "var(--shbz-kicker)" }}>
+          {/* Кнопки начинаются с левого края колонки — заголовок тоже слева, как у соседних. */}
+          <div className="text-[11px] font-bold uppercase tracking-[1.2px]" style={{ color: "var(--shbz-kicker)" }}>
             Действия
           </div>
         </div>
@@ -309,8 +310,8 @@ export function TeacherParentCallsList({
             >
               <div
                 className={cx(
-                  "flex flex-col gap-3 py-5 md:grid md:items-center md:gap-6",
-                  isDeveloper ? "md:grid-cols-[1fr_180px_128px]" : "md:grid-cols-[1fr_180px_312px]"
+                  "flex flex-col gap-3 py-5 md:grid md:items-center md:gap-3",
+                  isDeveloper ? "md:grid-cols-[1fr_200px_128px]" : "md:grid-cols-[1fr_200px_308px]"
                 )}
               >
                 <div className="min-w-0">
@@ -329,11 +330,11 @@ export function TeacherParentCallsList({
 
                 {/* Фиксированные колонки (ширины под Montserrat, подписи nowrap):
                     строки-сетки независимы, иначе кнопки гуляют по горизонтали.
-                    Колонка статуса = ширина самого длинного чипа, чип у левого
-                    края; кнопки одной высоты (44px) и прижаты вправо. */}
+                    Чип статуса растянут на колонку и по высоте, радиусу и зазору
+                    (12px) не отличается от кнопок действий — одна линейка. */}
                 <div>{chipFor(student.reminder.state)}</div>
 
-                <div className="flex flex-wrap items-center gap-3 md:justify-end">
+                <div className="flex flex-wrap items-center gap-3 md:flex-nowrap">
                   {!isDeveloper ? (
                     <button
                       type="button"
