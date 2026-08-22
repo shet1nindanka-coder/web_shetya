@@ -6,6 +6,7 @@ import { deleteStudentAction } from "@/actions/student";
 import { AccountPasswordResetButton } from "@/components/account-password-reset-button";
 import { DeleteButton } from "@/components/delete-button";
 import { ShbzSelect } from "@/components/shbz-select";
+import { CopyValue } from "@/components/copy-value";
 import { matchesAccountSearch } from "@/lib/utils";
 
 /*
@@ -62,9 +63,12 @@ function StudentRow({
         <div className="truncate text-base font-bold" style={{ color: "var(--shbz-text-strong)" }}>
           {student.name}
         </div>
-        <div className="truncate text-[13.5px]" style={{ color: "var(--shbz-text-muted)" }}>
-          {student.email}
-        </div>
+        <CopyValue
+          value={student.email}
+          label="Логин"
+          className="-mx-2 px-2 text-[13.5px]"
+          style={{ color: "var(--shbz-text-muted)", minHeight: 36 }}
+        />
         {!hasOwner ? (
           <div className="mt-1 text-[12.5px] font-semibold" style={{ color: "var(--shbz-danger-solid)" }}>
             Без учителя — не виден ни одному учителю. Назначьте владельца.

@@ -4,6 +4,7 @@ import { InterfaceSettingsPanel } from "@/components/interface-settings-panel";
 import { ShbzNumberSearch } from "@/components/shbz-number-search";
 import { ShbzPageHeader } from "@/components/shbz-page-header";
 import { MAX_PASSWORD_LENGTH } from "@/lib/password-policy";
+import { CopyValue } from "@/components/copy-value";
 import { formatDate, MAX_USER_NAME_LENGTH } from "@/lib/utils";
 
 type ResolvedSearchParams = Record<string, string | string[] | undefined>;
@@ -154,12 +155,12 @@ export function AccountSettingsView({ user, notice }: AccountSettingsViewProps) 
                 <span className="mb-[9px] block text-[13px] font-semibold" style={{ color: "var(--shbz-label)" }}>
                   Логин для входа
                 </span>
-                <div
-                  className="shbz-input flex items-center"
-                  style={{ color: "var(--shbz-text-muted)", cursor: "not-allowed", userSelect: "all" }}
-                >
-                  {user.email}
-                </div>
+                <CopyValue
+                  value={user.email}
+                  label="Логин"
+                  className="shbz-input flex w-full"
+                  style={{ color: "var(--shbz-text-muted)" }}
+                />
               </div>
             </div>
 

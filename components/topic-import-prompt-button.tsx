@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useCopy } from "@/lib/animation-hooks";
 import { TOPIC_IMPORT_PROMPT } from "@/lib/topic-import-prompt";
 
 /*
@@ -10,15 +11,15 @@ import { TOPIC_IMPORT_PROMPT } from "@/lib/topic-import-prompt";
  */
 
 export function TopicImportPromptButton() {
-  const [copied, setCopied] = useState(false);
+  // Общий хук копирования (с fallback на textarea) — см. lib/animation-hooks.ts.
+  const { copied: copiedId, copy } = useCopy(2000);
+  const copied = copiedId === "prompt";
   const [failed, setFailed] = useState(false);
 
   async function copyPrompt() {
     try {
-      await navigator.clipboard.writeText(TOPIC_IMPORT_PROMPT);
+      await copy(TOPIC_IMPORT_PROMPT, "prompt");
       setFailed(false);
-      setCopied(true);
-      window.setTimeout(() => setCopied(false), 2000);
     } catch {
       setFailed(true);
     }
@@ -33,11 +34,9 @@ export function TopicImportPromptButton() {
       >
         Скопировать промпт для ИИ
       </button>
-      {copied ? (
-        <span className="text-sm font-semibold" style={{ color: "var(--theme-success-text)" }}>
-          Скопировано
-        </span>
-      ) : null}
+      <span role="status" aria-live="polite" className="text-sm font-semibold" style={{ color: "var(--theme-success-text)" }}>
+        {copied ? "Скопировано" : ""}
+      </span>
       {failed ? (
         <span className="text-sm font-semibold" style={{ color: "var(--theme-danger-text)" }}>
           Браузер не дал доступ к буферу обмена

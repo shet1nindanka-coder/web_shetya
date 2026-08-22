@@ -2,7 +2,8 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
-import { useDialogExit } from "@/lib/animation-hooks";
+import { useCopy, useDialogExit } from "@/lib/animation-hooks";
+import { CopyIcon } from "@/components/copy-value";
 
 /*
  * Всплывающее окно после создания аккаунта: логин и пароль показываются один
@@ -24,6 +25,8 @@ type AccountCredentialsDialogProps = {
 
 export function AccountCredentialsDialog({ title, name, login, password, onClose }: AccountCredentialsDialogProps) {
   const [feedback, setFeedback] = useState<string | null>(null);
+  // Вспышка строки (см. .ui-copy-row): id — подпись строки либо "all" для всего сообщения.
+  const { copied, copy } = useCopy();
   // Адрес сайта известен только в браузере — берём после монтирования.
   const [siteHost, setSiteHost] = useState("");
   const { closing, close } = useDialogExit(onClose);
@@ -55,11 +58,14 @@ export function AccountCredentialsDialog({ title, name, login, password, onClose
 
   const messageText = lines.map((line) => `${line.label}: ${line.value}`).join("\n");
 
-  const copyMessage = () => {
-    navigator.clipboard
-      .writeText(messageText)
-      .then(() => setFeedback("Скопировано — можно вставлять в мессенджер."))
-      .catch(() => setFeedback("Не удалось скопировать — выделите текст вручную."));
+  const copyMessage = async () => {
+    await copy(messageText, "all");
+    setFeedback("Скопировано — можно вставлять в мессенджер.");
+  };
+
+  const copyLine = (label: string, value: string) => {
+    void copy(value, label);
+    setFeedback(`${label} скопирован — можно вставлять.`);
   };
 
   return createPortal(
@@ -93,28 +99,50 @@ export function AccountCredentialsDialog({ title, name, login, password, onClose
           Сообщение для передачи
         </p>
         <div
-          className="mt-2 whitespace-pre-wrap break-all rounded-[12px] border px-4 py-3.5 font-mono text-[14px] leading-[1.85]"
-          style={{ background: "var(--shbz-soft-bg)", borderColor: "var(--shbz-soft-border)" }}
+          className="ui-copy-row mt-2 rounded-[12px] border px-2 py-1.5 font-mono text-[14px]"
+          style={{ background: "var(--shbz-soft-bg)", borderColor: "var(--shbz-soft-border)", cursor: "default" }}
+          data-copied={String(copied === "all")}
         >
-          {lines.map((line, index) => (
-            <span key={line.label}>
-              <span style={{ color: "var(--shbz-kicker)" }}>{line.label}: </span>
-              <span className="font-semibold" style={{ color: "var(--shbz-text-strong)" }}>
-                {line.value}
+          {lines.map((line) => (
+            <div
+              key={line.label}
+              className="ui-copy-row flex items-center gap-2 px-2 py-1.5"
+              data-copied={String(copied === line.label)}
+              role="button"
+              tabIndex={0}
+              title={`Скопировать: ${line.label.toLowerCase()}`}
+              onClick={() => copyLine(line.label, line.value)}
+              onKeyDown={(event) => {
+                if (event.key === "Enter" || event.key === " ") {
+                  event.preventDefault();
+                  copyLine(line.label, line.value);
+                }
+              }}
+            >
+              <span className="min-w-0 break-all">
+                <span style={{ color: "var(--shbz-kicker)" }}>{line.label}: </span>
+                <span className="font-semibold" style={{ color: "var(--shbz-text-strong)" }}>
+                  {line.value}
+                </span>
               </span>
-              {index < lines.length - 1 ? "\n" : null}
-            </span>
+              <CopyIcon className="ui-copy-icon ml-auto" />
+              <span className="ui-copy-pill">Скопировано</span>
+            </div>
           ))}
+          <span className="ui-copy-pill">Скопировано</span>
         </div>
 
-        {feedback ? (
-          <p className="mt-3 text-[13px] font-medium" style={{ color: "var(--shbz-green-text)" }} aria-live="polite">
-            {feedback}
-          </p>
-        ) : null}
+        <p
+          role="status"
+          aria-live="polite"
+          className="mt-3 min-h-[20px] text-[13px] font-medium"
+          style={{ color: "var(--shbz-green-text)" }}
+        >
+          {feedback ?? ""}
+        </p>
 
         <div className="mt-5 flex flex-wrap gap-3">
-          <button type="button" className="shbz-btn-primary shbz-btn-primary--lg" onClick={copyMessage}>
+          <button type="button" className="shbz-btn-primary shbz-btn-primary--lg" onClick={() => void copyMessage()}>
             Скопировать
           </button>
           <button type="button" className="shbz-btn-outline shbz-btn-outline--lg" onClick={close}>

@@ -6,6 +6,7 @@ import { useDialogExit } from "@/lib/animation-hooks";
 import { deleteTeacherAction } from "@/actions/account";
 import { AccountPasswordResetButton } from "@/components/account-password-reset-button";
 import { ShbzSelect } from "@/components/shbz-select";
+import { CopyValue } from "@/components/copy-value";
 import { matchesAccountSearch } from "@/lib/utils";
 
 /*
@@ -212,9 +213,12 @@ function TeacherRow({
         <div className="truncate text-base font-bold" style={{ color: "var(--shbz-text-strong)" }}>
           {teacher.name}
         </div>
-        <div className="truncate text-[13.5px]" style={{ color: "var(--shbz-text-muted)" }}>
-          {teacher.email}
-        </div>
+        <CopyValue
+          value={teacher.email}
+          label="Логин"
+          className="-mx-2 px-2 text-[13.5px]"
+          style={{ color: "var(--shbz-text-muted)", minHeight: 36 }}
+        />
       </div>
 
       <div className="text-[13.5px] font-semibold" style={{ color: "var(--shbz-text-muted)" }}>

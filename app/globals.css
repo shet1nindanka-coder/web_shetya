@@ -4121,3 +4121,52 @@ html[data-theme="dark"] .ui-skeleton::after {
   font-weight: 600;
   line-height: 1;
 }
+
+/* Копирование · вспышка строки со значением (см. lib/animation-hooks.ts → useCopy).
+   Зажигается мгновенно, гаснет 900 мс; пилюля «Скопировано» всплывает над строкой.
+   Анимируем только background-color / opacity / transform. */
+@keyframes copy-flash {
+  0%   { background-color: var(--theme-accent-soft-hover); }
+  100% { background-color: var(--theme-surface); }
+}
+
+.ui-copy-row {
+  position: relative;
+  min-height: 44px;          /* палец на мобильном */
+  cursor: pointer;
+  border-radius: var(--radius-lg);
+}
+.ui-copy-row[data-copied="true"] { animation: copy-flash 900ms var(--ease-out); }
+
+.ui-copy-pill {
+  position: absolute;
+  left: 50%;
+  bottom: calc(100% + 8px);
+  opacity: 0;
+  transform: translate(-50%, 4px);
+  transition: opacity 220ms ease, transform 260ms var(--anim-spring);
+  pointer-events: none;
+  white-space: nowrap;
+  border-radius: var(--radius-full);
+  /* ШБЗ: вид пилюли — как у чёрной подложки таббара, читается в обеих темах */
+  padding: 5px 11px;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1;
+  color: var(--shbz-tab-active-text, #fff);
+  background: var(--shbz-tab-active-bg, #0a0a0a);
+  box-shadow: 0 4px 12px rgba(10, 10, 10, 0.18);
+  z-index: 2;
+}
+.ui-copy-row[data-copied="true"] .ui-copy-pill { opacity: 1; transform: translate(-50%, 0); }
+
+/* ШБЗ: иконка копирования подсвечивается при наведении на строку */
+.ui-copy-icon { flex: none; opacity: 0.55; transition: opacity 180ms ease; }
+.ui-copy-row:hover .ui-copy-icon,
+.ui-copy-row:focus-visible .ui-copy-icon { opacity: 1; }
+.ui-copy-row:focus-visible { outline: 2px solid var(--shbz-accent-solid, #16b07e); outline-offset: 2px; }
+
+@media (prefers-reduced-motion: reduce) {
+  .ui-copy-row[data-copied="true"] { animation: none; }
+  .ui-copy-pill { transition: none; }
+}

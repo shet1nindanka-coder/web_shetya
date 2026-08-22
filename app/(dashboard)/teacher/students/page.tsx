@@ -3,6 +3,7 @@ import { UserRole } from "@prisma/client";
 import { deleteStudentAction } from "@/actions/student";
 import { StudentPasswordResetButton } from "@/components/student-password-reset-button";
 import { DeleteButton } from "@/components/delete-button";
+import { CopyValue } from "@/components/copy-value";
 import { StudentCreateForm } from "@/components/student-create-form";
 import { ShbzNumberSearch } from "@/components/shbz-number-search";
 import { ShbzPageHeader } from "@/components/shbz-page-header";
@@ -176,9 +177,12 @@ export default async function TeacherStudentsPage({ searchParams }: TeacherStude
                 <div className="min-w-0 truncate text-base font-bold" style={{ color: "var(--shbz-text-strong)" }}>
                   {student.name}
                 </div>
-                <div className="min-w-0 truncate text-[15px]" style={{ color: "var(--shbz-text-muted)" }}>
-                  {student.email}
-                </div>
+                <CopyValue
+                  value={student.email}
+                  label="Логин"
+                  className="min-w-0 -mx-2 px-2 text-[15px]"
+                  style={{ color: "var(--shbz-text-muted)" }}
+                />
                 <div className="flex flex-wrap items-center gap-2.5 md:justify-end">
                   <Link
                     href={`/teacher/students/${student.id}`}
