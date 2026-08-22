@@ -71,7 +71,7 @@ export function StudentCreateForm() {
       }}
     >
       <div className="flex flex-wrap items-start gap-4">
-        <label className="min-w-[200px] flex-1">
+        <label className="min-w-[220px] flex-1">
           <span className="mb-[9px] block text-[13px] font-semibold" style={{ color: "var(--shbz-label)" }}>
             Имя ученика
           </span>
@@ -85,7 +85,7 @@ export function StudentCreateForm() {
               setSuggestedPassword(null);
               setIsSuggestOpen(false);
             }}
-            placeholder="Например, Мария Смирнова"
+            placeholder="Мария Смирнова"
             className="shbz-input"
             required
             autoComplete="name"
@@ -93,7 +93,7 @@ export function StudentCreateForm() {
           />
         </label>
 
-        <label className="min-w-[200px] flex-1">
+        <label className="min-w-[220px] flex-1">
           <span className="mb-[9px] block text-[13px] font-semibold" style={{ color: "var(--shbz-label)" }}>
             Логин ученика
           </span>
@@ -112,7 +112,7 @@ export function StudentCreateForm() {
           />
         </label>
 
-        <label className="min-w-[200px] flex-1">
+        <label className="min-w-[220px] flex-1">
           <span className="mb-[9px] block text-[13px] font-semibold" style={{ color: "var(--shbz-label)" }}>
             Пароль
           </span>
@@ -133,7 +133,7 @@ export function StudentCreateForm() {
                 setIsSuggestOpen(true);
               }
             }}
-            placeholder="От 8 символов, буквы и цифры"
+            placeholder="Минимум 8 символов"
             className="shbz-input"
             style={
               passwordError
@@ -181,7 +181,7 @@ export function StudentCreateForm() {
           <span className="mb-[9px] block text-[13px] font-semibold opacity-0" aria-hidden="true">
             {"\u00A0"}
           </span>
-          <button type="submit" disabled={isSubmitDisabled} className="shbz-btn-primary h-[52px] px-[26px] text-[15px]">
+          <button type="submit" disabled={isSubmitDisabled} className="shbz-btn-primary inline-flex h-[52px] items-center px-[26px] text-[15px] leading-none">
             {isPending ? "Создаём..." : "Добавить ученика"}
           </button>
         </div>

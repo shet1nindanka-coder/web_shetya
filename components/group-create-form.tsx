@@ -20,7 +20,7 @@ export function GroupCreateForm() {
           maxLength={120}
           value={name}
           onChange={(event) => setName(event.target.value)}
-          placeholder="Например: 9 класс, ОГЭ по субботам"
+          placeholder="9 класс, ОГЭ по субботам"
           className="shbz-input"
         />
       </label>
@@ -38,7 +38,7 @@ export function GroupCreateForm() {
         <button
           type="submit"
           disabled={!name.trim()}
-          className="shbz-btn-primary h-[52px] px-[26px] text-[15px]"
+          className="shbz-btn-primary inline-flex h-[52px] items-center px-[26px] text-[15px] leading-none"
         >
           Создать группу
         </button>

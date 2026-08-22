@@ -1,4 +1,5 @@
 import { UserRole } from "@prisma/client";
+import { ShbzNumberSearch } from "@/components/shbz-number-search";
 import { ShbzPageHeader } from "@/components/shbz-page-header";
 import { TeacherParentCallsList } from "@/components/teacher-parent-calls-list";
 import { requireUser } from "@/lib/auth";
@@ -43,7 +44,7 @@ export default async function TeacherCallsPage({ searchParams }: TeacherCallsPag
 
   return (
     <div>
-      <ShbzPageHeader kicker="Звонки" title="Звонки родителям" />
+      <ShbzPageHeader kicker="Звонки" title="Звонки родителям" aside={<ShbzNumberSearch endpoint="/api/teacher/topics/find-number" />} />
       <TeacherParentCallsList
         students={students}
         isDeveloper={isDeveloper}
