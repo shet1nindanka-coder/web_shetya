@@ -136,7 +136,8 @@ export function DashboardNav({ user }: DashboardNavProps) {
   const closeMobile = useCallback(() => setMobileOpen(false), []);
 
   // A02: чёрная подложка таббара переезжает между разделами, а не перекрашивается.
-  const activeTabIndex = Math.max(0, tabbarItems.findIndex((item) => item.match(pathname, searchParams)));
+  // -1 — ни одна вкладка не активна (настройки и прочие страницы вне таббара).
+  const activeTabIndex = tabbarItems.findIndex((item) => item.match(pathname, searchParams));
   const { shellRef: tabbarRef, indicatorProps: tabbarIndicator } = useTabIndicator<HTMLElement>(activeTabIndex);
 
   useEffect(() => {

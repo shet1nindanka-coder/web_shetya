@@ -56,6 +56,9 @@ export function useCountUp(target: number, ms = 600, decimals = 0): number {
    </nav>
    ШБЗ: помимо --tab-x/--tab-w выставляются --tab-y/--tab-h — сегменты
    переносятся на вторую строку на узких экранах.
+   ШБЗ: activeIndex < 0 — «ничего не выбрано» (например, страница настроек,
+   которой нет в таббаре): подложка схлопывается и прячется, а не прыгает
+   на первую вкладку.
    ---------------------------------------------------------------------------- */
 type TabIndicatorStyle = { "--tab-x": string; "--tab-y": string; "--tab-w": string; "--tab-h": string };
 
@@ -74,6 +77,10 @@ export function useTabIndicator<T extends HTMLElement = HTMLElement>(activeIndex
     if (!shell) return;
 
     const measure = () => {
+      if (activeIndex < 0) {
+        setStyle((prev) => ({ ...prev, "--tab-w": "0px", "--tab-h": "0px" }));
+        return;
+      }
       const tab = shell.querySelector<HTMLElement>(`[data-tab-index="${activeIndex}"]`);
       if (!tab) return;
       setStyle({
@@ -93,7 +100,12 @@ export function useTabIndicator<T extends HTMLElement = HTMLElement>(activeIndex
 
   return {
     shellRef,
-    indicatorProps: { style: style as CSSProperties, "data-ready": String(ready), "aria-hidden": true as const }
+    indicatorProps: {
+      style: style as CSSProperties,
+      "data-ready": String(ready),
+      "data-empty": String(activeIndex < 0),
+      "aria-hidden": true as const
+    }
   };
 }
 

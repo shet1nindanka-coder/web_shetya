@@ -3677,6 +3677,7 @@ html[data-theme="dark"] .shbz-search input:not([type="checkbox"]):not([type="rad
   z-index: 0;
 }
 .ui-tab-indicator[data-ready="false"] { transition: none; } /* без прыжка на первом кадре */
+.ui-tab-indicator[data-empty="true"] { opacity: 0; } /* ничего не выбрано — подложки нет */
 
 .ui-tab-shell .ui-tab { position: relative; z-index: 1; transition: color 180ms ease; }
 
