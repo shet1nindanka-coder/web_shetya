@@ -161,7 +161,7 @@ function CallForm({ studentId, onClose, onSaved }: CallFormProps) {
           type="button"
           disabled={isSaving}
           onClick={() => void submit()}
-          className="shbz-btn-primary px-5 py-[11px] text-sm disabled:cursor-not-allowed"
+          className="shbz-btn-primary inline-flex h-11 items-center px-5 text-sm disabled:cursor-not-allowed"
         >
           {isSaving ? "Сохраняем…" : "Сохранить звонок"}
         </button>
@@ -272,16 +272,16 @@ export function TeacherParentCallsList({
       <div className="shbz-card px-7 py-2">
         <div
           className={cx(
-            "hidden items-center gap-5 border-b py-[18px] md:grid",
-            isDeveloper ? "md:grid-cols-[1fr_208px_140px]" : "md:grid-cols-[1fr_208px_336px]"
+            "hidden items-center gap-6 border-b py-[18px] md:grid",
+            isDeveloper ? "md:grid-cols-[1fr_180px_128px]" : "md:grid-cols-[1fr_180px_312px]"
           )}
           style={{ borderColor: "var(--shbz-soft-border)" }}
         >
           <div className="text-[11px] font-bold uppercase tracking-[1.2px]" style={{ color: "var(--shbz-kicker)" }}>
             Ученик
           </div>
-          {/* Чипы статуса в строках прижаты вправо — подпись колонки тоже. */}
-          <div className="md:text-right text-[11px] font-bold uppercase tracking-[1.2px]" style={{ color: "var(--shbz-kicker)" }}>
+          {/* Чипы статуса в строках начинаются от левого края колонки — подпись тоже. */}
+          <div className="text-[11px] font-bold uppercase tracking-[1.2px]" style={{ color: "var(--shbz-kicker)" }}>
             Статус
           </div>
           <div className="text-right text-[11px] font-bold uppercase tracking-[1.2px]" style={{ color: "var(--shbz-kicker)" }}>
@@ -309,8 +309,8 @@ export function TeacherParentCallsList({
             >
               <div
                 className={cx(
-                  "flex flex-col gap-3 py-5 md:grid md:items-center md:gap-5",
-                  isDeveloper ? "md:grid-cols-[1fr_208px_140px]" : "md:grid-cols-[1fr_208px_336px]"
+                  "flex flex-col gap-3 py-5 md:grid md:items-center md:gap-6",
+                  isDeveloper ? "md:grid-cols-[1fr_180px_128px]" : "md:grid-cols-[1fr_180px_312px]"
                 )}
               >
                 <div className="min-w-0">
@@ -328,17 +328,19 @@ export function TeacherParentCallsList({
                 </div>
 
                 {/* Фиксированные колонки (ширины под Montserrat, подписи nowrap):
-                    строки-сетки независимы, иначе кнопки гуляют по горизонтали. */}
-                <div className="md:text-right">{chipFor(student.reminder.state)}</div>
+                    строки-сетки независимы, иначе кнопки гуляют по горизонтали.
+                    Колонка статуса = ширина самого длинного чипа, чип у левого
+                    края; кнопки одной высоты (44px) и прижаты вправо. */}
+                <div>{chipFor(student.reminder.state)}</div>
 
-                <div className="flex flex-wrap items-center gap-2.5 md:justify-end">
+                <div className="flex flex-wrap items-center gap-3 md:justify-end">
                   {!isDeveloper ? (
                     <button
                       type="button"
                       disabled={isRefreshing}
                       onClick={() => togglePanel(student.studentId, "form")}
                       aria-expanded={open === "form"}
-                      className="shbz-btn-primary px-5 py-[11px] text-sm disabled:cursor-not-allowed"
+                      className="shbz-btn-primary inline-flex h-11 items-center px-5 text-sm disabled:cursor-not-allowed"
                       style={{ boxShadow: "0 5px 14px var(--shbz-accent-shadow)" }}
                     >
                       Записать звонок
@@ -349,7 +351,7 @@ export function TeacherParentCallsList({
                     disabled={student.totalCalls === 0}
                     onClick={() => togglePanel(student.studentId, "history")}
                     aria-expanded={open === "history"}
-                    className="shbz-btn-outline min-w-[128px] text-center disabled:cursor-not-allowed disabled:opacity-55"
+                    className="shbz-btn-outline inline-flex h-11 min-w-[128px] items-center justify-center disabled:cursor-not-allowed disabled:opacity-55"
                   >
                     История ({student.totalCalls > 0 ? student.totalCalls : "—"})
                   </button>

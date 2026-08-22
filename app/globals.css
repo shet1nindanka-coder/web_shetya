@@ -2517,14 +2517,15 @@ html[data-theme="dark"] .shbz-btn-dark:hover { filter: brightness(0.85); }
 }
 .shbz-textarea::placeholder { color: var(--shbz-placeholder); }
 
+/* Те же габариты, что у .shbz-chip — в одной колонке таблицы чипы одной высоты. */
 .shbz-badge-muted {
   display: inline-block;
-  padding: 8px 14px;
+  padding: 6px 13px;
   border-radius: 8px;
   background: var(--shbz-tab-hover);
   color: var(--shbz-kicker);
-  font-size: 13px;
-  font-weight: 500;
+  font-size: 12.5px;
+  font-weight: 600;
 }
 
 .shbz-btn-danger-solid {
