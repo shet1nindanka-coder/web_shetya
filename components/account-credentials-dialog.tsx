@@ -110,7 +110,7 @@ export function AccountCredentialsDialog({ title, name, login, password, onClose
         ) : null}
 
         <div className="mt-5 flex flex-wrap gap-3">
-          <button type="button" className="shbz-btn-primary px-[26px] py-[13px] text-[15px]" onClick={copyMessage}>
+          <button type="button" className="shbz-btn-primary shbz-btn-primary--lg" onClick={copyMessage}>
             Скопировать
           </button>
           <button type="button" className="shbz-btn-outline shbz-btn-outline--lg" onClick={onClose}>

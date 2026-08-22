@@ -4,9 +4,11 @@ import { UserRole } from "@prisma/client";
 import { deleteGroupAction, renameGroupAction } from "@/actions/group";
 import { DeleteButton } from "@/components/delete-button";
 import { GroupMembersManager } from "@/components/group-members-manager";
+import { GroupStatisticsSection } from "@/components/group-statistics-section";
 import { ShbzNumberSearch } from "@/components/shbz-number-search";
 import { ShbzPageHeader } from "@/components/shbz-page-header";
 import { requireUser } from "@/lib/auth";
+import { getGroupStatistics } from "@/lib/group-statistics-data";
 import { getGroupDetail, getTeacherLessons } from "@/lib/platform-data";
 import { formatDateTime } from "@/lib/utils";
 
@@ -35,7 +37,10 @@ export default async function GroupDetailPage({ params, searchParams }: GroupDet
     notFound();
   }
 
-  const groupLessons = (await getTeacherLessons(user)).filter((lesson) => lesson.groupId === groupId);
+  const [groupLessons, groupStats] = await Promise.all([
+    getTeacherLessons(user).then((lessons) => lessons.filter((lesson) => lesson.groupId === groupId)),
+    getGroupStatistics(user, group.members.map((member) => ({ id: member.id, name: member.name })))
+  ]);
 
   const noticeKey =
     typeof resolvedSearchParams.groupCreated === "string"
@@ -59,7 +64,7 @@ export default async function GroupDetailPage({ params, searchParams }: GroupDet
       <div className="mb-8 flex flex-wrap items-center gap-2.5">
         <Link
           href={`${prefix}/lessons/new?groupId=${group.id}`}
-          className="shbz-btn-primary inline-block px-[26px] py-[13px] text-[15px] no-underline"
+          className="shbz-btn-primary shbz-btn-primary--lg inline-block no-underline"
         >
           Составить урок
         </Link>
@@ -99,6 +104,13 @@ export default async function GroupDetailPage({ params, searchParams }: GroupDet
             }))}
             allStudents={group.allStudents}
           />
+        </div>
+      </section>
+
+      <section className="mt-11">
+        <h2 className="shbz-section-title">Статистика группы</h2>
+        <div className="shbz-card shbz-section-pad">
+          <GroupStatisticsSection stats={groupStats} prefix={prefix} />
         </div>
       </section>
 

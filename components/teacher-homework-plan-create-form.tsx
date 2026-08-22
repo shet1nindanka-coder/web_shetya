@@ -202,7 +202,7 @@ export function TeacherHomeworkPlanCreateForm({
       <button
         type="submit"
         disabled={isPending || selectedStudentIds.length === 0}
-        className="shbz-btn-primary px-[26px] py-[13px] text-[15px]"
+        className="shbz-btn-primary shbz-btn-primary--lg"
       >
         <span className="inline-flex items-center gap-2.5">
           {isPending ? <span className="shbz-spinner" aria-hidden /> : null}

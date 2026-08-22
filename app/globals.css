@@ -1682,6 +1682,7 @@ html[data-theme="dark"] .student-virtual-scroll::-webkit-scrollbar-thumb {
    ─────────────────────────────────────────────── */
 :root {
   --shbz-field-h: 52px;    /* высота полей ввода и парных к ним кнопок */
+  --shbz-btn-h: 44px;      /* высота обычных кнопок действий */
   --brand: #16c79f;        /* фирменный цвет, основной */
   --brand-deep: #0e9b80;   /* тот же цвет для мелкого кегля и печати */
   --ink: #0a0a0a;          /* знак ШБЗ */
@@ -1826,6 +1827,24 @@ html[data-theme="dark"] {
   outline: none;
 }
 .shbz-input::placeholder { color: var(--shbz-placeholder); }
+
+/* Единая геометрия кнопок действий: 44px, один кегль 14px, подпись по центру.
+   Вертикальные py-* в разметке не влияют на высоту — только горизонтальные
+   отступы. Варианты --lg (48px) и --field (высота поля) переопределяют ниже. */
+.shbz-btn-primary,
+.shbz-btn-outline,
+.shbz-btn-dark,
+.shbz-btn-danger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: var(--shbz-btn-h);
+  padding-top: 0;
+  padding-bottom: 0;
+  font-size: 14px;
+  line-height: 1;
+}
+html[data-density="compact"] { --shbz-btn-h: 40px; }
 
 .shbz-btn-primary {
   border: none;
@@ -2042,12 +2061,11 @@ html[data-theme="dark"] {
 }
 
 .shbz-btn-outline {
-  padding: 9px 16px;
+  padding: 0 16px;
   border: 1.5px solid var(--shbz-outline-border);
   border-radius: 12px;
   background: var(--shbz-card-bg);
   font-family: inherit;
-  font-size: 13.5px;
   font-weight: 600;
   color: var(--shbz-tab-text);
   cursor: pointer;
@@ -2060,8 +2078,10 @@ html[data-theme="dark"] {
 }
 
 /* Парная кнопка к .shbz-btn-primary px-[26px] py-[13px] text-[15px]: совпадает по высоте */
-.shbz-btn-outline--lg {
-  padding: 11.5px 24px;
+.shbz-btn-outline--lg,
+.shbz-btn-primary--lg {
+  height: 48px;
+  padding: 0 24px;
   font-size: 15px;
 }
 
@@ -2187,6 +2207,16 @@ html[data-theme="dark"] {
   border-radius: 8px;
   font-size: 12.5px;
   font-weight: 700;
+}
+/* Чип в строке таблицы рядом с кнопками: та же высота и кегль, подпись по центру. */
+.shbz-chip--row {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: var(--shbz-btn-h);
+  padding: 0 16px;
+  font-size: 14px;
+  font-weight: 600;
 }
 .shbz-chip-green { background: var(--shbz-green-soft); color: var(--shbz-green-text); }
 .shbz-chip-yellow { background: var(--shbz-yellow-soft); color: var(--shbz-yellow-text); }
@@ -2365,7 +2395,7 @@ html[data-theme="dark"] {
 
 .shbz-btn-dark {
   flex-shrink: 0;
-  padding: 12px 22px;
+  padding: 0 22px;
   border: 1.5px solid transparent;
   border-radius: 12px;
   background: var(--shbz-tab-active-bg);
@@ -2384,7 +2414,7 @@ html[data-theme="dark"] .shbz-btn-dark:hover { filter: brightness(0.85); }
 }
 
 .shbz-btn-danger {
-  padding: 11px 20px;
+  padding: 0 20px;
   border: 1.5px solid var(--shbz-danger-outline);
   border-radius: 12px;
   background: var(--shbz-card-bg);
@@ -3195,7 +3225,8 @@ html[data-theme="dark"] .shbz-search input:not([type="checkbox"]):not([type="rad
 }
 
 .shbz-btn-danger--sm {
-  padding: 7px 14px;
+  height: 36px;
+  padding: 0 14px;
   font-size: 13px;
   border-radius: 10px;
 }

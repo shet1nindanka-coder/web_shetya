@@ -181,7 +181,7 @@ export function AccountPasswordResetButton({ userId, userName, target, className
                     <button
                       type="submit"
                       disabled={isSubmitDisabled}
-                      className="shbz-btn-primary px-[26px] py-[13px] text-[15px]"
+                      className="shbz-btn-primary shbz-btn-primary--lg"
                     >
                       {isPending ? "Сохраняем..." : "Сменить пароль"}
                     </button>

@@ -33,14 +33,14 @@ const DATE_TIME_FORMAT = new Intl.DateTimeFormat("ru-RU", {
 
 function chipFor(state: ParentCallStudentOverview["reminder"]["state"]) {
   if (state === "overdue") {
-    return <span className="shbz-chip shbz-chip-red inline-flex h-11 items-center">Просрочено</span>;
+    return <span className="shbz-chip shbz-chip--row shbz-chip-red">Просрочено</span>;
   }
 
   if (state === "due") {
-    return <span className="shbz-chip shbz-chip-yellow inline-flex h-11 items-center">Пора позвонить</span>;
+    return <span className="shbz-chip shbz-chip--row shbz-chip-yellow">Пора позвонить</span>;
   }
 
-  return <span className="shbz-badge-muted inline-flex h-11 items-center">Созвонились недавно</span>;
+  return <span className="shbz-badge-muted shbz-chip--row">Созвонились недавно</span>;
 }
 
 function metaFor(student: ParentCallStudentOverview) {
@@ -161,7 +161,7 @@ function CallForm({ studentId, onClose, onSaved }: CallFormProps) {
           type="button"
           disabled={isSaving}
           onClick={() => void submit()}
-          className="shbz-btn-primary inline-flex h-11 items-center px-5 text-sm disabled:cursor-not-allowed"
+          className="shbz-btn-primary px-5 disabled:cursor-not-allowed"
         >
           {isSaving ? "Сохраняем…" : "Сохранить звонок"}
         </button>
@@ -340,7 +340,7 @@ export function TeacherParentCallsList({
                       disabled={isRefreshing}
                       onClick={() => togglePanel(student.studentId, "form")}
                       aria-expanded={open === "form"}
-                      className="shbz-btn-primary inline-flex h-11 items-center px-5 text-sm disabled:cursor-not-allowed"
+                      className="shbz-btn-primary px-5 disabled:cursor-not-allowed"
                       style={{ boxShadow: "0 5px 14px var(--shbz-accent-shadow)" }}
                     >
                       Записать звонок
@@ -351,7 +351,7 @@ export function TeacherParentCallsList({
                     disabled={student.totalCalls === 0}
                     onClick={() => togglePanel(student.studentId, "history")}
                     aria-expanded={open === "history"}
-                    className="shbz-btn-outline inline-flex h-11 min-w-[128px] items-center justify-center disabled:cursor-not-allowed disabled:opacity-55"
+                    className="shbz-btn-outline min-w-[128px] disabled:cursor-not-allowed disabled:opacity-55"
                   >
                     История ({student.totalCalls > 0 ? student.totalCalls : "—"})
                   </button>

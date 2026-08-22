@@ -207,7 +207,7 @@ export function AccountStudentsManager({ students, teachers, searchQuery = "" }:
           type="button"
           onClick={save}
           disabled={changes.length === 0 || isPending}
-          className="shbz-btn-primary px-[26px] py-[13px] text-[15px] disabled:cursor-not-allowed"
+          className="shbz-btn-primary shbz-btn-primary--lg disabled:cursor-not-allowed"
         >
           {isPending ? "Сохраняем..." : "Сохранить изменения"}
         </button>

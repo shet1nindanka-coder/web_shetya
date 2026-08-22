@@ -164,7 +164,7 @@ export function AccountSettingsView({ user, notice }: AccountSettingsViewProps) 
             </div>
 
             <div className="flex flex-wrap items-center gap-3">
-              <button type="submit" className="shbz-btn-primary px-[26px] py-[13px] text-[15px]">
+              <button type="submit" className="shbz-btn-primary shbz-btn-primary--lg">
                 Сохранить
               </button>
               <p className="ui-hint text-sm" style={{ color: "var(--shbz-text-muted)" }}>
@@ -232,7 +232,7 @@ export function AccountSettingsView({ user, notice }: AccountSettingsViewProps) 
             </div>
 
             <div className="flex flex-wrap items-center gap-3">
-              <button type="submit" className="shbz-btn-primary px-[26px] py-[13px] text-[15px]">
+              <button type="submit" className="shbz-btn-primary shbz-btn-primary--lg">
                 Обновить пароль
               </button>
               <p className="ui-hint text-sm" style={{ color: "var(--shbz-text-muted)" }}>

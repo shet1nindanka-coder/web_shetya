@@ -192,7 +192,7 @@ function BroadcastForm({ students }: { students: Array<{ id: string; name: strin
       </div>
 
       <div className="flex flex-wrap items-center gap-3.5">
-        <button type="submit" disabled={pending} className="shbz-btn-primary px-[26px] py-[13px] text-[15px]">
+        <button type="submit" disabled={pending} className="shbz-btn-primary shbz-btn-primary--lg">
           <span className="inline-flex items-center justify-center gap-2.5">
             {pending ? <span className="shbz-spinner" aria-hidden /> : null}
             {pending ? "Отправляем…" : "Отправить уведомление"}
@@ -447,7 +447,7 @@ function SettingsForm({ settings }: { settings: SiteSettings }) {
       </div>
 
       <div className="mt-[26px] flex flex-wrap items-center gap-3.5">
-        <button type="submit" disabled={pending} className="shbz-btn-primary px-[26px] py-[13px] text-[15px]">
+        <button type="submit" disabled={pending} className="shbz-btn-primary shbz-btn-primary--lg">
           <span className="inline-flex items-center justify-center gap-2.5">
             {pending ? <span className="shbz-spinner" aria-hidden /> : null}
             {pending ? "Сохраняем…" : "Сохранить настройки"}
