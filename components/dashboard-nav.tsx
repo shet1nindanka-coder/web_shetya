@@ -7,6 +7,7 @@ import { usePathname, useSearchParams } from "next/navigation";
 import { UserRole } from "@prisma/client";
 import { logoutAction } from "@/actions/auth";
 import { useTabIndicator } from "@/lib/animation-hooks";
+import { roleHome } from "@/lib/utils";
 import { StudentNotificationsBell } from "@/components/student-notifications-bell";
 
 type DashboardNavProps = {
@@ -156,8 +157,9 @@ export function DashboardNav({ user }: DashboardNavProps) {
   return (
     <header className="shbz-topbar">
       <div className="mx-auto flex w-full max-w-[1180px] flex-wrap items-center justify-between gap-x-7 gap-y-5 px-4 py-3.5 sm:px-8">
-        {/* Логотип */}
-        <Logo href="/" size={24} className="shrink-0" />
+        {/* Логотип — сразу на домашнюю роли, а не через «/»: серверный редирект
+            с корня ломал клиентскую навигацию, и подложка таббара прыгала. */}
+        <Logo href={roleHome(user.role)} size={24} className="shrink-0" />
 
         {/* Таббар */}
         {tabbarItems.length > 0 ? (
