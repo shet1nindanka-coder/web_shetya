@@ -1,7 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
 import {
-  EGE_BASE_GRADES,
   EGE_PROFILE_MAX_PRIMARY,
   EGE_PROFILE_MIN_PRIMARY,
   EGE_PROFILE_SCALE,
@@ -32,9 +31,3 @@ test("ОГЭ: разбалловка и диапазоны оценок покр
   bounds.slice(1).forEach((b, i) => assert.equal(b[0], bounds[i][1] + 1));
 });
 
-test("ЕГЭ база: диапазоны оценок покрывают 0–21 без дыр", () => {
-  const bounds = EGE_BASE_GRADES.map((row) => row.range.split("–").map(Number)).sort((a, b) => a[0] - b[0]);
-  assert.equal(bounds[0][0], 0);
-  assert.equal(bounds[bounds.length - 1][1], 21);
-  bounds.slice(1).forEach((b, i) => assert.equal(b[0], bounds[i][1] + 1));
-});

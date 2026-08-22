@@ -26,14 +26,6 @@ export const EGE_PROFILE_TASKS: TaskScoringRow[] = [
   { badge: "4", text: "№ 18 и 19 — по 4 первичных балла" }
 ];
 
-/** ЕГЭ базовая математика: 21 задание по 1 баллу, оценка по первичным. */
-export const EGE_BASE_MAX_PRIMARY = 21;
-export const EGE_BASE_GRADES: GradeRow[] = [
-  { grade: 5, range: "17–21" },
-  { grade: 4, range: "12–16" },
-  { grade: 3, range: "7–11" },
-  { grade: 2, range: "0–6" }
-];
 
 /** ОГЭ математика: 25 заданий, 31 первичный балл, оценка по первичным. */
 export const OGE_MAX_PRIMARY = 31;
