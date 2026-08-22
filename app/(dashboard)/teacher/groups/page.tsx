@@ -73,7 +73,7 @@ export default async function TeacherGroupsPage({ searchParams }: GroupsPageProp
             </p>
           </div>
         ) : (
-          <div className="grid gap-4" style={{ gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))" }}>
+          <div className="ui-enter grid gap-4" style={{ gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))" }}>
             {groups.map((group) => (
               <article key={group.id} className="shbz-card shbz-card-hover p-6">
                 <div className="flex items-start justify-between gap-3">

@@ -159,7 +159,7 @@ export default async function TeacherTopicsPage({ searchParams }: TeacherTopicsP
           return isDeveloper ? (
             <TopicReorderGrid items={data.topics.map((topic, index) => ({ id: topic.id, card: cards[index] }))} />
           ) : (
-            <div className="grid gap-5" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))" }}>
+            <div className="ui-enter grid gap-5" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))" }}>
               {cards}
             </div>
           );

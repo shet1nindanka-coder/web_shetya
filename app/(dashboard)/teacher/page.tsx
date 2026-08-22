@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { UserRole } from "@prisma/client";
+import { CountUpValue } from "@/components/count-up-value";
 import { ShbzNavCard } from "@/components/shbz-nav-card";
 import { ShbzNumberSearch } from "@/components/shbz-number-search";
 import { ShbzPageHeader } from "@/components/shbz-page-header";
@@ -19,8 +20,8 @@ export default async function TeacherPage() {
       title: "Материалы и ответы",
       href: "/teacher/topics",
       stats: [
-        { label: "Темы", value: data.stats.totalTopics },
-        { label: "Номера", value: data.stats.totalNumbers }
+        { label: "Темы", value: <CountUpValue value={data.stats.totalTopics} /> },
+        { label: "Номера", value: <CountUpValue value={data.stats.totalNumbers} /> }
       ]
     },
     {
@@ -28,8 +29,8 @@ export default async function TeacherPage() {
       title: "Аккаунты и прогресс",
       href: "/teacher/students",
       stats: [
-        { label: "Ученики", value: data.stats.totalStudents },
-        { label: "Файлы", value: data.stats.totalFiles }
+        { label: "Ученики", value: <CountUpValue value={data.stats.totalStudents} /> },
+        { label: "Файлы", value: <CountUpValue value={data.stats.totalFiles} /> }
       ]
     },
     {
@@ -37,8 +38,8 @@ export default async function TeacherPage() {
       title: "Связь с родителями",
       href: "/teacher/calls",
       stats: [
-        { label: "Пора позвонить", value: callsDue },
-        { label: "Просрочено", value: callsOverdue }
+        { label: "Пора позвонить", value: <CountUpValue value={callsDue} /> },
+        { label: "Просрочено", value: <CountUpValue value={callsOverdue} /> }
       ]
     }
   ];
@@ -51,7 +52,7 @@ export default async function TeacherPage() {
         aside={<ShbzNumberSearch endpoint="/api/teacher/topics/find-number" />}
       />
 
-      <div className="grid gap-5" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))" }}>
+      <div className="ui-enter grid gap-5" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))" }}>
         {cards.map((card) => (
           <ShbzNavCard
             key={card.kicker}

@@ -5,6 +5,7 @@ import { createPortal } from "react-dom";
 import { useRouter } from "next/navigation";
 import type { StudentNotification } from "@/lib/notifications";
 import { STUDENT_NOTIFICATIONS_REALTIME_EVENT } from "@/lib/student-notifications-realtime";
+import { useBump, useFreshMarks } from "@/lib/animation-hooks";
 
 function formatNotificationTime(value: string) {
   const date = new Date(value);
@@ -25,7 +26,10 @@ function formatNotificationTime(value: string) {
     date.getMonth() === now.getMonth() &&
     date.getDate() === now.getDate();
 
-  const time = new Intl.DateTimeFormat("ru-RU", { hour: "2-digit", minute: "2-digit" }).format(date);
+  const time = new Intl.DateTimeFormat("ru-RU", {
+    hour: "2-digit",
+    minute: "2-digit",
+  }).format(date);
 
   if (sameDay) {
     return `сегодня, ${time}`;
@@ -43,46 +47,80 @@ type StudentNotificationsBellProps = {
   endpoint?: string;
 };
 
-export function StudentNotificationsBell({ endpoint = "/api/student/notifications" }: StudentNotificationsBellProps) {
+export function StudentNotificationsBell({
+  endpoint = "/api/student/notifications",
+}: StudentNotificationsBellProps) {
   const router = useRouter();
   const [isOpen, setIsOpen] = useState(false);
   const [notifications, setNotifications] = useState<StudentNotification[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
-  const [menuPosition, setMenuPosition] = useState<{ top: number; left: number; width: number } | null>(null);
+  // A11: до первого ответа сервера в панели лежит скелетон той же геометрии.
+  const [isLoaded, setIsLoaded] = useState(false);
+  // A10: подсветка строк, пришедших по живому каналу при открытой вкладке,
+  // и pop счётчика при его росте. Первая загрузка и ручное обновление не подсвечиваются.
+  const { isFresh, markFresh } = useFreshMarks();
+  const bumped = useBump(unreadCount);
+  const knownIdsRef = useRef<Set<string> | null>(null);
+  const [menuPosition, setMenuPosition] = useState<{
+    top: number;
+    left: number;
+    width: number;
+  } | null>(null);
   const triggerRef = useRef<HTMLButtonElement | null>(null);
   const panelRef = useRef<HTMLDivElement | null>(null);
 
-  const load = useCallback(async () => {
-    try {
-      const response = await fetch(endpoint, { cache: "no-store" });
+  const load = useCallback(
+    async (options?: { fromRealtime?: boolean }) => {
+      try {
+        const response = await fetch(endpoint, { cache: "no-store" });
 
-      if (!response.ok) {
-        return;
+        if (!response.ok) {
+          return;
+        }
+
+        const payload = (await response.json()) as {
+          notifications?: StudentNotification[];
+          unreadCount?: number;
+        };
+        const next = payload.notifications ?? [];
+
+        // Помечаем «свежими» только записи, которых не было в прошлом списке,
+        // и только когда обновление пришло по каналу (не первая загрузка).
+        if (options?.fromRealtime && knownIdsRef.current) {
+          for (const notification of next) {
+            if (!knownIdsRef.current.has(notification.id)) {
+              markFresh(notification.id);
+            }
+          }
+        }
+
+        knownIdsRef.current = new Set(
+          next.map((notification) => notification.id),
+        );
+        setNotifications(next);
+        setUnreadCount(payload.unreadCount ?? 0);
+        setIsLoaded(true);
+      } catch {
+        // сеть могла прерваться — показываем прошлые данные
       }
-
-      const payload = (await response.json()) as {
-        notifications?: StudentNotification[];
-        unreadCount?: number;
-      };
-
-      setNotifications(payload.notifications ?? []);
-      setUnreadCount(payload.unreadCount ?? 0);
-    } catch {
-      // сеть могла прерваться — показываем прошлые данные
-    }
-  }, [endpoint]);
+    },
+    [endpoint, markFresh],
+  );
 
   useEffect(() => {
     void load();
 
     const onRealtime = () => {
-      void load();
+      void load({ fromRealtime: true });
     };
 
     window.addEventListener(STUDENT_NOTIFICATIONS_REALTIME_EVENT, onRealtime);
 
     return () => {
-      window.removeEventListener(STUDENT_NOTIFICATIONS_REALTIME_EVENT, onRealtime);
+      window.removeEventListener(
+        STUDENT_NOTIFICATIONS_REALTIME_EVENT,
+        onRealtime,
+      );
     };
   }, [load]);
 
@@ -95,7 +133,10 @@ export function StudentNotificationsBell({ endpoint = "/api/student/notification
 
     const rect = trigger.getBoundingClientRect();
     const width = Math.min(340, window.innerWidth - 16);
-    const left = Math.min(Math.max(8, rect.right - width), window.innerWidth - width - 8);
+    const left = Math.min(
+      Math.max(8, rect.right - width),
+      window.innerWidth - width - 8,
+    );
 
     setMenuPosition({ top: rect.bottom + 10, left, width });
   }, []);
@@ -115,7 +156,10 @@ export function StudentNotificationsBell({ endpoint = "/api/student/notification
         return;
       }
 
-      if (triggerRef.current?.contains(target) || panelRef.current?.contains(target)) {
+      if (
+        triggerRef.current?.contains(target) ||
+        panelRef.current?.contains(target)
+      ) {
         return;
       }
 
@@ -146,14 +190,17 @@ export function StudentNotificationsBell({ endpoint = "/api/student/notification
   const markAllRead = useCallback(async () => {
     setUnreadCount(0);
     setNotifications((current) =>
-      current.map((notification) => ({ ...notification, readAt: notification.readAt ?? new Date().toISOString() }))
+      current.map((notification) => ({
+        ...notification,
+        readAt: notification.readAt ?? new Date().toISOString(),
+      })),
     );
 
     try {
       await fetch(endpoint, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({})
+        body: JSON.stringify({}),
       });
     } catch {
       // не критично
@@ -168,15 +215,17 @@ export function StudentNotificationsBell({ endpoint = "/api/student/notification
         setUnreadCount((current) => Math.max(0, current - 1));
         setNotifications((current) =>
           current.map((entry) =>
-            entry.id === notification.id ? { ...entry, readAt: new Date().toISOString() } : entry
-          )
+            entry.id === notification.id
+              ? { ...entry, readAt: new Date().toISOString() }
+              : entry,
+          ),
         );
 
         try {
           await fetch(endpoint, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ notificationId: notification.id })
+            body: JSON.stringify({ notificationId: notification.id }),
           });
         } catch {
           // не критично
@@ -187,7 +236,7 @@ export function StudentNotificationsBell({ endpoint = "/api/student/notification
         router.push(notification.href);
       }
     },
-    [endpoint, router]
+    [endpoint, router],
   );
 
   return (
@@ -196,22 +245,39 @@ export function StudentNotificationsBell({ endpoint = "/api/student/notification
         ref={triggerRef}
         type="button"
         onClick={() => setIsOpen((current) => !current)}
-        aria-label={unreadCount > 0 ? `Уведомления: ${unreadCount} непрочитанных` : "Уведомления"}
+        aria-label={
+          unreadCount > 0
+            ? `Уведомления: ${unreadCount} непрочитанных`
+            : "Уведомления"
+        }
         aria-expanded={isOpen}
         className="relative flex h-10 w-10 items-center justify-center rounded-full border-[1.5px] transition-colors"
         style={{
-          borderColor: isOpen ? "var(--shbz-outline-hover)" : "var(--shbz-outline-border)",
+          borderColor: isOpen
+            ? "var(--shbz-outline-hover)"
+            : "var(--shbz-outline-border)",
           background: "var(--shbz-card-bg)",
-          color: "var(--shbz-text-strong)"
+          color: "var(--shbz-text-strong)",
         }}
       >
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+        <svg
+          width="18"
+          height="18"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="1.9"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+          aria-hidden="true"
+        >
           <path d="M18 8a6 6 0 0 0-12 0c0 7-3 9-3 9h18s-3-2-3-9" />
           <path d="M13.7 21a2 2 0 0 1-3.4 0" />
         </svg>
         {unreadCount > 0 ? (
           <span
-            className="absolute -right-1 -top-1 flex h-[18px] min-w-[18px] items-center justify-center rounded-full px-1 text-[10.5px] font-extrabold text-white"
+            className="rt-badge absolute -right-1 -top-1 flex h-[18px] min-w-[18px] items-center justify-center rounded-full px-1 text-[10.5px] font-extrabold text-white"
+            data-bumped={String(bumped)}
             style={{ background: "var(--shbz-danger-solid)" }}
           >
             {unreadCount > 9 ? "9+" : unreadCount}
@@ -232,14 +298,18 @@ export function StudentNotificationsBell({ endpoint = "/api/student/notification
                 zIndex: 1000,
                 background: "var(--shbz-card-bg)",
                 borderColor: "var(--shbz-card-border)",
-                boxShadow: "0 4px 10px rgba(10,10,10,0.06), 0 20px 48px rgba(10,10,10,0.18)"
+                boxShadow:
+                  "0 4px 10px rgba(10,10,10,0.06), 0 20px 48px rgba(10,10,10,0.18)",
               }}
             >
               <div
                 className="flex items-center justify-between gap-3 border-b px-4 py-3"
                 style={{ borderColor: "var(--shbz-soft-border)" }}
               >
-                <span className="text-sm font-extrabold" style={{ color: "var(--shbz-text-strong)" }}>
+                <span
+                  className="text-sm font-extrabold"
+                  style={{ color: "var(--shbz-text-strong)" }}
+                >
                   Уведомления
                 </span>
                 {unreadCount > 0 ? (
@@ -254,58 +324,98 @@ export function StudentNotificationsBell({ endpoint = "/api/student/notification
                 ) : null}
               </div>
 
-              <div className="max-h-[380px] overflow-y-auto">
-                {notifications.length === 0 ? (
-                  <div className="px-4 py-10 text-center text-sm" style={{ color: "var(--shbz-text-muted)" }}>
-                    Уведомлений нет
-                  </div>
-                ) : (
-                  notifications.map((notification) => (
-                    <button
-                      key={notification.id}
-                      type="button"
-                      onClick={() => void openNotification(notification)}
-                      className="flex w-full items-start gap-2.5 border-b px-4 py-3 text-left transition-colors last:border-b-0"
+              <div
+                className="ui-swap max-h-[380px] overflow-y-auto"
+                data-loading={String(!isLoaded)}
+              >
+                {/* Скелетон повторяет строку уведомления: точка + две строки текста + время. */}
+                <div data-layer="skeleton" aria-hidden="true">
+                  {[0, 1, 2].map((index) => (
+                    <div
+                      key={index}
+                      className="flex items-start gap-2.5 border-b px-4 py-3 last:border-b-0"
                       style={{ borderColor: "var(--shbz-row-border)" }}
-                      onMouseEnter={(event) => {
-                        event.currentTarget.style.background = "var(--shbz-soft-bg)";
-                      }}
-                      onMouseLeave={(event) => {
-                        event.currentTarget.style.background = "transparent";
-                      }}
                     >
-                      <span
-                        aria-hidden
-                        className="mt-[7px] h-2 w-2 shrink-0 rounded-full"
-                        style={{
-                          background: notification.readAt ? "transparent" : "var(--shbz-accent-solid)"
+                      <div className="ui-skeleton mt-[7px] h-2 w-2 shrink-0 rounded-full" />
+                      <div className="min-w-0 flex-1">
+                        <div className="ui-skeleton h-[14px] w-3/4 rounded-full" />
+                        <div className="ui-skeleton mt-1.5 h-3 w-full rounded-full" />
+                        <div className="ui-skeleton mt-2 h-[11px] w-20 rounded-full" />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                <div data-layer="content">
+                  {!isLoaded ? (
+                    <div className="px-4 py-10" aria-hidden="true" />
+                  ) : notifications.length === 0 ? (
+                    <div
+                      className="px-4 py-10 text-center text-sm"
+                      style={{ color: "var(--shbz-text-muted)" }}
+                    >
+                      Уведомлений нет
+                    </div>
+                  ) : (
+                    notifications.map((notification) => (
+                      <button
+                        key={notification.id}
+                        type="button"
+                        onClick={() => void openNotification(notification)}
+                        className={
+                          isFresh(notification.id)
+                            ? "rt-new flex w-full items-start gap-2.5 border-b px-4 py-3 text-left transition-colors last:border-b-0"
+                            : "flex w-full items-start gap-2.5 border-b px-4 py-3 text-left transition-colors last:border-b-0"
+                        }
+                        style={{ borderColor: "var(--shbz-row-border)" }}
+                        onMouseEnter={(event) => {
+                          event.currentTarget.style.background =
+                            "var(--shbz-soft-bg)";
                         }}
-                      />
-                      <span className="min-w-0">
+                        onMouseLeave={(event) => {
+                          event.currentTarget.style.background = "transparent";
+                        }}
+                      >
                         <span
-                          className="block text-[13.5px] leading-snug"
+                          aria-hidden
+                          className="mt-[7px] h-2 w-2 shrink-0 rounded-full"
                           style={{
-                            color: "var(--shbz-text-strong)",
-                            fontWeight: notification.readAt ? 600 : 800
+                            background: notification.readAt
+                              ? "transparent"
+                              : "var(--shbz-accent-solid)",
                           }}
-                        >
-                          {notification.title}
-                        </span>
-                        {notification.body ? (
-                          <span className="mt-0.5 block text-[12.5px] leading-snug" style={{ color: "var(--shbz-text-muted)" }}>
-                            {notification.body}
+                        />
+                        <span className="min-w-0">
+                          <span
+                            className="block text-[13.5px] leading-snug"
+                            style={{
+                              color: "var(--shbz-text-strong)",
+                              fontWeight: notification.readAt ? 600 : 800,
+                            }}
+                          >
+                            {notification.title}
                           </span>
-                        ) : null}
-                        <span className="mt-1 block text-[11.5px] font-semibold" style={{ color: "var(--shbz-kicker)" }}>
-                          {formatNotificationTime(notification.createdAt)}
+                          {notification.body ? (
+                            <span
+                              className="mt-0.5 block text-[12.5px] leading-snug"
+                              style={{ color: "var(--shbz-text-muted)" }}
+                            >
+                              {notification.body}
+                            </span>
+                          ) : null}
+                          <span
+                            className="mt-1 block text-[11.5px] font-semibold"
+                            style={{ color: "var(--shbz-kicker)" }}
+                          >
+                            {formatNotificationTime(notification.createdAt)}
+                          </span>
                         </span>
-                      </span>
-                    </button>
-                  ))
-                )}
+                      </button>
+                    ))
+                  )}
+                </div>
               </div>
             </div>,
-            document.body
+            document.body,
           )
         : null}
     </>

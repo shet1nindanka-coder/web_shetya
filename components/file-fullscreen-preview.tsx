@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { createPortal } from "react-dom";
+import { useDialogExit } from "@/lib/animation-hooks";
 
 /*
  * Кнопка «Предпросмотр»: открывает файл во весь экран поверх страницы
@@ -16,6 +17,7 @@ type FileFullscreenPreviewProps = {
 
 export function FileFullscreenPreview({ fileId, fileName }: FileFullscreenPreviewProps) {
   const [isOpen, setIsOpen] = useState(false);
+  const { closing, close } = useDialogExit(useCallback(() => setIsOpen(false), []));
 
   useEffect(() => {
     if (!isOpen) {
@@ -24,7 +26,7 @@ export function FileFullscreenPreview({ fileId, fileName }: FileFullscreenPrevie
 
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
-        setIsOpen(false);
+        close();
       }
     };
 
@@ -35,7 +37,7 @@ export function FileFullscreenPreview({ fileId, fileName }: FileFullscreenPrevie
       document.body.style.overflow = "";
       window.removeEventListener("keydown", handleKeyDown);
     };
-  }, [isOpen]);
+  }, [isOpen, close]);
 
   return (
     <>
@@ -50,14 +52,16 @@ export function FileFullscreenPreview({ fileId, fileName }: FileFullscreenPrevie
       {isOpen
         ? createPortal(
             <div
-              className="fixed inset-0 z-50 flex flex-col bg-[rgba(15,23,42,0.78)] p-3 backdrop-blur-sm sm:p-6"
-              onClick={() => setIsOpen(false)}
+              data-closing={String(closing)}
+              className="shbz-modal-overlay fixed inset-0 z-50 flex flex-col bg-[rgba(15,23,42,0.78)] p-3 sm:p-6"
+              onClick={close}
             >
               <div
                 role="dialog"
                 aria-modal="true"
                 aria-label={`Предпросмотр файла ${fileName}`}
-                className="shbz-card mx-auto flex h-full w-full max-w-5xl flex-col overflow-hidden p-0"
+                data-closing={String(closing)}
+                className="shbz-modal-card shbz-card mx-auto flex h-full w-full max-w-5xl flex-col overflow-hidden p-0"
                 onClick={(event) => event.stopPropagation()}
               >
                 <div
@@ -73,7 +77,7 @@ export function FileFullscreenPreview({ fileId, fileName }: FileFullscreenPrevie
                     </a>
                     <button
                       type="button"
-                      onClick={() => setIsOpen(false)}
+                      onClick={close}
                       aria-label="Закрыть предпросмотр"
                       className="shbz-btn-outline"
                     >

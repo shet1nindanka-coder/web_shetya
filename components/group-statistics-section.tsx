@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { CountUpValue } from "@/components/count-up-value";
 import type { GroupMemberRow, GroupStatistics } from "@/lib/group-statistics";
 import { cx, formatShortDate } from "@/lib/utils";
 
@@ -149,12 +150,11 @@ export function GroupStatisticsSection({ stats, prefix }: GroupStatisticsSection
 function Stat({ value, label, tone }: { value: number; label: string; tone?: "red" }) {
   return (
     <div className="flex items-baseline gap-1.5 md:block md:text-center">
-      <span
+      <CountUpValue
+        value={value}
         className="text-[17px] font-extrabold"
         style={{ color: tone === "red" ? "var(--shbz-red-text)" : "var(--shbz-text-strong)" }}
-      >
-        {value}
-      </span>
+      />
       <span className="text-[12px] md:hidden" style={{ color: "var(--shbz-text-muted)" }}>
         {label}
       </span>

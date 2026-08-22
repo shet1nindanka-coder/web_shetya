@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState, useTransition } from "react";
+import { useTabIndicator } from "@/lib/animation-hooks";
 import {
   buildProgressTimelineView,
   type TimelineEntry,
@@ -63,15 +64,19 @@ export function ProgressTimelineChart({ entries, selectedStudentName }: Progress
   }, [view]);
 
   const trendArrow = view.trend.direction === "up" ? "↑" : view.trend.direction === "down" ? "↓" : "→";
+  const activeIndex = PERIOD_OPTIONS.findIndex((option) => option.key === period);
+  const { shellRef, indicatorProps } = useTabIndicator<HTMLDivElement>(activeIndex);
 
   return (
     <div>
       <div className="mb-[22px] flex flex-wrap items-center justify-between gap-5">
-        <div className="shbz-seg" style={{ opacity: isPending ? 0.7 : 1 }}>
-          {PERIOD_OPTIONS.map((option) => (
+        <div ref={shellRef} className="shbz-seg ui-tab-shell--live" style={{ opacity: isPending ? 0.7 : 1 }}>
+          <span className="ui-tab-indicator" {...indicatorProps} />
+          {PERIOD_OPTIONS.map((option, index) => (
             <button
               key={option.key}
               type="button"
+              data-tab-index={index}
               className="shbz-seg-btn shbz-seg-btn--plain"
               data-active={option.key === period}
               aria-pressed={option.key === period}

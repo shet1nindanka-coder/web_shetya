@@ -3,8 +3,9 @@
 import { useEffect, useImperativeHandle, useRef, useState, type DragEvent, type ReactNode, type Ref } from "react";
 import { cx } from "@/lib/utils";
 
-/** Визуальная фаза дропзоны. Hover — четвёртое состояние, живёт в чистом CSS (:hover). */
-type DropzonePhase = "idle" | "drag" | "success";
+/** Визуальная фаза дропзоны. Hover — ещё одно состояние, живёт в чистом CSS (:hover).
+ *  uploading приходит снаружи пропсом (A08): зона показывает честный процент XHR. */
+type DropzonePhase = "idle" | "drag" | "success" | "uploading";
 
 export type AnimatedDropzoneHandle = {
   /** Проиграть подтверждение вручную — когда файл выбран кликом, а не дропом. */
@@ -24,6 +25,13 @@ type AnimatedDropzoneProps = {
   subtitle?: ReactNode;
   /** Блокирует реакции на drag и вызов onDropFiles (лимит, идёт загрузка). */
   disabled?: boolean;
+  /** Идёт отправка: зона в состоянии uploading, подтверждение — после confirm(). */
+  uploading?: boolean;
+  /** Процент отправки 0–100 для полосы под подписями (только вместе с uploading). */
+  progress?: number;
+  /** Играть подтверждение сразу при дропе. false — потребитель вызовет confirm() сам
+   *  (когда файл реально загружен). */
+  confirmOnDrop?: boolean;
   /** Обработка брошенных файлов; вызывается сразу — анимация её не задерживает. */
   onDropFiles: (files: FileList) => void;
   /** Классы раскладки конкретной дропзоны (отступы, gap, cursor). */
@@ -50,12 +58,18 @@ export function AnimatedDropzone({
   icon,
   subtitle,
   disabled,
+  uploading = false,
+  progress,
+  confirmOnDrop = true,
   onDropFiles,
   className,
   children,
   ref
 }: AnimatedDropzoneProps) {
-  const [phase, setPhase] = useState<DropzonePhase>("idle");
+  const [ownPhase, setPhase] = useState<DropzonePhase>("idle");
+  // Пока идёт отправка, внешний флаг важнее внутренней машины состояний;
+  // success после неё включается через confirm().
+  const phase: DropzonePhase = uploading && ownPhase !== "success" ? "uploading" : ownPhase;
   const dragDepth = useRef(0);
   const successTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -127,7 +141,12 @@ export function AnimatedDropzone({
 
     // Сначала обработка файлов, потом визуальное подтверждение.
     onDropFiles(event.dataTransfer.files);
-    celebrate();
+
+    if (confirmOnDrop) {
+      celebrate();
+    } else {
+      setPhase("idle");
+    }
   };
 
   return (
@@ -182,6 +201,20 @@ export function AnimatedDropzone({
       </span>
 
       {subtitle}
+
+      {progress !== undefined ? (
+        <span
+          className="ui-upload-bar"
+          role="progressbar"
+          aria-valuemin={0}
+          aria-valuemax={100}
+          aria-valuenow={Math.max(0, Math.min(100, progress))}
+          aria-label="Отправка файлов"
+          style={{ "--pct": `${Math.max(0, Math.min(100, progress))}%` } as React.CSSProperties}
+        >
+          <span />
+        </span>
+      ) : null}
     </label>
   );
 }

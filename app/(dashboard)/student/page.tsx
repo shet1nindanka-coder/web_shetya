@@ -20,7 +20,7 @@ export default async function StudentPage() {
     <div>
       <ShbzPageHeader kicker="Обзор" title="Ваш кабинет" aside={<ShbzNumberSearch endpoint="/api/student/homeworks/find-number" />} />
 
-      <div className="space-y-11">
+      <div className="ui-enter space-y-11">
         {/* «Что дальше» и огонёк — выше сгиба; полный список ДЗ ниже. */}
         <UpcomingDeadlinesCard deadlines={assignmentDeadlines} limit={4} variant="hero" />
         <StudentWeeklyActivity streak={streak} />

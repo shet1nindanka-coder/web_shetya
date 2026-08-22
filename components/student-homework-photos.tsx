@@ -4,6 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { AnimatedDropzone, type AnimatedDropzoneHandle } from "@/components/animated-dropzone";
 import { DeleteButton } from "@/components/delete-button";
+import { UploadError, useUploadProgress } from "@/lib/animation-hooks";
 import { cx } from "@/lib/utils";
 
 const MAX_PHOTOS = 10;
@@ -31,6 +32,8 @@ export function StudentHomeworkPhotos({ assignmentId, maxPhotos = MAX_PHOTOS, ph
   const dropzoneRef = useRef<AnimatedDropzoneHandle>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  // A08: отправка через XHR — дропзона показывает честный процент, а не спиннер.
+  const { pct: uploadPct, upload } = useUploadProgress();
   const [pendingUploads, setPendingUploads] = useState<PendingUpload[]>([]);
   const pendingRef = useRef<PendingUpload[]>([]);
   // Фото первого рендера не анимируем: появление — только для новых карточек.
@@ -86,21 +89,25 @@ export function StudentHomeworkPhotos({ assignmentId, maxPhotos = MAX_PHOTOS, ph
         formData.append("files", file);
       }
 
-      const response = await fetch("/api/student/homework-submissions", {
-        method: "POST",
-        body: formData
-      });
+      await upload("/api/student/homework-submissions", formData);
 
-      const result = (await response.json().catch(() => null)) as { error?: string } | null;
-
-      if (!response.ok) {
-        throw new Error(result?.error || "Не удалось загрузить фото.");
-      }
-
+      // Файлы реально на сервере — только теперь зона играет подтверждение.
+      dropzoneRef.current?.confirm();
       router.refresh();
     } catch (uploadError) {
       flushPendingUploads();
-      setError(uploadError instanceof Error ? uploadError.message : "Не удалось загрузить фото.");
+
+      if (uploadError instanceof UploadError) {
+        let serverMessage: string | undefined;
+        try {
+          serverMessage = (JSON.parse(uploadError.responseText) as { error?: string }).error;
+        } catch {
+          serverMessage = undefined;
+        }
+        setError(serverMessage || "Не удалось загрузить фото.");
+      } else {
+        setError(uploadError instanceof Error ? uploadError.message : "Не удалось загрузить фото.");
+      }
     } finally {
       setIsUploading(false);
 
@@ -159,6 +166,9 @@ export function StudentHomeworkPhotos({ assignmentId, maxPhotos = MAX_PHOTOS, ph
           atLimit ? "cursor-not-allowed" : "cursor-pointer"
         )}
         disabled={isUploading || atLimit}
+        uploading={isUploading}
+        progress={isUploading ? uploadPct : undefined}
+        confirmOnDrop={false}
         onDropFiles={(files) => void uploadPhotos(files)}
         title={
           isUploading
@@ -192,14 +202,8 @@ export function StudentHomeworkPhotos({ assignmentId, maxPhotos = MAX_PHOTOS, ph
           // input из фокуса, и сдать ДЗ с клавиатуры было нельзя.
           className="sr-only"
           onChange={(event) => {
-            const files = event.target.files;
-
-            // То же подтверждение, что при дропе: выбор через диалог — равноценный путь.
-            if (files?.length) {
-              dropzoneRef.current?.confirm();
-            }
-
-            void uploadPhotos(files);
+            // Подтверждение одно для дропа и диалога — после успешной отправки (uploadPhotos).
+            void uploadPhotos(event.target.files);
           }}
         />
       </AnimatedDropzone>
@@ -214,7 +218,7 @@ export function StudentHomeworkPhotos({ assignmentId, maxPhotos = MAX_PHOTOS, ph
               <a href={`/files/${photo.fileId}`} target="_blank" rel="noreferrer" title={photo.originalName}>
                 {/* eslint-disable-next-line @next/next/no-img-element */}
                 <img
-                  src={`/files/${photo.fileId}`}
+                  src={`/files/${photo.fileId}?thumb=1`}
                   loading="lazy"
                   alt={photo.originalName}
                   className="h-24 w-24 rounded-[12px] border object-cover"

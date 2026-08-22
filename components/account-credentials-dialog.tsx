@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { createPortal } from "react-dom";
+import { useDialogExit } from "@/lib/animation-hooks";
 
 /*
  * Всплывающее окно после создания аккаунта: логин и пароль показываются один
@@ -25,6 +26,7 @@ export function AccountCredentialsDialog({ title, name, login, password, onClose
   const [feedback, setFeedback] = useState<string | null>(null);
   // Адрес сайта известен только в браузере — берём после монтирования.
   const [siteHost, setSiteHost] = useState("");
+  const { closing, close } = useDialogExit(onClose);
 
   useEffect(() => {
     setSiteHost(window.location.host);
@@ -33,14 +35,14 @@ export function AccountCredentialsDialog({ title, name, login, password, onClose
   useEffect(() => {
     const onEscape = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
-        onClose();
+        close();
       }
     };
 
     document.addEventListener("keydown", onEscape);
 
     return () => document.removeEventListener("keydown", onEscape);
-  }, [onClose]);
+  }, [close]);
 
   const lines = useMemo(
     () => [
@@ -62,13 +64,15 @@ export function AccountCredentialsDialog({ title, name, login, password, onClose
 
   return createPortal(
     <div
-      className="shbz-modal-overlay fixed inset-0 z-50 flex items-center justify-center bg-[rgba(15,23,42,0.45)] px-4 py-6 backdrop-blur-sm"
-      onClick={onClose}
+      data-closing={String(closing)}
+      className="shbz-modal-overlay fixed inset-0 z-50 flex items-center justify-center bg-[rgba(15,23,42,0.45)] px-4 py-6"
+      onClick={close}
     >
       <div
         role="dialog"
         aria-modal="true"
         aria-label={title}
+        data-closing={String(closing)}
         className="shbz-modal-card shbz-card max-h-[85vh] w-full max-w-md overflow-y-auto p-6"
         onClick={(event) => event.stopPropagation()}
       >
@@ -113,7 +117,7 @@ export function AccountCredentialsDialog({ title, name, login, password, onClose
           <button type="button" className="shbz-btn-primary shbz-btn-primary--lg" onClick={copyMessage}>
             Скопировать
           </button>
-          <button type="button" className="shbz-btn-outline shbz-btn-outline--lg" onClick={onClose}>
+          <button type="button" className="shbz-btn-outline shbz-btn-outline--lg" onClick={close}>
             Готово
           </button>
         </div>

@@ -269,7 +269,7 @@ export function TeacherParentCallsList({
         Просрочено: {overdueCount} · Пора позвонить: {dueCount} · Всего учеников: {students.length}
       </p>
 
-      <div className="shbz-card px-7 py-2">
+      <div className="ui-enter shbz-card px-7 py-2">
         <div
           className={cx(
             "hidden items-center gap-6 border-b py-[18px] md:grid",

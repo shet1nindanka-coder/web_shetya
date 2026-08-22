@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useTabIndicator } from "@/lib/animation-hooks";
 
 type TeacherStudentTabsProps = {
   studentId: string;
@@ -30,13 +31,19 @@ export function TeacherStudentTabs({ studentId, activeHomeworksCount }: TeacherS
     }
   ];
 
+  // A02: активная подложка — отдельный элемент, переезжает между вкладками.
+  const activeIndex = Math.max(0, items.findIndex((item) => item.isActive));
+  const { shellRef, indicatorProps } = useTabIndicator<HTMLElement>(activeIndex);
+
   return (
-    <nav className="shbz-seg" aria-label="Разделы ученика">
-      {items.map((item) => (
+    <nav ref={shellRef} className="shbz-seg ui-tab-shell--live" aria-label="Разделы ученика">
+      <span className="ui-tab-indicator" {...indicatorProps} />
+      {items.map((item, index) => (
         <Link
           key={item.href}
           href={item.href}
           prefetch
+          data-tab-index={index}
           data-active={item.isActive}
           aria-current={item.isActive ? "page" : undefined}
           className="shbz-seg-btn shbz-seg-btn--plain"

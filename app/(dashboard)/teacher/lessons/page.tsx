@@ -77,7 +77,7 @@ export default async function TeacherLessonsPage() {
               <h2 className="shbz-section-title">
                 {section.title} · {section.items.length}
               </h2>
-              <div className="space-y-3.5">
+              <div className="ui-enter space-y-3.5">
                 {section.items.map((lesson) => (
             <article key={lesson.id} className="shbz-card flex flex-wrap items-center justify-between gap-4 px-6 py-5">
               <div className="min-w-0">

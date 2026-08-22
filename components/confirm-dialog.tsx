@@ -2,6 +2,7 @@
 
 import { useEffect, type ReactNode } from "react";
 import { createPortal } from "react-dom";
+import { useDialogExit } from "@/lib/animation-hooks";
 
 type ConfirmDialogProps = {
   open: boolean;
@@ -32,6 +33,9 @@ export function ConfirmDialog({
   onConfirm,
   onCancel
 }: ConfirmDialogProps) {
+  // A09: все пути закрытия (Esc, фон, «Отмена») идут через close — с анимацией выхода.
+  const { closing, close } = useDialogExit(onCancel);
+
   useEffect(() => {
     if (!open) {
       return;
@@ -39,7 +43,7 @@ export function ConfirmDialog({
 
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape" && !isPending) {
-        onCancel();
+        close();
       }
     };
 
@@ -50,7 +54,7 @@ export function ConfirmDialog({
       document.body.style.overflow = "";
       window.removeEventListener("keydown", handleKeyDown);
     };
-  }, [open, isPending, onCancel]);
+  }, [open, isPending, close]);
 
   if (!open) {
     return null;
@@ -58,10 +62,11 @@ export function ConfirmDialog({
 
   return createPortal(
     <div
-      className="shbz-modal-overlay fixed inset-0 z-50 flex items-center justify-center bg-[rgba(15,23,42,0.45)] px-4 py-6 backdrop-blur-sm"
+      data-closing={String(closing)}
+      className="shbz-modal-overlay fixed inset-0 z-50 flex items-center justify-center bg-[rgba(15,23,42,0.45)] px-4 py-6"
       onClick={() => {
         if (!isPending) {
-          onCancel();
+          close();
         }
       }}
     >
@@ -69,6 +74,7 @@ export function ConfirmDialog({
         role="dialog"
         aria-modal="true"
         aria-label={title}
+        data-closing={String(closing)}
         className={`shbz-modal-card shbz-card w-full ${wide ? "max-w-xl" : "max-w-md"} max-h-[85vh] overflow-y-auto p-6`}
         onClick={(event) => event.stopPropagation()}
       >
@@ -85,7 +91,7 @@ export function ConfirmDialog({
         <div className="mt-5 flex flex-wrap gap-3">
           <button
             type="button"
-            onClick={onCancel}
+            onClick={close}
             disabled={isPending}
             autoFocus
             className="shbz-btn-outline disabled:opacity-60"

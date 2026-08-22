@@ -615,16 +615,15 @@ export function TopicAnswerManager({ topicId, initialNumber = null, numbers }: T
         </div>
       </div>
 
-      <div className="grid min-w-0 gap-4 xl:grid-cols-2">
-        {currentPageItems.map((item, index) => {
+      <div className="ui-enter grid min-w-0 gap-4 xl:grid-cols-2">
+        {currentPageItems.map((item) => {
           const cardStatus = getCardStatus(item);
 
           return (
             <article
               key={item.id}
               className={cx(
-                "topic-answer-card ui-fade-slide ui-panel-soft min-w-0 rounded-[16px] p-4 shadow-[0_10px_24px_rgba(15,23,42,0.05)] sm:p-4.5",
-                `ui-stagger-${Math.min(index + 1, 6)}`,
+                "topic-answer-card ui-panel-soft min-w-0 rounded-[16px] p-4 shadow-[0_10px_24px_rgba(15,23,42,0.05)] sm:p-4.5",
                 initialNumber !== null && normalizeHomeworkNumber(item.number) === normalizeHomeworkNumber(initialNumber)
                   ? "ring-2 ring-[var(--theme-accent-border)] ring-offset-2 ring-offset-transparent"
                   : ""

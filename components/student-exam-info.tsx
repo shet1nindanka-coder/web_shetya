@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useTabIndicator } from "@/lib/animation-hooks";
 import {
   EGE_PROFILE_MAX_PRIMARY,
   EGE_PROFILE_MIN_PRIMARY,
@@ -165,15 +166,19 @@ function OgeContent() {
 
 export function StudentExamInfo() {
   const [exam, setExam] = useState<ExamKind>("ege");
+  const activeIndex = EXAM_OPTIONS.findIndex((option) => option.key === exam);
+  const { shellRef, indicatorProps } = useTabIndicator<HTMLDivElement>(activeIndex);
 
   return (
     <div>
-      <div className="shbz-seg mb-8" role="tablist" aria-label="Экзамен">
-        {EXAM_OPTIONS.map((option) => (
+      <div ref={shellRef} className="shbz-seg ui-tab-shell--live mb-8" role="tablist" aria-label="Экзамен">
+        <span className="ui-tab-indicator" {...indicatorProps} />
+        {EXAM_OPTIONS.map((option, index) => (
           <button
             key={option.key}
             type="button"
             role="tab"
+            data-tab-index={index}
             className="shbz-seg-btn shbz-seg-btn--plain"
             data-active={option.key === exam}
             aria-selected={option.key === exam}
@@ -184,7 +189,10 @@ export function StudentExamInfo() {
         ))}
       </div>
 
-      {exam === "ege" ? <EgeContent /> : <OgeContent />}
+      {/* key — чтобы панель перепроигрывала вход при смене экзамена (A02). */}
+      <div className="ui-tab-panel" key={exam}>
+        {exam === "ege" ? <EgeContent /> : <OgeContent />}
+      </div>
     </div>
   );
 }

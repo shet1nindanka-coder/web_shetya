@@ -109,11 +109,11 @@ export function GroupMembersManager({ groupId, members, allStudents }: GroupMemb
           В группе пока никого нет — найдите ученика в поле ниже.
         </p>
       ) : (
-        <div className="mb-3 space-y-3.5">
-          {members.map((member, index) => (
+        <div className="ui-enter mb-3 space-y-3.5">
+          {members.map((member) => (
             <div
               key={member.id}
-              className={cx("ui-fade-slide rounded-[16px] border px-5 py-4", `ui-stagger-${Math.min(index + 1, 6)}`)}
+              className="rounded-[16px] border px-5 py-4"
               style={{ background: "var(--shbz-soft-bg)", borderColor: "var(--shbz-soft-border)" }}
             >
               <div className="flex flex-wrap items-center justify-between gap-3">

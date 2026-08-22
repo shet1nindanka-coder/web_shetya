@@ -6,6 +6,7 @@ import { useState, useCallback, useEffect } from "react";
 import { usePathname, useSearchParams } from "next/navigation";
 import { UserRole } from "@prisma/client";
 import { logoutAction } from "@/actions/auth";
+import { useTabIndicator } from "@/lib/animation-hooks";
 import { StudentNotificationsBell } from "@/components/student-notifications-bell";
 
 type DashboardNavProps = {
@@ -134,6 +135,10 @@ export function DashboardNav({ user }: DashboardNavProps) {
 
   const closeMobile = useCallback(() => setMobileOpen(false), []);
 
+  // A02: чёрная подложка таббара переезжает между разделами, а не перекрашивается.
+  const activeTabIndex = Math.max(0, tabbarItems.findIndex((item) => item.match(pathname, searchParams)));
+  const { shellRef: tabbarRef, indicatorProps: tabbarIndicator } = useTabIndicator<HTMLElement>(activeTabIndex);
+
   useEffect(() => {
     closeMobile();
   }, [pathname, closeMobile]);
@@ -155,12 +160,18 @@ export function DashboardNav({ user }: DashboardNavProps) {
 
         {/* Таббар */}
         {tabbarItems.length > 0 ? (
-          <nav className="shbz-tabbar order-3 mx-auto hidden w-auto md:inline-flex xl:order-none xl:mx-0" aria-label="Разделы">
-            {tabbarItems.map((item) => (
+          <nav
+            ref={tabbarRef}
+            className="shbz-tabbar ui-tab-shell--live order-3 mx-auto hidden w-auto md:inline-flex xl:order-none xl:mx-0"
+            aria-label="Разделы"
+          >
+            <span className="ui-tab-indicator" {...tabbarIndicator} />
+            {tabbarItems.map((item, index) => (
               <Link
                 key={item.href}
                 href={item.href}
                 prefetch
+                data-tab-index={index}
                 data-active={item.match(pathname, searchParams)}
                 aria-current={item.match(pathname, searchParams) ? "page" : undefined}
                 className="shbz-tab"

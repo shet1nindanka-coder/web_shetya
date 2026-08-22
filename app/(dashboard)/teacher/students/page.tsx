@@ -144,7 +144,7 @@ export default async function TeacherStudentsPage({ searchParams }: TeacherStude
             </p>
           </div>
         ) : (
-          <div className="shbz-card px-7 py-2">
+          <div className="ui-enter shbz-card px-7 py-2">
             <div
               className="hidden items-center gap-5 border-b py-[18px] md:grid md:grid-cols-[1.2fr_1.6fr_auto]"
               style={{ borderColor: "var(--shbz-soft-border)" }}

@@ -425,15 +425,6 @@ html[data-theme="dark"] .page-header-panel::after { background: radial-gradient(
 .ui-fade-slide { animation: ui-fade-slide 0.25s var(--ease-out) both; }
 .ui-pop-in { animation: ui-pop-in 0.18s var(--ease-out) both; }
 
-/* ───────────────────────────────────────────────
-   Stagger delays — cascade for cards & list items
-   ─────────────────────────────────────────────── */
-.ui-stagger-1 { animation-delay: 0ms; }
-.ui-stagger-2 { animation-delay: 50ms; }
-.ui-stagger-3 { animation-delay: 100ms; }
-.ui-stagger-4 { animation-delay: 150ms; }
-.ui-stagger-5 { animation-delay: 200ms; }
-.ui-stagger-6 { animation-delay: 250ms; }
 
 /* ───────────────────────────────────────────────
    Surface
@@ -2517,18 +2508,8 @@ html[data-theme="dark"] .shbz-btn-dark:hover { filter: brightness(0.85); }
   from { opacity: 0; transform: scale(0.96) translateY(8px); }
   to { opacity: 1; transform: scale(1) translateY(0); }
 }
-.shbz-modal-overlay {
-  animation: shbz-modal-overlay-in var(--duration-fast) var(--ease-out) both;
-}
-.shbz-modal-card {
-  transform-origin: center;
-  animation: shbz-modal-card-in var(--duration-slow) var(--ease-out) both;
-}
-@media (prefers-reduced-motion: reduce) {
-  .shbz-modal-card {
-    animation: shbz-modal-overlay-in var(--duration-fast) ease both;
-  }
-}
+/* Вход/выход модалок — пакет анимаций A09 (адаптер в конце файла). */
+.shbz-modal-card { transform-origin: center; }
 
 .shbz-textarea {
   width: 100%;
@@ -3639,4 +3620,491 @@ html[data-theme="dark"] .shbz-search input:not([type="checkbox"]):not([type="rad
     animation: none;
     opacity: 0;
   }
+}
+
+/* ============================================================================
+   animations.css — пакет анимаций для платформы
+   Дописывается В КОНЕЦ app/globals.css (после существующих @keyframes),
+   либо импортируется отдельным файлом ПОСЛЕ globals.css.
+
+   Все значения опираются на уже существующие токены проекта:
+     --anim-spring: cubic-bezier(0.22, 1, 0.36, 1)
+     --anim-standard: cubic-bezier(0.2, 0.8, 0.2, 1)
+     --ease-out: cubic-bezier(0.23, 1, 0.32, 1)
+     --ease-in-out: cubic-bezier(0.77, 0, 0.175, 1)
+     --ease-drawer: cubic-bezier(0.32, 0.72, 0, 1)
+     --theme-accent / --theme-accent-soft-hover / --theme-surface / --theme-border ...
+   Ничего кроме transform / opacity / max-height не анимируется.
+   Все правила отключаются одним блоком prefers-reduced-motion в конце файла.
+   ============================================================================ */
+
+/* ---------------------------------------------------------------------------
+   A01 · Каскадный вход страницы
+   Родителю — .ui-enter. Детям ничего не нужно, задержка считается по nth-child.
+   Заменяет ручные .ui-stagger-1…6.
+   --------------------------------------------------------------------------- */
+@keyframes ui-enter-item {
+  from { opacity: 0; transform: translateY(10px); }
+  to   { opacity: 1; transform: none; }
+}
+
+.ui-enter > * {
+  animation: ui-enter-item 240ms var(--anim-spring) both;
+  animation-delay: calc(var(--i, 0) * 45ms);
+}
+.ui-enter > *:nth-child(1)  { --i: 0; }
+.ui-enter > *:nth-child(2)  { --i: 1; }
+.ui-enter > *:nth-child(3)  { --i: 2; }
+.ui-enter > *:nth-child(4)  { --i: 3; }
+.ui-enter > *:nth-child(5)  { --i: 4; }
+.ui-enter > *:nth-child(6)  { --i: 5; }
+.ui-enter > *:nth-child(n+7) { --i: 6; } /* каскад не растёт дальше 270 ms */
+
+/* Вложенный каскад (сначала блок, потом его строки) */
+.ui-enter-nested > * { animation-delay: calc(120ms + var(--i, 0) * 45ms); }
+
+/* ---------------------------------------------------------------------------
+   A02 · Скользящая подложка таба
+   .ui-tab-shell (position: relative) > .ui-tab-indicator + кнопки .ui-tab
+   --tab-x / --tab-w выставляет JS (см. useTabIndicator в animation-hooks.ts).
+   --------------------------------------------------------------------------- */
+.ui-tab-shell { position: relative; }
+
+.ui-tab-indicator {
+  position: absolute;
+  top: 4px;
+  left: 0;
+  height: calc(100% - 8px);
+  width: var(--tab-w, 0px);
+  border-radius: var(--radius-lg);
+  background: var(--theme-tab-active);
+  box-shadow: 0 1px 3px rgba(15, 23, 42, 0.08);
+  transform: translateX(var(--tab-x, 0px));
+  transition:
+    transform 260ms var(--anim-spring),
+    width 260ms var(--anim-spring);
+  pointer-events: none;
+  z-index: 0;
+}
+.ui-tab-indicator[data-ready="false"] { transition: none; } /* без прыжка на первом кадре */
+
+.ui-tab-shell .ui-tab { position: relative; z-index: 1; transition: color 180ms ease; }
+
+/* Контент под табами. key={activeTab} на обёртке — тогда анимация играет заново. */
+.ui-tab-panel { animation: ui-enter-item 180ms var(--ease-out) both; }
+
+/* ---------------------------------------------------------------------------
+   A03 · Отметка статуса (самое частое действие ученика)
+   .ui-status-button уже наследует .ui-pressable — добавляется только «печать»,
+   рисующаяся галочка и рост полосы прогресса.
+   --------------------------------------------------------------------------- */
+@keyframes ui-status-stamp {
+  0%   { transform: scale(0.94); }
+  60%  { transform: scale(1.03); }
+  100% { transform: scale(1); }
+}
+.ui-status-button[aria-pressed="true"] { animation: ui-status-stamp 220ms var(--anim-spring); }
+
+/* Галочка: <svg class="ui-tick" data-on="true"><path d="M4 12.5l5 5L20 7" /></svg> */
+.ui-tick { transform: scale(0.6); transition: transform 220ms var(--anim-spring); }
+.ui-tick path {
+  stroke-dasharray: 26;
+  stroke-dashoffset: 26;
+  transition: stroke-dashoffset 260ms var(--ease-out) 60ms;
+}
+.ui-tick[data-on="true"] { transform: scale(1); }
+.ui-tick[data-on="true"] path { stroke-dashoffset: 0; }
+
+/* Полоса прогресса темы: ширина из --fill (проценты) */
+.ui-progress-fill {
+  width: var(--fill, 0%);
+  transition: width 420ms var(--anim-spring);
+}
+
+/* ---------------------------------------------------------------------------
+   A04 · Числа-счётчики и растущие столбцы
+   Счёт — в JS (useCountUp). CSS отвечает за стабильную ширину и рост столбцов.
+   --------------------------------------------------------------------------- */
+.ui-metric-pill-value,
+.ui-mini-stat-card-value,
+.ui-stat-card-value,
+.ui-num { font-variant-numeric: tabular-nums; }
+
+/* Столбцы графика: высота из --h, каскад из --i */
+.progress-timeline-bar,
+.ui-bar-grow {
+  height: var(--h, 0%);
+  transition: height 520ms var(--anim-spring);
+  transition-delay: calc(var(--i, 0) * 70ms);
+  will-change: height;
+}
+
+/* ---------------------------------------------------------------------------
+   A05 · Награда за стрик — единственная громкая анимация в продукте
+   Срабатывает ТОЛЬКО когда счётчик реально вырос (флаг в JS, см. useStreakReward).
+   --------------------------------------------------------------------------- */
+@keyframes streak-pop {
+  0%   { transform: scale(1) rotate(0deg); }
+  35%  { transform: scale(1.18) rotate(-6deg); }
+  70%  { transform: scale(0.97) rotate(2deg); }
+  100% { transform: scale(1) rotate(0deg); }
+}
+.streak-badge[data-grew="true"] { animation: streak-pop 260ms var(--anim-spring); }
+
+@keyframes streak-plus {
+  from { opacity: 0; transform: translateY(6px); }
+  30%  { opacity: 1; }
+  to   { opacity: 0; transform: translateY(-22px); }
+}
+.streak-plus { animation: streak-plus 620ms var(--anim-spring) both; }
+
+/* Сетка активности за неделю: каскад по клеткам */
+@keyframes streak-day-in {
+  from { opacity: 0; transform: scale(0.88); }
+  to   { opacity: 1; transform: none; }
+}
+.streak-week > * {
+  animation: streak-day-in 320ms var(--anim-spring) both;
+  animation-delay: calc(var(--i, 0) * 50ms);
+}
+.streak-week > *:nth-child(1) { --i: 0; }
+.streak-week > *:nth-child(2) { --i: 1; }
+.streak-week > *:nth-child(3) { --i: 2; }
+.streak-week > *:nth-child(4) { --i: 3; }
+.streak-week > *:nth-child(5) { --i: 4; }
+.streak-week > *:nth-child(6) { --i: 5; }
+.streak-week > *:nth-child(7) { --i: 6; }
+
+/* Клетка «сегодня» после первого решённого номера */
+.streak-day[data-today="true"][data-filled="true"] {
+  transform: scale(1.06);
+  transition: transform 340ms var(--anim-spring), background-color 300ms ease;
+}
+
+/* ---------------------------------------------------------------------------
+   A06 · Дедлайны: дыхание срочного и раскрытие дня
+   --------------------------------------------------------------------------- */
+@keyframes deadline-breathe {
+  0%   { box-shadow: 0 0 0 0 color-mix(in srgb, var(--theme-accent) 35%, transparent); }
+  70%  { box-shadow: 0 0 0 12px transparent; }
+  100% { box-shadow: 0 0 0 0 transparent; }
+}
+/* 2 итерации, НЕ infinite: обводка привлекает внимание один раз при входе */
+.deadline-soon { animation: deadline-breathe 1.8s var(--ease-out) 2; }
+
+/* Раскрытие: max-height задаёт JS из scrollHeight (переменная --h), не magic-число */
+.ui-collapse {
+  overflow: hidden;
+  max-height: 0;
+  opacity: 0;
+  transition: max-height 320ms var(--ease-drawer), opacity 200ms ease;
+}
+.ui-collapse[data-open="true"] { max-height: var(--h, 1000px); opacity: 1; }
+
+.ui-collapse-chevron { transition: transform 240ms var(--ease-drawer); }
+.ui-collapse-chevron[data-open="true"] { transform: rotate(180deg); }
+
+/* ---------------------------------------------------------------------------
+   A07 · Выход строки из списка (очередь проверки, удаление, зачёт)
+   Строка сначала помечается data-exiting, из state удаляется через 260 ms.
+   --------------------------------------------------------------------------- */
+.ui-exit-row {
+  overflow: hidden;
+  max-height: var(--row-h, 200px);
+  transition:
+    max-height 260ms var(--ease-drawer),
+    opacity 180ms ease,
+    transform 240ms var(--anim-spring);
+}
+.ui-exit-row[data-exiting="true"] {
+  max-height: 0;
+  opacity: 0;
+  transform: translateX(24px);
+}
+/* Пустое состояние тоже входит анимацией, а не появляется рывком */
+.ui-empty-state { animation: ui-enter-item 260ms var(--anim-spring) both; }
+
+/* ---------------------------------------------------------------------------
+   A08 · Дропзона: три состояния, ни одного мигания
+   data-state="idle" | "over" | "uploading" | "done"
+   --------------------------------------------------------------------------- */
+@keyframes dz-march {
+  to { background-position: 40px 0, -40px 100%, 0 -40px, 100% 40px; }
+}
+.ui-dropzone {
+  border-radius: var(--radius-2xl);
+  background-color: var(--theme-surface);
+  background-image:
+    linear-gradient(90deg, var(--theme-input-border) 50%, transparent 0),
+    linear-gradient(90deg, var(--theme-input-border) 50%, transparent 0),
+    linear-gradient(0deg,  var(--theme-input-border) 50%, transparent 0),
+    linear-gradient(0deg,  var(--theme-input-border) 50%, transparent 0);
+  background-size: 20px 2px, 20px 2px, 2px 20px, 2px 20px;
+  background-repeat: repeat-x, repeat-x, repeat-y, repeat-y;
+  background-position: 0 0, 0 100%, 0 0, 100% 0;
+  transition: background-color 200ms ease;
+}
+.ui-dropzone[data-state="over"] {
+  background-color: var(--theme-accent-soft);
+  background-image:
+    linear-gradient(90deg, var(--theme-accent) 50%, transparent 0),
+    linear-gradient(90deg, var(--theme-accent) 50%, transparent 0),
+    linear-gradient(0deg,  var(--theme-accent) 50%, transparent 0),
+    linear-gradient(0deg,  var(--theme-accent) 50%, transparent 0);
+  animation: dz-march 700ms linear infinite; /* живёт только пока курсор над зоной */
+}
+.ui-dropzone[data-state="done"] { background-color: var(--theme-success-soft); }
+
+.ui-dropzone-icon { transition: transform 240ms var(--anim-spring); }
+.ui-dropzone[data-state="over"] .ui-dropzone-icon { transform: scale(1.08) translateY(-3px); }
+
+.ui-dropzone-arrow { transition: opacity 160ms ease; }
+.ui-dropzone[data-state="done"] .ui-dropzone-arrow { opacity: 0; }
+.ui-dropzone[data-state="done"] .ui-tick path { stroke-dashoffset: 0; }
+
+/* Честная полоса вместо спиннера: --pct выставляет обработчик прогресса XHR */
+.ui-upload-bar {
+  opacity: 0;
+  transition: opacity 200ms ease;
+}
+.ui-dropzone[data-state="uploading"] .ui-upload-bar { opacity: 1; }
+.ui-upload-bar > span {
+  display: block;
+  height: 100%;
+  width: var(--pct, 0%);
+  border-radius: var(--radius-full);
+  background: linear-gradient(90deg, var(--theme-accent-strong), var(--theme-accent));
+  transition: width 220ms linear;
+}
+
+/* ---------------------------------------------------------------------------
+   A09 · Диалоги: десктоп — всплытие, мобильный — лист снизу
+   Выход всегда быстрее входа.
+   --------------------------------------------------------------------------- */
+@keyframes dlg-in  { from { opacity: 0; transform: scale(0.96); } to { opacity: 1; transform: none; } }
+@keyframes dlg-out { from { opacity: 1; transform: none; } to { opacity: 0; transform: scale(0.98); } }
+@keyframes backdrop-in { from { opacity: 0; } to { opacity: 1; } }
+
+.ui-dialog-backdrop { animation: backdrop-in 200ms ease both; }
+.ui-dialog-shell { animation: dlg-in 200ms var(--anim-spring) both; }
+.ui-dialog-shell[data-closing="true"] { animation: dlg-out 120ms var(--ease-in-out) both; }
+
+@media (min-width: 641px) {
+  .ui-dialog-backdrop { backdrop-filter: blur(3px); }
+}
+
+@media (max-width: 640px) {
+  @keyframes sheet-in  { from { transform: translateY(100%); } to { transform: none; } }
+  @keyframes sheet-out { from { transform: none; } to { transform: translateY(100%); } }
+  .ui-dialog-shell {
+    border-radius: 18px 18px 0 0;
+    animation: sheet-in 260ms var(--ease-drawer) both;
+  }
+  .ui-dialog-shell[data-closing="true"] { animation: sheet-out 160ms var(--ease-drawer) both; }
+  /* backdrop-filter на мобильных не включаем — дорого для школьных телефонов */
+}
+
+/* ---------------------------------------------------------------------------
+   A10 · Realtime: что именно только что изменилось
+   Ставить .rt-new ТОЛЬКО на элементы, пришедшие пока пользователь смотрел
+   на экран (document.visibilityState === "visible"), иначе мигнёт весь список.
+   --------------------------------------------------------------------------- */
+@keyframes rt-flash {
+  0%   { background-color: var(--theme-accent-soft-hover); }
+  100% { background-color: var(--theme-surface); }
+}
+.rt-new {
+  animation:
+    ui-enter-item 260ms var(--anim-spring) both,
+    rt-flash 900ms var(--ease-out) 260ms both;
+}
+
+@keyframes rt-badge-pop {
+  0%   { transform: scale(1); }
+  45%  { transform: scale(1.25); }
+  100% { transform: scale(1); }
+}
+.rt-badge[data-bumped="true"] { animation: rt-badge-pop 240ms var(--anim-spring); }
+
+/* ---------------------------------------------------------------------------
+   A11 · Скелетоны: шиммер вместо пульсации, кроссфейд вместо подмены
+   Скелетон должен повторять геометрию контента (та же высота и радиус).
+   --------------------------------------------------------------------------- */
+.ui-skeleton {
+  position: relative;
+  overflow: hidden;
+  /* border-radius намеренно не задаётся: радиус повторяет контент и приходит из разметки
+     (rounded-full у пилюль, rounded-[16px] у карточек) — см. ANIMATIONS.md, A11. */
+  background: color-mix(in srgb, var(--theme-text-soft) 14%, transparent);
+}
+.ui-skeleton::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.6), transparent);
+  animation: ui-shimmer 1.2s linear infinite; /* keyframes уже есть в globals.css */
+}
+html[data-theme="dark"] .ui-skeleton::after {
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.08), transparent);
+}
+.ui-skeleton:nth-child(2)::after { animation-delay: 150ms; }
+.ui-skeleton:nth-child(3)::after { animation-delay: 300ms; }
+
+/* Кроссфейд скелетон → контент (обёртки лежат друг над другом) */
+.ui-swap { position: relative; }
+.ui-swap > [data-layer] { transition: opacity 160ms ease; }
+.ui-swap > [data-layer="skeleton"] { position: absolute; inset: 0; opacity: 0; pointer-events: none; }
+.ui-swap[data-loading="true"] > [data-layer="skeleton"] { opacity: 1; }
+.ui-swap[data-loading="true"] > [data-layer="content"] { opacity: 0; }
+.ui-swap > [data-layer="content"] { opacity: 1; transition-delay: 120ms; }
+
+/* ---------------------------------------------------------------------------
+   Общий выключатель. Никаких исключений.
+   --------------------------------------------------------------------------- */
+@media (prefers-reduced-motion: reduce) {
+  .ui-enter > *,
+  .ui-tab-panel,
+  .ui-status-button[aria-pressed="true"],
+  .streak-badge[data-grew="true"],
+  .streak-plus,
+  .streak-week > *,
+  .deadline-soon,
+  .ui-empty-state,
+  .ui-dialog-backdrop,
+  .ui-dialog-shell,
+  .ui-dialog-shell[data-closing="true"],
+  .rt-new,
+  .rt-badge[data-bumped="true"],
+  .ui-dropzone[data-state="over"],
+  .ui-skeleton::after {
+    animation: none !important;
+  }
+  .ui-tab-indicator,
+  .ui-tick,
+  .ui-tick path,
+  .ui-progress-fill,
+  .progress-timeline-bar,
+  .ui-bar-grow,
+  .ui-collapse,
+  .ui-collapse-chevron,
+  .ui-exit-row,
+  .ui-dropzone-icon,
+  .ui-upload-bar > span,
+  .ui-swap > [data-layer] {
+    transition: none !important;
+  }
+  .ui-enter > *,
+  .streak-week > * { opacity: 1 !important; transform: none !important; }
+}
+
+/* ============================================================================
+   Адаптер пакета анимаций под классы ШБЗ.
+   animations.css выше — без переименований; здесь только привязка к реальной
+   разметке проекта: табы .shbz-seg / .shbz-tabbar, модалки .shbz-modal-*,
+   дропзона .shbz-dropzone (состояние uploading), reduced-motion для них.
+   ============================================================================ */
+
+/* A01: ручные .ui-stagger-1…6 заменены на .ui-enter у родителя (удалены). */
+
+/* A02: подложка таба в сегментах и таббаре шапки. Индикатор живёт отдельным
+   элементом, поэтому у активной кнопки остаётся только цвет текста.
+   --tab-y / --tab-h добавлены к хуку: .shbz-seg переносится на вторую строку
+   на узких экранах, и одного translateX там не хватает. */
+.ui-tab-shell--live { position: relative; }
+.ui-tab-shell--live > .ui-tab-indicator {
+  top: 0;
+  left: 0;
+  height: var(--tab-h, 0px);
+  transform: translate(var(--tab-x, 0px), var(--tab-y, 0px));
+  transition:
+    transform 260ms var(--anim-spring),
+    width 260ms var(--anim-spring),
+    height 260ms var(--anim-spring);
+}
+.ui-tab-shell--live > .shbz-seg-btn,
+.ui-tab-shell--live > .shbz-tab { position: relative; z-index: 1; }
+.shbz-seg.ui-tab-shell--live > .ui-tab-indicator {
+  border-radius: 9px;
+  background: var(--shbz-seg-active-bg);
+  box-shadow: 0 1px 2px rgba(10, 10, 10, 0.1);
+}
+.shbz-seg.ui-tab-shell--live > .shbz-seg-btn[data-active="true"] { background: transparent; box-shadow: none; }
+.shbz-tabbar.ui-tab-shell--live > .ui-tab-indicator {
+  border-radius: 12px;
+  background: var(--shbz-tab-active-bg);
+  box-shadow: none;
+}
+.shbz-tabbar.ui-tab-shell--live > .shbz-tab[data-active="true"],
+.shbz-tabbar.ui-tab-shell--live > .shbz-tab[data-active="true"]:hover { background: transparent; }
+/* Пока индикатор не измерен (первый кадр, SSR) — активная кнопка красится сама,
+   чтобы не было «пустого» состояния до гидрации. */
+.ui-tab-shell--live > .ui-tab-indicator[data-ready="false"] { opacity: 0; }
+.shbz-seg.ui-tab-shell--live:has(> .ui-tab-indicator[data-ready="false"]) > .shbz-seg-btn[data-active="true"] {
+  background: var(--shbz-seg-active-bg);
+}
+.shbz-tabbar.ui-tab-shell--live:has(> .ui-tab-indicator[data-ready="false"]) > .shbz-tab[data-active="true"] {
+  background: var(--shbz-tab-active-bg);
+}
+
+/* A04: табличные цифры у счётчиков. */
+.ui-num { font-variant-numeric: tabular-nums; }
+
+/* A08: четвёртое состояние дропзоны — загрузка с честным процентом.
+   idle/drag/success уже описаны выше в блоке «Анимированная дропзона». */
+.shbz-dropzone[data-state="uploading"] {
+  border-style: solid;
+  border-color: color-mix(in srgb, var(--shbz-accent-solid) 55%, var(--shbz-input-border));
+  cursor: progress;
+}
+.shbz-dropzone[data-state="uploading"] .shbz-dropzone-title--idle { opacity: 1; transform: none; }
+.shbz-dropzone[data-state="uploading"] .ui-upload-bar { opacity: 1; }
+.shbz-dropzone .ui-upload-bar {
+  width: 100%;
+  max-width: 280px;
+  height: 6px;
+  margin-top: 6px;
+  border-radius: 999px;
+  background: var(--shbz-progress-track);
+  overflow: hidden;
+}
+.shbz-dropzone .ui-upload-bar > span {
+  background: var(--shbz-accent-grad);
+}
+
+/* A09: диалоги .shbz-modal-* — те же кривые, что у .ui-dialog-shell:
+   десктоп — всплытие 200 ms / выход 120 ms, телефон — лист снизу 260 / 160 ms. */
+.shbz-modal-overlay { animation: backdrop-in 200ms ease both; }
+.shbz-modal-overlay[data-closing="true"] { animation: backdrop-in 120ms ease reverse both; }
+.shbz-modal-card { animation: dlg-in 200ms var(--anim-spring) both; }
+.shbz-modal-card[data-closing="true"] { animation: dlg-out 120ms var(--ease-in-out) both; }
+@media (min-width: 641px) {
+  .shbz-modal-overlay { backdrop-filter: blur(3px); }
+}
+@media (max-width: 640px) {
+  .shbz-modal-overlay {
+    align-items: flex-end;
+    padding: 0;
+    backdrop-filter: none; /* дорого для школьных телефонов */
+  }
+  .shbz-modal-card {
+    max-width: none;
+    max-height: 88vh;
+    border-radius: 18px 18px 0 0;
+    animation: sheet-in 260ms var(--ease-drawer) both;
+  }
+  .shbz-modal-card[data-closing="true"] { animation: sheet-out 160ms var(--ease-drawer) both; }
+}
+
+/* A10: счётчик колокольчика. */
+.rt-badge { transform-origin: center; }
+
+/* A11: скелетон-строка уведомления повторяет геометрию настоящей строки. */
+.ui-swap > [data-layer="skeleton"] { display: block; }
+
+@media (prefers-reduced-motion: reduce) {
+  .shbz-modal-overlay,
+  .shbz-modal-overlay[data-closing="true"],
+  .shbz-modal-card,
+  .shbz-modal-card[data-closing="true"] { animation: none !important; }
+  .ui-tab-shell--live > .ui-tab-indicator { transition: none !important; }
 }

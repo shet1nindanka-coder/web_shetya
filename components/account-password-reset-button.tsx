@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useMemo, useState, useTransition } from "react";
+import { useCallback, useEffect, useMemo, useState, useTransition } from "react";
 import { createPortal } from "react-dom";
+import { useDialogExit } from "@/lib/animation-hooks";
 import { resetTeacherPasswordAction } from "@/actions/account";
 import { resetStudentPasswordAction } from "@/actions/student";
 import { MAX_PASSWORD_LENGTH, validatePasswordStrength } from "@/lib/password-policy";
@@ -47,6 +48,14 @@ export function AccountPasswordResetButton({ userId, userName, target, className
   const isSubmitDisabled = password.length === 0 || passwordError !== null || isPending;
   const copy = TARGET_COPY[target];
 
+  // A09: размонтирование после анимации выхода; все пути закрытия — через close.
+  const { closing, close: closeAnimated } = useDialogExit(
+    useCallback(() => {
+      setIsOpen(false);
+      setPassword("");
+    }, [])
+  );
+
   useEffect(() => {
     if (!isOpen) {
       return;
@@ -54,8 +63,7 @@ export function AccountPasswordResetButton({ userId, userName, target, className
 
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape" && !isPending) {
-        setIsOpen(false);
-        setPassword("");
+        closeAnimated();
       }
     };
 
@@ -66,12 +74,11 @@ export function AccountPasswordResetButton({ userId, userName, target, className
       document.body.style.overflow = "";
       window.removeEventListener("keydown", handleKeyDown);
     };
-  }, [isOpen, isPending]);
+  }, [isOpen, isPending, closeAnimated]);
 
   const close = () => {
     if (!isPending) {
-      setIsOpen(false);
-      setPassword("");
+      closeAnimated();
     }
   };
 
@@ -104,14 +111,16 @@ export function AccountPasswordResetButton({ userId, userName, target, className
       {isOpen
         ? createPortal(
             <div
-              className="fixed inset-0 z-50 flex items-center justify-center bg-[rgba(15,23,42,0.45)] px-4 py-6 backdrop-blur-sm"
+              data-closing={String(closing)}
+              className="shbz-modal-overlay fixed inset-0 z-50 flex items-center justify-center bg-[rgba(15,23,42,0.45)] px-4 py-6"
               onClick={close}
             >
               <div
                 role="dialog"
                 aria-modal="true"
                 aria-label={copy.dialogLabel}
-                className="shbz-card max-h-[85vh] w-full max-w-md overflow-y-auto p-6"
+                data-closing={String(closing)}
+                className="shbz-modal-card shbz-card max-h-[85vh] w-full max-w-md overflow-y-auto p-6"
                 onClick={(event) => event.stopPropagation()}
               >
                 <div className="space-y-3">

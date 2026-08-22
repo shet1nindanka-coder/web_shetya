@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useTransition } from "react";
 import { createPortal } from "react-dom";
+import { useDialogExit } from "@/lib/animation-hooks";
 import { deleteTeacherAction } from "@/actions/account";
 import { AccountPasswordResetButton } from "@/components/account-password-reset-button";
 import { ShbzSelect } from "@/components/shbz-select";
@@ -63,11 +64,12 @@ function TeacherDeleteDialog({
   const hasTransferTarget = otherTeachers.length > 0;
   const isBlocked = needsTransfer && !hasTransferTarget;
   const isSubmitDisabled = isPending || isBlocked || (needsTransfer && !transferToTeacherId);
+  const { closing, close } = useDialogExit(onClose);
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape" && !isPending) {
-        onClose();
+        close();
       }
     };
 
@@ -78,7 +80,7 @@ function TeacherDeleteDialog({
       document.body.style.overflow = "";
       window.removeEventListener("keydown", handleKeyDown);
     };
-  }, [isPending, onClose]);
+  }, [isPending, close]);
 
   const submit = () => {
     if (isSubmitDisabled) {
@@ -97,14 +99,16 @@ function TeacherDeleteDialog({
 
   return createPortal(
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-[rgba(15,23,42,0.45)] px-4 py-6 backdrop-blur-sm"
-      onClick={() => (isPending ? undefined : onClose())}
+      data-closing={String(closing)}
+      className="shbz-modal-overlay fixed inset-0 z-50 flex items-center justify-center bg-[rgba(15,23,42,0.45)] px-4 py-6"
+      onClick={() => (isPending ? undefined : close())}
     >
       <div
         role="dialog"
         aria-modal="true"
         aria-label="Удалить учителя"
-        className="shbz-card max-h-[85vh] w-full max-w-md overflow-y-auto p-6"
+        data-closing={String(closing)}
+        className="shbz-modal-card shbz-card max-h-[85vh] w-full max-w-md overflow-y-auto p-6"
         onClick={(event) => event.stopPropagation()}
       >
         <div className="space-y-3">
@@ -167,7 +171,7 @@ function TeacherDeleteDialog({
         <div className="mt-5 flex flex-wrap gap-3">
           <button
             type="button"
-            onClick={onClose}
+            onClick={close}
             disabled={isPending}
             className="shbz-btn-outline shbz-btn-outline--lg"
           >

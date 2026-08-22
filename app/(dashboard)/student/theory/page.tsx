@@ -35,7 +35,7 @@ export default async function StudentTheoryPage() {
           </p>
         </div>
       ) : (
-        <div className="grid gap-5" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))" }}>
+        <div className="ui-enter grid gap-5" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(320px, 1fr))" }}>
           {topics.map((topic) => (
             <article key={topic.id} className="shbz-card flex flex-col gap-4 shbz-section-pad">
               {/* Решение владельца: в карточке только название темы и кнопка —
