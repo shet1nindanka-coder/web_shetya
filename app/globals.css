@@ -2199,16 +2199,6 @@ html[data-theme="dark"] {
   font-size: 12.5px;
   font-weight: 700;
 }
-/* Чип в строке таблицы рядом с кнопками: та же высота и кегль, подпись по центру. */
-.shbz-chip--row {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  height: var(--shbz-btn-h);
-  padding: 0 16px;
-  font-size: 14px;
-  font-weight: 600;
-}
 .shbz-chip-green { background: var(--shbz-green-soft); color: var(--shbz-green-text); }
 .shbz-chip-yellow { background: var(--shbz-yellow-soft); color: var(--shbz-yellow-text); }
 .shbz-chip-red { background: var(--shbz-red-soft); color: var(--shbz-red-text); }
@@ -4107,4 +4097,22 @@ html[data-theme="dark"] .ui-skeleton::after {
   .shbz-modal-card,
   .shbz-modal-card[data-closing="true"] { animation: none !important; }
   .ui-tab-shell--live > .ui-tab-indicator { transition: none !important; }
+}
+
+/* Чип в строке таблицы рядом с кнопками (звонки): та же высота и кегль, что у
+   кнопок, подпись по центру. Стоит в конце файла с двойным классом, потому что
+   базовые .shbz-chip / .shbz-badge-muted объявлены позже первой версии правила
+   и перебивали display, padding и font-size. line-height: 1 — Montserrat с
+   наследуемым 1.5 смещал строку вверх. */
+.shbz-chip.shbz-chip--row,
+.shbz-badge-muted.shbz-chip--row {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  height: var(--shbz-btn-h);
+  padding: 0 16px;
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1;
 }
