@@ -28,7 +28,7 @@ export default async function DashboardLayout({
         <DashboardRealtimeListener userId={user.id} role={user.role} />
         {/* useSearchParams в шапке требует Suspense-границу при пререндере. */}
         <Suspense fallback={null}>
-          <DashboardNav user={user} />
+          <DashboardNav user={user} studentStreak={studentStreak} />
         </Suspense>
         <main className="mx-auto w-full max-w-[1180px] px-4 pb-16 pt-8 sm:px-8 sm:pb-[72px]">
           {children}
