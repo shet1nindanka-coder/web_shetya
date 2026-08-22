@@ -57,8 +57,8 @@ export function useCountUp(target: number, ms = 600, decimals = 0): number {
    ШБЗ: помимо --tab-x/--tab-w выставляются --tab-y/--tab-h — сегменты
    переносятся на вторую строку на узких экранах.
    ШБЗ: activeIndex < 0 — «ничего не выбрано» (например, страница настроек,
-   которой нет в таббаре): подложка схлопывается и прячется, а не прыгает
-   на первую вкладку.
+   которой нет в таббаре): подложка гаснет на месте, а при возврате встаёт
+   под вкладку без переезда и проявляется.
    ---------------------------------------------------------------------------- */
 type TabIndicatorStyle = { "--tab-x": string; "--tab-y": string; "--tab-w": string; "--tab-h": string };
 
@@ -71,16 +71,19 @@ export function useTabIndicator<T extends HTMLElement = HTMLElement>(activeIndex
     "--tab-h": "0px"
   });
   const [ready, setReady] = useState(false);
+  // ШБЗ: из пустого состояния подложка не «едет» со старого места, а встаёт под
+  // вкладку без перехода и затем проявляется (opacity через data-empty).
+  const prevIndex = useRef(activeIndex);
 
   useLayoutEffect(() => {
     const shell = shellRef.current;
     if (!shell) return;
+    const fromEmpty = prevIndex.current < 0 && activeIndex >= 0;
+    prevIndex.current = activeIndex;
+    if (activeIndex < 0) return; // размер и позицию не трогаем — просто гаснем на месте
+    if (fromEmpty) setReady(false);
 
     const measure = () => {
-      if (activeIndex < 0) {
-        setStyle((prev) => ({ ...prev, "--tab-w": "0px", "--tab-h": "0px" }));
-        return;
-      }
       const tab = shell.querySelector<HTMLElement>(`[data-tab-index="${activeIndex}"]`);
       if (!tab) return;
       setStyle({

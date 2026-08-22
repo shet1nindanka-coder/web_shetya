@@ -3672,12 +3672,14 @@ html[data-theme="dark"] .shbz-search input:not([type="checkbox"]):not([type="rad
   transform: translateX(var(--tab-x, 0px));
   transition:
     transform 260ms var(--anim-spring),
-    width 260ms var(--anim-spring);
+    width 260ms var(--anim-spring),
+    opacity 180ms ease;
   pointer-events: none;
   z-index: 0;
 }
 .ui-tab-indicator[data-ready="false"] { transition: none; } /* без прыжка на первом кадре */
 .ui-tab-indicator[data-empty="true"] { opacity: 0; } /* ничего не выбрано — подложки нет */
+.ui-tab-indicator[data-ready="false"][data-empty="false"] { transition: opacity 180ms ease; } /* возврат из пустого: без переезда, только проявление */
 
 .ui-tab-shell .ui-tab { position: relative; z-index: 1; transition: color 180ms ease; }
 
@@ -4010,7 +4012,8 @@ html[data-theme="dark"] .ui-skeleton::after {
   transition:
     transform 260ms var(--anim-spring),
     width 260ms var(--anim-spring),
-    height 260ms var(--anim-spring);
+    height 260ms var(--anim-spring),
+    opacity 180ms ease;
 }
 .ui-tab-shell--live > .shbz-seg-btn,
 .ui-tab-shell--live > .shbz-tab { position: relative; z-index: 1; }
