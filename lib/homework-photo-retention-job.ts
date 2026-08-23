@@ -1,4 +1,5 @@
-import { logErrorEvent } from "@/lib/logger";
+import { pruneExpiredAuditLogs } from "@/lib/audit";
+import { logErrorEvent, logInfoEvent } from "@/lib/logger";
 import { pruneExpiredHomeworkPhotos } from "@/lib/homework-photo-retention";
 
 const SWEEP_STARTUP_DELAY_MS = 5 * 60_000;
@@ -12,6 +13,14 @@ declare global {
 async function sweep() {
   try {
     await pruneExpiredHomeworkPhotos();
+
+    // Журнал действий чистится тем же суточным проходом: отдельный таймер под
+    // один DELETE не нужен, а срок хранения у них одинаково «по дням».
+    const auditPrune = await pruneExpiredAuditLogs();
+
+    if (auditPrune.deleted > 0) {
+      logInfoEvent("retention.audit_pruned", { deleted: auditPrune.deleted });
+    }
 
     const { setInternalSettingValue } = await import("@/lib/site-settings");
     await setInternalSettingValue("internal.retentionLastRunAt", new Date().toISOString());

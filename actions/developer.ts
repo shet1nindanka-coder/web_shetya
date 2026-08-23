@@ -1,6 +1,7 @@
 "use server";
 
-import { SolutionCheckStatus, UserRole } from "@prisma/client";
+import { AuditCategory, Prisma, SolutionCheckStatus, UserRole } from "@prisma/client";
+import { writeAuditLog } from "@/lib/audit";
 import { requireUser } from "@/lib/auth";
 import { pruneExpiredHomeworkPhotos } from "@/lib/homework-photo-retention";
 import { logErrorEvent, logInfoEvent } from "@/lib/logger";
@@ -23,6 +24,34 @@ const STALE_CHECK_UNFREEZE_MS = 15 * 60_000;
 // Результат действия дев-панели: показывается на клиенте без перезагрузки страницы.
 type ActionResult = { ok: boolean; message: string };
 
+type PanelActor = { id: string; name: string; role: UserRole };
+
+/**
+ * Пишет строку журнала и возвращает тот же результат — чтобы инструментировать
+ * действие панели одной обёрткой вокруг существующего return, не переписывая тело.
+ * Текст результата и так человекочитаемый, он же становится summary записи.
+ */
+async function auditReturn(
+  user: PanelActor,
+  action: string,
+  result: ActionResult,
+  options?: { category?: AuditCategory; meta?: Prisma.InputJsonValue; error?: unknown }
+): Promise<ActionResult> {
+  await writeAuditLog({
+    category: options?.category ?? AuditCategory.DATA,
+    action,
+    outcome: result.ok ? "ok" : "failed",
+    actorId: user.id,
+    actorName: user.name,
+    actorRole: user.role,
+    summary: result.message,
+    meta: options?.meta,
+    error: options?.error
+  });
+
+  return result;
+}
+
 export async function saveSiteSettingsAction(formData: FormData): Promise<ActionResult> {
   const user = await requireUser(UserRole.DEVELOPER);
   const values = parseSiteSettingsForm(formData);
@@ -30,7 +59,10 @@ export async function saveSiteSettingsAction(formData: FormData): Promise<Action
   try {
     await saveSiteSettings(values);
     logInfoEvent("site_settings.updated", { userId: user.id });
-    return { ok: true, message: "Настройки сохранены и применены — подействуют в течение 15 секунд." };
+    return auditReturn(user, "developer.settings_saved", {
+      ok: true,
+      message: "Настройки сохранены и применены — подействуют в течение 15 секунд."
+    });
   } catch (error) {
     logErrorEvent(
       "site_settings.update_failed",
@@ -38,7 +70,12 @@ export async function saveSiteSettingsAction(formData: FormData): Promise<Action
       error instanceof Error ? error : undefined,
       "Failed to save site settings."
     );
-    return { ok: false, message: "Не удалось сохранить настройки. Применена ли миграция SiteSetting?" };
+    return auditReturn(
+      user,
+      "developer.settings_saved",
+      { ok: false, message: "Не удалось сохранить настройки. Применена ли миграция SiteSetting?" },
+      { error }
+    );
   }
 }
 
@@ -46,7 +83,7 @@ export async function testAiConnectionAction(
   _prevState: ActionResult | null,
   _formData: FormData
 ): Promise<ActionResult> {
-  await requireUser(UserRole.DEVELOPER);
+  const user = await requireUser(UserRole.DEVELOPER);
   const settings = await getSiteSettingsUncached();
   const config = settings.aiEnabled ? getAiCheckConfig(settings) : null;
 
@@ -77,11 +114,21 @@ export async function testAiConnectionAction(
     const elapsedMs = Date.now() - startedAt;
 
     if (response.ok) {
-      return { ok: true, message: `Модель отвечает: ${config.model} · ${elapsedMs} мс.` };
+      return auditReturn(
+        user,
+        "developer.ai_ping",
+        { ok: true, message: `Модель отвечает: ${config.model} · ${elapsedMs} мс.` },
+        { category: AuditCategory.AI, meta: { model: config.model, elapsedMs } }
+      );
     }
 
     const text = (await response.text().catch(() => "")).slice(0, 140);
-    return { ok: false, message: `Модель недоступна: HTTP ${response.status} ${text}`.trim() + "." };
+    return auditReturn(
+      user,
+      "developer.ai_ping",
+      { ok: false, message: `Модель недоступна: HTTP ${response.status} ${text}`.trim() + "." },
+      { category: AuditCategory.AI, meta: { model: config.model, status: response.status } }
+    );
   } catch (error) {
     const message = error instanceof Error && error.name === "AbortError"
       ? "таймаут 20 секунд"
@@ -102,10 +149,15 @@ export async function runRetentionNowAction(
     const result = await pruneExpiredHomeworkPhotos();
     await setInternalSettingValue("internal.retentionLastRunAt", new Date().toISOString());
     logInfoEvent("site_settings.retention_manual_run", { userId: user.id, ...result });
-    return {
-      ok: true,
-      message: `Автоудаление выполнено: снято ссылок на фото — ${result.submissionPhotos + result.checkPhotos}, удалено файлов — ${result.files}.`
-    };
+    return auditReturn(
+      user,
+      "developer.retention_run",
+      {
+        ok: true,
+        message: `Автоудаление выполнено: снято ссылок на фото — ${result.submissionPhotos + result.checkPhotos}, удалено файлов — ${result.files}.`
+      },
+      { meta: { ...result } }
+    );
   } catch (error) {
     logErrorEvent(
       "site_settings.retention_manual_failed",
@@ -113,7 +165,12 @@ export async function runRetentionNowAction(
       error instanceof Error ? error : undefined,
       "Manual retention run failed."
     );
-    return { ok: false, message: "Автоудаление не выполнено — подробности в логах сервера." };
+    return auditReturn(
+      user,
+      "developer.retention_run",
+      { ok: false, message: "Автоудаление не выполнено — подробности в логах сервера." },
+      { error }
+    );
   }
 }
 
@@ -126,9 +183,17 @@ export async function resetAiDailyBudgetAction(
   try {
     await resetPersistentRateLimit("api:homework-checks:global", "global");
     logInfoEvent("site_settings.ai_budget_reset", { userId: user.id });
-    return { ok: true, message: "Дневной бюджет автопроверки сброшен." };
-  } catch {
-    return { ok: false, message: "Не удалось сбросить бюджет — подробности в логах сервера." };
+    return auditReturn(user, "developer.ai_budget_reset", {
+      ok: true,
+      message: "Дневной бюджет автопроверки сброшен."
+    });
+  } catch (error) {
+    return auditReturn(
+      user,
+      "developer.ai_budget_reset",
+      { ok: false, message: "Не удалось сбросить бюджет — подробности в логах сервера." },
+      { error }
+    );
   }
 }
 
@@ -153,7 +218,12 @@ export async function unfreezeChecksAction(
       }
     });
     logInfoEvent("site_settings.checks_unfrozen", { userId: user.id, count: result.count });
-    return { ok: true, message: `Зависших проверок снято: ${result.count}.` };
+    return auditReturn(
+      user,
+      "developer.checks_unfrozen",
+      { ok: true, message: `Зависших проверок снято: ${result.count}.` },
+      { meta: { count: result.count } }
+    );
   } catch (error) {
     logErrorEvent(
       "site_settings.unfreeze_failed",
@@ -161,7 +231,12 @@ export async function unfreezeChecksAction(
       error instanceof Error ? error : undefined,
       "Failed to unfreeze stale checks."
     );
-    return { ok: false, message: "Не удалось снять зависшие проверки — подробности в логах сервера." };
+    return auditReturn(
+      user,
+      "developer.checks_unfrozen",
+      { ok: false, message: "Не удалось снять зависшие проверки — подробности в логах сервера." },
+      { error }
+    );
   }
 }
 
@@ -179,7 +254,7 @@ export async function flushCachesAction(
 
   invalidateSiteSettingsCache();
   logInfoEvent("site_settings.caches_flushed", { userId: user.id });
-  return { ok: true, message: "Кэши платформы сброшены." };
+  return auditReturn(user, "developer.caches_flushed", { ok: true, message: "Кэши платформы сброшены." });
 }
 
 export async function tagNumbersDifficultyAction(
@@ -198,12 +273,17 @@ export async function tagNumbersDifficultyAction(
     logInfoEvent("site_settings.numbers_tagged", { userId: user.id, ...result });
 
     if (result.tagged === 0 && result.remaining === 0 && result.failed === 0) {
-      return {
-        ok: true,
-        message: result.skippedNoCondition
-          ? `Все номера с условием уже размечены. Без условия (пропущены): ${result.skippedNoCondition}.`
-          : "Все номера уже размечены."
-      };
+      return auditReturn(
+        user,
+        "developer.numbers_tagged",
+        {
+          ok: true,
+          message: result.skippedNoCondition
+            ? `Все номера с условием уже размечены. Без условия (пропущены): ${result.skippedNoCondition}.`
+            : "Все номера уже размечены."
+        },
+        { meta: { ...result } }
+      );
     }
 
     const parts = [`Размечено: ${result.tagged}.`];
@@ -211,7 +291,12 @@ export async function tagNumbersDifficultyAction(
     if (result.failed > 0) parts.push(`Не получилось: ${result.failed}.`);
     if (result.skippedNoCondition > 0) parts.push(`Без условия (пропущены): ${result.skippedNoCondition}.`);
 
-    return { ok: result.tagged > 0 || result.failed === 0, message: parts.join(" ") };
+    return auditReturn(
+      user,
+      "developer.numbers_tagged",
+      { ok: result.tagged > 0 || result.failed === 0, message: parts.join(" ") },
+      { meta: { ...result } }
+    );
   } catch (error) {
     logErrorEvent(
       "site_settings.numbers_tagging_failed",
@@ -219,7 +304,12 @@ export async function tagNumbersDifficultyAction(
       error instanceof Error ? error : undefined,
       "Number difficulty tagging run failed."
     );
-    return { ok: false, message: "Разметка не выполнена — подробности в логах сервера." };
+    return auditReturn(
+      user,
+      "developer.numbers_tagged",
+      { ok: false, message: "Разметка не выполнена — подробности в логах сервера." },
+      { error }
+    );
   }
 }
 
@@ -261,5 +351,10 @@ export async function broadcastNotificationAction(formData: FormData): Promise<A
     recipients: students.length,
     toAll
   });
-  return { ok: true, message: `Уведомление отправлено ученикам: ${students.length}.` };
+  return auditReturn(
+    developer,
+    "developer.broadcast_sent",
+    { ok: true, message: `Уведомление отправлено ученикам: ${students.length}.` },
+    { meta: { recipients: students.length, toAll, title } }
+  );
 }

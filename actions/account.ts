@@ -1,9 +1,10 @@
 "use server";
 
-import { UserRole } from "@prisma/client";
+import { AuditCategory, UserRole } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
+import { writeAuditLog } from "@/lib/audit";
 import { requireUser } from "@/lib/auth";
 import { publishDashboardRealtimeEvent } from "@/lib/dashboard-realtime";
 import { getHeadersLogContext, logErrorEvent, logInfoEvent, logWarnEvent } from "@/lib/logger";
@@ -205,6 +206,18 @@ export async function createAccountAction(formData: FormData): Promise<CreateAcc
     },
     "Account was created by the developer."
   );
+  await writeAuditLog({
+    category: AuditCategory.DATA,
+    action: "account.create",
+    actorId: developer.id,
+    actorName: developer.name,
+    actorRole: developer.role,
+    targetType: "User",
+    targetLabel: name,
+    summary: `Создан аккаунт ${name} (${accountRole})`,
+    clientIp,
+    meta: { accountLogin: login, accountRole }
+  });
   revalidateTeacherStudentsData();
   revalidateTeacherTopicsData();
   publishDashboardRealtimeEvent({ kind: "students-changed" });
@@ -301,6 +314,16 @@ export async function changeStudentOwnersAction(formData: FormData) {
     { developerId: developer.id, changes },
     "Student owners were changed by the developer."
   );
+  await writeAuditLog({
+    category: AuditCategory.DATA,
+    action: "student.owner_change",
+    actorId: developer.id,
+    actorName: developer.name,
+    actorRole: developer.role,
+    targetType: "User",
+    summary: `Смена владельца у учеников: ${changes.length}`,
+    meta: { changes }
+  });
   revalidateTeacherStudentsData();
   revalidateTeacherTopicsData();
   publishDashboardRealtimeEvent({ kind: "students-changed" });
@@ -400,6 +423,18 @@ export async function deleteTeacherAction(formData: FormData) {
     { developerId: developer.id, teacherId, studentCount, newOwnerId },
     "Teacher account was deleted by the developer."
   );
+  await writeAuditLog({
+    category: AuditCategory.DATA,
+    action: "teacher.delete",
+    actorId: developer.id,
+    actorName: developer.name,
+    actorRole: developer.role,
+    targetType: "User",
+    targetId: teacherId,
+    targetLabel: teacher!.name,
+    summary: `Удалён учитель ${teacher!.name}; учеников переведено: ${studentCount}`,
+    meta: { studentCount, newOwnerId }
+  });
   revalidateTeacherStudentsData();
   revalidateTeacherTopicsData();
   publishDashboardRealtimeEvent({ kind: "students-changed" });
@@ -494,6 +529,16 @@ export async function resetTeacherPasswordAction(formData: FormData) {
     { developerId: developer.id, teacherId },
     "Teacher password was reset by the developer."
   );
+  await writeAuditLog({
+    category: AuditCategory.DATA,
+    action: "teacher.password_reset",
+    actorId: developer.id,
+    actorName: developer.name,
+    actorRole: developer.role,
+    targetType: "User",
+    targetId: teacherId,
+    summary: "Сброшен пароль учителя"
+  });
   revalidatePath("/developer/accounts");
   redirectDeveloperWithAccountStatus(new URLSearchParams({ teacherPasswordReset: "1" }));
 }

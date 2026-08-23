@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useActionState, useRef, useState, useTransition, type ReactNode } from "react";
 import {
@@ -489,6 +490,11 @@ export function DeveloperPanel({ stats, settings, students, statusChips }: Devel
               {item.label}
             </button>
           ))}
+          {/* Журнал — отдельная страница, а не вкладка: у него свои фильтры и
+              пагинация в адресе, чтобы ссылку на выборку можно было сохранить. */}
+          <Link href="/teacher/panel/journal" className="shbz-seg-btn shbz-seg-btn--plain">
+            Журнал
+          </Link>
         </nav>
         {statusChips}
       </div>

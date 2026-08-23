@@ -1,3 +1,5 @@
+import { AuditCategory } from "@prisma/client";
+import { currentAuditActor, writeAuditLog } from "@/lib/audit";
 import { logErrorEvent, logInfoEvent } from "@/lib/logger";
 import { prisma } from "@/lib/prisma";
 import { getSiteSettingsUncached } from "@/lib/site-settings";
@@ -110,10 +112,12 @@ type TaggingCandidate = {
   topic: { title: string };
 };
 
+type BatchTaggingResult = { items: TaggingItem[]; inputTokens: number | null; outputTokens: number | null };
+
 async function requestBatchTagging(
   config: { apiKey: string; model: string; baseUrl: string },
   batch: TaggingCandidate[]
-): Promise<TaggingItem[]> {
+): Promise<BatchTaggingResult> {
   const isReasoning = /(^|\/)(gpt-5|o\d)/i.test(config.model);
   const userPayload = {
     numbers: batch.map((candidate, index) => ({
@@ -148,7 +152,10 @@ async function requestBatchTagging(
   }
 
   const body = (await response.json().catch(() => null)) as
-    | { choices?: Array<{ message?: { content?: string } }> }
+    | {
+        choices?: Array<{ message?: { content?: string } }>;
+        usage?: { prompt_tokens?: number; completion_tokens?: number };
+      }
     | null;
   const content = body?.choices?.[0]?.message?.content;
 
@@ -156,7 +163,11 @@ async function requestBatchTagging(
     throw new Error("Tagging response has no content.");
   }
 
-  return parseTaggingResponse(content, batch.length);
+  return {
+    items: parseTaggingResponse(content, batch.length),
+    inputTokens: body?.usage?.prompt_tokens ?? null,
+    outputTokens: body?.usage?.completion_tokens ?? null
+  };
 }
 
 /**
@@ -191,12 +202,22 @@ export async function tagUntaggedNumbers(limit = MAX_NUMBERS_PER_RUN): Promise<T
 
   let tagged = 0;
   let failed = 0;
+  // Разметка идёт пачками, но в журнал пишем ОДНУ строку на прогон: иначе
+  // один клик в панели давал бы десяток записей, а интересен именно прогон.
+  const startedAt = Date.now();
+  const actor = await currentAuditActor();
+  let aiInputTokens = 0;
+  let aiOutputTokens = 0;
+  let batches = 0;
 
   for (let offset = 0; offset < candidates.length; offset += BATCH_SIZE) {
     const batch = candidates.slice(offset, offset + BATCH_SIZE);
 
     try {
-      const items = await requestBatchTagging(config, batch);
+      const { items, inputTokens, outputTokens } = await requestBatchTagging(config, batch);
+      aiInputTokens += inputTokens ?? 0;
+      aiOutputTokens += outputTokens ?? 0;
+      batches += 1;
 
       for (const item of items) {
         const target = batch[item.index];
@@ -230,6 +251,19 @@ export async function tagUntaggedNumbers(limit = MAX_NUMBERS_PER_RUN): Promise<T
   ]);
 
   logInfoEvent("number_tagging.run", { tagged, failed, remaining, skippedNoCondition });
+
+  await writeAuditLog({
+    ...actor,
+    category: AuditCategory.AI,
+    action: "number_tagging.run",
+    outcome: failed > 0 && tagged === 0 ? "failed" : "ok",
+    summary: `Разметка сложности: размечено ${tagged}, не удалось ${failed}, осталось ${remaining}`,
+    model: config.model,
+    inputTokens: aiInputTokens || null,
+    outputTokens: aiOutputTokens || null,
+    durationMs: Date.now() - startedAt,
+    meta: { tagged, failed, remaining, skippedNoCondition, batches }
+  });
 
   return { tagged, failed, skippedNoCondition, remaining };
 }

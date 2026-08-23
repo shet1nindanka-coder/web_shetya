@@ -1,5 +1,6 @@
-import { SolutionCheckStatus, SolutionVerdict } from "@prisma/client";
+import { AuditCategory, SolutionCheckStatus, SolutionVerdict, UserRole } from "@prisma/client";
 import sharp from "sharp";
+import { writeAuditLog } from "@/lib/audit";
 import { publishDashboardRealtimeEvent } from "@/lib/dashboard-realtime";
 import { logErrorEvent, logInfoEvent, logWarnEvent } from "@/lib/logger";
 import { createNotification } from "@/lib/notifications";
@@ -287,7 +288,7 @@ async function callModelOnce(
       headers: {
         Authorization: `Bearer ${config.apiKey}`,
         "Content-Type": "application/json",
-        "HTTP-Referer": "https://shetya.ru",
+        "HTTP-Referer": process.env.PUBLIC_SITE_URL?.trim() || "https://shbz-edu.ru",
         "X-Title": "SHBZ School"
       },
       body: JSON.stringify({
@@ -615,6 +616,10 @@ export async function runHomeworkCheck(checkId: string) {
           id: true,
           studentId: true,
           topicId: true,
+          // Имя нужно журналу действий: актором автопроверки считается ученик,
+          // который отправил фото, и запись должна остаться читаемой после
+          // удаления аккаунта.
+          student: { select: { name: true } },
           topic: { select: { title: true } },
           numbers: {
             select: {
@@ -667,6 +672,13 @@ export async function runHomeworkCheck(checkId: string) {
   // (PROD-010). Если модель уже ответила, токены списаны — слот остаётся занят,
   // даже когда разобрать ответ не удалось.
   let modelCallStarted = false;
+
+  // Счётчики для журнала действий: сколько раз звали модель и сколько токенов ушло.
+  const modelStartedAt = Date.now();
+  const studentName = check.assignment.student.name;
+  let aiInputTokens = 0;
+  let aiOutputTokens = 0;
+  let aiCalls = 0;
 
   const failCheck = async (message: string) => {
     // Только PENDING/CHECKING: если проверка уже DONE (например, упала запись
@@ -760,6 +772,11 @@ export async function runHomeworkCheck(checkId: string) {
     modelCallStarted = true;
 
     let modelResponse = await callModel(config, userText, imageUrls);
+    // Токены копим по всем вызовам: при неразобранном JSON модель зовётся дважды,
+    // и в журнал должна попасть суммарная стоимость, а не только последняя.
+    aiInputTokens += modelResponse.inputTokens ?? 0;
+    aiOutputTokens += modelResponse.outputTokens ?? 0;
+    aiCalls += 1;
     let results: ParsedCheckResult[];
 
     try {
@@ -772,6 +789,9 @@ export async function runHomeworkCheck(checkId: string) {
         imageUrls,
         "Предыдущий ответ не удалось разобрать. Верни СТРОГО один JSON-объект по формату, без текста вокруг."
       );
+      aiInputTokens += modelResponse.inputTokens ?? 0;
+      aiOutputTokens += modelResponse.outputTokens ?? 0;
+      aiCalls += 1;
       results = parseCheckResponse(modelResponse.content, validNumbers);
     }
 
@@ -871,8 +891,49 @@ export async function runHomeworkCheck(checkId: string) {
       inputTokens: modelResponse.inputTokens,
       outputTokens: modelResponse.outputTokens
     });
+
+    // Актор автопроверки — ученик, приславший фото: инициатор расхода именно он,
+    // хотя сам запрос к модели уходит из фоновой очереди уже без его сессии.
+    await writeAuditLog({
+      category: AuditCategory.AI,
+      action: "solution.check",
+      actorId: assignment.studentId,
+      actorName: studentName,
+      actorRole: UserRole.STUDENT,
+      targetType: "HomeworkAssignment",
+      targetId: assignment.id,
+      targetLabel: assignment.topicTitle,
+      summary: `Автопроверка: верно ${correctCount}, с ошибкой ${incorrectCount}, не распознано ${uncertainCount}`,
+      model: config?.model ?? null,
+      inputTokens: aiInputTokens || null,
+      outputTokens: aiOutputTokens || null,
+      durationMs: Date.now() - modelStartedAt,
+      meta: { checkId, aiCalls, numbers: assignment.numbers.length, photos: assignment.photos.length }
+    });
   } catch (error) {
     logErrorEvent("solution.check.failed", { checkId, assignmentId: assignment.id }, error, "Homework check failed.");
+
+    // Упавшую проверку тоже пишем: если модель уже ответила, токены списаны,
+    // и такие вызовы обязаны быть видны в расходах.
+    await writeAuditLog({
+      category: AuditCategory.AI,
+      action: "solution.check",
+      outcome: "failed",
+      actorId: assignment.studentId,
+      actorName: studentName,
+      actorRole: UserRole.STUDENT,
+      targetType: "HomeworkAssignment",
+      targetId: assignment.id,
+      targetLabel: assignment.topicTitle,
+      summary: "Автопроверка не удалась",
+      model: config?.model ?? null,
+      inputTokens: aiInputTokens || null,
+      outputTokens: aiOutputTokens || null,
+      durationMs: Date.now() - modelStartedAt,
+      error,
+      meta: { checkId, aiCalls, modelCallStarted }
+    });
+
     await failCheck(error instanceof Error ? error.message : "Не удалось проверить решение.");
   }
 }

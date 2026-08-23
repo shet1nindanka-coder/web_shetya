@@ -274,7 +274,13 @@ export async function generateHomeworkPlanForParticipant(lessonId: string, parti
         candidates: buildCandidatePayload(available, false, now)
       });
 
-      const shortlistContent = await callPlannerModel(config, HOMEWORK_SHORTLIST_SYSTEM_PROMPT, shortlistUser, "low");
+      const shortlistContent = await callPlannerModel(config, HOMEWORK_SHORTLIST_SYSTEM_PROMPT, shortlistUser, "low", {
+        action: "homework_plan.shortlist",
+        targetType: "User",
+        targetId: context.student.id,
+        targetLabel: context.student.name,
+        summary: `Отбор кандидатов в ДЗ для ученика ${context.student.name}`
+      });
       const indexes = parseShortlistResponse(shortlistContent, available.length).slice(0, shortlistSize);
 
       if (indexes.length > 0) {
@@ -303,7 +309,13 @@ export async function generateHomeworkPlanForParticipant(lessonId: string, parti
       candidates: buildCandidatePayload(candidates, true, now)
     });
 
-    const planContent = await callPlannerModel(config, HOMEWORK_PLAN_SYSTEM_PROMPT, planUser, config.reasoningEffort);
+    const planContent = await callPlannerModel(config, HOMEWORK_PLAN_SYSTEM_PROMPT, planUser, config.reasoningEffort, {
+      action: "homework_plan.generate",
+      targetType: "User",
+      targetId: context.student.id,
+      targetLabel: context.student.name,
+      summary: `Подбор домашнего задания для ученика ${context.student.name}`
+    });
     const plan = parseLessonPlanResponse(planContent, candidates.length);
     // Дополнительной части у ДЗ нет: extraItems от модели отбрасываются.
     const items = plan.items.slice(0, settings.homeworkPlanMaxItems);

@@ -1,9 +1,10 @@
 "use server";
 
-import { UserRole } from "@prisma/client";
+import { AuditCategory, UserRole } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
+import { writeAuditLog } from "@/lib/audit";
 import { requireUser } from "@/lib/auth";
 import { publishDashboardRealtimeEvent } from "@/lib/dashboard-realtime";
 import { getHeadersLogContext, logErrorEvent, logInfoEvent, logWarnEvent } from "@/lib/logger";
@@ -173,6 +174,18 @@ export async function createStudentAction(formData: FormData): Promise<CreateStu
     },
     "Student account was created."
   );
+  await writeAuditLog({
+    category: AuditCategory.DATA,
+    action: "student.create",
+    actorId: teacher.id,
+    actorName: teacher.name,
+    actorRole: teacher.role,
+    targetType: "User",
+    targetLabel: name,
+    summary: `Создан ученик ${name}`,
+    clientIp,
+    meta: { studentLogin: login }
+  });
   revalidateTeacherStudentsData();
   revalidateTeacherTopicsData();
   publishDashboardRealtimeEvent({ kind: "students-changed" });
@@ -213,7 +226,9 @@ export async function deleteStudentAction(formData: FormData) {
       ...(isDeveloper ? {} : { teacherId: user.id })
     },
     select: {
-      id: true
+      id: true,
+      // Имя нужно журналу действий: после удаления по id уже ничего не найти.
+      name: true
     }
   });
 
@@ -281,6 +296,17 @@ export async function deleteStudentAction(formData: FormData) {
     },
     "Student account was deleted."
   );
+  await writeAuditLog({
+    category: AuditCategory.DATA,
+    action: "student.delete",
+    actorId: user.id,
+    actorName: user.name,
+    actorRole: user.role,
+    targetType: "User",
+    targetId: studentId,
+    targetLabel: student!.name,
+    summary: `Удалён ученик ${student!.name} со всеми работами`
+  });
   revalidateTeacherStudentsData();
   revalidateTeacherTopicsData();
   publishDashboardRealtimeEvent({ kind: "students-changed" });
@@ -390,5 +416,15 @@ export async function resetStudentPasswordAction(formData: FormData) {
     { actorId: user.id, studentId },
     "Student password was reset."
   );
+  await writeAuditLog({
+    category: AuditCategory.DATA,
+    action: "student.password_reset",
+    actorId: user.id,
+    actorName: user.name,
+    actorRole: user.role,
+    targetType: "User",
+    targetId: studentId,
+    summary: "Сброшен пароль ученика"
+  });
   redirectWithStatus(new URLSearchParams({ passwordReset: "1" }));
 }

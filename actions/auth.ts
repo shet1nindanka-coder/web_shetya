@@ -2,6 +2,8 @@
 
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
+import { AuditCategory } from "@prisma/client";
+import { currentAuditActor, writeAuditLog } from "@/lib/audit";
 import { signIn, signOut } from "@/lib/auth";
 import { getHeadersLogContext, logErrorEvent, logInfoEvent, logWarnEvent } from "@/lib/logger";
 import {
@@ -130,6 +132,15 @@ export async function loginAction(formData: FormData) {
       undefined,
       "Login was rejected due to invalid credentials."
     );
+    // Пишем ДО redirect: redirect бросает исключение, код после него не выполнится.
+    await writeAuditLog({
+      category: AuditCategory.AUTH,
+      action: "auth.login",
+      outcome: "failed",
+      summary: `Неудачный вход: ${login}`,
+      clientIp,
+      meta: { login, reason: "invalid_credentials" }
+    });
     redirect("/login?error=invalid");
   }
 
@@ -158,10 +169,28 @@ export async function loginAction(formData: FormData) {
     }),
     "Login session created successfully."
   );
+  await writeAuditLog({
+    category: AuditCategory.AUTH,
+    action: "auth.login",
+    actorId: user.id,
+    actorName: user.name,
+    actorRole: user.role,
+    summary: "Вход в систему",
+    clientIp
+  });
   redirect(roleHome(user.role));
 }
 
 export async function logoutAction() {
+  // Актора снимаем до signOut: после него сессии уже нет и записывать некого.
+  const actor = await currentAuditActor();
+
   await signOut();
+  await writeAuditLog({
+    ...actor,
+    category: AuditCategory.AUTH,
+    action: "auth.logout",
+    summary: "Выход из системы"
+  });
   redirect("/login");
 }

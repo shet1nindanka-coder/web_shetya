@@ -1,8 +1,9 @@
 "use server";
 
-import { UserRole } from "@prisma/client";
+import { AuditCategory, UserRole } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { writeAuditLog } from "@/lib/audit";
 import { requireUser } from "@/lib/auth";
 import { publishDashboardRealtimeEvent } from "@/lib/dashboard-realtime";
 import { logErrorEvent, logInfoEvent, logWarnEvent } from "@/lib/logger";
@@ -244,6 +245,18 @@ export async function createTopicAction(formData: FormData) {
     },
     "Topic was created successfully."
   );
+  await writeAuditLog({
+    category: AuditCategory.DATA,
+    action: "topic.create",
+    actorId: user.id,
+    actorName: user.name,
+    actorRole: user.role,
+    targetType: "Topic",
+    targetId: createdTopicId,
+    targetLabel: title,
+    summary: `Создана тема «${title}», номеров: ${numbers.length}`,
+    meta: { numberCount: numbers.length }
+  });
   revalidateTopicRoutes();
   redirectTeacherTopicsWithStatus(new URLSearchParams({ created: "1" }));
 }
@@ -721,6 +734,17 @@ export async function deleteTopicAction(formData: FormData) {
     },
     "Topic was deleted."
   );
+  await writeAuditLog({
+    category: AuditCategory.DATA,
+    action: "topic.delete",
+    actorId: user.id,
+    actorName: user.name,
+    actorRole: user.role,
+    targetType: "Topic",
+    targetId: topicId,
+    summary: `Удалена тема, файлов вычищено: ${fileIdsToCleanup.size}`,
+    meta: { cleanedFileCount: fileIdsToCleanup.size }
+  });
   revalidateTopicRoutes();
   redirectTeacherTopicsWithStatus(new URLSearchParams({ deleted: "1" }));
 }

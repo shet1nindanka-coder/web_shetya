@@ -1,4 +1,5 @@
-import { HomeworkNumberStatus } from "@prisma/client";
+import { AuditCategory, HomeworkNumberStatus } from "@prisma/client";
+import { currentAuditActor, writeAuditLog } from "@/lib/audit";
 import {
   collectAvailableNumbers,
   CONDITION_CHARS_LIMIT,
@@ -97,12 +98,14 @@ reason для каждой задачи: "GAP" — закрывает пробе
 
 type PlannerConfig = NonNullable<ReturnType<typeof getAiCheckConfig>>;
 
+type PlannerModelResult = { content: string; inputTokens: number | null; outputTokens: number | null };
+
 async function callPlannerModelOnce(
   config: PlannerConfig,
   systemPrompt: string,
   userText: string,
   reasoningEffort: string
-): Promise<string> {
+): Promise<PlannerModelResult> {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), MODEL_TIMEOUT_MS);
 
@@ -112,7 +115,7 @@ async function callPlannerModelOnce(
       headers: {
         Authorization: `Bearer ${config.apiKey}`,
         "Content-Type": "application/json",
-        "HTTP-Referer": "https://shetya.ru",
+        "HTTP-Referer": process.env.PUBLIC_SITE_URL?.trim() || "https://shbz-edu.ru",
         "X-Title": "SHBZ School"
       },
       body: JSON.stringify({
@@ -130,7 +133,11 @@ async function callPlannerModelOnce(
     });
 
     const rawBody = await response.text();
-    let payload: { choices?: Array<{ message?: { content?: string } }>; error?: { message?: string } } | null = null;
+    let payload: {
+      choices?: Array<{ message?: { content?: string } }>;
+      usage?: { prompt_tokens?: number; completion_tokens?: number };
+      error?: { message?: string };
+    } | null = null;
 
     try {
       payload = JSON.parse(rawBody);
@@ -162,29 +169,85 @@ async function callPlannerModelOnce(
       throw new Error("Модель вернула пустой ответ.");
     }
 
-    return content;
+    return {
+      content,
+      inputTokens: payload?.usage?.prompt_tokens ?? null,
+      outputTokens: payload?.usage?.completion_tokens ?? null
+    };
   } finally {
     clearTimeout(timeout);
   }
 }
 
+/**
+ * Контекст для журнала действий. Планировщик — самый дорогой потребитель модели
+ * (16000 токенов ответа на вызов), поэтому каждый его вызов обязан оставлять
+ * след: кто запустил, над кем и сколько это стоило.
+ */
+export type PlannerAuditContext = {
+  action: string;
+  targetType?: string | null;
+  targetId?: string | null;
+  targetLabel?: string | null;
+  summary?: string | null;
+};
+
 export async function callPlannerModel(
   config: PlannerConfig,
   systemPrompt: string,
   userText: string,
-  reasoningEffort: string
+  reasoningEffort: string,
+  audit?: PlannerAuditContext
 ): Promise<string> {
   let lastError: Error | null = null;
+  const startedAt = Date.now();
+  const actor = audit ? await currentAuditActor() : {};
 
   for (let attempt = 1; attempt <= MODEL_MAX_ATTEMPTS; attempt += 1) {
     try {
-      return await callPlannerModelOnce(config, systemPrompt, userText, reasoningEffort);
+      const result = await callPlannerModelOnce(config, systemPrompt, userText, reasoningEffort);
+
+      if (audit) {
+        await writeAuditLog({
+          ...actor,
+          category: AuditCategory.AI,
+          action: audit.action,
+          targetType: audit.targetType,
+          targetId: audit.targetId,
+          targetLabel: audit.targetLabel,
+          summary: audit.summary,
+          model: config.model,
+          inputTokens: result.inputTokens,
+          outputTokens: result.outputTokens,
+          durationMs: Date.now() - startedAt,
+          meta: { attempt, reasoningEffort }
+        });
+      }
+
+      return result.content;
     } catch (error) {
       lastError = error instanceof Error ? error : new Error("Не удалось получить ответ модели.");
 
       const isRetriable = lastError.name === "RetriableModelError" || lastError.name === "AbortError";
 
       if (!isRetriable || attempt === MODEL_MAX_ATTEMPTS) {
+        if (audit) {
+          await writeAuditLog({
+            ...actor,
+            category: AuditCategory.AI,
+            action: audit.action,
+            outcome: "failed",
+            targetType: audit.targetType,
+            targetId: audit.targetId,
+            targetLabel: audit.targetLabel,
+            summary: audit.summary,
+            model: config.model,
+            durationMs: Date.now() - startedAt,
+            error: lastError,
+            meta: { attempt, reasoningEffort }
+          });
+        }
+
         throw lastError;
       }
 
@@ -334,7 +397,13 @@ export async function generateLessonPlanForParticipant(lessonId: string, partici
         candidates: buildCandidatePayload(available, false, now)
       });
 
-      const shortlistContent = await callPlannerModel(config, SHORTLIST_SYSTEM_PROMPT, shortlistUser, "low");
+      const shortlistContent = await callPlannerModel(config, SHORTLIST_SYSTEM_PROMPT, shortlistUser, "low", {
+        action: "lesson_plan.shortlist",
+        targetType: "User",
+        targetId: context.student.id,
+        targetLabel: context.student.name,
+        summary: `Отбор кандидатов на урок для ученика ${context.student.name}`
+      });
       const indexes = parseShortlistResponse(shortlistContent, available.length).slice(0, shortlistSize);
 
       if (indexes.length > 0) {
@@ -377,7 +446,13 @@ export async function generateLessonPlanForParticipant(lessonId: string, partici
       candidates: buildCandidatePayload(candidates, true, now)
     });
 
-    const planContent = await callPlannerModel(config, PLAN_SYSTEM_PROMPT, planUser, config.reasoningEffort);
+    const planContent = await callPlannerModel(config, PLAN_SYSTEM_PROMPT, planUser, config.reasoningEffort, {
+      action: "lesson_plan.generate",
+      targetType: "User",
+      targetId: context.student.id,
+      targetLabel: context.student.name,
+      summary: `Подбор набора на урок для ученика ${context.student.name}`
+    });
     const plan = parseLessonPlanResponse(planContent, candidates.length);
     const items = plan.items.slice(0, settings.lessonPlanMaxItems);
     const extraItems = plan.extraItems.slice(0, Math.max(2, Math.ceil(settings.lessonPlanMaxItems / 2)));

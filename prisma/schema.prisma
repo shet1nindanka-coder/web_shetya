@@ -101,6 +101,7 @@ model User {
   homeworkAssignments  HomeworkAssignment[]       @relation("StudentHomeworkAssignments")
   parentCallsAsStudent ParentCallLog[]            @relation("StudentParentCalls")
   parentCallsMade      ParentCallLog[]            @relation("TeacherParentCalls")
+  auditLogs            AuditLog[]                 @relation("AuditActor")
 
   @@index([teacherId])
 }
@@ -554,4 +555,61 @@ model SiteSetting {
   key       String   @id
   value     String
   updatedAt DateTime @updatedAt
+}
+
+// Категория записи журнала. Разделяем, чтобы дев-панель могла показывать
+// деньги (AI) отдельно от «кто что удалил» (DATA) и от входов (AUTH).
+enum AuditCategory {
+  AI
+  DATA
+  AUTH
+}
+
+// Журнал действий для панели разработчика: кто, что и когда вызвал.
+// Пишется best-effort (lib/audit.ts никогда не бросает) — журнал не должен
+// ронять основную операцию. Хранится 90 дней, чистится retention-джобом.
+model AuditLog {
+  id        String        @id @default(cuid())
+  createdAt DateTime      @default(now())
+  category  AuditCategory
+  // Точечное имя события в стиле логов pino: "lesson_plan.generate", "auth.login".
+  action    String
+  // "ok" | "failed" — чтобы фильтровать неудачи без разбора текста ошибки.
+  outcome   String        @default("ok")
+
+  // Актор. Связь SetNull, а имя и роль — СНИМОК на момент действия: запись
+  // должна пережить удаление пользователя, иначе журнал теряет смысл ровно
+  // в том случае, ради которого его завели.
+  actorId   String?
+  actorName String?
+  actorRole UserRole?
+  actor     User?         @relation("AuditActor", fields: [actorId], references: [id], onDelete: SetNull)
+
+  // Над чем действие. Строки, а не связи: цель может быть уже удалена.
+  targetType  String?
+  targetId    String?
+  targetLabel String?
+
+  // Короткая человекочитаемая строка для таблицы в панели.
+  summary String?
+
+  // Расход на модель. costRub считается при записи по ценам из env:
+  // тарифы провайдера меняются, пересчитывать историю задним числом нельзя.
+  model        String?
+  inputTokens  Int?
+  outputTokens Int?
+  costRub      Decimal? @db.Decimal(12, 4)
+  durationMs   Int?
+
+  // Текст ошибки для outcome = "failed", обрезается до 500 символов.
+  error String?
+  // Всё остальное, что полезно для конкретного действия.
+  meta  Json?
+
+  clientIp String?
+
+  @@index([createdAt])
+  @@index([category, createdAt])
+  @@index([actorId, createdAt])
+  @@index([action, createdAt])
 }
