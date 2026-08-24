@@ -4125,9 +4125,10 @@ html[data-theme="dark"] .ui-skeleton::after {
 /* Копирование · вспышка строки со значением (см. lib/animation-hooks.ts → useCopy).
    Зажигается мгновенно, гаснет 900 мс; пилюля «Скопировано» всплывает над строкой.
    Анимируем только background-color / opacity / transform. */
+/* Без 100%-кадра: подложка гаснет к собственному фону элемента, поэтому
+   вспышка работает и на строках с мягким фоном, и на кнопках. */
 @keyframes copy-flash {
-  0%   { background-color: var(--theme-accent-soft-hover); }
-  100% { background-color: var(--theme-surface); }
+  0% { background-color: var(--theme-accent-soft-hover); }
 }
 
 .ui-copy-row {
@@ -4137,6 +4138,12 @@ html[data-theme="dark"] .ui-skeleton::after {
   border-radius: var(--radius-lg);
 }
 .ui-copy-row[data-copied="true"] { animation: copy-flash 900ms var(--ease-out); }
+
+/* Цель копирования, которая не строка (кнопка): та же вспышка и пилюля,
+   без правил размера строки. */
+.ui-copy-target { position: relative; }
+.ui-copy-target[data-copied="true"] { animation: copy-flash 900ms var(--ease-out); }
+.ui-copy-target[data-copied="true"] > .ui-copy-pill { opacity: 1; transform: translate(-50%, 0); }
 
 .ui-copy-pill {
   position: absolute;
@@ -4167,6 +4174,7 @@ html[data-theme="dark"] .ui-skeleton::after {
 .ui-copy-row:focus-visible { outline: 2px solid var(--shbz-accent-solid, #16b07e); outline-offset: 2px; }
 
 @media (prefers-reduced-motion: reduce) {
-  .ui-copy-row[data-copied="true"] { animation: none; }
+  .ui-copy-row[data-copied="true"],
+  .ui-copy-target[data-copied="true"] { animation: none; }
   .ui-copy-pill { transition: none; }
 }

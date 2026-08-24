@@ -29,12 +29,14 @@ export function TopicImportPromptButton() {
     <span className="inline-flex flex-wrap items-center gap-3">
       <button
         type="button"
-        className="ui-pressable ui-button-secondary rounded-[12px] px-4 py-2 text-sm font-semibold transition"
+        className="ui-pressable ui-button-secondary ui-copy-target rounded-[12px] px-4 py-2 text-sm font-semibold transition"
+        data-copied={String(copied)}
         onClick={() => void copyPrompt()}
       >
         Скопировать промпт для ИИ
+        <span className="ui-copy-pill">Скопировано</span>
       </button>
-      <span role="status" aria-live="polite" className="text-sm font-semibold" style={{ color: "var(--theme-success-text)" }}>
+      <span role="status" aria-live="polite" className="sr-only">
         {copied ? "Скопировано" : ""}
       </span>
       {failed ? (
