@@ -16,7 +16,7 @@ type ShbzNavCardProps = {
 export function ShbzNavCard({ kicker, title, stats, meta, footer }: ShbzNavCardProps) {
   return (
     <article
-      className="shbz-card shbz-card-hover flex flex-col overflow-hidden"
+      className="shbz-card shbz-card-hover flex h-full flex-col overflow-hidden"
       style={{ borderRadius: 16, padding: 0 }}
     >
       <div className="h-[5px] shrink-0" style={{ background: "var(--shbz-accent-grad)" }} />
@@ -25,7 +25,21 @@ export function ShbzNavCard({ kicker, title, stats, meta, footer }: ShbzNavCardP
           <div className="text-[10.5px] font-bold uppercase tracking-[1.2px]" style={{ color: "var(--shbz-kicker)" }}>
             {kicker}
           </div>
-          <div className="mt-1.5 text-[17px] font-bold" style={{ color: "var(--shbz-text-strong)" }}>
+          {/* Всегда резерв под две строки (и не больше двух) — карточки в сетке
+              одной высоты независимо от длины названия. */}
+          <div
+            className="mt-1.5 text-[17px] font-bold"
+            title={title}
+            style={{
+              color: "var(--shbz-text-strong)",
+              lineHeight: 1.35,
+              minHeight: "2.7em",
+              display: "-webkit-box",
+              WebkitLineClamp: 2,
+              WebkitBoxOrient: "vertical",
+              overflow: "hidden"
+            }}
+          >
             {title}
           </div>
         </div>
