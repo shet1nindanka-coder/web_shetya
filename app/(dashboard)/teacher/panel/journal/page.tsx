@@ -78,20 +78,13 @@ export default async function DeveloperJournalPage({ searchParams }: { searchPar
     ...(since ? { createdAt: { gte: since } } : {})
   };
 
-  const [total, entries, costAggregate, actors] = await Promise.all([
+  const [total, entries, actors] = await Promise.all([
     prisma.auditLog.count({ where }),
     prisma.auditLog.findMany({
       where,
       orderBy: { createdAt: "desc" },
       skip: (page - 1) * PAGE_SIZE,
       take: PAGE_SIZE
-    }),
-    // Сводка по деньгам считается по ТЕМ ЖЕ фильтрам, что и таблица: иначе
-    // цифра вверху не совпадала бы с тем, что человек видит под ней.
-    prisma.auditLog.aggregate({
-      where: { ...where, category: AuditCategory.AI },
-      _sum: { costRub: true, inputTokens: true, outputTokens: true },
-      _count: { _all: true }
     }),
     prisma.user.findMany({
       where: { auditLogs: { some: {} } },
@@ -101,7 +94,6 @@ export default async function DeveloperJournalPage({ searchParams }: { searchPar
   ]);
 
   const pageCount = Math.max(1, Math.ceil(total / PAGE_SIZE));
-  const periodLabel = days > 0 ? `за ${days} дн.` : "за всё время";
 
   const buildHref = (overrides: Partial<SearchParams>) => {
     const next = new URLSearchParams();
@@ -162,17 +154,6 @@ export default async function DeveloperJournalPage({ searchParams }: { searchPar
           onlyFailed={onlyFailed}
           actors={actors.map((actor) => ({ id: actor.id, name: actor.name, roleLabel: ROLE_LABELS[actor.role] }))}
         />
-
-        <div className="mt-5 flex flex-wrap gap-2">
-          <span className="shbz-chip">Записей: {total}</span>
-          <span className="shbz-chip shbz-chip-green">
-            Расход на ИИ {periodLabel}: {formatCost(costAggregate._sum.costRub)}
-          </span>
-          <span className="shbz-chip">Вызовов модели: {costAggregate._count._all}</span>
-          <span className="shbz-chip">
-            Токены: {costAggregate._sum.inputTokens ?? 0} → {costAggregate._sum.outputTokens ?? 0}
-          </span>
-        </div>
       </div>
 
       <div className="shbz-card shbz-section-pad mt-[18px]">
