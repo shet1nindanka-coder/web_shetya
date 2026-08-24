@@ -1,7 +1,10 @@
 import Link from "next/link";
 import { AuditCategory, Prisma, UserRole } from "@prisma/client";
+import { DeveloperJournalFilters } from "@/components/developer-journal-filters";
+import { ShbzNumberSearch } from "@/components/shbz-number-search";
 import { ShbzPageHeader } from "@/components/shbz-page-header";
 import { requireUser } from "@/lib/auth";
+import { DEVELOPER_PANEL_TABS } from "@/lib/developer-panel-tabs";
 import { getAuditRetentionDays } from "@/lib/audit";
 import { prisma } from "@/lib/prisma";
 import { formatDateTime } from "@/lib/utils";
@@ -118,82 +121,47 @@ export default async function DeveloperJournalPage({ searchParams }: { searchPar
       }
     }
 
-    return `/teacher/panel/journal?${next.toString()}`;
+    return `/developer/panel/journal?${next.toString()}`;
   };
 
   return (
     <div>
+      {/* Тот же хедер и таббар, что у панели: журнал — её вкладка, просто со
+          своим URL (фильтры и пагинация живут в адресе). */}
       <ShbzPageHeader
         kicker="Служебный доступ"
-        title="Журнал действий"
-        aside={
-          <Link href="/teacher/panel" className="shbz-btn-outline">
-            К панели
-          </Link>
-        }
+        title="Панель разработчика"
+        aside={<ShbzNumberSearch endpoint="/api/teacher/topics/find-number" />}
       />
 
-      <div className="shbz-card shbz-section-pad">
+      <nav className="shbz-seg" aria-label="Разделы панели">
+        {DEVELOPER_PANEL_TABS.map((item) => (
+          <Link
+            key={item.key}
+            href={`/developer/panel?tab=${item.key}`}
+            className="shbz-seg-btn shbz-seg-btn--plain"
+          >
+            {item.label}
+          </Link>
+        ))}
+        <span className="shbz-seg-btn shbz-seg-btn--plain" data-active aria-current="page">
+          Журнал
+        </span>
+      </nav>
+
+      <div className="shbz-card shbz-section-pad mt-[18px]">
         <p className="ui-hint mb-4 text-[13px]" style={{ color: "var(--shbz-text-muted)" }}>
           Кто и что вызвал на платформе. Записи хранятся {getAuditRetentionDays()} дней, потом удаляются автоматически.
         </p>
 
-        <form method="get" className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
-          <label className="block">
-            <span className="shbz-kicker mb-1 block">Категория</span>
-            <select name="category" defaultValue={category ?? ""} className="shbz-select w-full">
-              <option value="">Все</option>
-              <option value="AI">ИИ и расходы</option>
-              <option value="DATA">Изменения данных</option>
-              <option value="AUTH">Входы</option>
-            </select>
-          </label>
-
-          <label className="block">
-            <span className="shbz-kicker mb-1 block">Кто</span>
-            <select name="actor" defaultValue={actorId ?? ""} className="shbz-select w-full">
-              <option value="">Все</option>
-              {actors.map((actor) => (
-                <option key={actor.id} value={actor.id}>
-                  {actor.name} — {ROLE_LABELS[actor.role]}
-                </option>
-              ))}
-            </select>
-          </label>
-
-          <label className="block">
-            <span className="shbz-kicker mb-1 block">Действие</span>
-            <input
-              type="text"
-              name="action"
-              defaultValue={actionQuery ?? ""}
-              placeholder="lesson_plan"
-              maxLength={60}
-              className="shbz-input w-full"
-            />
-          </label>
-
-          <label className="block">
-            <span className="shbz-kicker mb-1 block">Период</span>
-            <select name="days" defaultValue={String(days)} className="shbz-select w-full">
-              <option value="1">Сутки</option>
-              <option value="7">Неделя</option>
-              <option value="30">Месяц</option>
-              <option value="90">Три месяца</option>
-              <option value="0">Всё время</option>
-            </select>
-          </label>
-
-          <div className="flex items-end gap-3">
-            <label className="flex items-center gap-2 pb-2 text-[13px]">
-              <input type="checkbox" name="outcome" value="failed" defaultChecked={onlyFailed} className="shbz-checkbox" />
-              <span style={{ color: "var(--shbz-text-strong)" }}>Только ошибки</span>
-            </label>
-            <button type="submit" className="shbz-btn-primary ml-auto">
-              Показать
-            </button>
-          </div>
-        </form>
+        <DeveloperJournalFilters
+          category={category ?? ""}
+          actorId={actorId ?? ""}
+          action={actionQuery ?? ""}
+          days={days}
+          onlyFailed={onlyFailed}
+          actors={actors.map((actor) => ({ id: actor.id, name: actor.name, roleLabel: ROLE_LABELS[actor.role] }))}
+        />
 
         <div className="mt-5 flex flex-wrap gap-2">
           <span className="shbz-chip">Записей: {total}</span>

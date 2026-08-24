@@ -7,14 +7,16 @@ import { prisma } from "@/lib/prisma";
 import { getLessonPlanQueueLength } from "@/lib/lesson-plan-queue";
 import { getInternalSettingValue, getSiteSettingsUncached } from "@/lib/site-settings";
 import { getHomeworkCheckQueueLength } from "@/lib/solution-check-queue";
+import { parseDeveloperPanelTab } from "@/lib/developer-panel-tabs";
 import { formatDateTime, formatFileSize } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
 const STORAGE_WARN_BYTES = 512 * 1024 * 1024;
 
-export default async function DeveloperPage() {
+export default async function DeveloperPage({ searchParams }: { searchParams: Promise<{ tab?: string }> }) {
   await requireUser(UserRole.DEVELOPER);
+  const initialTab = parseDeveloperPanelTab((await searchParams).tab);
   const settings = await getSiteSettingsUncached();
 
   const dayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000);
@@ -90,6 +92,7 @@ export default async function DeveloperPage() {
         }}
         settings={settings}
         students={students}
+        initialTab={initialTab}
       />
     </div>
   );

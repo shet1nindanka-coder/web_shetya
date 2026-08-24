@@ -16,8 +16,9 @@ import {
 import { DeveloperBroadcastRecipients } from "@/components/developer-broadcast-recipients";
 import { ShbzSelect } from "@/components/shbz-select";
 import type { ReasoningEffort, SiteSettings } from "@/lib/site-settings";
+import { DEVELOPER_PANEL_TABS, type DeveloperPanelTab } from "@/lib/developer-panel-tabs";
 
-export type DeveloperPanelTab = "status" | "actions" | "broadcast" | "settings";
+export type { DeveloperPanelTab } from "@/lib/developer-panel-tabs";
 
 export type DeveloperPanelStats = {
   queueLength: number;
@@ -40,19 +41,14 @@ type DeveloperPanelProps = {
   students: Array<{ id: string; name: string }>;
   /** Чипы статуса — рендерятся справа от таббара панели. */
   statusChips?: ReactNode;
+  /** Вкладка при открытии — из ?tab=, чтобы возврат со страницы журнала попадал куда нужно. */
+  initialTab?: DeveloperPanelTab;
 };
 
 const EFFORT_OPTIONS = [
   { value: "low", label: "low — быстрый" },
   { value: "medium", label: "medium — сбалансированный" },
   { value: "high", label: "high — максимальная точность" }
-];
-
-const TABS: Array<{ key: DeveloperPanelTab; label: string }> = [
-  { key: "status", label: "Статус" },
-  { key: "actions", label: "Действия" },
-  { key: "broadcast", label: "Рассылка" },
-  { key: "settings", label: "Настройки" }
 ];
 
 function StatBlock({
@@ -470,8 +466,8 @@ function SettingsForm({ settings }: { settings: SiteSettings }) {
   );
 }
 
-export function DeveloperPanel({ stats, settings, students, statusChips }: DeveloperPanelProps) {
-  const [tab, setTab] = useState<DeveloperPanelTab>("status");
+export function DeveloperPanel({ stats, settings, students, statusChips, initialTab }: DeveloperPanelProps) {
+  const [tab, setTab] = useState<DeveloperPanelTab>(initialTab ?? "status");
 
   const budgetPercent = Math.min(100, Math.round((stats.checksLastDay / Math.max(1, settings.aiDailyLimit)) * 100));
 
@@ -479,7 +475,7 @@ export function DeveloperPanel({ stats, settings, students, statusChips }: Devel
     <div>
       <div className="flex flex-wrap items-center justify-between gap-x-6 gap-y-3">
         <nav className="shbz-seg" aria-label="Разделы панели">
-          {TABS.map((item) => (
+          {DEVELOPER_PANEL_TABS.map((item) => (
             <button
               key={item.key}
               type="button"
@@ -492,7 +488,7 @@ export function DeveloperPanel({ stats, settings, students, statusChips }: Devel
           ))}
           {/* Журнал — отдельная страница, а не вкладка: у него свои фильтры и
               пагинация в адресе, чтобы ссылку на выборку можно было сохранить. */}
-          <Link href="/teacher/panel/journal" className="shbz-seg-btn shbz-seg-btn--plain">
+          <Link href="/developer/panel/journal" className="shbz-seg-btn shbz-seg-btn--plain">
             Журнал
           </Link>
         </nav>
