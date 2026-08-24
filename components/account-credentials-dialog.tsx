@@ -129,21 +129,21 @@ export function AccountCredentialsDialog({ title, name, login, password, onClose
               <span className="ui-copy-pill">Скопировано</span>
             </div>
           ))}
-          <span className="ui-copy-pill">Скопировано</span>
         </div>
 
-        <p
-          role="status"
-          aria-live="polite"
-          className="mt-3 min-h-[20px] text-[13px] font-medium"
-          style={{ color: "var(--shbz-green-text)" }}
-        >
+        <span role="status" aria-live="polite" className="sr-only">
           {feedback ?? ""}
-        </p>
+        </span>
 
         <div className="mt-5 flex flex-wrap gap-3">
-          <button type="button" className="shbz-btn-primary shbz-btn-primary--lg" onClick={() => void copyMessage()}>
+          <button
+            type="button"
+            className="shbz-btn-primary shbz-btn-primary--lg ui-copy-target"
+            data-copied={String(copied === "all")}
+            onClick={() => void copyMessage()}
+          >
             Скопировать
+            <span className="ui-copy-pill">Скопировано</span>
           </button>
           <button type="button" className="shbz-btn-outline shbz-btn-outline--lg" onClick={close}>
             Готово

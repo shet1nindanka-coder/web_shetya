@@ -4165,7 +4165,9 @@ html[data-theme="dark"] .ui-skeleton::after {
   box-shadow: 0 4px 12px rgba(10, 10, 10, 0.18);
   z-index: 2;
 }
-.ui-copy-row[data-copied="true"] .ui-copy-pill { opacity: 1; transform: translate(-50%, 0); }
+/* Только прямой потомок: у вложенных целей (строка внутри блока «всё сообщение»)
+   пилюля родителя не должна зажигать детские. Одна пилюля за раз. */
+.ui-copy-row[data-copied="true"] > .ui-copy-pill { opacity: 1; transform: translate(-50%, 0); }
 
 /* ШБЗ: иконка копирования подсвечивается при наведении на строку */
 .ui-copy-icon { flex: none; opacity: 0.55; transition: opacity 180ms ease; }
