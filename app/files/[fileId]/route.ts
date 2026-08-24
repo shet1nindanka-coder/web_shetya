@@ -2,9 +2,16 @@ import { UserRole } from "@prisma/client";
 import { enforceApiRateLimit } from "@/lib/api-rate-limit";
 import { tryGetCurrentUser } from "@/lib/auth";
 import { canAccessStoredFile, summarizeStoredFileAccess } from "@/lib/file-access";
+import { buildThumbnail, isThumbnailable } from "@/lib/image-thumbnail";
 import { getRequestLogContext, logWarnEvent } from "@/lib/logger";
 import { prisma } from "@/lib/prisma";
-import { getBlobAccessMode, getPublicBlobUrl, getStorageBackend, readStoredFile } from "@/lib/storage";
+import {
+  getBlobAccessMode,
+  getPublicBlobUrl,
+  getStorageBackend,
+  readStoredFile,
+  readStoredFileBuffer
+} from "@/lib/storage";
 
 type FileRouteProps = {
   params: Promise<{
@@ -123,10 +130,40 @@ export async function GET(request: Request, { params }: FileRouteProps) {
     return new Response("Not found", { status: 404 });
   }
 
-  const download = new URL(request.url).searchParams.get("download") === "1";
+  const requestUrl = new URL(request.url);
+  const download = requestUrl.searchParams.get("download") === "1";
+  const wantsThumbnail = requestUrl.searchParams.get("thumb") === "1" && !download && isThumbnailable(file.mimeType);
+
+  if (wantsThumbnail) {
+    const source = await readStoredFileBuffer(file.storageKey).catch(() => null);
+    const thumbnail = source ? await buildThumbnail(source, { ...requestContext, fileId: file.id }) : null;
+
+    if (thumbnail) {
+      const thumbEtag = `"${file.id}-thumb-${thumbnail.body.byteLength}"`;
+
+      if (request.headers.get("if-none-match") === thumbEtag) {
+        return new Response(null, {
+          status: 304,
+          headers: { ETag: thumbEtag, "Cache-Control": "private, max-age=31536000, immutable" }
+        });
+      }
+
+      return new Response(new Uint8Array(thumbnail.body), {
+        headers: {
+          "Content-Type": thumbnail.mimeType,
+          "Content-Length": String(thumbnail.body.byteLength),
+          "Cache-Control": "private, max-age=31536000, immutable",
+          ETag: thumbEtag,
+          "X-Content-Type-Options": "nosniff"
+        }
+      });
+    }
+    // Превью не собралось — ниже отдаём оригинал, как раньше.
+  }
+
   const publicBlobUrl = await getPublicBlobUrl(file.storageKey, download);
 
-  if (publicBlobUrl) {
+  if (publicBlobUrl && !wantsThumbnail) {
     return Response.redirect(publicBlobUrl, 302);
   }
 
@@ -154,12 +191,29 @@ export async function GET(request: Request, { params }: FileRouteProps) {
       ? storedFile.body
       : new Uint8Array(storedFile.body).buffer;
 
+  // Файл иммутабелен: id выдаётся один раз на загрузку, содержимое не меняется.
+  // Прежний no-store заставлял браузер перекачивать каждое фото ДЗ при любом
+  // возврате на страницу; private-кэш держит их только в кэше самого клиента,
+  // а доступ всё равно проверяется на каждом промахе кэша.
+  const etag = `"${file.id}-${storedFile.size}"`;
+
+  if (request.headers.get("if-none-match") === etag) {
+    return new Response(null, {
+      status: 304,
+      headers: {
+        ETag: etag,
+        "Cache-Control": "private, max-age=31536000, immutable"
+      }
+    });
+  }
+
   return new Response(responseBody, {
     headers: {
       "Content-Type": file.mimeType,
       "Content-Length": String(storedFile.size),
       "Content-Disposition": `${dispositionType}; filename*=UTF-8''${encodeURIComponent(file.originalName)}`,
-      "Cache-Control": "private, no-cache, no-store, max-age=0, must-revalidate",
+      "Cache-Control": "private, max-age=31536000, immutable",
+      ETag: etag,
       "X-Content-Type-Options": "nosniff"
     }
   });

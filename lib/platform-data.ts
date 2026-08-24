@@ -541,8 +541,59 @@ export async function getStudentTopicDetail(
   }
 }
 
+/**
+ * Агрегаты светофора для обзора учителя. Считаем их в SQL, а не вытаскиванием
+ * всех строк StudentTopicNumberStatus: банк статусов растёт как
+ * «ученики × номера» (40 учеников × 1500 номеров ≈ 27k строк ≈ 3.8 МБ JSON),
+ * из-за чего результат превышал лимит Data Cache в 2 МБ и кэш не работал вовсе.
+ */
+async function getTeacherStatusAggregates(viewer: TeacherViewer) {
+  const teacherId = viewer.role === UserRole.TEACHER ? viewer.id : null;
+
+  // COUNT(DISTINCT) держать в одном запросе с COUNT(*) нельзя: он добавляет
+  // сортировку по (тема, статус, ученик) и стоит ~65 мс на 27k строк. Раздельно
+  // оба запроса идут через hash aggregate — 23 мс + 7 мс.
+  const [byTopic, byTopicStudents, byStudent] = await Promise.all([
+    prisma.$queryRaw<Array<{ topicId: string; status: string; count: bigint }>>`
+      SELECT n."topicId"        AS "topicId",
+             s."status"::text   AS "status",
+             COUNT(*)                        AS "count"
+      FROM "StudentTopicNumberStatus" s
+      JOIN "TopicHomeworkNumber" n ON n."id" = s."homeworkNumberId"
+      JOIN "User" u ON u."id" = s."studentId"
+      WHERE s."status" IS NOT NULL
+        AND (${teacherId}::text IS NULL OR u."teacherId" = ${teacherId})
+      GROUP BY n."topicId", s."status"
+    `,
+    prisma.$queryRaw<Array<{ topicId: string; students: bigint }>>`
+      SELECT d."topicId" AS "topicId", COUNT(*) AS "students"
+      FROM (
+        SELECT DISTINCT n."topicId", s."studentId"
+        FROM "StudentTopicNumberStatus" s
+        JOIN "TopicHomeworkNumber" n ON n."id" = s."homeworkNumberId"
+        JOIN "User" u ON u."id" = s."studentId"
+        WHERE s."status" IS NOT NULL
+          AND (${teacherId}::text IS NULL OR u."teacherId" = ${teacherId})
+      ) d
+      GROUP BY d."topicId"
+    `,
+    prisma.$queryRaw<Array<{ studentId: string; status: string; count: bigint }>>`
+      SELECT s."studentId"      AS "studentId",
+             s."status"::text   AS "status",
+             COUNT(*)                        AS "count"
+      FROM "StudentTopicNumberStatus" s
+      JOIN "User" u ON u."id" = s."studentId"
+      WHERE s."status" IS NOT NULL
+        AND (${teacherId}::text IS NULL OR u."teacherId" = ${teacherId})
+      GROUP BY s."studentId", s."status"
+    `
+  ]);
+
+  return { byTopic, byTopicStudents, byStudent };
+}
+
 async function getTeacherTopicsOverviewUncached(viewer: TeacherViewer) {
-  const [students, topicsResult, totalFiles] = await Promise.all([
+  const [students, topicsResult, totalFiles, aggregates] = await Promise.all([
     prisma.user.findMany({
       where: { role: UserRole.STUDENT, ...ownStudentsWhere(viewer) },
       orderBy: { name: "asc" },
@@ -552,28 +603,12 @@ async function getTeacherTopicsOverviewUncached(viewer: TeacherViewer) {
         email: true
       }
     }),
-    resolveTopicDataCapabilities(({ deadlinesEnabled }) =>
+    resolveTopicDataCapabilities(() =>
       prisma.topic.findMany({
         include: {
           theoryFile: true,
           homeworkFile: true,
-          homeworkNumbers: {
-            orderBy: { displayOrder: "asc" },
-            select: {
-              id: true,
-              number: true,
-              displayOrder: true,
-              statuses: {
-                ...ownStatusesWhere(viewer),
-                select: {
-                  studentId: true,
-                  status: true,
-                  updatedAt: true,
-                  ...(deadlinesEnabled ? { deadlineAt: true } : {})
-                }
-              }
-            }
-          }
+          _count: { select: { homeworkNumbers: true } }
         },
         orderBy: [{ displayOrder: "asc" }, { createdAt: "asc" }]
       })
@@ -598,46 +633,78 @@ async function getTeacherTopicsOverviewUncached(viewer: TeacherViewer) {
           }
         ]
       }
-    })
+    }),
+    getTeacherStatusAggregates(viewer)
   ]);
-  const { result: topics, deadlinesEnabled } = topicsResult;
+  const { result: topics } = topicsResult;
+
+  const topicCounts = new Map<string, { GREEN: number; YELLOW: number; RED: number; students: number }>();
+
+  for (const row of aggregates.byTopic) {
+    const entry = topicCounts.get(row.topicId) ?? { GREEN: 0, YELLOW: 0, RED: 0, students: 0 };
+
+    if (row.status === "GREEN" || row.status === "YELLOW" || row.status === "RED") {
+      entry[row.status] = Number(row.count);
+    }
+
+    topicCounts.set(row.topicId, entry);
+  }
+
+  for (const row of aggregates.byTopicStudents) {
+    const entry = topicCounts.get(row.topicId) ?? { GREEN: 0, YELLOW: 0, RED: 0, students: 0 };
+
+    entry.students = Number(row.students);
+    topicCounts.set(row.topicId, entry);
+  }
+
+  const studentCounts = new Map<string, { GREEN: number; YELLOW: number; RED: number }>();
+
+  for (const row of aggregates.byStudent) {
+    const entry = studentCounts.get(row.studentId) ?? { GREEN: 0, YELLOW: 0, RED: 0 };
+
+    if (row.status === "GREEN" || row.status === "YELLOW" || row.status === "RED") {
+      entry[row.status] = Number(row.count);
+    }
+
+    studentCounts.set(row.studentId, entry);
+  }
 
   const topicCards = topics.map((topic) => {
-    const allStatuses = topic.homeworkNumbers.flatMap((number) => number.statuses.map((status) => status.status));
-    const counts = getStatusCounts(allStatuses);
-    const studentIds = new Set(
-      topic.homeworkNumbers.flatMap((number) =>
-        number.statuses.filter((status) => status.status !== null).map((status) => status.studentId)
-      )
-    );
-    const totalSlots = topic.homeworkNumbers.length * students.length;
+    const counts = topicCounts.get(topic.id) ?? { GREEN: 0, YELLOW: 0, RED: 0, students: 0 };
+    const totalNumbers = topic._count.homeworkNumbers;
+    const totalSlots = totalNumbers * students.length;
     const markedCount = counts.GREEN + counts.YELLOW + counts.RED;
 
     return {
       ...topic,
-      homeworkNumbers: topic.homeworkNumbers.map((number) => ({
-        ...number,
-        statuses: number.statuses.map((status) => ({
-          ...status,
-          deadlineAt: deadlinesEnabled
-            ? (status as { deadlineAt?: Date | null }).deadlineAt ?? null
-            : null
-        }))
-      })),
       greenCount: counts.GREEN,
       yellowCount: counts.YELLOW,
       redCount: counts.RED,
       markedCount,
       totalStudents: students.length,
-      totalNumbers: topic.homeworkNumbers.length,
+      totalNumbers,
       totalSlots,
-      studentsWithActivity: studentIds.size,
+      studentsWithActivity: counts.students,
       progressPercent: completionPercent(markedCount, totalSlots)
     };
   });
 
+  const studentCards = students.map((student) => {
+    const counts = studentCounts.get(student.id) ?? { GREEN: 0, YELLOW: 0, RED: 0 };
+    const markedCount = counts.GREEN + counts.YELLOW + counts.RED;
+
+    return {
+      ...student,
+      greenCount: counts.GREEN,
+      yellowCount: counts.YELLOW,
+      redCount: counts.RED,
+      markedCount,
+      solvedCount: counts.GREEN + counts.YELLOW
+    };
+  });
+
   return {
-    students,
+    students: studentCards,
     topics: topicCards,
     stats: {
       totalTopics: topicCards.length,
@@ -661,6 +728,78 @@ export async function getTeacherTopicsOverview(
   viewer: TeacherViewer
 ): Promise<Awaited<ReturnType<typeof getTeacherTopicsOverviewUncached>>> {
   return getTeacherTopicsOverviewCached(viewer);
+}
+
+/**
+ * Срез «тема × ученик» для статистики. Раньше страница отдавала клиенту весь
+ * банк статусов (26 982 записи, 2.75 МБ HTML), хотя показывает одну пару за раз —
+ * теперь грузим только выбранную пару: номера темы со статусом этого ученика.
+ */
+async function getTeacherStatisticsDrilldownUncached(
+  viewer: TeacherViewer,
+  topicId: string,
+  studentId: string
+) {
+  const student = await prisma.user.findFirst({
+    where: { id: studentId, role: UserRole.STUDENT, ...ownStudentsWhere(viewer) },
+    select: { id: true }
+  });
+
+  if (!student) {
+    return null;
+  }
+
+  const buildQuery = ({ deadlinesEnabled }: { deadlinesEnabled: boolean }) =>
+    prisma.topicHomeworkNumber.findMany({
+      where: { topicId },
+      orderBy: { displayOrder: "asc" },
+      select: {
+        id: true,
+        statuses: {
+          where: { studentId },
+          select: {
+            status: true,
+            ...(deadlinesEnabled ? { deadlineAt: true } : {})
+          }
+        }
+      }
+    });
+
+  const { result: numbers, deadlinesEnabled } = await resolveTopicDataCapabilities(buildQuery);
+
+  return {
+    topicId,
+    studentId,
+    // Строкой, а не Date: unstable_cache отдаёт результат через JSON, и
+    // восстановленный из кэша Date приходит уже строкой.
+    numbers: numbers.map((number) => {
+      const entry = number.statuses[0];
+      const deadlineAt = deadlinesEnabled
+        ? (entry as { deadlineAt?: Date | null } | undefined)?.deadlineAt ?? null
+        : null;
+
+      return {
+        status: entry?.status ?? null,
+        deadlineAt: deadlineAt ? deadlineAt.toISOString() : null
+      };
+    })
+  };
+}
+
+const getTeacherStatisticsDrilldownCached = unstable_cache(
+  getTeacherStatisticsDrilldownUncached,
+  ["teacher-statistics-drilldown"],
+  {
+    tags: [PLATFORM_DATA_TAGS.teacherTopics, PLATFORM_DATA_TAGS.teacherStudents]
+  }
+);
+
+export async function getTeacherStatisticsDrilldown(
+  viewer: TeacherViewer,
+  topicId: string,
+  studentId: string
+): Promise<Awaited<ReturnType<typeof getTeacherStatisticsDrilldownUncached>>> {
+  return getTeacherStatisticsDrilldownCached(viewer, topicId, studentId);
 }
 
 async function getTeacherTopicDetailUncached(topicId: string) {

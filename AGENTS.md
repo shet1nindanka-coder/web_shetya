@@ -4,7 +4,7 @@ After every task that changes project files, always end the user-facing response
 
 ## Deployment environment
 
-- Local Mac repository: `~/Desktop/Сайт`
+- Local Mac repository: `~/Desktop/shbz-edu`
 - Production server repository: `~/web_shetya`
 - Production process manager: PM2
 - PM2 application name: `shetya`

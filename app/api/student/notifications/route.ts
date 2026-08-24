@@ -1,6 +1,7 @@
 import { UserRole } from "@prisma/client";
 import { NextResponse } from "next/server";
 import { tryGetCurrentUser } from "@/lib/auth";
+import { jsonResponse } from "@/lib/api-json";
 import { enforceApiRateLimit } from "@/lib/api-rate-limit";
 import { listNotifications, markNotificationsRead } from "@/lib/notifications";
 
@@ -21,7 +22,7 @@ export async function GET(request: Request) {
 
   const payload = await listNotifications(user.id);
 
-  return NextResponse.json(payload);
+  return jsonResponse(request, payload);
 }
 
 export async function POST(request: Request) {

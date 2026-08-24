@@ -1,0 +1,529 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-08-16T23:58:52Z",
+  "title": "Design System: ШБЗ — Школа Базовых Знаний",
+  "extensions": {
+    "colorMeta": {
+      "ink": {
+        "role": "neutral",
+        "displayName": "Чернила",
+        "canonical": "oklch(13% 0 0)",
+        "tonalRamp": [
+          "oklch(13% 0 0)",
+          "oklch(22% 0 0)",
+          "oklch(33% 0 0)",
+          "oklch(45% 0 0)",
+          "oklch(58% 0 0)",
+          "oklch(72% 0 0)",
+          "oklch(86% 0 0)",
+          "oklch(96% 0 0)"
+        ]
+      },
+      "ink-ui": {
+        "role": "neutral",
+        "displayName": "Интерфейсные чернила",
+        "canonical": "oklch(19% 0.004 260)"
+      },
+      "label": {
+        "role": "neutral",
+        "displayName": "Метка",
+        "canonical": "oklch(29% 0.005 265)"
+      },
+      "paper": {
+        "role": "neutral",
+        "displayName": "Бумага",
+        "canonical": "oklch(100% 0 0)",
+        "darkValue": "#0b0c0e"
+      },
+      "mist": {
+        "role": "neutral",
+        "displayName": "Дымка",
+        "canonical": "oklch(98% 0.002 250)",
+        "darkValue": "#1a1c1f"
+      },
+      "panel": {
+        "role": "neutral",
+        "displayName": "Панель",
+        "canonical": "oklch(99% 0.002 260)",
+        "darkValue": "#17181b"
+      },
+      "hairline": {
+        "role": "neutral",
+        "displayName": "Волосок",
+        "canonical": "oklch(93.5% 0.002 280)",
+        "darkValue": "#26282c"
+      },
+      "field-line": {
+        "role": "neutral",
+        "displayName": "Линия поля",
+        "canonical": "oklch(91% 0.003 270)",
+        "darkValue": "#2c2e33"
+      },
+      "text-muted": {
+        "role": "neutral",
+        "displayName": "Приглушённый",
+        "canonical": "oklch(51% 0.008 265)",
+        "darkValue": "#9ba0a6"
+      },
+      "text-soft": {
+        "role": "neutral",
+        "displayName": "Тихий",
+        "canonical": "oklch(62% 0.008 265)",
+        "darkValue": "#85898f"
+      },
+      "kicker": {
+        "role": "neutral",
+        "displayName": "Кикер",
+        "canonical": "oklch(68% 0.007 265)",
+        "darkValue": "#7c8087"
+      },
+      "placeholder": {
+        "role": "neutral",
+        "displayName": "Плейсхолдер",
+        "canonical": "oklch(74% 0.006 268)",
+        "darkValue": "#6a6e75"
+      },
+      "accent-aqua": {
+        "role": "primary",
+        "displayName": "Аква (левый стоп градиента)",
+        "canonical": "oklch(78% 0.10 224)",
+        "tonalRamp": [
+          "oklch(16% 0.04 224)",
+          "oklch(27% 0.06 224)",
+          "oklch(39% 0.08 224)",
+          "oklch(50% 0.09 224)",
+          "oklch(62% 0.10 224)",
+          "oklch(74% 0.10 224)",
+          "oklch(86% 0.07 224)",
+          "oklch(95% 0.03 224)"
+        ]
+      },
+      "accent-mint": {
+        "role": "primary",
+        "displayName": "Мята (правый стоп градиента)",
+        "canonical": "oklch(83% 0.16 165)",
+        "tonalRamp": [
+          "oklch(16% 0.05 165)",
+          "oklch(27% 0.08 165)",
+          "oklch(39% 0.11 165)",
+          "oklch(50% 0.13 165)",
+          "oklch(62% 0.15 165)",
+          "oklch(74% 0.16 165)",
+          "oklch(86% 0.13 165)",
+          "oklch(95% 0.05 165)"
+        ]
+      },
+      "accent-solid": {
+        "role": "primary",
+        "displayName": "Мята сплошная",
+        "canonical": "oklch(66% 0.14 165)",
+        "darkValue": "#36e0a4",
+        "tonalRamp": [
+          "oklch(16% 0.05 165)",
+          "oklch(27% 0.08 165)",
+          "oklch(39% 0.11 165)",
+          "oklch(50% 0.13 165)",
+          "oklch(62% 0.14 165)",
+          "oklch(74% 0.15 165)",
+          "oklch(86% 0.12 165)",
+          "oklch(95% 0.04 165)"
+        ]
+      },
+      "status-green": {
+        "role": "tertiary",
+        "displayName": "Зелёный «решил сам»",
+        "canonical": "oklch(61% 0.14 155)",
+        "darkValue": "#59d49d",
+        "tonalRamp": [
+          "oklch(16% 0.05 155)",
+          "oklch(27% 0.08 155)",
+          "oklch(38% 0.10 155)",
+          "oklch(49% 0.12 155)",
+          "oklch(61% 0.14 155)",
+          "oklch(73% 0.13 155)",
+          "oklch(85% 0.09 155)",
+          "oklch(95% 0.03 155)"
+        ]
+      },
+      "status-yellow": {
+        "role": "tertiary",
+        "displayName": "Жёлтый «исправил»",
+        "canonical": "oklch(66% 0.13 78)",
+        "darkValue": "#e8b45c",
+        "tonalRamp": [
+          "oklch(17% 0.04 78)",
+          "oklch(28% 0.07 78)",
+          "oklch(39% 0.09 78)",
+          "oklch(52% 0.11 78)",
+          "oklch(66% 0.13 78)",
+          "oklch(78% 0.11 78)",
+          "oklch(88% 0.07 78)",
+          "oklch(96% 0.03 78)"
+        ]
+      },
+      "status-red": {
+        "role": "tertiary",
+        "displayName": "Красный «нужна помощь»",
+        "canonical": "oklch(60% 0.19 20)",
+        "darkValue": "#ff8f94",
+        "tonalRamp": [
+          "oklch(16% 0.06 20)",
+          "oklch(27% 0.10 20)",
+          "oklch(38% 0.14 20)",
+          "oklch(49% 0.17 20)",
+          "oklch(60% 0.19 20)",
+          "oklch(73% 0.15 20)",
+          "oklch(86% 0.09 20)",
+          "oklch(95% 0.03 20)"
+        ]
+      },
+      "danger-solid": {
+        "role": "tertiary",
+        "displayName": "Алый сплошной",
+        "canonical": "oklch(60% 0.20 22)",
+        "darkValue": "#ff6b70"
+      },
+      "streak-flame": {
+        "role": "tertiary",
+        "displayName": "Огонёк стрика",
+        "canonical": "oklch(75% 0.15 60)",
+        "tonalRamp": [
+          "oklch(18% 0.05 60)",
+          "oklch(29% 0.08 60)",
+          "oklch(41% 0.11 60)",
+          "oklch(53% 0.13 60)",
+          "oklch(65% 0.15 60)",
+          "oklch(75% 0.15 60)",
+          "oklch(87% 0.09 60)",
+          "oklch(96% 0.03 60)"
+        ]
+      }
+    },
+    "typographyMeta": {
+      "display": {
+        "displayName": "Display",
+        "purpose": "Заголовок страницы .shbz-h1. Всегда в паре с градиентной точкой 12px."
+      },
+      "headline": {
+        "displayName": "Headline",
+        "purpose": "Заголовок секции .shbz-section-title, отступ снизу 18px."
+      },
+      "title": {
+        "displayName": "Title",
+        "purpose": "Заголовок карточки. Значение метрики — 23px / 800."
+      },
+      "body": {
+        "displayName": "Body",
+        "purpose": "Основной текст, содержимое инпутов и textarea. Вспомогательный текст — 13–14px цветом text-muted."
+      },
+      "label": {
+        "displayName": "Label",
+        "purpose": "Подписи полей формы, цвет label."
+      },
+      "kicker": {
+        "displayName": "Kicker",
+        "purpose": "Надзаголовок над .shbz-h1 — единственный uppercase в системе. В навигационных карточках 10.5px / 1.2px."
+      }
+    },
+    "gradients": [
+      {
+        "name": "accent-grad",
+        "value": "linear-gradient(90deg, #5ac8ea 0%, #36e0a4 100%)",
+        "purpose": "«Мятный рассвет» — главная кнопка, прогресс, кант поля в фокусе, включённый свитч и чекбокс, рант навигационной карточки."
+      },
+      {
+        "name": "accent-grad-diag",
+        "value": "linear-gradient(135deg, #5ac8ea, #36e0a4)",
+        "purpose": "Диагональная версия — аватар пользователя и логотип-плашка."
+      },
+      {
+        "name": "page-glow",
+        "value": "radial-gradient(720px 420px at 50% -8%, rgba(54, 224, 164, 0.12), rgba(90, 200, 234, 0) 70%)",
+        "purpose": "Едва заметное свечение вверху страницы входа."
+      },
+      {
+        "name": "dashboard-glow",
+        "value": "radial-gradient(640px 320px at 100% 0%, rgba(54, 224, 164, 0.07), rgba(90, 200, 234, 0) 70%)",
+        "purpose": "То же свечение в правом верхнем углу кабинета."
+      },
+      {
+        "name": "streak-bg",
+        "value": "linear-gradient(135deg, #fff3e4, #ffe9d2)",
+        "purpose": "Тёплая подложка блока стрика — единственный тёплый остров системы."
+      }
+    ],
+    "shadows": [
+      {
+        "name": "card-rest",
+        "value": "0 1px 2px rgba(10, 10, 10, 0.04), 0 14px 38px rgba(10, 10, 10, 0.07)",
+        "purpose": "Карточка в покое. В тёмной теме — та же геометрия с непрозрачностью 0.4 / 0.5."
+      },
+      {
+        "name": "surface-rest",
+        "value": "0 1px 2px rgba(10, 10, 10, 0.04), 0 8px 24px rgba(10, 10, 10, 0.05)",
+        "purpose": "Унаследованные поверхности .ui-surface и шапки страниц."
+      },
+      {
+        "name": "card-hover",
+        "value": "0 2px 4px rgba(10, 10, 10, 0.05), 0 14px 36px rgba(10, 10, 10, 0.09)",
+        "purpose": "Только .shbz-card-hover и только при (hover: hover), вместе с подъёмом -2px."
+      },
+      {
+        "name": "accent-glow",
+        "value": "0 6px 18px rgba(54, 224, 164, 0.3)",
+        "purpose": "Свечение главной кнопки в покое."
+      },
+      {
+        "name": "accent-glow-hover",
+        "value": "0 10px 26px rgba(54, 224, 164, 0.42)",
+        "purpose": "Свечение главной кнопки под курсором, с подъёмом -1px."
+      },
+      {
+        "name": "seg-active",
+        "value": "0 1px 2px rgba(10, 10, 10, 0.1)",
+        "purpose": "Выбранная кнопка внутри сегментированного переключателя."
+      },
+      {
+        "name": "switch-knob",
+        "value": "0 1px 3px rgba(10, 10, 10, 0.25)",
+        "purpose": "Ползунок свитча."
+      }
+    ],
+    "motion": [
+      {
+        "name": "duration-fast",
+        "value": "150ms",
+        "purpose": "Смена цвета, рамки, фона; наведение на вкладку."
+      },
+      {
+        "name": "duration-base",
+        "value": "180ms",
+        "purpose": "Трансформации кнопок и карточек."
+      },
+      {
+        "name": "duration-slow",
+        "value": "200ms",
+        "purpose": "Выпадающие панели, модалки, ход свитча."
+      },
+      {
+        "name": "press",
+        "value": "transform: scale(0.97); transition-duration: 60ms",
+        "purpose": "Подпись системы: физический отклик на нажатие любой кнопки."
+      },
+      {
+        "name": "ease-out",
+        "value": "cubic-bezier(0.23, 1, 0.32, 1)",
+        "purpose": "Основная кривая появления: панели, модалки, карточки."
+      },
+      {
+        "name": "anim-spring",
+        "value": "cubic-bezier(0.22, 1, 0.36, 1)",
+        "purpose": "Пружина дропзоны и блока стрика."
+      },
+      {
+        "name": "ease-in-out",
+        "value": "cubic-bezier(0.77, 0, 0.175, 1)",
+        "purpose": "Ход ползунка свитча."
+      },
+      {
+        "name": "anim-standard",
+        "value": "cubic-bezier(0.2, 0.8, 0.2, 1)",
+        "purpose": "Появление столбцов таймлайна прогресса."
+      },
+      {
+        "name": "reduced-motion",
+        "value": "@media (prefers-reduced-motion: reduce)",
+        "purpose": "Обязательный парный блок: все transform снимаются, остаются только opacity и смена цвета."
+      }
+    ],
+    "breakpoints": [
+      { "name": "sm", "value": "640px" },
+      { "name": "md", "value": "768px" },
+      { "name": "container", "value": "1180px" }
+    ],
+    "runtimeModes": [
+      { "name": "data-theme", "value": "light | dark", "purpose": "Вторая полноценная палитра на html." },
+      { "name": "data-density", "value": "comfortable | compact", "purpose": "Сжимает отступы и кегли." },
+      { "name": "data-hints", "value": "on | off", "purpose": "Скрывает пояснительные подписи .ui-hint." }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Главное действие блока. Единственная градиентная кнопка на экране.",
+      "html": "<button class=\"ds-btn-primary\">Сохранить</button>",
+      "css": ".ds-btn-primary { border: none; border-radius: 12px; padding: 13px 26px; background: linear-gradient(90deg, #5ac8ea 0%, #36e0a4 100%); color: #ffffff; font-family: Onest, system-ui, sans-serif; font-size: 15px; font-weight: 700; cursor: pointer; box-shadow: 0 6px 18px rgba(54, 224, 164, 0.3); transition: box-shadow 180ms ease, transform 180ms cubic-bezier(0.23, 1, 0.32, 1); } .ds-btn-primary:hover { transform: translateY(-1px); box-shadow: 0 10px 26px rgba(54, 224, 164, 0.42); } .ds-btn-primary:active { transform: scale(0.97); transition-duration: 60ms; } .ds-btn-primary:focus-visible { outline: 2px solid #16b07e; outline-offset: 2px; }"
+    },
+    {
+      "name": "Outline Button",
+      "kind": "button",
+      "refersTo": "button-outline",
+      "description": "Вторичное действие. Под курсором меняется только цвет рамки.",
+      "html": "<button class=\"ds-btn-outline\">Выйти</button>",
+      "css": ".ds-btn-outline { padding: 9px 16px; border: 1.5px solid #e4e5e7; border-radius: 12px; background: #ffffff; font-family: Onest, system-ui, sans-serif; font-size: 13.5px; font-weight: 600; color: #14161a; cursor: pointer; transition: border-color 150ms, transform 180ms cubic-bezier(0.23, 1, 0.32, 1); } .ds-btn-outline:hover { border-color: #0a0a0a; } .ds-btn-outline:active { transform: scale(0.97); transition-duration: 60ms; } .ds-btn-outline:focus-visible { outline: 2px solid #16b07e; outline-offset: 2px; }"
+    },
+    {
+      "name": "Dark Button",
+      "kind": "button",
+      "refersTo": "button-dark",
+      "description": "Действие-подтверждение там, где градиент стал бы вторым голосом.",
+      "html": "<button class=\"ds-btn-dark\">Выдать ДЗ</button>",
+      "css": ".ds-btn-dark { padding: 12px 22px; border: 1.5px solid transparent; border-radius: 12px; background: #0a0a0a; color: #ffffff; font-family: Onest, system-ui, sans-serif; font-size: 14px; font-weight: 700; cursor: pointer; transition: filter 150ms, transform 180ms cubic-bezier(0.23, 1, 0.32, 1); } .ds-btn-dark:hover { filter: brightness(1.25); } .ds-btn-dark:active { transform: scale(0.97); transition-duration: 60ms; } .ds-btn-dark:focus-visible { outline: 2px solid #16b07e; outline-offset: 2px; }"
+    },
+    {
+      "name": "Danger Button",
+      "kind": "button",
+      "refersTo": "button-danger",
+      "description": "Необратимое действие. Заливка розовеет только под курсором.",
+      "html": "<button class=\"ds-btn-danger\">Удалить</button>",
+      "css": ".ds-btn-danger { padding: 11px 20px; border: 1.5px solid #f3c7c9; border-radius: 12px; background: #ffffff; color: #e5484d; font-family: Onest, system-ui, sans-serif; font-size: 14px; font-weight: 600; cursor: pointer; transition: background 150ms, transform 180ms cubic-bezier(0.23, 1, 0.32, 1); } .ds-btn-danger:hover { background: #fceded; } .ds-btn-danger:active { transform: scale(0.97); transition-duration: 60ms; } .ds-btn-danger:focus-visible { outline: 2px solid #e5484d; outline-offset: 2px; }"
+    },
+    {
+      "name": "Text Field",
+      "kind": "input",
+      "refersTo": "input",
+      "description": "Поле ввода 52px. В фокусе рамка растворяется, на её место встаёт градиентный кант.",
+      "html": "<input class=\"ds-input\" type=\"text\" placeholder=\"teacher@example.com\" />",
+      "css": ".ds-input { width: 100%; height: 52px; padding: 0 16px; font-family: Onest, system-ui, sans-serif; font-size: 15px; color: #0a0a0a; background: #ffffff; border: 1.5px solid #e4e5e7; border-radius: 12px; outline: none; transition: border-color 150ms, box-shadow 150ms; } .ds-input::placeholder { color: #abaeb3; } .ds-input:focus { border-color: transparent; background-image: linear-gradient(#ffffff, #ffffff), linear-gradient(90deg, #5ac8ea 0%, #36e0a4 100%); background-origin: border-box; background-clip: padding-box, border-box; }"
+    },
+    {
+      "name": "Select",
+      "kind": "input",
+      "refersTo": "select",
+      "description": "Селект 50px с собственной SVG-шевронкой; системная стрелка отключена.",
+      "html": "<select class=\"ds-select\"><option>Тема 1. Дроби</option><option>Тема 2. Проценты</option></select>",
+      "css": ".ds-select { -webkit-appearance: none; appearance: none; width: 100%; height: 50px; padding: 0 40px 0 16px; font-family: Onest, system-ui, sans-serif; font-size: 15px; font-weight: 600; color: #0a0a0a; background-color: #ffffff; border: 1.5px solid #e4e5e7; border-radius: 14px; outline: none; cursor: pointer; background-image: url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%239AA0A6' stroke-width='2.5' stroke-linecap='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E\"); background-repeat: no-repeat; background-position: right 16px center; transition: border-color 150ms; } .ds-select:focus { border-color: #16b07e; }"
+    },
+    {
+      "name": "Tab Bar",
+      "kind": "nav",
+      "refersTo": "tab",
+      "description": "Пилюля навигации с чернильной рамкой 1.5px. Активная вкладка инвертируется. Подписи строчными.",
+      "html": "<nav class=\"ds-tabbar\"><a class=\"ds-tab\" data-active=\"true\">обзор</a><a class=\"ds-tab\">дз</a><a class=\"ds-tab\">дедлайны</a><a class=\"ds-tab\">теория</a></nav>",
+      "css": ".ds-tabbar { display: inline-flex; align-items: center; gap: 4px; padding: 6px; border: 1.5px solid #0a0a0a; border-radius: 16px; background: #ffffff; } .ds-tab { padding: 9px 18px; border-radius: 12px; border: none; background: transparent; color: #14161a; font-family: Onest, system-ui, sans-serif; font-size: 14px; font-weight: 600; cursor: pointer; white-space: nowrap; transition: background 150ms; } .ds-tab:hover { background: #f2f3f4; } .ds-tab[data-active=\"true\"] { background: #0a0a0a; color: #ffffff; }"
+    },
+    {
+      "name": "Nav Card",
+      "kind": "card",
+      "refersTo": "card",
+      "description": "Фирменная карточка раздела: градиентный рант 5px, кикер, заголовок, ряд статов. Подъём -2px под курсором.",
+      "html": "<article class=\"ds-navcard\"><div class=\"ds-navcard-rail\"></div><div class=\"ds-navcard-body\"><div><div class=\"ds-navcard-kicker\">Тема 3</div><div class=\"ds-navcard-title\">Квадратные уравнения</div></div><div class=\"ds-navcard-stats\"><div><div class=\"ds-navcard-stat-label\">Номеров</div><div class=\"ds-navcard-stat-value\">24</div></div><div><div class=\"ds-navcard-stat-label\">Решено</div><div class=\"ds-navcard-stat-value\">17</div></div></div></div></article>",
+      "css": ".ds-navcard { display: flex; flex-direction: column; overflow: hidden; background: #ffffff; border: 1px solid #ececee; border-radius: 16px; box-shadow: 0 1px 2px rgba(10,10,10,0.04), 0 14px 38px rgba(10,10,10,0.07); transition: transform 180ms cubic-bezier(0.23,1,0.32,1), box-shadow 180ms ease; max-width: 320px; } .ds-navcard:hover { transform: translateY(-2px); box-shadow: 0 2px 4px rgba(10,10,10,0.05), 0 14px 36px rgba(10,10,10,0.09); } .ds-navcard-rail { height: 5px; flex-shrink: 0; background: linear-gradient(90deg, #5ac8ea 0%, #36e0a4 100%); } .ds-navcard-body { display: flex; flex-direction: column; gap: 18px; padding: 22px; font-family: Onest, system-ui, sans-serif; } .ds-navcard-kicker { font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.2px; color: #9aa0a6; } .ds-navcard-title { margin-top: 6px; font-size: 17px; font-weight: 700; color: #0a0a0a; } .ds-navcard-stats { display: flex; gap: 26px; } .ds-navcard-stat-label { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.6px; color: #9aa0a6; } .ds-navcard-stat-value { margin-top: 2px; font-size: 23px; font-weight: 800; color: #0a0a0a; }"
+    },
+    {
+      "name": "Status Chips",
+      "kind": "chip",
+      "refersTo": "chip-green",
+      "description": "Светофор статусов номера: мягкая заливка + насыщенный текст. Без рамки.",
+      "html": "<span class=\"ds-chip ds-chip-green\">Зелёный</span> <span class=\"ds-chip ds-chip-yellow\">Жёлтый</span> <span class=\"ds-chip ds-chip-red\">Красный</span>",
+      "css": ".ds-chip { display: inline-block; padding: 6px 13px; border-radius: 8px; font-family: Onest, system-ui, sans-serif; font-size: 12.5px; font-weight: 700; } .ds-chip-green { background: #eaf7ef; color: #1b9e63; } .ds-chip-yellow { background: #fef4e3; color: #c98a1e; } .ds-chip-red { background: #fceded; color: #d64550; }"
+    },
+    {
+      "name": "Switch",
+      "kind": "custom",
+      "refersTo": "button-primary",
+      "description": "Свитч настроек: включённое состояние — фирменный градиент вместо системного синего.",
+      "html": "<label class=\"ds-switch\"><input type=\"checkbox\" checked /><span class=\"ds-switch-track\"></span><span class=\"ds-switch-knob\"></span><span class=\"ds-switch-label\">Показывать подсказки</span></label>",
+      "css": ".ds-switch { position: relative; display: inline-flex; align-items: center; gap: 11px; cursor: pointer; user-select: none; font-family: Onest, system-ui, sans-serif; font-size: 14px; color: #0a0a0a; } .ds-switch input { position: absolute; opacity: 0; width: 0; height: 0; } .ds-switch-track { width: 46px; height: 26px; border-radius: 999px; background: #ecedef; border: 1.5px solid #e4e5e7; transition: background 200ms, border-color 200ms; flex-shrink: 0; } .ds-switch-knob { position: absolute; left: 3.5px; top: 13px; width: 20px; height: 20px; margin-top: -10px; border-radius: 999px; background: #ffffff; box-shadow: 0 1px 3px rgba(10,10,10,0.25); transition: transform 200ms cubic-bezier(0.77, 0, 0.175, 1); } .ds-switch input:checked ~ .ds-switch-track { background: linear-gradient(90deg, #5ac8ea 0%, #36e0a4 100%); border-color: transparent; } .ds-switch input:checked ~ .ds-switch-knob { transform: translateX(19.5px); } .ds-switch input:focus-visible ~ .ds-switch-track { outline: 2px solid #16b07e; outline-offset: 2px; }"
+    },
+    {
+      "name": "Page Header",
+      "kind": "custom",
+      "refersTo": "card",
+      "description": "Открытие любой страницы: кикер, заголовок и градиентная точка 12px по центру строки.",
+      "html": "<div class=\"ds-pageheader\"><div class=\"ds-pageheader-kicker\">Обзор</div><h1 class=\"ds-pageheader-title\">Ваш кабинет<span class=\"ds-dot\"></span></h1></div>",
+      "css": ".ds-pageheader { font-family: Onest, system-ui, sans-serif; } .ds-pageheader-kicker { font-size: 12px; font-weight: 700; letter-spacing: 1.6px; text-transform: uppercase; color: #9aa0a6; } .ds-pageheader-title { display: flex; align-items: baseline; gap: 12px; margin: 10px 0 0; font-size: clamp(26px, 5vw, 40px); font-weight: 800; letter-spacing: -1px; color: #0a0a0a; } .ds-dot { display: inline-block; width: 12px; height: 12px; flex-shrink: 0; align-self: center; border-radius: 999px; background: linear-gradient(90deg, #5ac8ea 0%, #36e0a4 100%); }"
+    }
+  ],
+  "narrative": {
+    "northStar": "Тихий класс",
+    "overview": "Это не витрина, а комната, в которой занимаются. Белый лист от края до края, крупные скругления, мягкие рассеянные тени и почти полное отсутствие декоративного цвета: интерфейс убирает себя из поля зрения, чтобы остались номера задач, дедлайны и статусы. Единственный «громкий» элемент — градиент «Мятный рассвет» (#5ac8ea → #36e0a4), и он всегда означает действие или прогресс, никогда — украшение.\n\nХарактер мягкий и дружелюбный: высота полей 52 px, радиусы 12–16 px, ничего острого, ничего угрожающего — платформой пользуются школьники, и первое впечатление не должно быть впечатлением экзамена. При этом система живая и отзывчивая: каждое нажатие даёт физический отклик (scale(0.97) за 60 мс), дропзона «раскрывается» навстречу файлу, огонёк стрика вспыхивает при росте, выпадающие панели приезжают из своей точки. Движение здесь — обратная связь, а не эффект: оно всегда короткое (150–200 мс) и всегда полностью отключается под prefers-reduced-motion.\n\nТёмная тема — не инверсия, а вторая полноценная палитра (html[data-theme=\"dark\"]): чернильный фон #0b0c0e, карточки #131417, тот же мятный акцент. Ни один компонент не имеет права задавать цвет мимо токенов — иначе он ломается в одной из двух тем.",
+    "keyCharacteristics": [
+      "Белый лист как основа; цвет несёт смысл, а не настроение.",
+      "Один акцентный градиент на всю систему.",
+      "Светофор GREEN / YELLOW / RED — центральный визуальный язык прогресса.",
+      "Радиусы 12–16 px, рамки 1–1.5 px, тени мягкие и широкие.",
+      "Двойная палитра: светлая и тёмная равноправны.",
+      "Микроотклик на каждое действие; полное уважение к prefers-reduced-motion."
+    ],
+    "rules": [
+      {
+        "name": "Правило одного голоса",
+        "body": "В системе ровно один фирменный акцент — «Мятный рассвет». Если на экране больше одного градиентного элемента подряд, лишний убирается: акцент маркирует главное действие блока, а не каждое.",
+        "section": "colors"
+      },
+      {
+        "name": "Правило светофора",
+        "body": "Зелёный, жёлтый и красный зарезервированы за статусами номеров (homeworkStatusMeta) и производными от них сигналами. Использовать их как декоративную заливку запрещено — ученик читает цвет как оценку.",
+        "section": "colors"
+      },
+      {
+        "name": "Правило двух палитр",
+        "body": "Любой цвет приходит из токена --shbz-*. Хардкод #fff, rgb(...) или tailwind-цвета вроде bg-slate-100 ломает тёмную тему и считается дефектом.",
+        "section": "colors"
+      },
+      {
+        "name": "Правило единственного uppercase",
+        "body": "Прописные буквы в системе разрешены только кикеру. Кнопки, вкладки и заголовки пишутся обычным регистром; навигационные вкладки — принципиально строчными («обзор», «дз», «дедлайны»).",
+        "section": "typography"
+      },
+      {
+        "name": "Правило мёртвых токенов",
+        "body": "--font-body и --font-display в globals.css всё ещё объявлены как Inter, но не действуют: класс Onest на <body> перебивает их по специфичности. Реальная гарнитура — Onest. Не «чинить» это, добавляя Inter, и не опираться на --font-* при вёрстке.",
+        "section": "typography"
+      },
+      {
+        "name": "Правило 1180",
+        "body": "Контент не бывает шире 1180 px. Ни таблица, ни доска урока не выходят за контейнер — вместо этого они прокручиваются внутри себя.",
+        "section": "layout"
+      },
+      {
+        "name": "Правило текучей сетки",
+        "body": "Никаких grid-cols-3 для карточек. Только auto-fit + minmax — это единственная адаптивность, которую не нужно проверять на каждом брейкпоинте.",
+        "section": "layout"
+      },
+      {
+        "name": "Правило «тень — это воздух»",
+        "body": "Тень не сообщает об интерактивности — она только отделяет карточку от фона. Поэтому карточка отбрасывает тень уже в покое, а под курсором тень расширяется, но не становится жёстче. Резкие короткие тени (0 2px 4px в одиночку) системе чужды.",
+        "section": "elevation"
+      },
+      {
+        "name": "Правило двух этажей",
+        "body": "Этажей ровно два: карточка над страницей (тень) и панель внутри карточки (тон + рамка, без тени). Третий уровень вложенности — сигнал, что блок пора выносить в отдельную секцию.",
+        "section": "elevation"
+      },
+      {
+        "name": "Правило 999",
+        "body": "Полный радиус разрешён только функционально круглому: аватар, точка после заголовка, ползунок свитча, спиннер, трек и заливка прогресса. Круглых кнопок и «пилюль-кнопок» в системе нет.",
+        "section": "shapes"
+      },
+      {
+        "name": "Правило исчезающей рамки",
+        "body": "В фокусе поле не рисует внешнее кольцо — рамка становится прозрачной, а на её место встаёт градиент через background-clip: padding-box, border-box. Толщина рамки при этом не меняется, поэтому вёрстка не дёргается.",
+        "section": "shapes"
+      }
+    ],
+    "dos": [
+      "Do брать цвет только из токенов --shbz-* и проверять новый экран в обеих темах (html[data-theme=\"dark\"]).",
+      "Do держаться шкалы радиусов 8 / 12 / 14 / 16 px и рамок 1 px (статика) / 1.5 px (интерактив).",
+      "Do давать нажатию физический отклик transform: scale(0.97) за 60 мс — это подпись системы.",
+      "Do строить сетки карточек на repeat(auto-fit, minmax(260–320px, 1fr)) с зазором 20 px.",
+      "Do открывать страницу связкой ShbzPageHeader (кикер + заголовок + градиентная точка) и отделять секции 44 px.",
+      "Do дублировать любую новую анимацию правилом в блоке @media (prefers-reduced-motion: reduce).",
+      "Do проверять новый компонент при data-density=\"compact\" и data-hints=\"off\".",
+      "Do отдавать статусам GREEN / YELLOW / RED их собственные пары «мягкий фон + насыщенный текст» из homeworkStatusMeta, а не изобретать локальные оттенки."
+    ],
+    "donts": [
+      "Don't ставить второй градиентный элемент рядом с главной кнопкой — акцент теряет смысл.",
+      "Don't красить в зелёный, жёлтый или красный ничего, кроме статусов и прямых сигналов.",
+      "Don't вводить новые токены --theme-*: этот слой унаследован от старого дизайна и целиком переопределён через --shbz-* в конце globals.css. Новый код пишется на --shbz-*.",
+      "Don't опираться на --font-body / --font-display: они всё ещё указывают на Inter, хотя реальная гарнитура — Onest с <body>.",
+      "Don't добавлять border-radius: 999px ничему, кроме функционально круглого (аватар, точка, ползунок, спиннер, прогресс).",
+      "Don't ставить жёсткое число колонок (grid-cols-3) для карточек.",
+      "Don't делать резкие короткие тени и не выносить тень на вложенные панели — там работают тон и рамка.",
+      "Don't оставлять бесконечную анимацию в состоянии покоя: постоянное движение допустимо только как индикация загрузки (спиннер, шиммер, бегущий пунктир в drag)."
+    ]
+  }
+}

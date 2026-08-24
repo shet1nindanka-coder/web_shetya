@@ -1,0 +1,9 @@
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "types": ["node", "react", "react-dom"],
+    "noEmit": true,
+    "incremental": false
+  },
+  "exclude": ["node_modules", ".next"]
+}

@@ -1,4 +1,3 @@
-import { Prisma } from "@prisma/client";
 import { prisma } from "@/lib/prisma";
 import {
   buildRateLimitKey,
@@ -6,16 +5,8 @@ import {
   type RateLimitResult
 } from "@/lib/rate-limit";
 
-const SERIALIZABLE_RETRY_ATTEMPTS = 4;
 const BUCKET_CLEANUP_PROBABILITY = 0.01;
 const BUCKET_MAX_AGE_MS = 30 * 24 * 60 * 60_000;
-
-function isRetryableSerializableError(error: unknown) {
-  return (
-    error instanceof Prisma.PrismaClientKnownRequestError &&
-    (error.code === "P2034" || error.code === "P2002")
-  );
-}
 
 export async function consumePersistentRateLimit({
   scope,
@@ -37,84 +28,42 @@ export async function consumePersistentRateLimit({
   const windowStart = new Date(windowStartMs);
   const resetAt = windowStartMs + windowMs;
 
-  for (let attempt = 1; attempt <= SERIALIZABLE_RETRY_ATTEMPTS; attempt += 1) {
-    try {
-      return await prisma.$transaction(
-        async (transaction) => {
-          const existing = await transaction.rateLimitBucket.findUnique({
-            where: {
-              key
-            }
-          });
+  // Один атомарный upsert вместо SERIALIZABLE-транзакции с read-then-write.
+  // Та транзакция конфликтовала сама с собой: параллельные запросы одного
+  // пользователя бьются в одну строку, Postgres отменяет их как write conflict,
+  // и после исчерпания ретраев запрос уходил в 503. На 40 параллельных вызовах
+  // так падала ровно половина. Здесь конкуренция разруливается блокировкой
+  // строки внутри одного запроса — отменять нечего.
+  const [row] = await prisma.$queryRaw<Array<{ hits: number }>>`
+    INSERT INTO "RateLimitBucket" ("key", "windowStart", "hits", "updatedAt")
+    VALUES (${key}, ${windowStart}, 1, NOW())
+    ON CONFLICT ("key") DO UPDATE
+    SET "hits" = CASE
+          WHEN "RateLimitBucket"."windowStart" <> ${windowStart} THEN 1
+          ELSE "RateLimitBucket"."hits" + 1
+        END,
+        "windowStart" = ${windowStart},
+        "updatedAt" = NOW()
+    RETURNING "hits"
+  `;
 
-          if (!existing || existing.windowStart.getTime() !== windowStartMs) {
-            await transaction.rateLimitBucket.upsert({
-              where: {
-                key
-              },
-              create: {
-                key,
-                windowStart,
-                hits: 1
-              },
-              update: {
-                windowStart,
-                hits: 1
-              }
-            });
+  const hits = row?.hits ?? 1;
 
-            return {
-              allowed: true,
-              remaining: Math.max(0, limit - 1),
-              retryAfterMs: 0,
-              resetAt
-            };
-          }
-
-          if (existing.hits >= limit) {
-            return {
-              allowed: false,
-              remaining: 0,
-              retryAfterMs: Math.max(1, resetAt - now),
-              resetAt
-            };
-          }
-
-          const updated = await transaction.rateLimitBucket.update({
-            where: {
-              key
-            },
-            data: {
-              hits: {
-                increment: 1
-              }
-            },
-            select: {
-              hits: true
-            }
-          });
-
-          return {
-            allowed: true,
-            remaining: Math.max(0, limit - updated.hits),
-            retryAfterMs: 0,
-            resetAt
-          };
-        },
-        {
-          isolationLevel: Prisma.TransactionIsolationLevel.Serializable
-        }
-      );
-    } catch (error) {
-      if (attempt < SERIALIZABLE_RETRY_ATTEMPTS && isRetryableSerializableError(error)) {
-        continue;
-      }
-
-      throw error;
-    }
+  if (hits > limit) {
+    return {
+      allowed: false,
+      remaining: 0,
+      retryAfterMs: Math.max(1, resetAt - now),
+      resetAt
+    };
   }
 
-  throw new Error("Persistent rate limit retry attempts exhausted.");
+  return {
+    allowed: true,
+    remaining: Math.max(0, limit - hits),
+    retryAfterMs: 0,
+    resetAt
+  };
 }
 
 /**

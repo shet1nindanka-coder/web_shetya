@@ -3,6 +3,7 @@ import { revalidatePath } from "next/cache";
 import { NextResponse } from "next/server";
 import { enforceApiRateLimit } from "@/lib/api-rate-limit";
 import { tryGetCurrentUser } from "@/lib/auth";
+import { jsonResponse } from "@/lib/api-json";
 import { getRequestLogContext, logErrorEvent, logInfoEvent } from "@/lib/logger";
 import {
   canAccessStudentParentCalls,
@@ -62,7 +63,7 @@ export async function GET(request: Request) {
     }
   });
 
-  return NextResponse.json({
+  return jsonResponse(request, {
     studentId,
     calls: calls.map((call) => ({
       id: call.id,

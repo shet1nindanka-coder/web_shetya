@@ -100,6 +100,7 @@ export default async function TeacherStatisticsPage({ searchParams }: TeacherSta
     data.students.find((student) => student.id === requestedStudentId) ?? null;
   const totalStatusSlots = data.stats.totalStudents * data.stats.totalNumbers;
 
+  // Счётчики по ученикам приходят уже свёрнутыми из SQL — страница их не пересчитывает.
   const studentStatsMap = new Map(
     data.students.map((student) => [
       student.id,
@@ -107,11 +108,11 @@ export default async function TeacherStatisticsPage({ searchParams }: TeacherSta
         id: student.id,
         name: student.name,
         email: student.email,
-        markedCount: 0,
-        solvedCount: 0,
-        greenCount: 0,
-        yellowCount: 0,
-        redCount: 0,
+        markedCount: student.markedCount,
+        solvedCount: student.solvedCount,
+        greenCount: student.greenCount,
+        yellowCount: student.yellowCount,
+        redCount: student.redCount,
         coveragePercent: 0,
         solvedPercent: 0,
         redPercent: 0
@@ -120,28 +121,6 @@ export default async function TeacherStatisticsPage({ searchParams }: TeacherSta
   );
 
   const topicAnalytics: TopicAnalytics[] = data.topics.map((topic) => {
-    for (const number of topic.homeworkNumbers) {
-      for (const status of number.statuses) {
-        const current = studentStatsMap.get(status.studentId);
-
-        if (!current) {
-          continue;
-        }
-
-        current.markedCount += 1;
-
-        if (status.status === HomeworkNumberStatus.GREEN) {
-          current.greenCount += 1;
-          current.solvedCount += 1;
-        } else if (status.status === HomeworkNumberStatus.YELLOW) {
-          current.yellowCount += 1;
-          current.solvedCount += 1;
-        } else if (status.status === HomeworkNumberStatus.RED) {
-          current.redCount += 1;
-        }
-      }
-    }
-
     const solvedCount = topic.greenCount + topic.yellowCount;
     const emptyCount = Math.max(topic.totalSlots - topic.markedCount, 0);
 
@@ -231,16 +210,7 @@ export default async function TeacherStatisticsPage({ searchParams }: TeacherSta
   const drilldownTopics = data.topics.map((topic) => ({
     id: topic.id,
     title: topic.title,
-    totalNumbers: topic.totalNumbers,
-    homeworkNumbers: topic.homeworkNumbers.map((number) => ({
-      id: number.id,
-      number: number.number,
-      statuses: number.statuses.map((status) => ({
-        studentId: status.studentId,
-        status: status.status as HomeworkNumberStatus | null,
-        deadlineAt: toIsoDateTimeString(status.deadlineAt ?? null)
-      }))
-    }))
+    totalNumbers: topic.totalNumbers
   }));
   const drilldownStudents = data.students.map((student) => ({
     id: student.id,

@@ -1,24 +1,21 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { ShbzSelect } from "@/components/shbz-select";
 import { completionPercent, formatDate } from "@/lib/utils";
 
 type DrilldownStatus = "GREEN" | "YELLOW" | "RED" | null;
 
+/** Один номер выбранной темы глазами выбранного ученика. */
+type DrilldownNumber = {
+  status: DrilldownStatus;
+  deadlineAt: string | null;
+};
+
 type DrilldownTopic = {
   id: string;
   title: string;
   totalNumbers: number;
-  homeworkNumbers: Array<{
-    id: string;
-    number: string;
-    statuses: Array<{
-      studentId: string;
-      status: DrilldownStatus;
-      deadlineAt: string | null;
-    }>;
-  }>;
 };
 
 type DrilldownStudent = {
@@ -91,6 +88,59 @@ export function TeacherStatisticsDrilldown({
     () => students.find((student) => student.id === selectedStudentId) ?? students[0] ?? null,
     [selectedStudentId, students]
   );
+  // Срез грузим точечно: страница отдаёт только списки тем и учеников,
+  // а статусы выбранной пары приезжают отдельным запросом.
+  const [numbers, setNumbers] = useState<DrilldownNumber[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const requestRef = useRef<AbortController | null>(null);
+
+  const loadSlice = useCallback(async (topicId: string, studentId: string) => {
+    if (!topicId || !studentId) {
+      setNumbers([]);
+      return;
+    }
+
+    requestRef.current?.abort();
+    const controller = new AbortController();
+    requestRef.current = controller;
+
+    setIsLoading(true);
+    setLoadError(null);
+
+    try {
+      const response = await fetch(
+        `/api/teacher/statistics/drilldown?topicId=${encodeURIComponent(topicId)}&studentId=${encodeURIComponent(studentId)}`,
+        { signal: controller.signal, cache: "no-store" }
+      );
+
+      if (!response.ok) {
+        const payload = (await response.json().catch(() => null)) as { error?: string } | null;
+        throw new Error(payload?.error || "Не удалось загрузить срез.");
+      }
+
+      const payload = (await response.json()) as { numbers: DrilldownNumber[] };
+      setNumbers(payload.numbers);
+    } catch (error) {
+      if (controller.signal.aborted) {
+        return;
+      }
+
+      setNumbers([]);
+      setLoadError(error instanceof Error ? error.message : "Не удалось загрузить срез.");
+    } finally {
+      if (!controller.signal.aborted) {
+        setIsLoading(false);
+      }
+    }
+  }, []);
+
+  useEffect(() => {
+    void loadSlice(selectedTopic?.id ?? "", selectedStudent?.id ?? "");
+
+    return () => requestRef.current?.abort();
+  }, [loadSlice, selectedStudent?.id, selectedTopic?.id]);
+
   const assignmentOptions = useMemo<AssignmentOption[]>(() => {
     if (!selectedTopic || !selectedStudent) {
       return [];
@@ -98,14 +148,12 @@ export function TeacherStatisticsDrilldown({
 
     const grouped = new Map<string, number>();
 
-    for (const number of selectedTopic.homeworkNumbers) {
-      const statusEntry = number.statuses.find((status) => status.studentId === selectedStudent.id);
-
-      if (!statusEntry?.deadlineAt) {
+    for (const number of numbers) {
+      if (!number.deadlineAt) {
         continue;
       }
 
-      grouped.set(statusEntry.deadlineAt, (grouped.get(statusEntry.deadlineAt) ?? 0) + 1);
+      grouped.set(number.deadlineAt, (grouped.get(number.deadlineAt) ?? 0) + 1);
     }
 
     return Array.from(grouped.entries())
@@ -116,7 +164,7 @@ export function TeacherStatisticsDrilldown({
         deadlineLabel: formatDate(deadlineAt),
         totalNumbers
       }));
-  }, [selectedStudent, selectedTopic]);
+  }, [numbers, selectedStudent, selectedTopic]);
 
   useEffect(() => {
     if (selectedAssignmentId === "__all__") {
@@ -150,24 +198,19 @@ export function TeacherStatisticsDrilldown({
 
     const scopedNumbers =
       selectedAssignmentId === "__all__"
-        ? selectedTopic.homeworkNumbers
-        : selectedTopic.homeworkNumbers.filter((number) => {
-            const statusEntry = number.statuses.find((status) => status.studentId === selectedStudent.id);
-            return statusEntry?.deadlineAt === selectedAssignmentId;
-          });
+        ? numbers
+        : numbers.filter((number) => number.deadlineAt === selectedAssignmentId);
 
     let greenCount = 0;
     let yellowCount = 0;
     let redCount = 0;
 
     for (const number of scopedNumbers) {
-      const statusEntry = number.statuses.find((status) => status.studentId === selectedStudent.id);
-
-      if (statusEntry?.status === "GREEN") {
+      if (number.status === "GREEN") {
         greenCount += 1;
-      } else if (statusEntry?.status === "YELLOW") {
+      } else if (number.status === "YELLOW") {
         yellowCount += 1;
-      } else if (statusEntry?.status === "RED") {
+      } else if (number.status === "RED") {
         redCount += 1;
       }
     }
@@ -188,11 +231,19 @@ export function TeacherStatisticsDrilldown({
       solvedPercent: completionPercent(solvedCount, totalNumbers),
         markedPercent: completionPercent(markedCount, totalNumbers)
       };
-  }, [selectedAssignmentId, selectedStudent, selectedTopic]);
+  }, [numbers, selectedAssignmentId, selectedStudent, selectedTopic]);
 
   const insight = useMemo(() => {
     if (!selectedTopic || !selectedStudent) {
       return "Сначала выберите тему и ученика.";
+    }
+
+    if (loadError) {
+      return loadError;
+    }
+
+    if (isLoading) {
+      return "Загружаем срез…";
     }
 
     const scopeLabel = selectedAssignment ? `в ${selectedAssignment.label.toLowerCase()}` : "в теме";
@@ -220,7 +271,7 @@ export function TeacherStatisticsDrilldown({
     }
 
     return `${selectedStudent.name} уже разобрал ${metrics.solvedCount} из ${metrics.totalNumbers} номеров ${scopeLabel}. Осталось добрать еще ${metrics.totalNumbers - metrics.solvedCount}.`;
-  }, [metrics, selectedAssignment, selectedStudent, selectedTopic]);
+  }, [isLoading, loadError, metrics, selectedAssignment, selectedStudent, selectedTopic]);
 
   if (!topics.length || !students.length) {
     return (
