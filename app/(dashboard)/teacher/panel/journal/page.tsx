@@ -25,6 +25,43 @@ const ROLE_LABELS: Record<UserRole, string> = {
   DEVELOPER: "разработчик"
 };
 
+/*
+ * Русские подписи системных имён действий. Неизвестное имя показывается как
+ * есть — журнал не ломается, если появится новое событие раньше подписи.
+ * Системное имя всё равно выводится под подписью: по нему работает фильтр.
+ */
+const ACTION_LABELS: Record<string, string> = {
+  "auth.login": "Вход в систему",
+  "auth.logout": "Выход из системы",
+  "solution.check": "Автопроверка ДЗ",
+  "lesson_plan.shortlist": "ИИ-отсев номеров к уроку",
+  "lesson_plan.generate": "ИИ-план урока",
+  "homework_plan.shortlist": "ИИ-отсев номеров к ДЗ",
+  "homework_plan.generate": "ИИ-план ДЗ",
+  "number_tagging.run": "Разметка сложности номеров",
+  "account.create": "Создание аккаунта",
+  "student.create": "Создание ученика",
+  "student.delete": "Удаление ученика",
+  "student.owner_change": "Смена владельца учеников",
+  "student.password_reset": "Сброс пароля ученика",
+  "teacher.delete": "Удаление учителя",
+  "teacher.password_reset": "Сброс пароля учителя",
+  "topic.create": "Создание темы",
+  "topic.delete": "Удаление темы",
+  "developer.settings_saved": "Панель: настройки сохранены",
+  "developer.ai_ping": "Панель: проверка связи с ИИ",
+  "developer.retention_run": "Панель: очистка по сроку хранения",
+  "developer.ai_budget_reset": "Панель: сброс бюджета ИИ",
+  "developer.checks_unfrozen": "Панель: снятие зависших проверок",
+  "developer.caches_flushed": "Панель: сброс кэшей",
+  "developer.numbers_tagged": "Панель: разметка сложности",
+  "developer.broadcast_sent": "Панель: рассылка уведомлений"
+};
+
+// Порог, после которого текст ошибки сворачивается в раскрывашку: короткие
+// ошибки читаются на месте, простыни не растягивают таблицу.
+const ERROR_PREVIEW_MAX = 140;
+
 type SearchParams = {
   category?: string;
   actor?: string;
@@ -180,27 +217,59 @@ export default async function DeveloperJournalPage({ searchParams }: { searchPar
                     <td className="px-2 py-2.5 whitespace-nowrap" style={{ color: "var(--shbz-text-muted)" }}>
                       {formatDateTime(entry.createdAt)}
                     </td>
-                    <td className="px-2 py-2.5" style={{ color: "var(--shbz-text-strong)" }}>
+                    <td
+                      className="max-w-[180px] break-words px-2 py-2.5"
+                      style={{ color: "var(--shbz-text-strong)", overflowWrap: "anywhere" }}
+                    >
                       {entry.actorName ?? "—"}
                       {entry.actorRole ? (
-                        <span style={{ color: "var(--shbz-text-muted)" }}> · {ROLE_LABELS[entry.actorRole]}</span>
+                        <span className="whitespace-nowrap" style={{ color: "var(--shbz-text-muted)" }}>
+                          {" "}
+                          · {ROLE_LABELS[entry.actorRole]}
+                        </span>
                       ) : null}
                     </td>
-                    <td className="px-2 py-2.5 whitespace-nowrap">
-                      <span
-                        className={`shbz-chip ${entry.outcome === "failed" ? "shbz-chip-red" : ""}`}
-                        style={entry.outcome === "failed" ? undefined : { background: "var(--shbz-tab-hover)" }}
-                      >
-                        {CATEGORY_LABELS[entry.category]}
-                      </span>{" "}
-                      <span style={{ color: "var(--shbz-text-strong)" }}>{entry.action}</span>
+                    <td className="max-w-[240px] px-2 py-2.5">
+                      <div className="flex items-center gap-2">
+                        <span
+                          className={`shbz-chip shrink-0 ${entry.outcome === "failed" ? "shbz-chip-red" : ""}`}
+                          style={entry.outcome === "failed" ? undefined : { background: "var(--shbz-tab-hover)" }}
+                        >
+                          {CATEGORY_LABELS[entry.category]}
+                        </span>
+                        <span style={{ color: "var(--shbz-text-strong)" }}>
+                          {ACTION_LABELS[entry.action] ?? entry.action}
+                        </span>
+                      </div>
+                      {ACTION_LABELS[entry.action] ? (
+                        <div className="mt-0.5 font-mono text-[11px]" style={{ color: "var(--shbz-kicker)" }}>
+                          {entry.action}
+                        </div>
+                      ) : null}
                     </td>
-                    <td className="px-2 py-2.5" style={{ color: "var(--shbz-text-muted)" }}>
+                    <td
+                      className="max-w-[380px] break-words px-2 py-2.5"
+                      style={{ color: "var(--shbz-text-muted)", overflowWrap: "anywhere" }}
+                    >
                       {entry.summary ?? entry.targetLabel ?? "—"}
                       {entry.error ? (
-                        <span className="mt-0.5 block" style={{ color: "var(--shbz-danger-text)" }}>
-                          {entry.error}
-                        </span>
+                        entry.error.length > ERROR_PREVIEW_MAX ? (
+                          <details className="mt-0.5">
+                            <summary
+                              className="cursor-pointer select-none"
+                              style={{ color: "var(--shbz-danger-text)" }}
+                            >
+                              {entry.error.slice(0, ERROR_PREVIEW_MAX)}… <span className="underline">полностью</span>
+                            </summary>
+                            <span className="mt-1 block" style={{ color: "var(--shbz-danger-text)" }}>
+                              {entry.error}
+                            </span>
+                          </details>
+                        ) : (
+                          <span className="mt-0.5 block" style={{ color: "var(--shbz-danger-text)" }}>
+                            {entry.error}
+                          </span>
+                        )
                       ) : null}
                     </td>
                     <td className="px-2 py-2.5 text-right whitespace-nowrap" style={{ color: "var(--shbz-text-muted)" }}>
