@@ -611,13 +611,15 @@ export function TeacherLessonBoard({
         <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2.5">
         {/* Действия «до и после урока» — обычные кнопки в одну строку,
             в едином стиле платформы (меню-дропдаун выбивалось — решение владельца). */}
+        {/* Ростом с соседние кнопки действий, чтобы строка читалась одной линией. */}
         <span
-          className="shbz-chip"
-          style={
-            isLive
+          className="inline-flex items-center rounded-[12px] px-[18px] text-[14px] font-bold"
+          style={{
+            height: "var(--shbz-btn-h)",
+            ...(isLive
               ? { background: "var(--shbz-accent-solid)", color: "#fff" }
-              : { background: "var(--shbz-tab-hover)", color: "var(--shbz-kicker)" }
-          }
+              : { background: "var(--shbz-tab-hover)", color: "var(--shbz-kicker)" }),
+          }}
         >
           {lessonStatusLabels[lesson.status] ?? lesson.status}
         </span>
@@ -857,8 +859,25 @@ export function TeacherLessonBoard({
                         </span>
                       )}
                       {idle && idle.level !== "ok" ? (
+                        // Компактный чип в масштабе «сдано X/Y»; amber/danger —
+                        // не светофор статусов номеров («Правило светофора», DESIGN.md).
                         <span
-                          className={idle.level === "warn" ? "ui-metric-pill ui-metric-pill-warning" : "ui-metric-pill ui-metric-pill-danger"}
+                          className="shbz-chip border"
+                          style={
+                            idle.level === "warn"
+                              ? {
+                                  background: "var(--theme-warning-soft)",
+                                  borderColor: "var(--theme-warning-border)",
+                                  color: "var(--theme-warning-text)",
+                                  padding: "3px 9px",
+                                }
+                              : {
+                                  background: "var(--shbz-danger-bg)",
+                                  borderColor: "var(--shbz-danger-border)",
+                                  color: "var(--shbz-danger-text)",
+                                  padding: "3px 9px",
+                                }
+                          }
                         >
                           нет сдач {idle.idleMinutes} мин
                         </span>
