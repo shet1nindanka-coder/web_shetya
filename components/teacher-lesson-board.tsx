@@ -605,7 +605,10 @@ export function TeacherLessonBoard({
 
   return (
     <div>
-      <div className="mb-6 flex flex-wrap items-center gap-2.5">
+      {/* Два слоя: левая группа переносится внутри себя, «Удалить урок» закреплена
+          справа — появление счётчика «Готово X из Y…» не сдвигает её на новую строку. */}
+      <div className="mb-6 flex flex-wrap items-start justify-between gap-2.5">
+        <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2.5">
         {/* Действия «до и после урока» — обычные кнопки в одну строку,
             в едином стиле платформы (меню-дропдаун выбивалось — решение владельца). */}
         <span
@@ -674,7 +677,8 @@ export function TeacherLessonBoard({
             Готово {readyCount} из {participants.length}…
           </span>
         ) : null}
-        <span className="ml-auto">
+        </div>
+        <span className="shrink-0">
           <DeleteButton
             label="Удалить урок"
             title="Удалить урок?"
