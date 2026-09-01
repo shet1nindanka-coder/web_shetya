@@ -21,6 +21,15 @@ export type SiteSettings = {
   homeworkPlanEnabled: boolean;
   homeworkPlanMaxItems: number;
   homeworkPlanShortlistSize: number;
+  // ИИ-проверка классной работы (вкладка «Урок»): отдельный кошелёк, чтобы
+  // одно занятие не сжигало дневной бюджет автопроверки ДЗ всей школы.
+  lessonCheckEnabled: boolean;
+  lessonCheckDailyLimit: number;
+  lessonCheckPerStudentHourlyLimit: number;
+  // Пороги простоя на панели урока: столько минут без сдач — «предупреждение»
+  // и «тревога» соответственно.
+  lessonIdleWarnMinutes: number;
+  lessonIdleAlertMinutes: number;
   // Контакт для «Не получается войти?» на странице входа; пусто — строка скрыта.
   loginHelpContact: string;
 };
@@ -85,6 +94,12 @@ export function getSiteSettingsDefaults(): SiteSettings {
     homeworkPlanEnabled: Boolean(process.env.AI_CHECK_API_KEY?.trim() && process.env.AI_CHECK_MODEL?.trim()),
     homeworkPlanMaxItems: 40,
     homeworkPlanShortlistSize: 60,
+    lessonCheckEnabled: Boolean(process.env.AI_CHECK_API_KEY?.trim() && process.env.AI_CHECK_MODEL?.trim()),
+    lessonCheckDailyLimit: 300,
+    // На уроке ученик сдаёт по одному номеру — лимит выше, чем у пачечных проверок ДЗ.
+    lessonCheckPerStudentHourlyLimit: 30,
+    lessonIdleWarnMinutes: 8,
+    lessonIdleAlertMinutes: 15,
     loginHelpContact: process.env.LOGIN_HELP_CONTACT?.trim() ?? ""
   };
 }
@@ -150,6 +165,26 @@ export function applySettingRows(
       case "homeworkPlanShortlistSize":
         result.homeworkPlanShortlistSize = clampInt(value, 20, 150, defaults.homeworkPlanShortlistSize);
         break;
+      case "lessonCheckEnabled":
+        result.lessonCheckEnabled = value === "true";
+        break;
+      case "lessonCheckDailyLimit":
+        result.lessonCheckDailyLimit = clampInt(value, 1, 100000, defaults.lessonCheckDailyLimit);
+        break;
+      case "lessonCheckPerStudentHourlyLimit":
+        result.lessonCheckPerStudentHourlyLimit = clampInt(
+          value,
+          1,
+          1000,
+          defaults.lessonCheckPerStudentHourlyLimit
+        );
+        break;
+      case "lessonIdleWarnMinutes":
+        result.lessonIdleWarnMinutes = clampInt(value, 1, 120, defaults.lessonIdleWarnMinutes);
+        break;
+      case "lessonIdleAlertMinutes":
+        result.lessonIdleAlertMinutes = clampInt(value, 1, 240, defaults.lessonIdleAlertMinutes);
+        break;
       case "loginHelpContact":
         result.loginHelpContact = value.trim().slice(0, 200);
         break;
@@ -179,6 +214,11 @@ export function serializeSiteSettings(values: SiteSettings): Array<{ key: string
     { key: "homeworkPlanEnabled", value: String(values.homeworkPlanEnabled) },
     { key: "homeworkPlanMaxItems", value: String(values.homeworkPlanMaxItems) },
     { key: "homeworkPlanShortlistSize", value: String(values.homeworkPlanShortlistSize) },
+    { key: "lessonCheckEnabled", value: String(values.lessonCheckEnabled) },
+    { key: "lessonCheckDailyLimit", value: String(values.lessonCheckDailyLimit) },
+    { key: "lessonCheckPerStudentHourlyLimit", value: String(values.lessonCheckPerStudentHourlyLimit) },
+    { key: "lessonIdleWarnMinutes", value: String(values.lessonIdleWarnMinutes) },
+    { key: "lessonIdleAlertMinutes", value: String(values.lessonIdleAlertMinutes) },
     { key: "loginHelpContact", value: values.loginHelpContact }
   ];
 }
@@ -201,6 +241,14 @@ export function parseSiteSettingsForm(formData: FormData): SiteSettings {
     { key: "homeworkPlanEnabled", value: formData.get("homeworkPlanEnabled") === "on" ? "true" : "false" },
     { key: "homeworkPlanMaxItems", value: String(formData.get("homeworkPlanMaxItems") ?? "") },
     { key: "homeworkPlanShortlistSize", value: String(formData.get("homeworkPlanShortlistSize") ?? "") },
+    { key: "lessonCheckEnabled", value: formData.get("lessonCheckEnabled") === "on" ? "true" : "false" },
+    { key: "lessonCheckDailyLimit", value: String(formData.get("lessonCheckDailyLimit") ?? "") },
+    {
+      key: "lessonCheckPerStudentHourlyLimit",
+      value: String(formData.get("lessonCheckPerStudentHourlyLimit") ?? "")
+    },
+    { key: "lessonIdleWarnMinutes", value: String(formData.get("lessonIdleWarnMinutes") ?? "") },
+    { key: "lessonIdleAlertMinutes", value: String(formData.get("lessonIdleAlertMinutes") ?? "") },
     { key: "loginHelpContact", value: String(formData.get("loginHelpContact") ?? "") }
   ];
 

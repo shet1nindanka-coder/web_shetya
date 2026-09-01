@@ -22,6 +22,16 @@ export type DashboardRealtimeEvent =
       occurredAt: string;
       studentId: string;
       topicId?: string;
+    }
+  | {
+      // Живой урок: старт/завершение, сдача фото, результат проверки,
+      // ручная переразметка итога. studentId — чьё действие (для доставки
+      // ученику); учитель получает события своих уроков целиком.
+      kind: "lesson-activity";
+      occurredAt: string;
+      lessonId: string;
+      teacherId: string;
+      studentId?: string;
     };
 
 type DashboardRealtimeListener = (event: DashboardRealtimeEvent) => void;
@@ -104,7 +114,9 @@ export function shouldReceiveDashboardRealtimeEvent(
   user: { id: string; role: UserRole },
   event: DashboardRealtimeEvent
 ) {
-  if (user.role === UserRole.TEACHER) {
+  // DEVELOPER видит всё, как и в остальных read-слоях платформы. Раньше он
+  // проваливался в ученическую ветку и не получал почти ничего.
+  if (user.role === UserRole.TEACHER || user.role === UserRole.DEVELOPER) {
     return true;
   }
 

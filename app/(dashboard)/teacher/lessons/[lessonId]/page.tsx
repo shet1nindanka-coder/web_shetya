@@ -46,7 +46,7 @@ export default async function LessonDetailPage({ params }: LessonDetailPageProps
   return (
     <div>
       <ShbzPageHeader
-        kicker={`${lesson.group?.name ?? "Урок"} · ${formatDateTime(lesson.createdAt)} · ${lesson.durationMinutes} мин`}
+        kicker={`${lesson.group?.name ?? "Урок"} · ${formatDateTime(lesson.startsAt ?? lesson.createdAt)} · ${lesson.durationMinutes} мин`}
         title={lesson.title}
         aside={<ShbzNumberSearch endpoint="/api/teacher/topics/find-number" />}
       />
@@ -54,8 +54,12 @@ export default async function LessonDetailPage({ params }: LessonDetailPageProps
       <TeacherLessonBoard
         prefix={prefix}
         aiAvailable={aiAvailable}
+        idleWarnMinutes={settings.lessonIdleWarnMinutes}
+        idleAlertMinutes={settings.lessonIdleAlertMinutes}
         lesson={{
           id: lesson.id,
+          status: lesson.status,
+          startsAt: lesson.startsAt ? lesson.startsAt.toISOString() : null,
           participants: lesson.participants.map((participant) => ({
             id: participant.id,
             studentId: participant.studentId,
@@ -65,6 +69,7 @@ export default async function LessonDetailPage({ params }: LessonDetailPageProps
             planGeneratedAt: participant.planGeneratedAt ? participant.planGeneratedAt.toISOString() : null,
             planError: participant.planError,
             createdAt: participant.createdAt.toISOString(),
+            joinedAt: participant.joinedAt ? participant.joinedAt.toISOString() : null,
             items: participant.items.map((item) => ({
               id: item.id,
               homeworkNumberId: item.homeworkNumberId,
@@ -76,7 +81,16 @@ export default async function LessonDetailPage({ params }: LessonDetailPageProps
               isExtra: item.isExtra,
               result: item.result,
               topicTitle: item.topicTitle,
-              studentStatus: item.studentStatus
+              studentStatus: item.studentStatus,
+              submission: item.latestSubmission
+                ? {
+                    status: item.latestSubmission.status,
+                    verdict: item.latestSubmission.verdict,
+                    submittedAt: item.latestSubmission.submittedAt.toISOString(),
+                    checkedAt: item.latestSubmission.checkedAt ? item.latestSubmission.checkedAt.toISOString() : null,
+                    photoFileIds: item.latestSubmission.photos.map((photo) => photo.fileId)
+                  }
+                : null
             }))
           }))
         }}

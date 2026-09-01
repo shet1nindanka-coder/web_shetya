@@ -26,6 +26,13 @@ type DashboardRealtimeEvent =
       occurredAt: string;
       studentId: string;
       topicId?: string;
+    }
+  | {
+      kind: "lesson-activity";
+      occurredAt: string;
+      lessonId: string;
+      teacherId: string;
+      studentId?: string;
     };
 
 function shouldRefresh(userId: string, role: UserRole, event: DashboardRealtimeEvent) {
@@ -33,7 +40,7 @@ function shouldRefresh(userId: string, role: UserRole, event: DashboardRealtimeE
     return false;
   }
 
-  if (role === UserRole.TEACHER) {
+  if (role === UserRole.TEACHER || role === UserRole.DEVELOPER) {
     return true;
   }
 
@@ -46,6 +53,12 @@ function shouldRefresh(userId: string, role: UserRole, event: DashboardRealtimeE
   }
 
   if (event.kind === "student-deadlines-changed") {
+    return event.studentId === userId;
+  }
+
+  // Живой урок: страница /student/lesson серверная, свежие вердикты и итоги
+  // приезжают обычным refresh.
+  if (event.kind === "lesson-activity") {
     return event.studentId === userId;
   }
 

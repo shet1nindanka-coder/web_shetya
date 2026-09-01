@@ -81,6 +81,39 @@ test("unsubscribe stops further dashboard realtime notifications", () => {
   assert.equal(calls, 1);
 });
 
+test("shouldReceiveDashboardRealtimeEvent: lesson-activity доставляется учителю, разработчику и своему ученику", () => {
+  const teacher = { id: "teacher-1", role: UserRole.TEACHER };
+  const developer = { id: "dev-1", role: UserRole.DEVELOPER };
+  const student = { id: "student-1", role: UserRole.STUDENT };
+  const otherStudent = { id: "student-2", role: UserRole.STUDENT };
+  const event = {
+    kind: "lesson-activity" as const,
+    occurredAt: "2026-09-01T12:00:00.000Z",
+    lessonId: "lesson-1",
+    teacherId: "teacher-1",
+    studentId: "student-1"
+  };
+
+  assert.equal(shouldReceiveDashboardRealtimeEvent(teacher, event), true);
+  assert.equal(shouldReceiveDashboardRealtimeEvent(developer, event), true);
+  assert.equal(shouldReceiveDashboardRealtimeEvent(student, event), true);
+  assert.equal(shouldReceiveDashboardRealtimeEvent(otherStudent, event), false);
+});
+
+test("shouldReceiveDashboardRealtimeEvent: DEVELOPER получает события прогресса, как учитель", () => {
+  const developer = { id: "dev-1", role: UserRole.DEVELOPER };
+
+  assert.equal(
+    shouldReceiveDashboardRealtimeEvent(developer, {
+      kind: "student-progress-changed",
+      occurredAt: "2026-09-01T12:00:00.000Z",
+      studentId: "student-1",
+      topicId: "topic-1"
+    }),
+    true
+  );
+});
+
 test("shouldReceiveDashboardRealtimeEvent filters events by role and student ownership", () => {
   const teacher = { id: "teacher-1", role: UserRole.TEACHER };
   const student = { id: "student-1", role: UserRole.STUDENT };

@@ -12,9 +12,12 @@ import {
 import { DeleteButton } from "@/components/delete-button";
 import { LessonManualAdd } from "@/components/lesson-manual-add";
 import { ResultToggle } from "@/components/lesson-result-toggle";
+import { computeIdleLevel, computeSpentMinutes, type IdleLevel } from "@/lib/lesson-live";
 
 const STALE_PLAN_MS = 15 * 60_000;
 const POLL_INTERVAL_MS = 2000;
+// Поллинг живой активности — фолбэк, основной канал обновления — SSE.
+const LIVE_POLL_INTERVAL_MS = 15_000;
 const UNDO_REMOVE_MS = 5000;
 
 // Горячие клавиши отметки итога на строке набора.
@@ -23,6 +26,14 @@ const RESULT_HOTKEYS: Record<string, string> = {
   "2": "PARTIAL",
   "3": "NOT_SOLVED",
   "4": "SKIPPED",
+};
+
+type LessonBoardSubmission = {
+  status: "PENDING" | "CHECKING" | "DONE" | "FAILED";
+  verdict: string | null;
+  submittedAt: string;
+  checkedAt: string | null;
+  photoFileIds: string[];
 };
 
 type LessonBoardItem = {
@@ -37,6 +48,7 @@ type LessonBoardItem = {
   result: string | null;
   topicTitle: string;
   studentStatus: string | null;
+  submission: LessonBoardSubmission | null;
 };
 
 type LessonBoardParticipant = {
@@ -48,6 +60,7 @@ type LessonBoardParticipant = {
   planGeneratedAt: string | null;
   planError: string | null;
   createdAt: string;
+  joinedAt: string | null;
   items: LessonBoardItem[];
 };
 
@@ -56,14 +69,38 @@ type TeacherLessonBoardProps = {
   aiAvailable: boolean;
   lesson: {
     id: string;
+    status: "PLANNED" | "ACTIVE" | "FINISHED";
+    startsAt: string | null;
     participants: LessonBoardParticipant[];
   };
+  idleWarnMinutes: number;
+  idleAlertMinutes: number;
   bank: Array<{
     topicId: string;
     topicTitle: string;
     numbers: Array<{ id: string; number: string; difficulty: number | null }>;
   }>;
 };
+
+const lessonStatusLabels: Record<string, string> = {
+  PLANNED: "Запланирован",
+  ACTIVE: "Идёт",
+  FINISHED: "Завершён"
+};
+
+function formatClockTime(iso: string) {
+  return new Date(iso).toLocaleTimeString("ru-RU", { hour: "2-digit", minute: "2-digit" });
+}
+
+function formatMinutesAgo(iso: string, now: number) {
+  const minutes = Math.max(0, Math.floor((now - new Date(iso).getTime()) / 60_000));
+
+  if (minutes === 0) {
+    return "только что";
+  }
+
+  return `${minutes} мин назад`;
+}
 
 // Причина подбора — не статус: нейтральная палитра, чтобы в одной строке
 // не стояли два одинаковых по форме чипа из статусной палитры («Правило светофора», DESIGN.md).
@@ -126,6 +163,8 @@ export function TeacherLessonBoard({
   prefix,
   aiAvailable,
   lesson,
+  idleWarnMinutes,
+  idleAlertMinutes,
   bank,
 }: TeacherLessonBoardProps) {
   const router = useRouter();
@@ -150,6 +189,11 @@ export function TeacherLessonBoard({
   const undoTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [, startTransition] = useTransition();
   const lastSignature = useRef("");
+  const lastLiveSignature = useRef("");
+  const [finishing, setFinishing] = useState(false);
+  const [scheduleValue, setScheduleValue] = useState("");
+  const [scheduling, setScheduling] = useState(false);
+  const isLive = lesson.status === "ACTIVE";
 
   useEffect(() => {
     return () => {
@@ -229,6 +273,91 @@ export function TeacherLessonBoard({
 
     return () => clearInterval(timer);
   }, [pendingCount, lesson.id, router]);
+
+  // Живая панель: пока урок идёт, раз в 15 секунд сверяем сигнатуру активности —
+  // фолбэк на случай, если SSE-событие потерялось.
+  useEffect(() => {
+    if (!isLive) {
+      return;
+    }
+
+    const timer = setInterval(async () => {
+      try {
+        const response = await fetch(`/api/teacher/lessons/${lesson.id}/live`, { cache: "no-store" });
+
+        if (!response.ok) {
+          return;
+        }
+
+        const payload = (await response.json()) as { signature?: string };
+        const signature = payload.signature ?? "";
+
+        if (lastLiveSignature.current && signature !== lastLiveSignature.current) {
+          startTransition(() => router.refresh());
+        }
+
+        lastLiveSignature.current = signature;
+      } catch {
+        // Сеть мигнула — следующий тик попробует снова.
+      }
+    }, LIVE_POLL_INTERVAL_MS);
+
+    return () => clearInterval(timer);
+  }, [isLive, lesson.id, router, startTransition]);
+
+  const finishLesson = useCallback(async () => {
+    setFinishing(true);
+    setNotice(null);
+
+    try {
+      const response = await fetch(`/api/teacher/lessons/${lesson.id}/finish`, { method: "POST" });
+      const result = (await response.json().catch(() => null)) as { error?: string } | null;
+
+      if (!response.ok) {
+        throw new Error(result?.error || "Не удалось завершить урок.");
+      }
+
+      startTransition(() => router.refresh());
+    } catch (error) {
+      setNotice({
+        tone: "error",
+        text: error instanceof Error ? error.message : "Не удалось завершить урок.",
+      });
+    } finally {
+      setFinishing(false);
+    }
+  }, [lesson.id, router, startTransition]);
+
+  const scheduleLesson = useCallback(async () => {
+    if (!scheduleValue) {
+      return;
+    }
+
+    setScheduling(true);
+    setNotice(null);
+
+    try {
+      const response = await fetch(`/api/teacher/lessons/${lesson.id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ startsAt: new Date(scheduleValue).toISOString() }),
+      });
+      const result = (await response.json().catch(() => null)) as { error?: string } | null;
+
+      if (!response.ok) {
+        throw new Error(result?.error || "Не удалось назначить время урока.");
+      }
+
+      startTransition(() => router.refresh());
+    } catch (error) {
+      setNotice({
+        tone: "error",
+        text: error instanceof Error ? error.message : "Не удалось назначить время урока.",
+      });
+    } finally {
+      setScheduling(false);
+    }
+  }, [lesson.id, router, scheduleValue, startTransition]);
 
   const saveItems = useCallback(
     async (
@@ -427,11 +556,78 @@ export function TeacherLessonBoard({
     router.push(`${prefix}/lessons`);
   }, [lesson.id, prefix, router]);
 
+  // Сдача по номеру: когда сдал (абсолютное время — в подсказке), сколько минут
+  // ушло, ссылки на фото. Пока идёт проверка — спиннер (индикация загрузки).
+  const renderSubmissionInfo = (item: LessonBoardItem, spentMinutes?: number) => {
+    const submission = item.submission;
+
+    if (!submission) {
+      return null;
+    }
+
+    const checking = submission.status === "PENDING" || submission.status === "CHECKING";
+
+    return (
+      <span className="flex w-full flex-wrap items-center gap-x-2.5 gap-y-1 text-xs" style={{ color: "var(--shbz-text-soft)" }}>
+        {checking ? (
+          <span
+            role="status"
+            className="inline-flex items-center gap-1.5 font-semibold"
+            style={{ color: "var(--shbz-text-muted)" }}
+          >
+            <span className="shbz-spinner" style={{ color: "var(--shbz-accent-solid)" }} aria-hidden />
+            проверяется
+          </span>
+        ) : (
+          <span title={new Date(submission.submittedAt).toLocaleString("ru-RU")}>
+            сдал {formatMinutesAgo(submission.submittedAt, now)}
+            {typeof spentMinutes === "number" ? ` · ${spentMinutes} мин на номер` : ""}
+          </span>
+        )}
+        {submission.status === "FAILED" ? (
+          <span style={{ color: "var(--shbz-danger-text)" }}>проверка не удалась</span>
+        ) : null}
+        {submission.photoFileIds.map((fileId, index) => (
+          <a
+            key={fileId}
+            href={`/files/${fileId}`}
+            target="_blank"
+            rel="noreferrer"
+            className="font-semibold underline"
+            style={{ color: "var(--shbz-kicker)" }}
+          >
+            фото {index + 1}
+          </a>
+        ))}
+      </span>
+    );
+  };
+
   return (
     <div>
       <div className="mb-6 flex flex-wrap items-center gap-2.5">
         {/* Действия «до и после урока» — обычные кнопки в одну строку,
             в едином стиле платформы (меню-дропдаун выбивалось — решение владельца). */}
+        <span
+          className="shbz-chip"
+          style={
+            isLive
+              ? { background: "var(--shbz-accent-solid)", color: "#fff" }
+              : { background: "var(--shbz-tab-hover)", color: "var(--shbz-kicker)" }
+          }
+        >
+          {lessonStatusLabels[lesson.status] ?? lesson.status}
+        </span>
+        {isLive ? (
+          <button
+            type="button"
+            disabled={finishing}
+            onClick={() => void finishLesson()}
+            className="shbz-btn-outline"
+          >
+            {finishing ? "Завершаем…" : "Завершить урок"}
+          </button>
+        ) : null}
         <a
           href={`${prefix}/lessons/${lesson.id}/pdf`}
           className="shbz-btn-primary inline-block px-[22px] py-[11px] text-[14px] no-underline"
@@ -497,6 +693,32 @@ export function TeacherLessonBoard({
         </span>
       </div>
 
+      {!lesson.startsAt && lesson.status !== "FINISHED" ? (
+        <div
+          className="mb-5 flex flex-wrap items-center gap-3 rounded-[12px] border px-5 py-4"
+          style={{ borderColor: "var(--shbz-soft-border)", background: "var(--shbz-soft-bg)" }}
+        >
+          <span className="text-sm font-semibold" style={{ color: "var(--shbz-text-strong)" }}>
+            У урока нет времени — он не начнётся и не появится у учеников во вкладке «Урок».
+          </span>
+          <input
+            type="datetime-local"
+            value={scheduleValue}
+            onChange={(event) => setScheduleValue(event.target.value)}
+            aria-label="Дата и время урока"
+            className="shbz-input w-auto"
+          />
+          <button
+            type="button"
+            disabled={scheduling || !scheduleValue}
+            onClick={() => void scheduleLesson()}
+            className="shbz-btn-outline"
+          >
+            {scheduling ? "Сохраняем…" : "Назначить время"}
+          </button>
+        </div>
+      ) : null}
+
       {!aiAvailable ? (
         <div
           className="mb-5 rounded-[12px] border px-5 py-4 text-sm font-medium"
@@ -529,6 +751,42 @@ export function TeacherLessonBoard({
           const busy = busyParticipantId === participant.id;
           const mainItems = participant.items.filter((item) => !item.isExtra);
           const extraItems = participant.items.filter((item) => item.isExtra);
+          // Живой урок: сколько номеров сдано и когда ученик был активен в последний раз.
+          const submittedItems = participant.items.filter((item) => item.submission);
+          const lastActivityAt = [
+            participant.joinedAt ? new Date(participant.joinedAt).getTime() : null,
+            ...submittedItems.map((item) => new Date(item.submission!.submittedAt).getTime()),
+          ]
+            .filter((value): value is number => value !== null)
+            .reduce<number | null>((max, value) => (max === null || value > max ? value : max), null);
+          const idle: { level: IdleLevel; idleMinutes: number } | null =
+            isLive && lesson.startsAt
+              ? computeIdleLevel(
+                  {
+                    lastActivityAt,
+                    lessonStartedAt: new Date(lesson.startsAt).getTime(),
+                    warnMinutes: idleWarnMinutes,
+                    alertMinutes: idleAlertMinutes,
+                  },
+                  now,
+                )
+              : null;
+          // Минуты на номер: от предыдущего события участника до момента сдачи.
+          const orderedSubmissionTimes = submittedItems
+            .map((entry) => ({ itemId: entry.id, at: new Date(entry.submission!.submittedAt).getTime() }))
+            .sort((left, right) => left.at - right.at);
+          const spentMinutes = lesson.startsAt
+            ? computeSpentMinutes(
+                orderedSubmissionTimes.map((entry) => entry.at),
+                {
+                  lessonStartedAt: new Date(lesson.startsAt).getTime(),
+                  joinedAt: participant.joinedAt ? new Date(participant.joinedAt).getTime() : null,
+                },
+              )
+            : [];
+          const spentByItemId = new Map(
+            orderedSubmissionTimes.map((entry, index) => [entry.itemId, spentMinutes[index]]),
+          );
           const mainIds = mainItems.map((item) => item.homeworkNumberId);
           const extraIds = extraItems.map((item) => item.homeworkNumberId);
           const removeItem = (target: LessonBoardItem) => {
@@ -556,12 +814,18 @@ export function TeacherLessonBoard({
           };
 
           return (
-            <article key={participant.id} className="shbz-card p-6">
+            <article
+              key={participant.id}
+              className="shbz-card p-6"
+              // Тревога простоя — не светофор статусов: danger-рамка карточки,
+              // чтобы учитель увидел, к кому подойти («Правило светофора», DESIGN.md).
+              style={idle?.level === "alert" ? { borderColor: "var(--shbz-danger-border)" } : undefined}
+            >
               <div
                 className="sticky top-2 z-10 -mx-2 flex flex-wrap items-center justify-between gap-3 rounded-[12px] px-2 py-1.5"
                 style={{ background: "var(--shbz-card-bg)" }}
               >
-                <div>
+                <div className="flex flex-wrap items-center gap-2.5">
                   {/* H2 после H1 страницы: пропуск уровня H1→H3 ломал структуру для скринридера. */}
                   {/* Только имя: счётчик отметок и строка «скорость · основных · доп. ·
                       минуты по оценке ИИ» убраны — перегружали шапку (решение владельца). */}
@@ -571,6 +835,32 @@ export function TeacherLessonBoard({
                   >
                     {participant.studentName}
                   </h2>
+                  {isLive ? (
+                    <>
+                      <span
+                        className="shbz-chip"
+                        style={{ background: "var(--shbz-tab-hover)", color: "var(--shbz-kicker)", padding: "3px 9px" }}
+                      >
+                        сдано {submittedItems.length} / {participant.items.length}
+                      </span>
+                      {participant.joinedAt ? (
+                        <span className="text-xs" style={{ color: "var(--shbz-text-soft)" }}>
+                          в классе с {formatClockTime(participant.joinedAt)}
+                        </span>
+                      ) : (
+                        <span className="text-xs" style={{ color: "var(--shbz-text-soft)" }}>
+                          ещё не открыл урок
+                        </span>
+                      )}
+                      {idle && idle.level !== "ok" ? (
+                        <span
+                          className={idle.level === "warn" ? "ui-metric-pill ui-metric-pill-warning" : "ui-metric-pill ui-metric-pill-danger"}
+                        >
+                          нет сдач {idle.idleMinutes} мин
+                        </span>
+                      ) : null}
+                    </>
+                  ) : null}
                 </div>
                 {/* Кнопки «Пересобрать» нет: промпт и вводные те же, результат
                     почти всегда тот же (решение владельца). Повтор остаётся
@@ -726,6 +1016,7 @@ export function TeacherLessonBoard({
                           >
                             ×
                           </button>
+                          {renderSubmissionInfo(item, spentByItemId.get(item.id))}
                           {itemErrors[item.id] ? (
                             <span
                               className="w-full text-xs font-semibold"
@@ -818,6 +1109,7 @@ export function TeacherLessonBoard({
                           >
                             ×
                           </button>
+                          {renderSubmissionInfo(item, spentByItemId.get(item.id))}
                           {itemErrors[item.id] ? (
                             <span
                               className="w-full text-xs font-semibold"

@@ -64,7 +64,7 @@ export async function PATCH(
       id: true,
       result: true,
       homeworkNumberId: true,
-      participant: { select: { studentId: true } },
+      participant: { select: { studentId: true, lesson: { select: { teacherId: true } } } },
       homeworkNumber: { select: { topicId: true } }
     }
   });
@@ -114,11 +114,20 @@ export async function PATCH(
   revalidatePath(`/teacher/lessons/${lessonId}`);
   revalidatePath(`/teacher/students/${studentId}`);
   revalidatePath("/student");
+  revalidatePath("/student/lesson");
 
   publishDashboardRealtimeEvent({
     kind: "student-progress-changed",
     studentId,
     topicId: item.homeworkNumber.topicId
+  });
+  // Вкладка «Урок» у ученика серверная: ручная переразметка должна доехать
+  // до неё сразу (student-progress-changed ученику refresh не делает — только стрик).
+  publishDashboardRealtimeEvent({
+    kind: "lesson-activity",
+    lessonId,
+    teacherId: item.participant.lesson.teacherId,
+    studentId
   });
 
   logInfoEvent("lesson_plan.result_set", {

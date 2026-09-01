@@ -87,6 +87,10 @@ export async function GET(request: Request, { params }: FileRouteProps) {
   if (user.role === UserRole.STUDENT || user.role === UserRole.TEACHER) {
     const assignmentScope =
       user.role === UserRole.STUDENT ? { studentId: user.id } : { student: { teacherId: user.id } };
+    // Сдачи классной работы скоупятся так же: ученик — свои, учитель — уроков,
+    // которые он ведёт.
+    const lessonParticipantScope =
+      user.role === UserRole.STUDENT ? { studentId: user.id } : { lesson: { teacherId: user.id } };
 
     ownsStudentPhoto = await prisma.storedFile
       .count({
@@ -105,6 +109,17 @@ export async function GET(request: Request, { params }: FileRouteProps) {
                 some: {
                   check: {
                     assignment: assignmentScope
+                  }
+                }
+              }
+            },
+            {
+              lessonSubmissionPhotoEntries: {
+                some: {
+                  submission: {
+                    item: {
+                      participant: lessonParticipantScope
+                    }
                   }
                 }
               }

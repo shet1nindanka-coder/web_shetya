@@ -34,3 +34,29 @@ test("deriveLessonStatus: нулевая длительность не даёт 
 
   assert.equal(deriveLessonStatus(lesson, START), "FINISHED");
 });
+
+test("deriveLessonStatus: досрочное завершение (finishedAt) перекрывает расписание", () => {
+  const lesson = {
+    startsAt: new Date(START),
+    durationMinutes: 60,
+    status: "PLANNED",
+    finishedAt: new Date(START + 30 * MINUTE)
+  };
+
+  // Урок завершили на 30-й минуте — с этого момента FINISHED, хотя по расписанию он ещё идёт.
+  assert.equal(deriveLessonStatus(lesson, START + 31 * MINUTE), "FINISHED");
+  // До момента завершения производная работает как раньше.
+  assert.equal(deriveLessonStatus(lesson, START + 10 * MINUTE), "ACTIVE");
+});
+
+test("deriveLessonStatus: finishedAt работает и для урока без расписания", () => {
+  const lesson = { startsAt: null, durationMinutes: 60, status: "PLANNED", finishedAt: new Date(START) };
+
+  assert.equal(deriveLessonStatus(lesson, START + MINUTE), "FINISHED");
+});
+
+test("deriveLessonStatus: мусорный finishedAt игнорируется", () => {
+  const lesson = { startsAt: new Date(START), durationMinutes: 60, status: "PLANNED", finishedAt: "not-a-date" };
+
+  assert.equal(deriveLessonStatus(lesson, START + MINUTE), "ACTIVE");
+});

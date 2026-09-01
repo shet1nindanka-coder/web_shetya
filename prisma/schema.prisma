@@ -150,6 +150,7 @@ model StoredFile {
   answerForNumberEntries TopicHomeworkNumber[]     @relation("NumberAnswerFile")
   submissionPhotoEntries HomeworkSubmissionPhoto[] @relation("SubmissionPhotoFile")
   checkPhotoEntries      HomeworkCheckPhoto[]      @relation("HomeworkCheckPhotoFile")
+  lessonSubmissionPhotoEntries LessonSubmissionPhoto[] @relation("LessonSubmissionPhotoFile")
 }
 
 model Notification {
@@ -345,10 +346,53 @@ model LessonAssignmentItem {
   createdAt        DateTime            @default(now())
   participant      LessonParticipant   @relation(fields: [participantId], references: [id], onDelete: Cascade)
   homeworkNumber   TopicHomeworkNumber @relation(fields: [homeworkNumberId], references: [id], onDelete: Cascade)
+  submissions      LessonItemSubmission[]
 
   @@unique([participantId, homeworkNumberId])
   @@index([participantId, order])
   @@index([homeworkNumberId])
+}
+
+// Сдача классной работы: фото решения ОДНОГО номера урока + результат
+// ИИ-проверки. В отличие от ДЗ (где проверка идёт пачкой на всё задание),
+// здесь гранулярность — номер: панель урока показывает, когда и что сдано.
+model LessonItemSubmission {
+  id                 String                  @id @default(cuid())
+  itemId             String
+  status             SolutionCheckStatus     @default(PENDING)
+  // «Одна активная сдача на номер» — та же механика, что у HomeworkCheck:
+  // у активной activeSlot = 1, у завершённой — NULL (NULL не конфликтуют).
+  activeSlot         Int?                    @default(1)
+  verdict            SolutionVerdict?
+  recognizedAnswer   String?
+  comment            String?
+  confidence         Float?
+  errorKind          String? // словарь ERROR_KINDS в lib/solution-check-parse.ts
+  errorNote          String? // разбор ошибки для подбора; ученику не показывается никогда
+  injectionSuspected Boolean                 @default(false)
+  injectionNote      String?
+  modelUsed          String?
+  error              String?
+  submittedAt        DateTime                @default(now())
+  checkedAt          DateTime?
+  item               LessonAssignmentItem    @relation(fields: [itemId], references: [id], onDelete: Cascade)
+  photos             LessonSubmissionPhoto[]
+
+  @@unique([itemId, activeSlot])
+  @@index([itemId, submittedAt])
+}
+
+model LessonSubmissionPhoto {
+  id           String               @id @default(cuid())
+  submissionId String
+  fileId       String
+  order        Int
+  submission   LessonItemSubmission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+  file         StoredFile           @relation("LessonSubmissionPhotoFile", fields: [fileId], references: [id], onDelete: Restrict)
+
+  @@unique([submissionId, fileId])
+  @@unique([submissionId, order])
+  @@index([fileId])
 }
 
 model Test {

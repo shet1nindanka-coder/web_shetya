@@ -60,7 +60,9 @@ export function getAiCheckConfig(settings?: { aiModel?: string; aiReasoningEffor
   };
 }
 
-const SYSTEM_PROMPT = [
+// Экспортируется для проверки классной работы (lib/lesson-item-check.ts):
+// правила вердиктов, безопасность и диагностика общие для ДЗ и урока.
+export const SOLUTION_CHECK_SYSTEM_PROMPT = [
   "Ты — строгий проверяющий домашних заданий по математике для школьников.",
   "Твоя главная цель — НЕ ошибиться в вердикте: неверный вердикт хуже, чем отказ от проверки.",
   "Тебе дают фото рукописного решения и список номеров с условиями и эталонными ответами.",
@@ -173,7 +175,7 @@ function buildUserText(assignment: CheckAssignment) {
   return lines.join("\n");
 }
 
-async function storedFileToDataUrl(storageKey: string, mimeType: string) {
+export async function storedFileToDataUrl(storageKey: string, mimeType: string) {
   const payload = await readStoredFile(storageKey);
 
   if (!payload) {
@@ -240,8 +242,10 @@ function delay(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-async function callModel(
-  config: NonNullable<ReturnType<typeof getAiCheckConfig>>,
+export type AiCheckConfig = NonNullable<ReturnType<typeof getAiCheckConfig>>;
+
+export async function callModel(
+  config: AiCheckConfig,
   userText: string,
   imageUrls: string[],
   extraInstruction?: string
@@ -274,7 +278,7 @@ async function callModel(
 }
 
 async function callModelOnce(
-  config: NonNullable<ReturnType<typeof getAiCheckConfig>>,
+  config: AiCheckConfig,
   userText: string,
   imageUrls: string[],
   extraInstruction?: string
@@ -301,7 +305,7 @@ async function callModelOnce(
           : { temperature: 0, max_tokens: 8000 }),
         response_format: { type: "json_object" },
         messages: [
-          { role: "system", content: SYSTEM_PROMPT },
+          { role: "system", content: SOLUTION_CHECK_SYSTEM_PROMPT },
           {
             role: "user",
             content: [

@@ -107,6 +107,39 @@ test("applySettingRows handles homework plan keys with clamps", () => {
   assert.equal(result.homeworkPlanShortlistSize, 150);
 });
 
+test("applySettingRows handles lesson check keys with clamps", () => {
+  const defaults = getSiteSettingsDefaults();
+  const result = applySettingRows(defaults, [
+    { key: "lessonCheckEnabled", value: "true" },
+    { key: "lessonCheckDailyLimit", value: "-1" },
+    { key: "lessonCheckPerStudentHourlyLimit", value: "5000" },
+    { key: "lessonIdleWarnMinutes", value: "0" },
+    { key: "lessonIdleAlertMinutes", value: "999" }
+  ]);
+
+  assert.equal(result.lessonCheckEnabled, true);
+  assert.equal(result.lessonCheckDailyLimit, 1);
+  assert.equal(result.lessonCheckPerStudentHourlyLimit, 1000);
+  assert.equal(result.lessonIdleWarnMinutes, 1);
+  assert.equal(result.lessonIdleAlertMinutes, 240);
+});
+
+test("lesson check keys survive the serialize round-trip", () => {
+  const defaults = getSiteSettingsDefaults();
+  const custom = {
+    ...defaults,
+    lessonCheckEnabled: true,
+    lessonCheckDailyLimit: 150,
+    lessonCheckPerStudentHourlyLimit: 40,
+    lessonIdleWarnMinutes: 5,
+    lessonIdleAlertMinutes: 12
+  };
+
+  const restored = applySettingRows(getSiteSettingsDefaults(), serializeSiteSettings(custom));
+
+  assert.deepEqual(restored, custom);
+});
+
 test("loginHelpContact применяется, обрезается и попадает в сериализацию", () => {
   const defaults = getSiteSettingsDefaults();
   const result = applySettingRows(defaults, [

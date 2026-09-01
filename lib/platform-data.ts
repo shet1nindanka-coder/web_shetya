@@ -2061,6 +2061,7 @@ export async function getTeacherLessons(viewer: TeacherViewer) {
         durationMinutes: true,
         createdAt: true,
         startsAt: true,
+        finishedAt: true,
         group: { select: { id: true, name: true } },
         participants: {
           select: {
@@ -2123,6 +2124,7 @@ export async function getTeacherStudentLessons(viewer: TeacherViewer, studentId:
             durationMinutes: true,
             createdAt: true,
             startsAt: true,
+            finishedAt: true,
             group: { select: { name: true } }
           }
         },
@@ -2607,10 +2609,13 @@ export async function getLessonDetail(viewer: TeacherViewer, lessonId: string) {
         status: true,
         kind: true,
         topicId: true,
+        teacherId: true,
         deadlineAt: true,
         durationMinutes: true,
         planParams: true,
         createdAt: true,
+        startsAt: true,
+        finishedAt: true,
         group: { select: { id: true, name: true } },
         participants: {
           orderBy: { student: { name: "asc" } },
@@ -2624,6 +2629,7 @@ export async function getLessonDetail(viewer: TeacherViewer, lessonId: string) {
             issuedAssignmentId: true,
             issuedAt: true,
             createdAt: true,
+            joinedAt: true,
             student: { select: { id: true, name: true } },
             items: {
               orderBy: { order: "asc" },
@@ -2670,16 +2676,59 @@ export async function getLessonDetail(viewer: TeacherViewer, lessonId: string) {
       : [];
     const existingAssignmentIds = new Set(existingAssignments.map((assignment) => assignment.id));
 
+    // Живой урок: последняя сдача по каждому номеру. Отдельным запросом в
+    // try/catch — до применения миграции сдач урок должен открываться как раньше.
+    const latestSubmissionByItemId = new Map<
+      string,
+      {
+        status: SolutionCheckStatus;
+        verdict: SolutionVerdict | null;
+        submittedAt: Date;
+        checkedAt: Date | null;
+        photos: Array<{ fileId: string }>;
+      }
+    >();
+
+    if (lesson.kind === LessonKind.LESSON) {
+      try {
+        const submissions = await prisma.lessonItemSubmission.findMany({
+          where: { item: { participant: { lessonId: lesson.id } } },
+          orderBy: { submittedAt: "desc" },
+          select: {
+            itemId: true,
+            status: true,
+            verdict: true,
+            submittedAt: true,
+            checkedAt: true,
+            photos: { orderBy: { order: "asc" }, select: { fileId: true } }
+          }
+        });
+
+        for (const submission of submissions) {
+          if (!latestSubmissionByItemId.has(submission.itemId)) {
+            latestSubmissionByItemId.set(submission.itemId, submission);
+          }
+        }
+      } catch (error) {
+        if (!isRecoverablePlatformDataError(error)) {
+          throw error;
+        }
+      }
+    }
+
     return {
       id: lesson.id,
       title: lesson.title,
-      status: lesson.status,
+      status: deriveLessonStatus(lesson),
       kind: lesson.kind,
       topicId: lesson.topicId,
+      teacherId: lesson.teacherId,
       deadlineAt: lesson.deadlineAt,
       durationMinutes: lesson.durationMinutes,
       planParams: lesson.planParams,
       createdAt: lesson.createdAt,
+      startsAt: lesson.startsAt,
+      finishedAt: lesson.finishedAt,
       group: lesson.group,
       participants: lesson.participants.map((participant) => ({
         id: participant.id,
@@ -2698,6 +2747,7 @@ export async function getLessonDetail(viewer: TeacherViewer, lessonId: string) {
             ? participant.issuedAt
             : null,
         createdAt: participant.createdAt,
+        joinedAt: participant.joinedAt,
         items: participant.items.map((item) => ({
           id: item.id,
           order: item.order,
@@ -2716,7 +2766,8 @@ export async function getLessonDetail(viewer: TeacherViewer, lessonId: string) {
           topicId: item.homeworkNumber.topic.id,
           topicTitle: item.homeworkNumber.topic.title,
           studentStatus:
-            item.homeworkNumber.statuses.find((status) => status.studentId === participant.studentId)?.status ?? null
+            item.homeworkNumber.statuses.find((status) => status.studentId === participant.studentId)?.status ?? null,
+          latestSubmission: latestSubmissionByItemId.get(item.id) ?? null
         }))
       }))
     };
@@ -2727,4 +2778,176 @@ export async function getLessonDetail(viewer: TeacherViewer, lessonId: string) {
 
     throw error;
   }
+}
+
+/**
+ * Живой урок ученика (вкладка «Урок»): идущее занятие с его набором номеров
+ * и сдачами, либо ближайшее запланированное. Некэшированная: страница
+ * force-dynamic, данные меняются каждую минуту.
+ */
+export async function getStudentLiveLesson(studentId: string) {
+  const now = Date.now();
+
+  let participants: Array<{
+    id: string;
+    joinedAt: Date | null;
+    lesson: {
+      id: string;
+      title: string;
+      status: string;
+      durationMinutes: number;
+      startsAt: Date | null;
+      finishedAt: Date | null;
+      group: { name: string } | null;
+    };
+  }>;
+
+  try {
+    participants = await prisma.lessonParticipant.findMany({
+      where: {
+        studentId,
+        lesson: {
+          kind: LessonKind.LESSON,
+          // Стартовавшие в последние сутки (покрывает идущие) и будущие.
+          startsAt: { not: null, gte: new Date(now - 24 * 60 * 60_000) }
+        }
+      },
+      orderBy: { lesson: { startsAt: "asc" } },
+      take: 20,
+      select: {
+        id: true,
+        joinedAt: true,
+        lesson: {
+          select: {
+            id: true,
+            title: true,
+            status: true,
+            durationMinutes: true,
+            startsAt: true,
+            finishedAt: true,
+            group: { select: { name: true } }
+          }
+        }
+      }
+    });
+  } catch (error) {
+    if (isRecoverablePlatformDataError(error)) {
+      return { active: null, upcoming: null };
+    }
+
+    throw error;
+  }
+
+  const activeParticipant = participants.find(
+    (participant) => deriveLessonStatus(participant.lesson, now) === "ACTIVE"
+  );
+  const upcomingParticipant = participants.find(
+    (participant) => deriveLessonStatus(participant.lesson, now) === "PLANNED"
+  );
+
+  const upcoming = upcomingParticipant
+    ? {
+        lessonId: upcomingParticipant.lesson.id,
+        title: upcomingParticipant.lesson.title,
+        startsAt: upcomingParticipant.lesson.startsAt,
+        durationMinutes: upcomingParticipant.lesson.durationMinutes,
+        groupName: upcomingParticipant.lesson.group?.name ?? null
+      }
+    : null;
+
+  if (!activeParticipant) {
+    return { active: null, upcoming };
+  }
+
+  const items = await prisma.lessonAssignmentItem.findMany({
+    where: { participantId: activeParticipant.id },
+    orderBy: { order: "asc" },
+    select: {
+      id: true,
+      order: true,
+      isExtra: true,
+      result: true,
+      homeworkNumber: {
+        select: {
+          id: true,
+          number: true,
+          difficulty: true,
+          conditionLatex: true,
+          topic: { select: { id: true, title: true } }
+        }
+      }
+    }
+  });
+
+  // Сдачи — отдельным запросом в try/catch: до применения миграции сдач
+  // вкладка урока должна работать (без статусов проверок).
+  const latestByItemId = new Map<
+    string,
+    {
+      id: string;
+      status: SolutionCheckStatus;
+      verdict: SolutionVerdict | null;
+      recognizedAnswer: string | null;
+      comment: string | null;
+      error: string | null;
+      submittedAt: Date;
+      checkedAt: Date | null;
+    }
+  >();
+
+  try {
+    const submissions = await prisma.lessonItemSubmission.findMany({
+      where: { item: { participantId: activeParticipant.id } },
+      orderBy: { submittedAt: "desc" },
+      select: {
+        id: true,
+        itemId: true,
+        status: true,
+        verdict: true,
+        recognizedAnswer: true,
+        comment: true,
+        error: true,
+        submittedAt: true,
+        checkedAt: true
+      }
+    });
+
+    for (const submission of submissions) {
+      if (!latestByItemId.has(submission.itemId)) {
+        latestByItemId.set(submission.itemId, submission);
+      }
+    }
+  } catch (error) {
+    if (!isRecoverablePlatformDataError(error)) {
+      throw error;
+    }
+  }
+
+  return {
+    active: {
+      lessonId: activeParticipant.lesson.id,
+      participantId: activeParticipant.id,
+      title: activeParticipant.lesson.title,
+      startsAt: activeParticipant.lesson.startsAt,
+      durationMinutes: activeParticipant.lesson.durationMinutes,
+      groupName: activeParticipant.lesson.group?.name ?? null,
+      joinedAt: activeParticipant.joinedAt,
+      items: items.map((item) => ({
+        id: item.id,
+        order: item.order,
+        isExtra: item.isExtra,
+        result: item.result,
+        homeworkNumberId: item.homeworkNumber.id,
+        number: item.homeworkNumber.number,
+        difficulty: item.homeworkNumber.difficulty,
+        conditionLatex: item.homeworkNumber.conditionLatex,
+        topicId: item.homeworkNumber.topic.id,
+        topicTitle: item.homeworkNumber.topic.title,
+        // Ученику — только его собственная сдача, без диагностики (errorKind/
+        // errorNote/injection* сюда не выбираются вовсе).
+        submission: latestByItemId.get(item.id) ?? null
+      }))
+    },
+    upcoming
+  };
 }

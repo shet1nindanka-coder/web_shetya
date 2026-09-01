@@ -355,6 +355,79 @@ function SettingsForm({ settings }: { settings: SiteSettings }) {
         </label>
       </div>
 
+      <p className="shbz-kicker mb-4 mt-8">Классная работа (урок)</p>
+      <label className="shbz-switch">
+        <input type="checkbox" name="lessonCheckEnabled" defaultChecked={settings.lessonCheckEnabled} />
+        <span className="shbz-switch-track" />
+        <span className="shbz-switch-knob" />
+        <span>
+          <span className="block text-[14px] font-semibold" style={{ color: "var(--shbz-text-strong)" }}>
+            Проверка сдач на уроке включена
+          </span>
+          <span className="block text-xs" style={{ color: "var(--shbz-text-muted)" }}>
+            Ученики сдают номера фото прямо на занятии, ИИ проверяет по одному номеру
+          </span>
+        </span>
+      </label>
+      <div className="mt-[18px] grid gap-5" style={{ gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))" }}>
+        <label className="flex flex-col">
+          <FieldLabel hint="Отдельный кошелёк: урок не тратит бюджет проверок ДЗ">
+            Сдач в день, всего
+          </FieldLabel>
+          <input
+            type="number"
+            name="lessonCheckDailyLimit"
+            defaultValue={settings.lessonCheckDailyLimit}
+            min={1}
+            max={100000}
+            step={1}
+            className="shbz-input mt-auto"
+          />
+        </label>
+        <label className="flex flex-col">
+          <FieldLabel hint="На уроке сдают по одному номеру — лимит выше, чем у ДЗ">
+            Сдач в час на ученика
+          </FieldLabel>
+          <input
+            type="number"
+            name="lessonCheckPerStudentHourlyLimit"
+            defaultValue={settings.lessonCheckPerStudentHourlyLimit}
+            min={1}
+            max={1000}
+            step={1}
+            className="shbz-input mt-auto"
+          />
+        </label>
+        <label className="flex flex-col">
+          <FieldLabel hint="Столько минут без сдач — жёлтая метка на панели урока">
+            Простой: предупреждение, мин
+          </FieldLabel>
+          <input
+            type="number"
+            name="lessonIdleWarnMinutes"
+            defaultValue={settings.lessonIdleWarnMinutes}
+            min={1}
+            max={120}
+            step={1}
+            className="shbz-input mt-auto"
+          />
+        </label>
+        <label className="flex flex-col">
+          <FieldLabel hint="Столько минут без сдач — тревожная метка, пора подойти">
+            Простой: тревога, мин
+          </FieldLabel>
+          <input
+            type="number"
+            name="lessonIdleAlertMinutes"
+            defaultValue={settings.lessonIdleAlertMinutes}
+            min={1}
+            max={240}
+            step={1}
+            className="shbz-input mt-auto"
+          />
+        </label>
+      </div>
+
       <p className="shbz-kicker mb-4 mt-8">ИИ-выдача ДЗ</p>
       <label className="shbz-switch">
         <input type="checkbox" name="homeworkPlanEnabled" defaultChecked={settings.homeworkPlanEnabled} />
