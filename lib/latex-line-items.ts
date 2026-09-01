@@ -12,11 +12,18 @@ export type LineItemsResult = {
 // Метка пункта: одна буква (обе раскладки, оба регистра) или число 1–99,
 // затем «)» либо «.» — точка только перед пробелом/концом, чтобы не ловить «1.5».
 const ITEM_LABEL_PATTERN = /^(?:[А-ЯЁа-яёA-Za-z]|\d{1,2})(?:\)|\.(?=\s|$))/;
+// Скобочная форма метки — «а)», «10)»: однозначна и распознаётся в любом месте строки.
+const PAREN_LABEL_PATTERN = /^(?:[А-ЯЁа-яёA-Za-z]|\d{1,2})\)/;
+// Точечная форма — «а.», «10.»: в прозе совпадает с концом предложения («…получится 10.»)
+// и сокращениями («и т. д.»), поэтому в середине строки признаётся меткой только когда
+// сама строка начинается с точечной метки (то есть это явное перечисление «1. … 2. …»).
+const DOT_LABEL_PATTERN = /^(?:[А-ЯЁа-яёA-Za-z]|\d{1,2})\.(?=\s|$)/;
 // Метка внутри \text{…}: «\text{А)}», «\text{ 1) }» и т.п.
 const TEXT_LABEL_PATTERN = /^\\text\{\s*(?:[А-ЯЁа-яёA-Za-z]|\d{1,2})(?:\)|\.)/;
 
 export function splitLineIntoItems(line: string): LineItemsResult {
   const boundaries: number[] = [];
+  const startsWithDotLabel = DOT_LABEL_PATTERN.test(line);
   let inMath = false;
 
   for (let i = 0; i < line.length; i++) {
@@ -30,7 +37,9 @@ export function splitLineIntoItems(line: string): LineItemsResult {
       continue;
     }
 
-    if (ITEM_LABEL_PATTERN.test(line.slice(i, i + 5))) {
+    const slice = line.slice(i, i + 5);
+
+    if (PAREN_LABEL_PATTERN.test(slice) || ((i === 0 || startsWithDotLabel) && DOT_LABEL_PATTERN.test(slice))) {
       boundaries.push(i);
     }
   }
@@ -54,6 +63,40 @@ export function splitLineIntoItems(line: string): LineItemsResult {
   }
 
   return { items, labeled: true };
+}
+
+// Конец предложения (или заголовка-надписи «Решите:») — после него перенос строки
+// считается осмысленным. Допускаются закрывающие кавычки/скобки после знака.
+const SENTENCE_END_PATTERN = /[.!?…:;]["»')\]]*$/;
+
+/*
+ * Склейка «мягких» переносов строк в прозе условия. Задачники приходят из PDF
+ * с типографскими переносами посреди предложения (и даже с пустой строкой между
+ * половинами фразы) — без склейки каждая строка рендерится отдельным абзацем.
+ * Перенос сохраняется, только если предыдущая строка закончила предложение
+ * (SENTENCE_END_PATTERN) либо граничит с display-формулой ($$…$$ или \[…\]);
+ * иначе он заменяется пробелом. Внутренность display-формул не трогается.
+ */
+export function mergeSoftWrappedLines(source: string): string {
+  const stash: string[] = [];
+  const shielded = source.replace(/\$\$[\s\S]*?\$\$|\\\[[\s\S]*?\\\]/g, (match) => {
+    stash.push(match);
+    return `\u0000${stash.length - 1}\u0000`;
+  });
+
+  const merged = shielded.replace(/[ \t]*\n[\s]*/g, (lineBreak, offset: number) => {
+    const before = shielded.slice(0, offset);
+    const prevLine = before.slice(before.lastIndexOf("\n") + 1).trimEnd();
+    const nextChar = shielded[offset + lineBreak.length] ?? "";
+
+    if (!prevLine || SENTENCE_END_PATTERN.test(prevLine) || prevLine.endsWith("\u0000") || nextChar === "\u0000") {
+      return lineBreak;
+    }
+
+    return " ";
+  });
+
+  return merged.replace(/\u0000(\d+)\u0000/g, (_, index: string) => stash[Number(index)] ?? "");
 }
 
 /*

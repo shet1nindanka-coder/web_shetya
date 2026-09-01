@@ -1,5 +1,5 @@
 import katex from "katex";
-import { splitLineIntoItems, splitMathIntoItems } from "@/lib/latex-line-items";
+import { mergeSoftWrappedLines, splitLineIntoItems, splitMathIntoItems } from "@/lib/latex-line-items";
 import { KATEX_CSS_MARKER } from "@/lib/print-theme";
 
 /*
@@ -144,7 +144,10 @@ export function renderConditionHtml(condition: string): string {
  * переносятся целиком. Условия с $$…$$ рендерятся классическим потоком —
  * там сетку строит .math-items внутри самой формулы.
  */
-export function renderConditionGridHtml(condition: string): string {
+export function renderConditionGridHtml(source: string): string {
+  // Как и на сайте: типографские переносы из задачника склеиваются в абзацы.
+  const condition = mergeSoftWrappedLines(source);
+
   if (condition.includes("$$") || condition.includes("\\[")) {
     return `<div class="cond-line">${renderConditionHtml(condition)}</div>`;
   }

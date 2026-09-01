@@ -1,6 +1,6 @@
 import { Fragment, type ReactNode } from "react";
 import { BlockMath, InlineMath } from "react-katex";
-import { splitLineIntoItems, splitMathIntoItems } from "@/lib/latex-line-items";
+import { mergeSoftWrappedLines, splitLineIntoItems, splitMathIntoItems } from "@/lib/latex-line-items";
 
 type LatexAnswerPreviewProps = {
   value: string;
@@ -89,7 +89,9 @@ function renderTextLines(text: string, keyPrefix: string): ReactNode[] {
 }
 
 export function LatexAnswerPreview({ value }: LatexAnswerPreviewProps) {
-  const blocks = value
+  // Типографские переносы из задачника склеиваются в цельные абзацы,
+  // прежде чем текст разбивается на блоки и строки.
+  const blocks = mergeSoftWrappedLines(value)
     .trim()
     .split(/\n{2,}/)
     .map((block) => block.trim())

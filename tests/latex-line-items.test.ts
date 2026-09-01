@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { splitLineIntoItems, splitMathIntoItems } from "../lib/latex-line-items";
+import { mergeSoftWrappedLines, splitLineIntoItems, splitMathIntoItems } from "../lib/latex-line-items";
 
 test("splits uppercase and digit labels with a bracket", () => {
   const result = splitLineIntoItems("А) первый пункт Б) второй 10) десятый");
@@ -85,4 +85,56 @@ test("splitMathIntoItems keeps a plain formula untouched", () => {
 
   assert.equal(result.labeled, false);
   assert.deepEqual(result.items, ["x^2 + y^2 = r^2"]);
+});
+
+test("a mid-line dot number in prose is not a label", () => {
+  const result = splitLineIntoItems("сумму разделить на 2, то получится 10. Какое число задумал ученик?");
+
+  assert.equal(result.labeled, false);
+});
+
+test("abbreviations like «и т. д.» are not labels", () => {
+  const result = splitLineIntoItems("Продолжите ряд 2, 4, 8 и т. д. до десятого члена");
+
+  assert.equal(result.labeled, false);
+});
+
+test("dot labels still split when the line starts with one", () => {
+  const result = splitLineIntoItems("1. первый пункт 2. второй пункт");
+
+  assert.equal(result.labeled, true);
+  assert.deepEqual(result.items, ["1. первый пункт", "2. второй пункт"]);
+});
+
+test("mergeSoftWrappedLines joins a sentence wrapped mid-phrase", () => {
+  const merged = mergeSoftWrappedLines(
+    "Ученик задумал число. Если его умножить на 4, к произведению прибавить 8 и полученную\nсумму разделить на 2, то получится\n10. Какое число задумал ученик?",
+  );
+
+  assert.equal(
+    merged,
+    "Ученик задумал число. Если его умножить на 4, к произведению прибавить 8 и полученную сумму разделить на 2, то получится 10. Какое число задумал ученик?",
+  );
+});
+
+test("mergeSoftWrappedLines joins even across a blank line inside a phrase", () => {
+  const merged = mergeSoftWrappedLines("к произведению прибавить 8 и полученную\n\nсумму разделить на 2");
+
+  assert.equal(merged, "к произведению прибавить 8 и полученную сумму разделить на 2");
+});
+
+test("mergeSoftWrappedLines keeps breaks after finished sentences and headings", () => {
+  const source = "Сократите дробь:\n$\\dfrac{x^2-4}{x+2}$";
+
+  assert.equal(mergeSoftWrappedLines(source), source);
+
+  const paragraphs = "Первое предложение.\n\nВторое предложение.";
+
+  assert.equal(mergeSoftWrappedLines(paragraphs), paragraphs);
+});
+
+test("mergeSoftWrappedLines leaves display math and its boundaries intact", () => {
+  const source = "Вычислите\n$$\\int_0^1\nx^2\\,dx$$\nи запишите ответ";
+
+  assert.equal(mergeSoftWrappedLines(source), source);
 });
