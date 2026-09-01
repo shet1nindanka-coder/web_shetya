@@ -643,7 +643,7 @@ export function TeacherLessonBoard({
           rel="noreferrer"
           className="shbz-btn-outline inline-block no-underline"
         >
-          Версия для печати
+          Для печати
         </a>
         <a
           href={`${prefix}/lessons/${lesson.id}/pdf?answers=1`}
@@ -655,7 +655,7 @@ export function TeacherLessonBoard({
           href={`${prefix}/homework-plans/new?lessonId=${lesson.id}`}
           className="shbz-btn-outline inline-block no-underline"
         >
-          Выдать ДЗ по итогам занятия
+          Выдать ДЗ по итогам
         </a>
         <span
           className="ui-hint text-xs"
