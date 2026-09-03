@@ -146,6 +146,26 @@ const statusMeta: Record<
   },
 };
 
+// Вердикт ИИ-проверки сдачи на уроке: прямой сигнал о правильности,
+// поэтому статусная палитра здесь уместна.
+const verdictMeta: Record<string, { label: string; background: string; color: string }> = {
+  CORRECT: {
+    label: "ИИ: верно",
+    background: "var(--shbz-green-soft)",
+    color: "var(--shbz-green-text)",
+  },
+  INCORRECT: {
+    label: "ИИ: с ошибкой",
+    background: "var(--shbz-danger-bg)",
+    color: "var(--shbz-danger-text)",
+  },
+  UNCERTAIN: {
+    label: "ИИ: не распознал — отметьте вручную",
+    background: "var(--shbz-tab-hover)",
+    color: "var(--shbz-kicker)",
+  },
+};
+
 function isParticipantPending(participant: LessonBoardParticipant) {
   return !participant.planGeneratedAt && !participant.planError;
 }
@@ -587,6 +607,20 @@ export function TeacherLessonBoard({
         {submission.status === "FAILED" ? (
           <span style={{ color: "var(--shbz-danger-text)" }}>проверка не удалась</span>
         ) : null}
+        {submission.status === "DONE" && submission.verdict && verdictMeta[submission.verdict] ? (
+          // Вердикт ИИ виден всегда — и когда он предзаполнил итог, и когда
+          // не распознал решение и итог остаётся за учителем.
+          <span
+            className="shbz-chip"
+            style={{
+              background: verdictMeta[submission.verdict].background,
+              color: verdictMeta[submission.verdict].color,
+              padding: "2px 8px",
+            }}
+          >
+            {verdictMeta[submission.verdict].label}
+          </span>
+        ) : null}
         {submission.photoFileIds.map((fileId, index) => (
           <a
             key={fileId}
@@ -635,7 +669,7 @@ export function TeacherLessonBoard({
         ) : null}
         <a
           href={`${prefix}/lessons/${lesson.id}/pdf`}
-          className="shbz-btn-primary inline-block px-[22px] py-[11px] text-[14px] no-underline"
+          className="shbz-btn-outline inline-block no-underline"
         >
           Скачать PDF
         </a>
@@ -1071,7 +1105,7 @@ export function TeacherLessonBoard({
                     Доп. задания
                   </p>
                   <ol className="space-y-2">
-                    {extraItems.map((item) => {
+                    {extraItems.map((item, index) => {
                       const reason = reasonMeta[item.reason] ?? reasonMeta.NEW;
 
                       return (
@@ -1085,6 +1119,13 @@ export function TeacherLessonBoard({
                           className="flex flex-wrap items-center gap-x-3 gap-y-1.5 rounded-[12px] border border-dashed px-3.5 py-2.5"
                           style={{ borderColor: "var(--shbz-soft-border)" }}
                         >
+                          {/* Нумерация сквозная: доп. часть продолжает основную. */}
+                          <span
+                            className="text-xs font-bold"
+                            style={{ color: "var(--shbz-kicker)" }}
+                          >
+                            {mainItems.length + index + 1}.
+                          </span>
                           <span
                             className="text-sm font-bold"
                             style={{ color: "var(--shbz-text-strong)" }}
