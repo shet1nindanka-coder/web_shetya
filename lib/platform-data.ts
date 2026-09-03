@@ -215,8 +215,19 @@ async function getStudentTopicsOverviewUncached(studentId: string) {
   };
 }
 
+/*
+ * TTL для unstable_cache-обёрток. Инвалидация по тегам (revalidateTag) в Next 15
+ * живёт только в памяти процесса, а сами записи кэша — на диске (.next/cache).
+ * После рестарта pm2 (деплой, падение) инвалидация теряется, и устаревшая
+ * дисковая запись «воскресает» навсегда — учитель не видел новые темы неделями.
+ * TTL — страховка: при штатной работе теги обновляют кэш мгновенно, а потерянная
+ * инвалидация теперь лечится сама не позже чем через минуту.
+ */
+const PLATFORM_CACHE_REVALIDATE_SECONDS = 60;
+
 const getStudentTopicsOverviewCached = unstable_cache(getStudentTopicsOverviewUncached, ["student-topics-overview"], {
-  tags: [PLATFORM_DATA_TAGS.studentTopics, PLATFORM_DATA_TAGS.teacherTopics]
+  tags: [PLATFORM_DATA_TAGS.studentTopics, PLATFORM_DATA_TAGS.teacherTopics],
+  revalidate: PLATFORM_CACHE_REVALIDATE_SECONDS
 });
 
 /*
@@ -241,7 +252,8 @@ async function getStudentTheoryLibraryUncached() {
 }
 
 const getStudentTheoryLibraryCached = unstable_cache(getStudentTheoryLibraryUncached, ["student-theory-library"], {
-  tags: [PLATFORM_DATA_TAGS.studentTopics, PLATFORM_DATA_TAGS.teacherTopics]
+  tags: [PLATFORM_DATA_TAGS.studentTopics, PLATFORM_DATA_TAGS.teacherTopics],
+  revalidate: PLATFORM_CACHE_REVALIDATE_SECONDS
 });
 
 export async function getStudentTheoryLibrary(): Promise<Awaited<ReturnType<typeof getStudentTheoryLibraryUncached>>> {
@@ -438,7 +450,8 @@ async function getStudentTopicDetailUncached(studentId: string, topicId: string)
 }
 
 const getStudentTopicDetailCached = unstable_cache(getStudentTopicDetailUncached, ["student-topic-detail"], {
-  tags: [PLATFORM_DATA_TAGS.studentTopics, PLATFORM_DATA_TAGS.teacherTopics]
+  tags: [PLATFORM_DATA_TAGS.studentTopics, PLATFORM_DATA_TAGS.teacherTopics],
+  revalidate: PLATFORM_CACHE_REVALIDATE_SECONDS
 });
 
 export async function getStudentTopicDetail(
@@ -720,7 +733,8 @@ const getTeacherTopicsOverviewCached = unstable_cache(
   getTeacherTopicsOverviewUncached,
   ["teacher-topics-overview"],
   {
-    tags: [PLATFORM_DATA_TAGS.teacherTopics, PLATFORM_DATA_TAGS.teacherStudents]
+    tags: [PLATFORM_DATA_TAGS.teacherTopics, PLATFORM_DATA_TAGS.teacherStudents],
+    revalidate: PLATFORM_CACHE_REVALIDATE_SECONDS
   }
 );
 
@@ -790,7 +804,8 @@ const getTeacherStatisticsDrilldownCached = unstable_cache(
   getTeacherStatisticsDrilldownUncached,
   ["teacher-statistics-drilldown"],
   {
-    tags: [PLATFORM_DATA_TAGS.teacherTopics, PLATFORM_DATA_TAGS.teacherStudents]
+    tags: [PLATFORM_DATA_TAGS.teacherTopics, PLATFORM_DATA_TAGS.teacherStudents],
+    revalidate: PLATFORM_CACHE_REVALIDATE_SECONDS
   }
 );
 
@@ -876,7 +891,8 @@ const getTeacherTopicDetailCached = unstable_cache(
   getTeacherTopicDetailUncached,
   ["teacher-topic-detail"],
   {
-    tags: [PLATFORM_DATA_TAGS.teacherTopics, PLATFORM_DATA_TAGS.teacherStudents]
+    tags: [PLATFORM_DATA_TAGS.teacherTopics, PLATFORM_DATA_TAGS.teacherStudents],
+    revalidate: PLATFORM_CACHE_REVALIDATE_SECONDS
   }
 );
 
@@ -1005,7 +1021,8 @@ async function getTeacherStudentDetailUncached(viewer: TeacherViewer, studentId:
 }
 
 const getTeacherStudentDetailCached = unstable_cache(getTeacherStudentDetailUncached, ["teacher-student-detail"], {
-  tags: [PLATFORM_DATA_TAGS.studentTopics, PLATFORM_DATA_TAGS.teacherTopics, PLATFORM_DATA_TAGS.teacherStudents]
+  tags: [PLATFORM_DATA_TAGS.studentTopics, PLATFORM_DATA_TAGS.teacherTopics, PLATFORM_DATA_TAGS.teacherStudents],
+  revalidate: PLATFORM_CACHE_REVALIDATE_SECONDS
 });
 
 export async function getTeacherStudentDetail(
@@ -1056,7 +1073,8 @@ async function getStudentDeadlinesUncached(studentId: string) {
 }
 
 const getStudentDeadlinesCached = unstable_cache(getStudentDeadlinesUncached, ["student-deadlines"], {
-  tags: [PLATFORM_DATA_TAGS.studentTopics, PLATFORM_DATA_TAGS.teacherTopics, PLATFORM_DATA_TAGS.teacherStudents]
+  tags: [PLATFORM_DATA_TAGS.studentTopics, PLATFORM_DATA_TAGS.teacherTopics, PLATFORM_DATA_TAGS.teacherStudents],
+  revalidate: PLATFORM_CACHE_REVALIDATE_SECONDS
 });
 
 export async function getStudentDeadlines(studentId: string) {
@@ -1816,7 +1834,8 @@ async function getDeveloperStatisticsUncached(viewer: TeacherViewer) {
 }
 
 const getDeveloperStatisticsCached = unstable_cache(getDeveloperStatisticsUncached, ["developer-statistics"], {
-  tags: [PLATFORM_DATA_TAGS.studentTopics, PLATFORM_DATA_TAGS.teacherTopics, PLATFORM_DATA_TAGS.teacherStudents]
+  tags: [PLATFORM_DATA_TAGS.studentTopics, PLATFORM_DATA_TAGS.teacherTopics, PLATFORM_DATA_TAGS.teacherStudents],
+  revalidate: PLATFORM_CACHE_REVALIDATE_SECONDS
 });
 
 export async function getDeveloperStatistics(
@@ -1909,7 +1928,8 @@ async function getTeacherGroupsUncached(viewer: TeacherViewer) {
 }
 
 const getTeacherGroupsCached = unstable_cache(getTeacherGroupsUncached, ["teacher-groups"], {
-  tags: [PLATFORM_DATA_TAGS.teacherStudents]
+  tags: [PLATFORM_DATA_TAGS.teacherStudents],
+  revalidate: PLATFORM_CACHE_REVALIDATE_SECONDS
 });
 
 export async function getTeacherGroups(
