@@ -146,26 +146,6 @@ const statusMeta: Record<
   },
 };
 
-// Вердикт ИИ-проверки сдачи на уроке: прямой сигнал о правильности,
-// поэтому статусная палитра здесь уместна.
-const verdictMeta: Record<string, { label: string; background: string; color: string }> = {
-  CORRECT: {
-    label: "ИИ: верно",
-    background: "var(--shbz-green-soft)",
-    color: "var(--shbz-green-text)",
-  },
-  INCORRECT: {
-    label: "ИИ: с ошибкой",
-    background: "var(--shbz-danger-bg)",
-    color: "var(--shbz-danger-text)",
-  },
-  UNCERTAIN: {
-    label: "ИИ: не распознал — отметьте вручную",
-    background: "var(--shbz-tab-hover)",
-    color: "var(--shbz-kicker)",
-  },
-};
-
 function isParticipantPending(participant: LessonBoardParticipant) {
   return !participant.planGeneratedAt && !participant.planError;
 }
@@ -607,18 +587,14 @@ export function TeacherLessonBoard({
         {submission.status === "FAILED" ? (
           <span style={{ color: "var(--shbz-danger-text)" }}>проверка не удалась</span>
         ) : null}
-        {submission.status === "DONE" && submission.verdict && verdictMeta[submission.verdict] ? (
-          // Вердикт ИИ виден всегда — и когда он предзаполнил итог, и когда
-          // не распознал решение и итог остаётся за учителем.
+        {submission.status === "DONE" && submission.verdict === "UNCERTAIN" ? (
+          // Верно/неверно ставят итог автоматически — отдельная пометка не нужна.
+          // Только «не распознано» остаётся за учителем, и об этом надо сказать.
           <span
             className="shbz-chip"
-            style={{
-              background: verdictMeta[submission.verdict].background,
-              color: verdictMeta[submission.verdict].color,
-              padding: "2px 8px",
-            }}
+            style={{ background: "var(--shbz-tab-hover)", color: "var(--shbz-kicker)", padding: "2px 8px" }}
           >
-            {verdictMeta[submission.verdict].label}
+            не распознано — отметьте вручную
           </span>
         ) : null}
         {submission.photoFileIds.map((fileId, index) => (

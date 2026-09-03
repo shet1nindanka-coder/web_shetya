@@ -5,6 +5,7 @@ import { enforceApiRateLimit } from "@/lib/api-rate-limit";
 import { auditCurrentUser } from "@/lib/audit";
 import { tryGetCurrentUser } from "@/lib/auth";
 import { publishDashboardRealtimeEvent } from "@/lib/dashboard-realtime";
+import { finalizeLessonResults } from "@/lib/lesson-finalize";
 import { deriveLessonStatus } from "@/lib/lesson-status";
 import { logErrorEvent, logInfoEvent } from "@/lib/logger";
 import { revalidateTeacherStudentsData } from "@/lib/platform-data-cache";
@@ -73,6 +74,18 @@ export async function POST(_request: Request, { params }: { params: Promise<{ le
     );
 
     return NextResponse.json({ error: "Не удалось завершить урок." }, { status: 500 });
+  }
+
+  // Урок закрыт — неотмеченные номера получают «не решил» (правило владельца).
+  try {
+    await finalizeLessonResults(lesson.id);
+  } catch (error) {
+    logErrorEvent(
+      "lesson_live.finalize_failed",
+      { userId: user.id, lessonId: lesson.id },
+      error instanceof Error ? error : undefined,
+      "Failed to finalize lesson results after manual finish."
+    );
   }
 
   revalidateTeacherStudentsData();

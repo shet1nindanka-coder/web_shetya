@@ -5,6 +5,7 @@ import { LessonDeleteButton } from "@/components/lesson-delete-button";
 import { ShbzNumberSearch } from "@/components/shbz-number-search";
 import { ShbzPageHeader } from "@/components/shbz-page-header";
 import { requireUser } from "@/lib/auth";
+import { finalizeRecentlyFinishedLessons } from "@/lib/lesson-finalize";
 import { getTeacherLessons } from "@/lib/platform-data";
 import { formatDateTime } from "@/lib/utils";
 
@@ -27,6 +28,7 @@ function isSameCalendarDay(left: Date, right: Date) {
 export default async function TeacherLessonsPage() {
   const user = await requireUser([UserRole.TEACHER, UserRole.DEVELOPER]);
   const prefix = user.role === UserRole.DEVELOPER ? "/developer" : "/teacher";
+  await finalizeRecentlyFinishedLessons(user.role === UserRole.TEACHER ? { teacherId: user.id } : {});
   const lessons = await getTeacherLessons(user);
 
   // Секции по расписанию: статус производный от startsAt+durationMinutes,

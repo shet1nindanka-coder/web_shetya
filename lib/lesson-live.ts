@@ -89,3 +89,59 @@ export function computeSpentMinutes(
 
   return result;
 }
+
+export type AutoLessonResult = "SOLVED" | "PARTIAL" | "NOT_SOLVED";
+
+/**
+ * Автоитог по вердикту ИИ-проверки сдачи (правила владельца):
+ * - верно с первой попытки → SOLVED («решил»);
+ * - верно после ошибочных попыток → PARTIAL («с ошибками»);
+ * - неверно → NOT_SOLVED («не решил»);
+ * - не распознано → итог не трогаем, решает учитель.
+ * Уже закрытый положительно номер (SOLVED/PARTIAL/SKIPPED) не переписываем —
+ * это либо ручная отметка учителя, либо более ранний зачёт.
+ */
+export function decideAutoLessonResult(input: {
+  verdict: "CORRECT" | "INCORRECT" | "UNCERTAIN";
+  currentResult: string | null;
+  hadIncorrectBefore: boolean;
+}): AutoLessonResult | null {
+  const { verdict, currentResult, hadIncorrectBefore } = input;
+
+  if (verdict === "UNCERTAIN") {
+    return null;
+  }
+
+  if (currentResult === "SOLVED" || currentResult === "PARTIAL" || currentResult === "SKIPPED") {
+    return null;
+  }
+
+  if (verdict === "INCORRECT") {
+    return currentResult === "NOT_SOLVED" ? null : "NOT_SOLVED";
+  }
+
+  // CORRECT: прошлые ошибочные попытки или уже стоящее «не решил» — значит, решил не с первого раза.
+  return hadIncorrectBefore || currentResult === "NOT_SOLVED" ? "PARTIAL" : "SOLVED";
+}
+
+/**
+ * Итог по окончании урока для номера без отметки: основная часть и открытая
+ * доп. часть — «не решил»; доп. номера, до которых ученик не добрался
+ * (часть так и не открылась), — «не успел», чтобы не красить в красное то,
+ * чего он не видел.
+ */
+export function decideEndOfLessonResult(input: {
+  currentResult: string | null;
+  isExtra: boolean;
+  extraUnlocked: boolean;
+}): "NOT_SOLVED" | "SKIPPED" | null {
+  if (input.currentResult !== null) {
+    return null;
+  }
+
+  if (input.isExtra && !input.extraUnlocked) {
+    return "SKIPPED";
+  }
+
+  return "NOT_SOLVED";
+}

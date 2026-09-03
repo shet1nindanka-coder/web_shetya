@@ -21,7 +21,7 @@ import {
   normalizeCheckResultsByConfidence,
   parseCheckResponse
 } from "@/lib/solution-check-parse";
-import { isStatusDowngrade } from "@/lib/solution-check-status";
+import { decideAutoLessonResult } from "@/lib/lesson-live";
 
 /*
  * ИИ-проверка сдачи классной работы (вкладка «Урок»).
@@ -42,12 +42,6 @@ const STALE_PENDING_MS = 15 * 60_000;
 const STALE_CHECKING_MS = 45 * 60_000;
 
 const STALE_ERROR_TEXT = "Проверка прервалась (перезапуск сервера). Сдайте номер заново.";
-
-// Вердикт → итог урока (предзаполнение; ручная отметка учителя приоритетна).
-const VERDICT_TO_RESULT: Partial<Record<SolutionVerdict, LessonItemResult>> = {
-  [SolutionVerdict.CORRECT]: LessonItemResult.SOLVED,
-  [SolutionVerdict.INCORRECT]: LessonItemResult.NOT_SOLVED
-};
 
 // Итог урока → статус номера ученика: та же таблица, что у ручной разметки
 // (app/api/teacher/lessons/**/result/route.ts).
@@ -124,14 +118,14 @@ function buildLessonUserText(input: {
 }
 
 /**
- * Зеркалит предзаполненный итог в StudentTopicNumberStatus. ИИ никогда не
- * понижает статус и не перетирает ручную правку, сделанную после сдачи.
+ * Зеркалит автоитог в StudentTopicNumberStatus — той же таблицей и тем же
+ * «силовым» upsert, что и ручная разметка учителя: итог урока — самый свежий
+ * сигнал о номере. «Не успел» статус не трогает.
  */
-async function mirrorResultToStatus(input: {
+export async function mirrorLessonResultToStatus(input: {
   studentId: string;
   homeworkNumberId: string;
   result: LessonItemResult;
-  submittedAt: Date;
 }) {
   const status = RESULT_TO_STATUS[input.result];
 
@@ -139,47 +133,20 @@ async function mirrorResultToStatus(input: {
     return false;
   }
 
-  const existing = await prisma.studentTopicNumberStatus.findUnique({
+  await prisma.studentTopicNumberStatus.upsert({
     where: {
-      studentId_homeworkNumberId: {
-        studentId: input.studentId,
-        homeworkNumberId: input.homeworkNumberId
-      }
+      studentId_homeworkNumberId: { studentId: input.studentId, homeworkNumberId: input.homeworkNumberId }
     },
-    select: { status: true, statusChangedAt: true }
-  });
-
-  if (!existing) {
-    await prisma.studentTopicNumberStatus.createMany({
-      data: [
-        {
-          studentId: input.studentId,
-          homeworkNumberId: input.homeworkNumberId,
-          status,
-          statusChangedAt: new Date()
-        }
-      ],
-      skipDuplicates: true
-    });
-
-    return true;
-  }
-
-  if (existing.status === status || isStatusDowngrade(status, existing.status)) {
-    return false;
-  }
-
-  const updated = await prisma.studentTopicNumberStatus.updateMany({
-    where: {
+    update: { status, statusChangedAt: new Date() },
+    create: {
       studentId: input.studentId,
       homeworkNumberId: input.homeworkNumberId,
-      status: existing.status,
-      OR: [{ statusChangedAt: null }, { statusChangedAt: { lte: input.submittedAt } }]
-    },
-    data: { status, statusChangedAt: new Date() }
+      status,
+      statusChangedAt: new Date()
+    }
   });
 
-  return updated.count > 0;
+  return true;
 }
 
 export async function runLessonItemCheck(submissionId: string) {
@@ -366,8 +333,23 @@ export async function runLessonItemCheck(submissionId: string) {
     }
 
     const verdict = result.verdict as SolutionVerdict;
-    // Предзаполняем итог, только если учитель ещё не размечал номер руками.
-    const prefillResult = item.result === null ? (VERDICT_TO_RESULT[verdict] ?? null) : null;
+
+    // Автоитог: «решил» с первой попытки, «с ошибками» — если раньше были
+    // неверные сдачи, «не решил» — при ошибке. Читаем актуальный итог и историю
+    // прямо перед записью: учитель мог разметить номер, пока шла проверка.
+    const [currentItem, incorrectBefore] = await Promise.all([
+      prisma.lessonAssignmentItem.findUnique({ where: { id: item.id }, select: { result: true } }),
+      prisma.lessonItemSubmission.count({
+        where: { itemId: item.id, id: { not: submissionId }, verdict: SolutionVerdict.INCORRECT }
+      })
+    ]);
+    const autoResult = decideAutoLessonResult({
+      verdict,
+      currentResult: currentItem?.result ?? null,
+      hadIncorrectBefore: incorrectBefore > 0
+    });
+    const prefillResult = autoResult ? (autoResult as LessonItemResult) : null;
+    const resultBefore = currentItem?.result ?? null;
 
     const finalized = await prisma.$transaction(async (transaction) => {
       const transition = await transaction.lessonItemSubmission.updateMany({
@@ -392,14 +374,16 @@ export async function runLessonItemCheck(submissionId: string) {
       }
 
       if (prefillResult) {
-        // Гонка с ручной отметкой: итог пишем только поверх всё ещё пустого.
-        await transaction.lessonAssignmentItem.updateMany({
-          where: { id: item.id, result: null },
+        // Гонка с ручной отметкой: пишем только поверх того итога, который видели.
+        const applied = await transaction.lessonAssignmentItem.updateMany({
+          where: { id: item.id, result: resultBefore },
           data: { result: prefillResult }
         });
+
+        return applied.count === 1 ? "with-result" : "verdict-only";
       }
 
-      return true;
+      return "verdict-only";
     });
 
     if (!finalized) {
@@ -408,12 +392,11 @@ export async function runLessonItemCheck(submissionId: string) {
 
     let statusApplied = false;
 
-    if (prefillResult) {
-      statusApplied = await mirrorResultToStatus({
+    if (prefillResult && finalized === "with-result") {
+      statusApplied = await mirrorLessonResultToStatus({
         studentId: participant.studentId,
         homeworkNumberId: number.id,
-        result: prefillResult,
-        submittedAt: submission.submittedAt
+        result: prefillResult
       });
     }
 

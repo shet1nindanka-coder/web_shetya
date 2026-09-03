@@ -4,6 +4,7 @@ import { ShbzNumberSearch } from "@/components/shbz-number-search";
 import { ShbzPageHeader } from "@/components/shbz-page-header";
 import { TeacherLessonBoard } from "@/components/teacher-lesson-board";
 import { requireUser } from "@/lib/auth";
+import { finalizeRecentlyFinishedLessons } from "@/lib/lesson-finalize";
 import { getLessonDetail } from "@/lib/platform-data";
 import { prisma } from "@/lib/prisma";
 import { getSiteSettingsUncached } from "@/lib/site-settings";
@@ -20,6 +21,12 @@ export default async function LessonDetailPage({ params }: LessonDetailPageProps
   const user = await requireUser([UserRole.TEACHER, UserRole.DEVELOPER]);
   const prefix = user.role === UserRole.DEVELOPER ? "/developer" : "/teacher";
   const { lessonId } = await params;
+
+  // Урок мог закончиться по расписанию, пока никто не смотрел: закрываем итоги лениво.
+  await finalizeRecentlyFinishedLessons({
+    lessonId,
+    ...(user.role === UserRole.TEACHER ? { teacherId: user.id } : {})
+  });
 
   const [lesson, settings, bankTopics] = await Promise.all([
     getLessonDetail(user, lessonId),

@@ -4,6 +4,8 @@ import {
   canSubmitLessonItem,
   computeIdleLevel,
   computeSpentMinutes,
+  decideAutoLessonResult,
+  decideEndOfLessonResult,
   isExtraPartUnlocked,
   isLessonItemClosed
 } from "../lib/lesson-live";
@@ -83,4 +85,27 @@ test("computeSpentMinutes: без joinedAt якорь — старт урока,
   const spent = computeSpentMinutes([started - MINUTE, NOW], { lessonStartedAt: started, joinedAt: null });
 
   assert.deepEqual(spent, [0, 10]);
+});
+
+test("decideAutoLessonResult: верно с первого раза — SOLVED, после ошибок — PARTIAL, неверно — NOT_SOLVED", () => {
+  assert.equal(decideAutoLessonResult({ verdict: "CORRECT", currentResult: null, hadIncorrectBefore: false }), "SOLVED");
+  assert.equal(decideAutoLessonResult({ verdict: "CORRECT", currentResult: null, hadIncorrectBefore: true }), "PARTIAL");
+  assert.equal(decideAutoLessonResult({ verdict: "CORRECT", currentResult: "NOT_SOLVED", hadIncorrectBefore: false }), "PARTIAL");
+  assert.equal(decideAutoLessonResult({ verdict: "INCORRECT", currentResult: null, hadIncorrectBefore: false }), "NOT_SOLVED");
+  // Повторная ошибка ничего не меняет.
+  assert.equal(decideAutoLessonResult({ verdict: "INCORRECT", currentResult: "NOT_SOLVED", hadIncorrectBefore: true }), null);
+});
+
+test("decideAutoLessonResult: не распознано и уже закрытые номера — итог не трогаем", () => {
+  assert.equal(decideAutoLessonResult({ verdict: "UNCERTAIN", currentResult: null, hadIncorrectBefore: false }), null);
+  assert.equal(decideAutoLessonResult({ verdict: "CORRECT", currentResult: "SOLVED", hadIncorrectBefore: false }), null);
+  assert.equal(decideAutoLessonResult({ verdict: "INCORRECT", currentResult: "PARTIAL", hadIncorrectBefore: false }), null);
+  assert.equal(decideAutoLessonResult({ verdict: "INCORRECT", currentResult: "SKIPPED", hadIncorrectBefore: false }), null);
+});
+
+test("decideEndOfLessonResult: без отметки — NOT_SOLVED, закрытая доп. часть — SKIPPED, отмеченные не трогаем", () => {
+  assert.equal(decideEndOfLessonResult({ currentResult: null, isExtra: false, extraUnlocked: false }), "NOT_SOLVED");
+  assert.equal(decideEndOfLessonResult({ currentResult: null, isExtra: true, extraUnlocked: true }), "NOT_SOLVED");
+  assert.equal(decideEndOfLessonResult({ currentResult: null, isExtra: true, extraUnlocked: false }), "SKIPPED");
+  assert.equal(decideEndOfLessonResult({ currentResult: "SOLVED", isExtra: false, extraUnlocked: true }), null);
 });

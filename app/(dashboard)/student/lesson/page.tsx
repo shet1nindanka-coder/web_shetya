@@ -2,6 +2,7 @@ import { UserRole } from "@prisma/client";
 import { ShbzPageHeader } from "@/components/shbz-page-header";
 import { StudentLessonView } from "@/components/student-lesson-view";
 import { requireUser } from "@/lib/auth";
+import { finalizeRecentlyFinishedLessons } from "@/lib/lesson-finalize";
 import { getStudentLiveLesson } from "@/lib/platform-data";
 import { toStudentFacingResult } from "@/lib/solution-check-student-view";
 import { formatDateTime } from "@/lib/utils";
@@ -10,6 +11,7 @@ export const dynamic = "force-dynamic";
 
 export default async function StudentLessonPage() {
   const user = await requireUser(UserRole.STUDENT);
+  await finalizeRecentlyFinishedLessons({ studentId: user.id });
   const { active, upcoming } = await getStudentLiveLesson(user.id);
 
   if (!active) {
