@@ -2971,3 +2971,87 @@ export async function getStudentLiveLesson(studentId: string) {
     upcoming
   };
 }
+
+/**
+ * Посещаемость группы: прошедшие (и идущие) занятия группы с отметками
+ * участников. Некэшированная — учитель правит отметки прямо в таблице.
+ */
+export async function getGroupAttendance(viewer: TeacherViewer, groupId: string, since?: Date, now = new Date()) {
+  try {
+    const lessons = await prisma.lesson.findMany({
+      where: {
+        groupId,
+        kind: LessonKind.LESSON,
+        ...ownResourceWhere(viewer),
+        startsAt: { not: null, lte: now, ...(since ? { gte: since } : {}) }
+      },
+      orderBy: { startsAt: "asc" },
+      select: {
+        id: true,
+        title: true,
+        status: true,
+        startsAt: true,
+        finishedAt: true,
+        durationMinutes: true,
+        participants: {
+          select: { id: true, studentId: true, attendance: true, joinedAt: true, _count: { select: { items: true } } }
+        }
+      }
+    });
+
+    return lessons
+      .filter((lesson) => deriveLessonStatus(lesson, now.getTime()) !== "PLANNED")
+      .map((lesson) => ({
+        id: lesson.id,
+        title: lesson.title,
+        startsAt: lesson.startsAt as Date,
+        status: deriveLessonStatus(lesson, now.getTime()),
+        participants: lesson.participants.map((participant) => ({
+          id: participant.id,
+          studentId: participant.studentId,
+          attendance: participant.attendance,
+          joinedAt: participant.joinedAt
+        }))
+      }));
+  } catch (error) {
+    if (isRecoverablePlatformDataError(error)) {
+      return [];
+    }
+
+    throw error;
+  }
+}
+
+/** Посещаемость одного ученика на групповых занятиях за период — для PDF-отчёта. */
+export async function getStudentGroupAttendance(studentId: string, since: Date, now = new Date()) {
+  try {
+    const participants = await prisma.lessonParticipant.findMany({
+      where: {
+        studentId,
+        lesson: { kind: LessonKind.LESSON, groupId: { not: null }, startsAt: { not: null, gte: since, lte: now } }
+      },
+      orderBy: { lesson: { startsAt: "asc" } },
+      select: {
+        attendance: true,
+        lesson: {
+          select: { id: true, title: true, status: true, startsAt: true, finishedAt: true, durationMinutes: true }
+        }
+      }
+    });
+
+    return participants
+      .filter((participant) => deriveLessonStatus(participant.lesson, now.getTime()) === "FINISHED")
+      .map((participant) => ({
+        lessonId: participant.lesson.id,
+        title: participant.lesson.title,
+        startsAt: participant.lesson.startsAt as Date,
+        attendance: participant.attendance
+      }));
+  } catch (error) {
+    if (isRecoverablePlatformDataError(error)) {
+      return [];
+    }
+
+    throw error;
+  }
+}

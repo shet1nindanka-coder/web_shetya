@@ -65,6 +65,12 @@ export type WeeklyPdfLesson = {
   resultsLabel: string;
 };
 
+export type WeeklyPdfAttendance = {
+  summaryLabel: string; // «был на 5 из 6 · 83%»
+  /** Только не-«был»: опоздания, пропуски, уважительные. Пусто — пропусков не было. */
+  rows: Array<{ dateLabel: string; title: string; label: string; kind: "late" | "absent" | "excused" }>;
+};
+
 export type WeeklyPdfRow = {
   whenLabel: string;
   topicTitle: string;
@@ -96,6 +102,8 @@ export type WeeklyPdfInput = {
   // null — понедельный режим со списком номеров (rows); иначе сводка по темам.
   topicSummaries: WeeklyPdfTopicSummary[] | null;
   rows: WeeklyPdfRow[];
+  // null — ученик не состоял в группе / групповых занятий за период не было.
+  attendance?: WeeklyPdfAttendance | null;
 };
 
 // Шрифт вшит в репозиторий (assets/fonts/montserrat) и грузится с диска — без запроса к
@@ -138,11 +146,24 @@ function ensureFonts() {
   return fontsRegistered;
 }
 
+/** Шрифты и палитра общие для всех PDF-отчётов (посещаемость группы — lib/group-attendance-pdf.tsx). */
+export function ensurePdfFonts() {
+  return ensureFonts();
+}
+
+export const pdfColors = colors;
+
 const stateChipColors: Record<WeeklyPdfAssignment["stateKind"], { bg: string; text: string }> = {
   done: { bg: colors.greenSoft, text: colors.green },
   progress: { bg: colors.tealSoft, text: colors.tealDark },
   attention: { bg: colors.redSoft, text: colors.red },
   muted: { bg: colors.softBg, text: colors.muted }
+};
+
+const attendanceRowColors: Record<"late" | "absent" | "excused", string> = {
+  late: colors.yellow,
+  absent: colors.red,
+  excused: colors.muted
 };
 
 const statusTextColors: Record<string, string> = {
@@ -350,6 +371,32 @@ function WeeklyReportDocument({ input }: { input: WeeklyPdfInput }) {
           )}
           {input.lessonsFootnote ? <Text style={styles.empty}>{input.lessonsFootnote}</Text> : null}
         </View>
+
+        {input.attendance ? (
+          <>
+            <Text style={styles.sectionTitle}>Посещаемость групповых занятий</Text>
+            <View style={styles.table}>
+              <Text style={[styles.td, { fontWeight: 700 }]}>{input.attendance.summaryLabel}</Text>
+              {input.attendance.rows.length === 0 ? (
+                <Text style={styles.empty}>Пропусков и опозданий за период не было.</Text>
+              ) : (
+                input.attendance.rows.map((row, index) => (
+                  <View
+                    key={`${row.dateLabel}-${index}`}
+                    style={[styles.tr, index % 2 === 1 ? { backgroundColor: colors.zebra } : {}]}
+                    wrap={false}
+                  >
+                    <Text style={[styles.td, { flexBasis: 0, flexGrow: 15, color: colors.muted }]}>{row.dateLabel}</Text>
+                    <Text style={[styles.td, { flexBasis: 0, flexGrow: 55 }]}>{row.title}</Text>
+                    <Text style={[styles.td, { flexBasis: 0, flexGrow: 30, fontWeight: 700, color: attendanceRowColors[row.kind] }]}>
+                      {row.label}
+                    </Text>
+                  </View>
+                ))
+              )}
+            </View>
+          </>
+        ) : null}
 
         <Text style={styles.sectionTitle}>Домашние задания</Text>
         <View style={styles.table}>

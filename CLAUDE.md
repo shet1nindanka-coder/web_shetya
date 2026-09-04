@@ -119,6 +119,14 @@ Postgres service.
   `difficulty`, `estimatedMinutes` и `answerFile` импорт не трогает — сложность ставит батч
   из дев-панели.
 
+- **Посещаемость** — только для групповых занятий, поле `LessonParticipant.attendance`
+  (PRESENT/LATE/ABSENT/EXCUSED, UNKNOWN — не отмечено). Ставится автоматически: вход во вкладку «Урок»
+  или сдача → PRESENT, закрытие урока без активности → ABSENT (`lib/lesson-finalize.ts`); учитель правит
+  вручную в таблице на странице группы (`components/group-attendance-section.tsx`, API
+  `/api/teacher/lessons/[lessonId]/participants/[participantId]/attendance`). Чистая логика и сводки —
+  `lib/attendance.ts`; периоды отчётов (7/30/учебный год) — `lib/report-period.ts`. В PDF ученика — блок
+  «Посещаемость групповых занятий», отдельный PDF по группе — `/teacher/groups/[groupId]/export/pdf?period=`
+  (`lib/group-attendance-pdf.tsx`).
 - **Звонки родителям** — раздел `/teacher/calls` (разработчик — `/developer/calls`, все ученики,
   read-only). Журнал `ParentCallLog` append-only; напоминание считается от последнего звонка с
   исходом REACHED (иначе от `createdAt` ученика): 30 дней — «пора позвонить», 45 — «просрочено»

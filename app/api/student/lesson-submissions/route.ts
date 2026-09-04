@@ -1,4 +1,4 @@
-import { LessonKind, Prisma, SolutionCheckStatus, UserRole } from "@prisma/client";
+import { AttendanceStatus, LessonKind, Prisma, SolutionCheckStatus, UserRole } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { NextResponse } from "next/server";
 import { enforceApiRateLimit } from "@/lib/api-rate-limit";
@@ -303,6 +303,12 @@ export async function POST(request: Request) {
             data: { joinedAt: new Date() }
           });
         }
+
+        // Посещаемость: сдал — значит был; ручную отметку учителя не перетираем.
+        await transaction.lessonParticipant.updateMany({
+          where: { id: item.participant.id, attendance: AttendanceStatus.UNKNOWN },
+          data: { attendance: AttendanceStatus.PRESENT }
+        });
 
         return submission.id;
       },

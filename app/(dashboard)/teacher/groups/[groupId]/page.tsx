@@ -3,14 +3,19 @@ import { notFound } from "next/navigation";
 import { UserRole } from "@prisma/client";
 import { deleteGroupAction, renameGroupAction } from "@/actions/group";
 import { DeleteButton } from "@/components/delete-button";
+import { GroupAttendanceSection } from "@/components/group-attendance-section";
 import { GroupMembersManager } from "@/components/group-members-manager";
 import { GroupStatisticsSection } from "@/components/group-statistics-section";
 import { ShbzNumberSearch } from "@/components/shbz-number-search";
 import { ShbzPageHeader } from "@/components/shbz-page-header";
 import { requireUser } from "@/lib/auth";
 import { getGroupStatistics } from "@/lib/group-statistics-data";
-import { getGroupDetail, getTeacherLessons } from "@/lib/platform-data";
+import { finalizeRecentlyFinishedLessons } from "@/lib/lesson-finalize";
+import { getGroupAttendance, getGroupDetail, getTeacherLessons } from "@/lib/platform-data";
+import { academicYearStart } from "@/lib/report-period";
 import { formatDateTime } from "@/lib/utils";
+
+const shortDayMonth = new Intl.DateTimeFormat("ru-RU", { day: "2-digit", month: "2-digit" });
 
 export const dynamic = "force-dynamic";
 
@@ -37,9 +42,16 @@ export default async function GroupDetailPage({ params, searchParams }: GroupDet
     notFound();
   }
 
-  const [groupLessons, groupStats] = await Promise.all([
+  // Занятие могло закончиться по расписанию, пока никто не смотрел: закрываем
+  // итоги и посещаемость лениво, до чтения таблицы.
+  await finalizeRecentlyFinishedLessons(user.role === UserRole.TEACHER ? { teacherId: user.id } : {});
+
+  const now = new Date();
+  const [groupLessons, groupStats, attendanceLessons] = await Promise.all([
     getTeacherLessons(user).then((lessons) => lessons.filter((lesson) => lesson.groupId === groupId)),
-    getGroupStatistics(user, group.members.map((member) => ({ id: member.id, name: member.name })))
+    getGroupStatistics(user, group.members.map((member) => ({ id: member.id, name: member.name }))),
+    // Таблица посещаемости — за учебный год; PDF за 7/30 дней строятся отдельно.
+    getGroupAttendance(user, groupId, academicYearStart(now), now)
   ]);
 
   const noticeKey =
@@ -111,6 +123,30 @@ export default async function GroupDetailPage({ params, searchParams }: GroupDet
         <h2 className="shbz-section-title">Статистика группы</h2>
         <div className="shbz-card shbz-section-pad">
           <GroupStatisticsSection stats={groupStats} prefix={prefix} />
+        </div>
+      </section>
+
+      <section className="mt-11">
+        <h2 className="shbz-section-title">Посещаемость</h2>
+        <div className="shbz-card shbz-section-pad">
+          <GroupAttendanceSection
+            groupId={group.id}
+            prefix={prefix}
+            members={group.members.map((member) => ({ id: member.id, name: member.name }))}
+            lessons={attendanceLessons.map((lesson) => ({
+              id: lesson.id,
+              title: lesson.title,
+              dateLabel: shortDayMonth.format(lesson.startsAt),
+              dateTitle: `${lesson.title} · ${formatDateTime(lesson.startsAt)}`,
+              status: lesson.status === "ACTIVE" ? "ACTIVE" : "FINISHED",
+              cells: Object.fromEntries(
+                lesson.participants.map((participant) => [
+                  participant.studentId,
+                  { participantId: participant.id, attendance: participant.attendance }
+                ])
+              )
+            }))}
+          />
         </div>
       </section>
 

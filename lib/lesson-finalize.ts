@@ -1,4 +1,5 @@
-import { AuditCategory, LessonItemResult, LessonKind, LessonStatus, Prisma } from "@prisma/client";
+import { AttendanceStatus, AuditCategory, LessonItemResult, LessonKind, LessonStatus, Prisma } from "@prisma/client";
+import { decideEndOfLessonAttendance } from "@/lib/attendance";
 import { writeAuditLog } from "@/lib/audit";
 import { publishDashboardRealtimeEvent } from "@/lib/dashboard-realtime";
 import { mirrorLessonResultToStatus } from "@/lib/lesson-item-check";
@@ -46,6 +47,8 @@ export async function finalizeLessonResults(lessonId: string) {
         select: {
           id: true,
           studentId: true,
+          attendance: true,
+          joinedAt: true,
           items: {
             select: {
               id: true,
@@ -70,8 +73,19 @@ export async function finalizeLessonResults(lessonId: string) {
   }
 
   const updates: Array<{ itemId: string; studentId: string; homeworkNumberId: string; result: LessonItemResult }> = [];
+  // Посещаемость: не отмеченные учителем участники получают «был» при любой
+  // активности (вход во вкладку урока, сдача) и «не был» без неё.
+  const attendanceUpdates: Array<{ participantId: string; attendance: AttendanceStatus }> = [];
 
   for (const participant of lesson.participants) {
+    const hadActivity =
+      participant.joinedAt !== null || participant.items.some((item) => item.submissions.length > 0);
+    const attendance = decideEndOfLessonAttendance({ current: participant.attendance, hadActivity });
+
+    if (attendance) {
+      attendanceUpdates.push({ participantId: participant.id, attendance });
+    }
+
     for (const item of participant.items) {
       const decision = decideEndOfLessonResult({
         currentResult: item.result,
@@ -97,6 +111,12 @@ export async function finalizeLessonResults(lessonId: string) {
         data: { result: update.result }
       })
     ),
+    ...attendanceUpdates.map((update) =>
+      prisma.lessonParticipant.updateMany({
+        where: { id: update.participantId, attendance: AttendanceStatus.UNKNOWN },
+        data: { attendance: update.attendance }
+      })
+    ),
     prisma.lesson.update({ where: { id: lesson.id }, data: { status: LessonStatus.FINISHED } })
   ]);
 
@@ -113,7 +133,7 @@ export async function finalizeLessonResults(lessonId: string) {
   const notSolved = updates.filter((update) => update.result === LessonItemResult.NOT_SOLVED).length;
   const skipped = updates.length - notSolved;
 
-  if (updates.length > 0) {
+  if (updates.length > 0 || attendanceUpdates.length > 0) {
     try {
       revalidateAllPlatformData();
     } catch {
@@ -129,8 +149,8 @@ export async function finalizeLessonResults(lessonId: string) {
     targetType: "Lesson",
     targetId: lesson.id,
     targetLabel: lesson.title,
-    summary: `Итоги закрыты автоматически: не решил — ${notSolved}, не успел — ${skipped}`,
-    meta: { notSolved, skipped }
+    summary: `Итоги закрыты автоматически: не решил — ${notSolved}, не успел — ${skipped}, отметок посещаемости — ${attendanceUpdates.length}`,
+    meta: { notSolved, skipped, attendance: attendanceUpdates.length }
   });
   logInfoEvent("lesson_live.results_finalized", { lessonId: lesson.id, notSolved, skipped });
 

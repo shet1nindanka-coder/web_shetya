@@ -3,7 +3,9 @@ import { NextResponse } from "next/server";
 import { enforceApiRateLimit } from "@/lib/api-rate-limit";
 import { tryGetCurrentUser } from "@/lib/auth";
 import { getRequestLogContext, logErrorEvent, logInfoEvent } from "@/lib/logger";
-import { getProgressTimeline } from "@/lib/platform-data";
+import { ATTENDANCE_META, formatAttendanceSummary, summarizeAttendance, type AttendanceValue } from "@/lib/attendance";
+import { getProgressTimeline, getStudentGroupAttendance } from "@/lib/platform-data";
+import { academicYearStart } from "@/lib/report-period";
 import { prisma } from "@/lib/prisma";
 import { loadExportData, statusLabels } from "@/lib/student-export-data";
 import { computeStudentStreak } from "@/lib/student-streak";
@@ -35,13 +37,6 @@ const periodMeta: Record<ReportPeriod, { reportTitle: string; fileLabel: string 
   "30d": { reportTitle: "ОТЧЁТ ЗА 30 ДНЕЙ", fileLabel: "30 дней" },
   year: { reportTitle: "ОТЧЁТ ЗА УЧЕБНЫЙ ГОД", fileLabel: "Учебный год" }
 };
-
-/** Начало учебного года: 1 сентября текущего года, а до сентября — прошлого. */
-function academicYearStart(now: Date) {
-  const year = now.getMonth() >= 8 ? now.getFullYear() : now.getFullYear() - 1;
-
-  return new Date(year, 8, 1);
-}
 
 function buildAssignmentState(input: { total: number; solved: number; red: number; marked: number }) {
   if (input.red > 0) {
@@ -284,10 +279,31 @@ async function handleGet(
       };
     });
 
-    const [timeline, streak] = await Promise.all([
+    const [timeline, streak, groupAttendance] = await Promise.all([
       getProgressTimeline(studentId, periodDays),
-      computeStudentStreak(studentId).catch(() => null)
+      computeStudentStreak(studentId).catch(() => null),
+      getStudentGroupAttendance(studentId, since, exportDate).catch(() => [])
     ]);
+
+    // Посещаемость групповых занятий за период: сводка + список не-«был».
+    const attendanceValues = groupAttendance.map((entry) => entry.attendance as AttendanceValue);
+    const attendance =
+      groupAttendance.length > 0
+        ? {
+            summaryLabel: formatAttendanceSummary(summarizeAttendance(attendanceValues)),
+            rows: groupAttendance
+              .filter((entry) => entry.attendance === "LATE" || entry.attendance === "ABSENT" || entry.attendance === "EXCUSED")
+              .map((entry) => ({
+                dateLabel: shortDeadline.format(entry.startsAt),
+                title: entry.title,
+                label: ATTENDANCE_META[entry.attendance as AttendanceValue].label,
+                kind: (entry.attendance === "LATE" ? "late" : entry.attendance === "ABSENT" ? "absent" : "excused") as
+                  | "late"
+                  | "absent"
+                  | "excused"
+              }))
+          }
+        : null;
 
     // Активность: 7 дней — по дням, 30 — по неделям, учебный год — по месяцам,
     // иначе столбики не помещаются на страницу.
@@ -415,7 +431,8 @@ async function handleGet(
       assignments: assignments.slice(0, 25),
       assignmentsFootnote: assignments.length > 25 ? "Показаны последние 25 ДЗ периода." : null,
       topicSummaries,
-      rows: topicSummaries ? [] : weeklyRawRows.map(({ updatedAt: _updatedAt, ...row }) => row)
+      rows: topicSummaries ? [] : weeklyRawRows.map(({ updatedAt: _updatedAt, ...row }) => row),
+      attendance
     });
 
     const datePart = exportDate.toISOString().slice(0, 10);

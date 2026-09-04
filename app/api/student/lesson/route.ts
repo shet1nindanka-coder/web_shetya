@@ -1,4 +1,4 @@
-import { LessonKind, UserRole } from "@prisma/client";
+import { AttendanceStatus, LessonKind, UserRole } from "@prisma/client";
 import { NextResponse } from "next/server";
 import { enforceApiRateLimit } from "@/lib/api-rate-limit";
 import { tryGetCurrentUser } from "@/lib/auth";
@@ -39,6 +39,7 @@ export async function POST(request: Request) {
     select: {
       id: true,
       joinedAt: true,
+      attendance: true,
       lesson: {
         select: { id: true, teacherId: true, status: true, startsAt: true, finishedAt: true, durationMinutes: true }
       }
@@ -56,7 +57,11 @@ export async function POST(request: Request) {
   if (!participant.joinedAt) {
     await prisma.lessonParticipant.update({
       where: { id: participant.id },
-      data: { joinedAt: new Date() }
+      // Открыл урок — «был»; ручную отметку учителя (опоздал/уважительная) не трогаем.
+      data: {
+        joinedAt: new Date(),
+        ...(participant.attendance === AttendanceStatus.UNKNOWN ? { attendance: AttendanceStatus.PRESENT } : {})
+      }
     });
 
     publishDashboardRealtimeEvent({
