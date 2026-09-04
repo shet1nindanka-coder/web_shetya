@@ -103,9 +103,9 @@ test("decideAutoLessonResult: не распознано и уже закрыты
   assert.equal(decideAutoLessonResult({ verdict: "INCORRECT", currentResult: "SKIPPED", hadIncorrectBefore: false }), null);
 });
 
-test("decideEndOfLessonResult: без отметки — NOT_SOLVED, закрытая доп. часть — SKIPPED, отмеченные не трогаем", () => {
-  assert.equal(decideEndOfLessonResult({ currentResult: null, isExtra: false, extraUnlocked: false }), "NOT_SOLVED");
-  assert.equal(decideEndOfLessonResult({ currentResult: null, isExtra: true, extraUnlocked: true }), "NOT_SOLVED");
-  assert.equal(decideEndOfLessonResult({ currentResult: null, isExtra: true, extraUnlocked: false }), "SKIPPED");
-  assert.equal(decideEndOfLessonResult({ currentResult: "SOLVED", isExtra: false, extraUnlocked: true }), null);
+test("decideEndOfLessonResult: не сдавал — SKIPPED, сдавал без зачёта — NOT_SOLVED, отмеченные не трогаем", () => {
+  assert.equal(decideEndOfLessonResult({ currentResult: null, hasSubmission: false }), "SKIPPED");
+  assert.equal(decideEndOfLessonResult({ currentResult: null, hasSubmission: true }), "NOT_SOLVED");
+  assert.equal(decideEndOfLessonResult({ currentResult: "SOLVED", hasSubmission: true }), null);
+  assert.equal(decideEndOfLessonResult({ currentResult: "NOT_SOLVED", hasSubmission: true }), null);
 });

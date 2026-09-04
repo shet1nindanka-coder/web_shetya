@@ -1,17 +1,17 @@
-import { AuditCategory, LessonItemResult, LessonKind, LessonStatus, Prisma, SolutionCheckStatus } from "@prisma/client";
+import { AuditCategory, LessonItemResult, LessonKind, LessonStatus, Prisma } from "@prisma/client";
 import { writeAuditLog } from "@/lib/audit";
 import { publishDashboardRealtimeEvent } from "@/lib/dashboard-realtime";
 import { mirrorLessonResultToStatus } from "@/lib/lesson-item-check";
-import { decideEndOfLessonResult, isExtraPartUnlocked } from "@/lib/lesson-live";
+import { decideEndOfLessonResult } from "@/lib/lesson-live";
 import { deriveLessonStatus } from "@/lib/lesson-status";
 import { logInfoEvent, logWarnEvent } from "@/lib/logger";
 import { revalidateAllPlatformData } from "@/lib/platform-data-cache";
 import { prisma } from "@/lib/prisma";
 
 /*
- * Закрытие итогов завершённого урока (правило владельца): урок кончился, а
- * номер без отметки — «не решил». Доп. номера, до которых ученик не добрался
- * (доп. часть так и не открылась), — «не успел».
+ * Закрытие итогов завершённого урока (правило владельца): урок кончился —
+ * номер, который ученик вообще не сдавал, получает «не успел» (мог не дойти
+ * и до основной части), сдавал без зачёта — «не решил».
  *
  * Старт и конец урока считаются по расписанию, поэтому «момента завершения»
  * как события нет. Закрытие ленивое: вызывается при открытии доски, списка
@@ -52,12 +52,8 @@ export async function finalizeLessonResults(lessonId: string) {
               isExtra: true,
               result: true,
               homeworkNumberId: true,
-              submissions: {
-                where: { status: SolutionCheckStatus.DONE },
-                orderBy: { submittedAt: "desc" },
-                take: 1,
-                select: { verdict: true }
-              }
+              // Любая сдача, даже неудачная: «не сдавал» — значит, фото не отправлял вовсе.
+              submissions: { take: 1, select: { id: true } }
             }
           }
         }
@@ -76,15 +72,11 @@ export async function finalizeLessonResults(lessonId: string) {
   const updates: Array<{ itemId: string; studentId: string; homeworkNumberId: string; result: LessonItemResult }> = [];
 
   for (const participant of lesson.participants) {
-    const liveStates = participant.items.map((item) => ({
-      isExtra: item.isExtra,
-      result: item.result,
-      latestVerdict: item.submissions[0]?.verdict ?? null
-    }));
-    const extraUnlocked = isExtraPartUnlocked(liveStates);
-
     for (const item of participant.items) {
-      const decision = decideEndOfLessonResult({ currentResult: item.result, isExtra: item.isExtra, extraUnlocked });
+      const decision = decideEndOfLessonResult({
+        currentResult: item.result,
+        hasSubmission: item.submissions.length > 0
+      });
 
       if (decision) {
         updates.push({

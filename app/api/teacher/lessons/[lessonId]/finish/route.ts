@@ -76,7 +76,7 @@ export async function POST(_request: Request, { params }: { params: Promise<{ le
     return NextResponse.json({ error: "Не удалось завершить урок." }, { status: 500 });
   }
 
-  // Урок закрыт — неотмеченные номера получают «не решил» (правило владельца).
+  // Урок закрыт — несданные номера получают «не успел», сданные без зачёта — «не решил».
   try {
     await finalizeLessonResults(lesson.id);
   } catch (error) {

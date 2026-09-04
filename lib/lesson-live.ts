@@ -125,23 +125,17 @@ export function decideAutoLessonResult(input: {
 }
 
 /**
- * Итог по окончании урока для номера без отметки: основная часть и открытая
- * доп. часть — «не решил»; доп. номера, до которых ученик не добрался
- * (часть так и не открылась), — «не успел», чтобы не красить в красное то,
- * чего он не видел.
+ * Итог по окончании урока для номера без отметки (правило владельца):
+ * ученик вообще не сдавал номер — «не успел» (мог не дойти и до основной
+ * части); сдавал, но решение так и не зачтено — «не решил».
  */
 export function decideEndOfLessonResult(input: {
   currentResult: string | null;
-  isExtra: boolean;
-  extraUnlocked: boolean;
+  hasSubmission: boolean;
 }): "NOT_SOLVED" | "SKIPPED" | null {
   if (input.currentResult !== null) {
     return null;
   }
 
-  if (input.isExtra && !input.extraUnlocked) {
-    return "SKIPPED";
-  }
-
-  return "NOT_SOLVED";
+  return input.hasSubmission ? "NOT_SOLVED" : "SKIPPED";
 }
