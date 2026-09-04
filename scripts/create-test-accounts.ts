@@ -194,7 +194,9 @@ async function main() {
       const roll = (index * 5 + studentIndex) % 10;
       const status =
         roll < greenShare * 10 ? HomeworkNumberStatus.GREEN : roll < greenShare * 10 + 3 ? HomeworkNumberStatus.YELLOW : HomeworkNumberStatus.RED;
-      const dayOffset = Math.max(0, 12 - Math.floor(index * 1.5) - (studentIndex === 0 ? 0 : 1));
+      // Последние два номера текущей темы — вчера и сегодня: у ученика живой стрик.
+      const dayOffset =
+        index >= currentCount - 2 ? currentCount - 1 - index : Math.max(2, 12 - Math.floor(index * 1.5) - (studentIndex === 0 ? 0 : 1));
 
       pushStatus(
         student.id,
