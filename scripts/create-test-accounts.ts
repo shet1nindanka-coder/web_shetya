@@ -202,14 +202,15 @@ async function main() {
         student.id,
         number.id,
         status,
-        daysAgo(dayOffset, 19, index * 5),
+        // Утренние часы: «сегодняшняя» отметка не должна оказаться в будущем.
+        daysAgo(dayOffset, 9, index * 5),
         index === 1 ? "Перепутал знак при раскрытии скобок" : undefined
       );
     });
 
     if (student.profile !== "weak" && topicNext !== topicCurrent) {
       topicNext.homeworkNumbers.slice(0, 2).forEach((number, index) => {
-        pushStatus(student.id, number.id, index === 0 ? HomeworkNumberStatus.GREEN : HomeworkNumberStatus.YELLOW, daysAgo(1, 20, index * 10));
+        pushStatus(student.id, number.id, index === 0 ? HomeworkNumberStatus.GREEN : HomeworkNumberStatus.YELLOW, daysAgo(1, 10, index * 10));
       });
     }
   });
@@ -397,14 +398,24 @@ async function main() {
           });
         }
 
-        // Итог урока зеркалится в статус номера, как делает доска.
+        // Итог урока зеркалится в статус номера, как делает доска, — но не поверх
+        // более поздней активности (иначе «сегодняшние» отметки уедут в дату урока).
         const mirrored = result ? RESULT_TO_STATUS[result] : null;
 
         if (mirrored) {
-          await prisma.studentTopicNumberStatus.upsert({
-            where: { studentId_homeworkNumberId: { studentId: entry.student.id, homeworkNumberId: item.number.id } },
-            update: { status: mirrored, statusChangedAt: new Date(input.startsAt.getTime() + 55 * 60_000) },
-            create: { studentId: entry.student.id, homeworkNumberId: item.number.id, status: mirrored, statusChangedAt: new Date(input.startsAt.getTime() + 55 * 60_000) }
+          const changedAt = new Date(input.startsAt.getTime() + 55 * 60_000);
+
+          await prisma.studentTopicNumberStatus.updateMany({
+            where: {
+              studentId: entry.student.id,
+              homeworkNumberId: item.number.id,
+              OR: [{ statusChangedAt: null }, { statusChangedAt: { lt: changedAt } }]
+            },
+            data: { status: mirrored, statusChangedAt: changedAt }
+          });
+          await prisma.studentTopicNumberStatus.createMany({
+            data: [{ studentId: entry.student.id, homeworkNumberId: item.number.id, status: mirrored, statusChangedAt: changedAt }],
+            skipDuplicates: true
           });
         }
       }

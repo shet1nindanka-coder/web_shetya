@@ -1,5 +1,6 @@
 import { Fragment, type ReactNode } from "react";
 import { BlockMath, InlineMath } from "react-katex";
+import { MathLineBreaks } from "@/components/math-line-breaks";
 import { mergeSoftWrappedLines, splitLineIntoItems, splitMathIntoItems } from "@/lib/latex-line-items";
 
 type LatexAnswerPreviewProps = {
@@ -102,7 +103,8 @@ export function LatexAnswerPreview({ value }: LatexAnswerPreviewProps) {
   }
 
   return (
-    <div className="min-w-0 max-w-full space-y-4 rounded-2xl bg-[var(--theme-surface-soft)] px-3 py-3 text-sm leading-7 text-[var(--theme-text-default)]">
+    // Обёртка повторяет знак операции в начале перенесённой строки (правило переноса формул).
+    <MathLineBreaks className="min-w-0 max-w-full space-y-4 rounded-2xl bg-[var(--theme-surface-soft)] px-3 py-3 text-sm leading-7 text-[var(--theme-text-default)]">
       {blocks.map((block, blockIndex) => {
         // \[…\] поддерживается только целым блоком (как исторически).
         if (block.startsWith("\\[") && block.endsWith("\\]") && block.length > 4) {
@@ -129,6 +131,6 @@ export function LatexAnswerPreview({ value }: LatexAnswerPreviewProps) {
           </div>
         );
       })}
-    </div>
+    </MathLineBreaks>
   );
 }

@@ -204,6 +204,10 @@ submission photos → AI checks → site settings → number difficulty → less
 ## Conventions
 
 - **All user-facing copy is Russian.** Keep new strings Russian.
+- Формулы KaTeX переносятся по математическому правилу: знак операции в конце строки повторяется в
+  начале следующей (`lib/math-line-breaks.ts`, чистый JS одной строкой — работает и в кабинете через
+  `components/math-line-breaks.tsx`, и в печатной раздатке инлайн-скриптом). Условия рендерить через
+  `LatexAnswerPreview`, который уже обёрнут.
 - Status styling comes from `homeworkStatusMeta` / the `ui-status-*` classes — don't hardcode colors.
   Build class strings with `cx(...)`.
 - Server-action results are surfaced via redirect query params (`?error=invalid`, `?saved=1`,

@@ -6,6 +6,7 @@ import { logErrorEvent, logInfoEvent } from "@/lib/logger";
 type PdfPage = {
   setDefaultTimeout(ms: number): void;
   setContent(html: string, options: { waitUntil: "load"; timeout: number }): Promise<void>;
+  evaluate<T>(fn: () => T | Promise<T>): Promise<T>;
   pdf(options: Record<string, unknown>): Promise<Uint8Array>;
   close(): Promise<void>;
 };
@@ -125,6 +126,16 @@ export async function renderPdfFromHtml(html: string): Promise<Buffer | null> {
     page = await browser.newPage();
     page.setDefaultTimeout(RENDER_TIMEOUT_MS);
     await page.setContent(html, { waitUntil: "load", timeout: RENDER_TIMEOUT_MS });
+    // Шрифты KaTeX инлайновые, но подгружаются асинхронно: раскладку формул
+    // (и повтор знака при переносе) считаем только после них.
+    await page
+      .evaluate(() =>
+        document.fonts.ready.then(() => {
+          const apply = (window as unknown as { __applyMathBreaks?: (root: Document) => void }).__applyMathBreaks;
+          apply?.(document);
+        })
+      )
+      .catch(() => undefined);
 
     const pdf = await page.pdf({
       format: "A4",

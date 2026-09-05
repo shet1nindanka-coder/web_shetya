@@ -1,4 +1,5 @@
 import katex from "katex";
+import { MATH_LINE_BREAKS_SCRIPT } from "@/lib/math-line-breaks";
 import { mergeSoftWrappedLines, splitLineIntoItems, splitMathIntoItems } from "@/lib/latex-line-items";
 import { KATEX_CSS_MARKER } from "@/lib/print-theme";
 
@@ -258,6 +259,11 @@ const PRINT_CSS = `
   .math-display { display: block; margin: 4pt 0; }
   .math-display .katex-display { margin: 0; text-align: left; }
   .math-display .katex-display > .katex { text-align: left; }
+  /* Перенос длинных формул между верхнеуровневыми сегментами; знак повторяется
+     в начале новой строки инлайн-скриптом (lib/math-line-breaks.ts). */
+  .katex { white-space: normal; }
+  .katex .base { white-space: nowrap; }
+  .katex-display > .katex { white-space: normal; }
   .empty { font-style: italic; color: #6a6e75; }
   .extra-divider {
     display: flex; align-items: center; gap: 8pt; margin: 12pt 0 2pt;
@@ -291,6 +297,15 @@ ${KATEX_CSS_MARKER}
 </head>
 <body>
 ${body}
+<script>
+${MATH_LINE_BREAKS_SCRIPT}
+window.__applyMathBreaks = applyMathLineBreaks;
+(function () {
+  var run = function () { try { window.__applyMathBreaks(document); } catch (e) {} };
+  run();
+  if (document.fonts && document.fonts.ready) { document.fonts.ready.then(run); }
+})();
+</script>
 </body>
 </html>`;
 }
