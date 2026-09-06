@@ -13,6 +13,9 @@ import type { ParentCallStudentOverview } from "@/lib/parent-calls";
  * Комментарии — персональные данные: видны только здесь (учитель/разработчик).
  */
 
+// Подсветка строки из уведомления живёт полторы секунды (решение владельца).
+const HIGHLIGHT_FLASH_MS = 1500;
+
 type TeacherParentCallsListProps = {
   students: ParentCallStudentOverview[];
   /** DEVELOPER видит всех учеников с колонкой учителя и не фиксирует звонки. */
@@ -224,12 +227,31 @@ export function TeacherParentCallsList({
   // Развёртка: на строку открыта максимум одна (форма ИЛИ история).
   const [openPanel, setOpenPanel] = useState<{ studentId: string; panel: "form" | "history" } | null>(null);
   const highlightRef = useRef<HTMLDivElement | null>(null);
+  // Подсветка из уведомления — кратковременная: строка вспыхивает на полторы
+  // секунды и гаснет, а ?studentId= убирается из адреса, чтобы обновление
+  // страницы не зажигало её снова.
+  const [flashStudentId, setFlashStudentId] = useState<string | null>(highlightStudentId);
 
-  // Переход из уведомления: прокручиваем подсвеченную строку в вид.
   useEffect(() => {
-    if (highlightStudentId) {
-      highlightRef.current?.scrollIntoView({ block: "center" });
+    if (!highlightStudentId) {
+      return;
     }
+
+    setFlashStudentId(highlightStudentId);
+    highlightRef.current?.scrollIntoView({ block: "center" });
+
+    const timer = setTimeout(() => {
+      setFlashStudentId(null);
+
+      const url = new URL(window.location.href);
+
+      if (url.searchParams.has("studentId")) {
+        url.searchParams.delete("studentId");
+        window.history.replaceState(window.history.state, "", url.pathname + url.search + url.hash);
+      }
+    }, HIGHLIGHT_FLASH_MS);
+
+    return () => clearTimeout(timer);
   }, [highlightStudentId]);
 
   const overdueCount = students.filter((s) => s.reminder.state === "overdue").length;
@@ -293,7 +315,7 @@ export function TeacherParentCallsList({
         {students.map((student, index) => {
           const isLast = index === students.length - 1;
           const open = openPanel && openPanel.studentId === student.studentId ? openPanel.panel : null;
-          const isHighlighted = highlightStudentId === student.studentId;
+          const isHighlighted = flashStudentId === student.studentId;
 
           return (
             <div
@@ -302,9 +324,9 @@ export function TeacherParentCallsList({
               // Подсветка строки из уведомления: мягкая мятная заливка на всю
               // ширину карточки (компенсируем её px-7), а не кольцо вокруг
               // контента — кольцо резало соседние строки и выходило за рамку.
-              className={cx(isHighlighted && "-mx-7 px-7")}
+              className={cx("-mx-7 px-7 transition-colors duration-500")}
               style={{
-                ...(isHighlighted ? { background: "var(--theme-accent-soft)" } : null),
+                background: isHighlighted ? "var(--theme-accent-soft)" : "transparent",
                 ...(!isLast ? { borderBottom: "1px solid var(--shbz-row-border)" } : null)
               }}
             >
