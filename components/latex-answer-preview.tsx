@@ -9,7 +9,7 @@ type LatexAnswerPreviewProps = {
 
 function renderInlineMathError(error: Error) {
   return (
-    <code className="rounded bg-[var(--theme-danger-soft)] px-1 py-0.5 text-[var(--theme-danger-text)]">
+    <code className="rounded-[8px] bg-[var(--theme-danger-soft)] px-1 py-0.5 text-[var(--theme-danger-text)]">
       {error.name}
     </code>
   );
@@ -52,7 +52,7 @@ function renderDisplayMath(math: string, key: string): ReactNode {
       <BlockMath
         math={math}
         renderError={(error) => (
-          <code className="block whitespace-pre-wrap rounded bg-[var(--theme-danger-soft)] px-3 py-2 text-[var(--theme-danger-text)]">
+          <code className="block whitespace-pre-wrap rounded-[8px] bg-[var(--theme-danger-soft)] px-3 py-2 text-[var(--theme-danger-text)]">
             {error.name}: {error.message}
           </code>
         )}

@@ -113,7 +113,7 @@ export function TeacherLessonComposeBoard({ studentId, topics }: TeacherLessonCo
 
   return (
     <div className="space-y-5">
-      {error ? <div className="ui-notice-error rounded-[8px] px-4 py-3 text-sm">{error}</div> : null}
+      {error ? <div className="ui-notice-error px-4 py-3 text-sm">{error}</div> : null}
 
       <div className="space-y-2">
         <span className="ui-copy-muted block text-sm font-medium">Тема</span>

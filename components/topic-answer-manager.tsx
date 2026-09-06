@@ -737,7 +737,7 @@ export function TopicAnswerManager({ topicId, initialNumber = null, numbers }: T
                   )}
 
                   {item.conditionError ? (
-                    <div className="ui-notice-error rounded-[8px] px-4 py-4 text-sm font-medium">{item.conditionError}</div>
+                    <div className="ui-notice-error px-4 py-4 text-sm font-medium">{item.conditionError}</div>
                   ) : null}
 
                   <div className="flex flex-wrap gap-3">
@@ -809,7 +809,7 @@ export function TopicAnswerManager({ topicId, initialNumber = null, numbers }: T
                   )}
 
                   {item.answerError ? (
-                    <div className="ui-notice-error rounded-[8px] px-4 py-4 text-sm font-medium">{item.answerError}</div>
+                    <div className="ui-notice-error px-4 py-4 text-sm font-medium">{item.answerError}</div>
                   ) : null}
 
                   <div className="flex flex-wrap gap-3">

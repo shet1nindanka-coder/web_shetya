@@ -192,7 +192,7 @@ export function StudentHomeworkCheck({ assignmentId, hasPhotos, initialCheck }: 
         </button>
       </div>
 
-      {error ? <div className="ui-notice-error mt-4 rounded-[8px] px-4 py-3 text-sm">{error}</div> : null}
+      {error ? <div className="ui-notice-error mt-4 px-4 py-3 text-sm">{error}</div> : null}
 
       {/* Живой регион: скринридер узнаёт о запуске и завершении многоминутной проверки. */}
       <p role="status" className="sr-only">

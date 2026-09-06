@@ -157,7 +157,7 @@ export function StudentHomeworkPhotos({ assignmentId, maxPhotos = MAX_PHOTOS, ph
         </span>
       </div>
 
-      {error ? <div className="ui-notice-error mb-4 rounded-[8px] px-4 py-3 text-sm">{error}</div> : null}
+      {error ? <div className="ui-notice-error mb-4 px-4 py-3 text-sm">{error}</div> : null}
 
       <AnimatedDropzone
         ref={dropzoneRef}

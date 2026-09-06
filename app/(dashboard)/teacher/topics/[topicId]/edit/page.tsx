@@ -109,8 +109,8 @@ export default async function TeacherTopicPage({ params, searchParams }: Teacher
         <div
           className={
             notice.tone === "success"
-              ? "ui-notice-success rounded-[8px] px-4 py-3 text-sm font-medium"
-              : "ui-notice-error rounded-[8px] px-4 py-3 text-sm font-medium"
+              ? "ui-notice-success px-4 py-3 text-sm font-medium"
+              : "ui-notice-error px-4 py-3 text-sm font-medium"
           }
         >
           {notice.message}

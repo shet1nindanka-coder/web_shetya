@@ -2667,7 +2667,7 @@ html[data-theme="dark"] .ui-state-shell,
 html[data-theme="dark"] .ui-dialog-shell {
   background: var(--shbz-card-bg);
   border: 1px solid var(--shbz-card-border);
-  border-radius: 18px;
+  border-radius: 16px;
   box-shadow: 0 1px 2px rgba(10, 10, 10, 0.04), 0 8px 24px rgba(10, 10, 10, 0.05);
 }
 @media (hover: hover) {
@@ -2889,7 +2889,7 @@ html[data-theme="dark"] .ui-status-button:hover {
   border-color: var(--shbz-outline-hover);
   background: var(--shbz-card-bg);
 }
-.ui-status-surface { border-radius: 10px; }
+.ui-status-surface { border-radius: 12px; }
 
 /* Логотип-плашка в старых скелетонах */
 .app-logo-mark,
@@ -3199,7 +3199,7 @@ html[data-theme="dark"] .shbz-search input:not([type="checkbox"]):not([type="rad
   height: 36px;
   padding: 0 14px;
   font-size: 13px;
-  border-radius: 10px;
+  border-radius: 12px;
 }
 
 .shbz-btn-danger-icon {
@@ -3890,7 +3890,7 @@ html[data-theme="dark"] .shbz-search input:not([type="checkbox"]):not([type="rad
   @keyframes sheet-in  { from { transform: translateY(100%); } to { transform: none; } }
   @keyframes sheet-out { from { transform: none; } to { transform: translateY(100%); } }
   .ui-dialog-shell {
-    border-radius: 18px 18px 0 0;
+    border-radius: 16px 16px 0 0;
     animation: sheet-in 260ms var(--ease-drawer) both;
   }
   .ui-dialog-shell[data-closing="true"] { animation: sheet-out 160ms var(--ease-drawer) both; }
@@ -4083,7 +4083,7 @@ html[data-theme="dark"] .ui-skeleton::after {
   .shbz-modal-card {
     max-width: none;
     max-height: 88vh;
-    border-radius: 18px 18px 0 0;
+    border-radius: 16px 16px 0 0;
     animation: sheet-in 260ms var(--ease-drawer) both;
   }
   .shbz-modal-card[data-closing="true"] { animation: sheet-out 160ms var(--ease-drawer) both; }

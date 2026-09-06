@@ -135,7 +135,7 @@ export function TeacherHomeworkAssignBoard({ studentId, topics }: TeacherHomewor
 
   return (
     <div className="space-y-5">
-      {error ? <div className="ui-notice-error rounded-[8px] px-4 py-3 text-sm">{error}</div> : null}
+      {error ? <div className="ui-notice-error px-4 py-3 text-sm">{error}</div> : null}
       {success ? (
         <div className="rounded-[8px] border border-[var(--theme-success-border)] bg-[var(--theme-success-soft)] px-4 py-3 text-sm text-[var(--theme-success-text)]">
           {success}

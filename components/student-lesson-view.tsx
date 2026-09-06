@@ -365,7 +365,7 @@ export function StudentLessonView({ lessonId, startsAt, durationMinutes, items }
         ) : null}
 
         {itemErrors[item.id] ? (
-          <div className="ui-notice-error mt-3 rounded-[8px] px-4 py-3 text-sm">{itemErrors[item.id]}</div>
+          <div className="ui-notice-error mt-3 px-4 py-3 text-sm">{itemErrors[item.id]}</div>
         ) : null}
 
         {canSubmit ? (

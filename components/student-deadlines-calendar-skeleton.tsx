@@ -14,7 +14,7 @@ export function StudentDeadlinesCalendarSkeleton() {
 
       <div className="grid grid-cols-7 gap-1">
         {Array.from({ length: 7 }).map((_, index) => (
-          <div key={`weekday-${index}`} className="h-6 animate-pulse rounded-md bg-[var(--theme-surface-soft)]" />
+          <div key={`weekday-${index}`} className="h-6 animate-pulse rounded-[8px] bg-[var(--theme-surface-soft)]" />
         ))}
         {Array.from({ length: 42 }).map((_, index) => (
           <div key={`day-${index}`} className="h-12 animate-pulse rounded-[12px] bg-[var(--theme-surface-soft)]" />

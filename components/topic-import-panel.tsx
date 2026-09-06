@@ -50,7 +50,7 @@ const BUTTON_SECONDARY =
 
 function SummaryTile({ label, value, danger }: { label: string; value: number; danger?: boolean }) {
   return (
-    <div className="ui-card-soft rounded-[14px] px-3.5 py-3">
+    <div className="ui-card-soft px-3.5 py-3">
       <div className="ui-kicker">{label}</div>
       <div
         className="mt-1 text-lg font-bold"
@@ -258,7 +258,7 @@ export function TopicImportPanel({ topicId, createTopic, hidePromptButton }: Top
           </div>
 
           {preview.willCreateTopic ? (
-            <div className="ui-card-soft rounded-[14px] px-3.5 py-3">
+            <div className="ui-card-soft px-3.5 py-3">
               <div className="ui-kicker">Будет создана тема</div>
               <div className="mt-1 text-base font-bold" style={{ color: "var(--theme-text-strong)" }}>
                 {preview.fileTitle}
@@ -330,7 +330,7 @@ export function TopicImportPanel({ topicId, createTopic, hidePromptButton }: Top
             <div className="space-y-2.5">
               <div className="ui-form-label">Как это увидит ученик</div>
               {preview.sample.map((item) => (
-                <div key={`sample-${item.number}`} className="ui-card-soft rounded-[14px] px-3.5 py-3">
+                <div key={`sample-${item.number}`} className="ui-card-soft px-3.5 py-3">
                   <div className="ui-kicker">Номер {item.number}</div>
                   <div className="mt-1.5">
                     <LatexAnswerPreview value={item.conditionLatex} />

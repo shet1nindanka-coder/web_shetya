@@ -144,7 +144,7 @@ export function GroupAttendanceSection({ groupId, prefix, members, lessons }: Gr
         {pdfLinks}
       </div>
 
-      {error ? <div className="ui-notice-error rounded-[8px] px-4 py-3 text-sm">{error}</div> : null}
+      {error ? <div className="ui-notice-error px-4 py-3 text-sm">{error}</div> : null}
 
       {/* Правило 1180: таблица прокручивается внутри себя, а не растягивает страницу. */}
       <div className="overflow-x-auto">
