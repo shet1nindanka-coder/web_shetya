@@ -10,9 +10,10 @@
  * каждым пересчётом (resize, смена шрифта).
  *
  * Исходник хранится строкой на чистом JS: одна и та же функция работает в
- * браузере (components/math-line-breaks.tsx) и в печатной раздатке как
- * инлайн-скрипт (lib/lesson-print-html.ts). Через `toString()` транспилированной
- * функции так нельзя — esbuild/tsx подмешивают хелперы вроде `__name`.
+ * кабинете (инлайн-скрипт в app/layout.tsx + components/math-line-breaks.tsx)
+ * и в печатной раздатке (инлайн-скрипт, lib/lesson-print-html.ts). Через
+ * `toString()` транспилированной функции так нельзя — esbuild/tsx подмешивают
+ * хелперы вроде `__name`; через `new Function` тоже нельзя — прод-CSP без 'unsafe-eval'.
  */
 
 export const MATH_LINE_BREAKS_SCRIPT = String.raw`
@@ -98,7 +99,11 @@ function applyMathLineBreaks(root) {
 }
 `;
 
-/** Та же функция для клиентского кода (собирается из исходника выше, без транспиляции). */
-export const applyMathLineBreaks = new Function(`${MATH_LINE_BREAKS_SCRIPT}\nreturn applyMathLineBreaks;`)() as (
-  root: ParentNode
-) => void;
+/**
+ * Имя глобальной функции, под которым скрипт подключён в корневом layout
+ * (инлайн-<script>, разрешён CSP 'unsafe-inline'). Клиентский компонент зовёт её
+ * через window — никакого eval/new Function: на проде CSP без 'unsafe-eval'.
+ */
+export const MATH_LINE_BREAKS_GLOBAL = "__applyMathBreaks";
+
+export const MATH_LINE_BREAKS_INLINE_SCRIPT = `${MATH_LINE_BREAKS_SCRIPT}\nwindow.${MATH_LINE_BREAKS_GLOBAL} = applyMathLineBreaks;`;

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, type ReactNode } from "react";
-import { applyMathLineBreaks } from "@/lib/math-line-breaks";
+import { MATH_LINE_BREAKS_GLOBAL } from "@/lib/math-line-breaks";
 
 /*
  * Обёртка, которая после раскладки применяет математическое правило переноса
@@ -18,10 +18,17 @@ export function MathLineBreaks({ children, className }: { children: ReactNode; c
       return;
     }
 
+    // Сама функция подключена инлайн-скриптом в app/layout.tsx (CSP без eval).
+    const apply = (window as unknown as Record<string, unknown>)[MATH_LINE_BREAKS_GLOBAL];
+
+    if (typeof apply !== "function") {
+      return;
+    }
+
     let frame = 0;
     const schedule = () => {
       cancelAnimationFrame(frame);
-      frame = requestAnimationFrame(() => applyMathLineBreaks(root));
+      frame = requestAnimationFrame(() => (apply as (node: ParentNode) => void)(root));
     };
 
     schedule();

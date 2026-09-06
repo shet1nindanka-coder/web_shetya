@@ -1,5 +1,5 @@
 import katex from "katex";
-import { MATH_LINE_BREAKS_SCRIPT } from "@/lib/math-line-breaks";
+import { MATH_LINE_BREAKS_INLINE_SCRIPT } from "@/lib/math-line-breaks";
 import { mergeSoftWrappedLines, splitLineIntoItems, splitMathIntoItems } from "@/lib/latex-line-items";
 import { KATEX_CSS_MARKER } from "@/lib/print-theme";
 
@@ -298,8 +298,7 @@ ${KATEX_CSS_MARKER}
 <body>
 ${body}
 <script>
-${MATH_LINE_BREAKS_SCRIPT}
-window.__applyMathBreaks = applyMathLineBreaks;
+${MATH_LINE_BREAKS_INLINE_SCRIPT}
 (function () {
   var run = function () { try { window.__applyMathBreaks(document); } catch (e) {} };
   run();
