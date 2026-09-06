@@ -205,6 +205,7 @@ export async function DELETE(request: Request) {
           homeworkNumberId: { in: numberIds },
           status: null,
           note: null,
+          statusChangedAt: null,
           deadlineAt: null
         }
       });

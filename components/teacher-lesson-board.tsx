@@ -11,6 +11,7 @@ import {
 } from "react";
 import { DeleteButton } from "@/components/delete-button";
 import { LessonManualAdd } from "@/components/lesson-manual-add";
+import { ProgressStatusHistory } from "@/components/progress-status-history";
 import { ResultToggle } from "@/components/lesson-result-toggle";
 import { computeIdleLevel, computeSpentMinutes, type IdleLevel } from "@/lib/lesson-live";
 
@@ -188,6 +189,7 @@ export function TeacherLessonBoard({
   } | null>(null);
   const undoTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const [, startTransition] = useTransition();
+  const [historyVersion, setHistoryVersion] = useState(0);
   const lastSignature = useRef("");
   const lastLiveSignature = useRef("");
   const [finishing, setFinishing] = useState(false);
@@ -444,6 +446,7 @@ export function TeacherLessonBoard({
           throw new Error(payload?.error || "Не удалось сохранить итог.");
         }
 
+        setHistoryVersion((version) => version + 1);
         startTransition(() => router.refresh());
       } catch (error) {
         setItemErrors((current) => ({
@@ -1050,6 +1053,9 @@ export function TeacherLessonBoard({
                             ×
                           </button>
                           {renderSubmissionInfo(item, spentByItemId.get(item.id))}
+                          <div className="w-full">
+                            <ProgressStatusHistory studentId={participant.studentId} homeworkNumberId={item.homeworkNumberId} refreshKey={`${item.result}:${historyVersion}`} />
+                          </div>
                           {itemErrors[item.id] ? (
                             <span
                               className="w-full text-xs font-semibold"
@@ -1150,6 +1156,9 @@ export function TeacherLessonBoard({
                             ×
                           </button>
                           {renderSubmissionInfo(item, spentByItemId.get(item.id))}
+                          <div className="w-full">
+                            <ProgressStatusHistory studentId={participant.studentId} homeworkNumberId={item.homeworkNumberId} refreshKey={`${item.result}:${historyVersion}`} />
+                          </div>
                           {itemErrors[item.id] ? (
                             <span
                               className="w-full text-xs font-semibold"

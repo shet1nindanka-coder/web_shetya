@@ -13,7 +13,7 @@ import {
   parseCheckResponse,
   type ParsedCheckResult
 } from "@/lib/solution-check-parse";
-import { getStatusForAiVerdict, isStatusDowngrade } from "@/lib/solution-check-status";
+import { runProgressTransaction, type ProgressWriter } from "@/lib/progress-write";
 import { readStoredFile } from "@/lib/storage";
 import { deleteOwnedStoredFileIfUnused } from "@/lib/stored-files";
 import { compareHomeworkNumbers, normalizeHomeworkNumber } from "@/lib/utils";
@@ -500,96 +500,27 @@ async function pruneCompletedHomeworkChecksSafely(studentId: string) {
   }
 }
 
-async function applyVerdictsToProgress(assignment: CheckAssignment, results: ParsedCheckResult[]) {
-  const existingStatuses = await prisma.studentTopicNumberStatus.findMany({
-    where: {
-      studentId: assignment.studentId,
-      homeworkNumberId: { in: assignment.numbers.map((number) => number.homeworkNumberId) }
-    },
-    select: {
-      homeworkNumberId: true,
-      status: true,
-      statusChangedAt: true
-    }
-  });
-  const existingByNumberId = new Map(
-    existingStatuses.map((status) => [status.homeworkNumberId, status])
-  );
-  // Ключ — нормализованный вид номера: сопоставление нечувствительно к ведущим нулям.
+async function applyVerdictsToProgress(
+  assignment: CheckAssignment, results: ParsedCheckResult[], checkId: string, writeProgress: ProgressWriter
+) {
   const numberByValue = new Map(
     assignment.numbers.map((number) => [normalizeHomeworkNumber(number.number), number])
   );
-  const changedAt = new Date();
-  const creates = [];
-  const updates = [];
-
+  let changed = 0;
   for (const result of results) {
     const target = numberByValue.get(normalizeHomeworkNumber(result.number));
-
-    if (!target) {
-      continue;
-    }
-
-    const existing = existingByNumberId.get(target.homeworkNumberId);
-    const nextStatus = getStatusForAiVerdict(result.verdict, existing?.status ?? null);
-
-    if (!nextStatus) {
-      continue;
-    }
-
-    if (existing?.status === nextStatus) {
-      continue;
-    }
-
-    // ИИ никогда не понижает уже выставленный статус (например, зелёный от учителя).
-    if (isStatusDowngrade(nextStatus, existing?.status ?? null)) {
-      continue;
-    }
-
-    if (!existing) {
-      creates.push({
-        studentId: assignment.studentId,
-        homeworkNumberId: target.homeworkNumberId,
-        status: nextStatus,
-        statusChangedAt: changedAt
-      });
-      continue;
-    }
-
-    // Ручное изменение, сделанное после запуска проверки, всегда имеет приоритет
-    // над более старым ответом ИИ. Условия также закрывают гонку между чтением и update.
-    updates.push(
-      prisma.studentTopicNumberStatus.updateMany({
-        where: {
-          studentId: assignment.studentId,
-          homeworkNumberId: target.homeworkNumberId,
-          status: existing.status,
-          OR: [
-            { statusChangedAt: null },
-            { statusChangedAt: { lte: assignment.checkStartedAt } }
-          ]
-        },
-        data: {
-          status: nextStatus,
-          statusChangedAt: changedAt
-        }
-      })
-    );
+    if (!target) continue;
+    const decision = await writeProgress({
+      studentId: assignment.studentId,
+      homeworkNumberId: target.homeworkNumberId,
+      source: "homework_check",
+      verdict: result.verdict,
+      checkStartedAt: assignment.checkStartedAt,
+      references: { assignmentId: assignment.id, checkId }
+    });
+    if (decision.write) changed++;
   }
-
-  const operations = [
-    ...updates,
-    ...(creates.length > 0
-      ? [prisma.studentTopicNumberStatus.createMany({ data: creates, skipDuplicates: true })]
-      : [])
-  ];
-
-  if (operations.length === 0) {
-    return 0;
-  }
-
-  const applied = await prisma.$transaction(operations);
-  return applied.reduce((total, result) => total + result.count, 0);
+  return changed;
 }
 
 export async function runHomeworkCheck(checkId: string) {
@@ -812,7 +743,7 @@ export async function runHomeworkCheck(checkId: string) {
     assignment.numbers.map((number) => [normalizeHomeworkNumber(number.number), number])
   );
 
-    const finalized = await prisma.$transaction(async (transaction) => {
+    const finalized = await runProgressTransaction(async (transaction, writeProgress) => {
       const transition = await transaction.homeworkCheck.updateMany({
         where: {
           id: checkId,
@@ -848,14 +779,15 @@ export async function runHomeworkCheck(checkId: string) {
         }))
       });
 
-      return true;
+      const appliedStatusCount = await applyVerdictsToProgress(assignment, results, checkId, writeProgress);
+      return { appliedStatusCount };
     });
 
     if (!finalized) {
       return;
     }
 
-    const appliedStatusCount = await applyVerdictsToProgress(assignment, results);
+    const { appliedStatusCount } = finalized;
     await pruneCompletedHomeworkChecksSafely(assignment.studentId);
 
 

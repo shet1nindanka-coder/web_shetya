@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { AuditCategory, Prisma, UserRole } from "@prisma/client";
+import { ProgressStatusHistory } from "@/components/progress-status-history";
 import { DeveloperJournalFilters } from "@/components/developer-journal-filters";
 import { ShbzNumberSearch } from "@/components/shbz-number-search";
 import { ShbzPageHeader } from "@/components/shbz-page-header";
@@ -31,6 +32,7 @@ const ROLE_LABELS: Record<UserRole, string> = {
  * Системное имя всё равно выводится под подписью: по нему работает фильтр.
  */
 const ACTION_LABELS: Record<string, string> = {
+  "progress.status": "Решение об изменении прогресса",
   "auth.login": "Вход в систему",
   "auth.logout": "Выход из системы",
   "solution.check": "Автопроверка ДЗ",
@@ -129,6 +131,12 @@ export default async function DeveloperJournalPage({ searchParams }: { searchPar
       orderBy: { name: "asc" }
     })
   ]);
+
+  const progressIds = entries.flatMap((entry) => entry.action === "progress.status" && entry.targetId ? [entry.targetId] : []);
+  const progressTargets = new Map((progressIds.length ? await prisma.progressStatusEvent.findMany({
+    where: { id: { in: progressIds } },
+    select: { id: true, student: { select: { name: true } }, homeworkNumber: { select: { number: true, topic: { select: { title: true } } } } }
+  }) : []).map((event) => [event.id, `${event.student.name} · № ${event.homeworkNumber.number} · ${event.homeworkNumber.topic.title}`]));
 
   const pageCount = Math.max(1, Math.ceil(total / PAGE_SIZE));
 
@@ -251,7 +259,20 @@ export default async function DeveloperJournalPage({ searchParams }: { searchPar
                       className="max-w-[380px] break-words px-2 py-2.5"
                       style={{ color: "var(--shbz-text-muted)", overflowWrap: "anywhere" }}
                     >
+                      {entry.targetId && progressTargets.has(entry.targetId) ? (
+                        <p className="mb-1 font-semibold">{progressTargets.get(entry.targetId)}</p>
+                      ) : null}
                       {entry.summary ?? entry.targetLabel ?? "—"}
+                      {entry.action === "progress.status" && entry.meta && typeof entry.meta === "object" && !Array.isArray(entry.meta)
+                        && typeof entry.meta.studentId === "string" && typeof entry.meta.homeworkNumberId === "string" ? (
+                        <>
+                          <ProgressStatusHistory studentId={entry.meta.studentId} homeworkNumberId={entry.meta.homeworkNumberId} />
+                          <details className="mt-1">
+                            <summary className="cursor-pointer underline">Детали записи</summary>
+                            <pre className="mt-1 whitespace-pre-wrap break-all text-xs">{JSON.stringify(entry.meta, null, 2)}</pre>
+                          </details>
+                        </>
+                      ) : null}
                       {entry.error ? (
                         entry.error.length > ERROR_PREVIEW_MAX ? (
                           <details className="mt-0.5">

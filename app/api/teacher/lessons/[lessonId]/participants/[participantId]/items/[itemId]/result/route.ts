@@ -1,4 +1,4 @@
-import { HomeworkNumberStatus, LessonItemResult, LessonKind, UserRole } from "@prisma/client";
+import { LessonItemResult, LessonKind, UserRole } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 import { NextResponse } from "next/server";
 import { enforceApiRateLimit } from "@/lib/api-rate-limit";
@@ -7,17 +7,9 @@ import { publishDashboardRealtimeEvent } from "@/lib/dashboard-realtime";
 import { logErrorEvent, logInfoEvent } from "@/lib/logger";
 import { revalidateAllPlatformData } from "@/lib/platform-data-cache";
 import { prisma } from "@/lib/prisma";
+import { runProgressTransaction } from "@/lib/progress-write";
 
 export const runtime = "nodejs";
-
-// Итог урока → статус ученика: решил — зелёный, с ошибками — жёлтый, не решил — красный
-// (красный возвращает номер в кандидаты будущих подборов). «Не успел» (SKIPPED)
-// статус не трогает: до номера не дошли, и домашний прогресс по нему остаётся каким был.
-const RESULT_TO_STATUS: Partial<Record<LessonItemResult, HomeworkNumberStatus>> = {
-  [LessonItemResult.SOLVED]: HomeworkNumberStatus.GREEN,
-  [LessonItemResult.PARTIAL]: HomeworkNumberStatus.YELLOW,
-  [LessonItemResult.NOT_SOLVED]: HomeworkNumberStatus.RED
-};
 
 const allowedResults = Object.values(LessonItemResult);
 
@@ -74,31 +66,19 @@ export async function PATCH(
   }
 
   const studentId = item.participant.studentId;
-  // Статус зеркалится только для итогов, у которых он есть; снятие итога
-  // очищает статус лишь если прежний итог его выставлял (после «не успел»
-  // чистить нечего — иначе стёрли бы домашний прогресс ученика).
-  const status = result === null ? null : (RESULT_TO_STATUS[result] ?? null);
-  const touchesStatus =
-    result === null ? item.result !== null && item.result !== LessonItemResult.SKIPPED : status !== null;
-
   try {
-    await prisma.$transaction([
-      prisma.lessonAssignmentItem.update({
+    await runProgressTransaction(async (tx, writeProgress) => {
+      const current = await tx.lessonAssignmentItem.findUniqueOrThrow({ where: { id: item.id }, select: { result: true } });
+      await tx.lessonAssignmentItem.update({
         where: { id: item.id },
         data: { result }
-      }),
-      // Зеркало в статус ученика — как у выдачи ДЗ с дедлайнами: кабинет ученика,
-      // карта тем и подбор видят итог урока сразу.
-      ...(touchesStatus
-        ? [
-            prisma.studentTopicNumberStatus.upsert({
-              where: { studentId_homeworkNumberId: { studentId, homeworkNumberId: item.homeworkNumberId } },
-              update: { status, statusChangedAt: new Date() },
-              create: { studentId, homeworkNumberId: item.homeworkNumberId, status, statusChangedAt: new Date() }
-            })
-          ]
-        : [])
-    ]);
+      });
+      await writeProgress({
+        studentId, homeworkNumberId: item.homeworkNumberId,
+        source: "lesson_teacher", result, previousResult: current.result,
+        actor: user, references: { lessonId, itemId: item.id }
+      });
+    });
   } catch (error) {
     logErrorEvent(
       "lesson_plan.result_update_failed",

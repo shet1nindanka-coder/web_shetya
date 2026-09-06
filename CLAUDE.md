@@ -70,6 +70,24 @@ Postgres service.
 - **Cache invalidation** — after every mutation call the helpers in `lib/platform-data-cache.ts`
   (`revalidateAllPlatformData`, `revalidateTeacherTopicsData`, `revalidateTeacherStudentsData`,
   `revalidateStudentTopicsData`) plus `revalidatePath(...)` for the affected routes.
+- **Запись прогресса** — все изменения цвета/очистки `StudentTopicNumberStatus.status`
+  проходят через `runProgressTransaction` + `writeProgress` (`lib/progress-write.ts`).
+  Правила источников — `lib/progress-policy.ts`: ДЗ не понижает статус и уступает более
+  свежей отметке; ручные отметки и итоги урока сохраняют свои правила, SKIPPED не меняет прогресс.
+  Ученик сам цвет не меняет, `/api/student/topic-status` сохраняет только заметку.
+  Результат проверки/урока, общий статус и `ProgressStatusEvent` записываются одной
+  Serializable-транзакцией с повтором конфликта. Внутри callback — только операции БД.
+  Повторная ручная отметка обновляет время и записывается как подтверждение.
+  Строки с `statusChangedAt` не удалять при очистке заметок/дедлайнов: даже пустой цвет
+  может быть свежей ручной очисткой, защищённой от ответа старой проверки.
+  После commit событие дублируется в pino и AuditLog (`progress.status`, категория DATA).
+  Общий AuditLog остаётся best effort и чистится по retention; отдельная история хранится
+  до удаления ученика/номера. Старые события не восстанавливаются задним числом.
+  Просмотр — `ProgressStatusHistory` у номеров ДЗ/урока и в журнале разработчика,
+  API `/api/teacher/progress-history` (только учитель-владелец или DEVELOPER, по 20 записей).
+  Интеграционный тест: `PROGRESS_TEST_DATABASE_URL` должен указывать на отдельную локальную
+  БД с именем `shbz_progress_*_test`, с применёнными миграциями;
+  запуск `node --import tsx --test tests/progress-write.integration.ts`. В CI выполняется отдельно.
 - **Auth** — `lib/auth.ts`: `requireUser(role?)` (redirects to `/login` or the user's role home),
   `getCurrentUser`, `tryGetCurrentUser`. Cookie name `tutor_session`; tokens are random and stored
   hashed (sha256), passwords use scrypt (`lib/password.ts`). `middleware.ts` guards `/dashboard`,

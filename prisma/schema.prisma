@@ -90,6 +90,7 @@ model User {
   sessions             Session[]
   uploadedFiles        StoredFile[]               @relation("UploadedFiles")
   numberStatuses       StudentTopicNumberStatus[]
+  progressEvents       ProgressStatusEvent[]
   notifications        Notification[]
   studentProfile       StudentProfile?
   groupsLed            StudentGroup[]             @relation("GroupTeacher")
@@ -214,6 +215,7 @@ model TopicHomeworkNumber {
   testQuestions      TestQuestion[]
   assignmentEntries  HomeworkAssignmentNumber[]
   checkResults       HomeworkCheckResult[]
+  progressEvents     ProgressStatusEvent[]
 
   @@unique([topicId, number])
   @@index([answerFileId])
@@ -240,6 +242,31 @@ model StudentTopicNumberStatus {
   @@unique([studentId, homeworkNumberId])
   @@index([studentId, deadlineAt])
   @@index([studentId, status])
+  @@index([homeworkNumberId])
+}
+
+// История решений об общем прогрессе. Сохраняется атомарно со статусом,
+// не чистится вместе с общим AuditLog. Удаляется вместе с учеником/номером.
+model ProgressStatusEvent {
+  id               String                @id @default(cuid())
+  createdAt        DateTime              @default(now())
+  studentId        String
+  homeworkNumberId String
+  source           String
+  previousStatus   HomeworkNumberStatus?
+  requestedStatus  HomeworkNumberStatus?
+  status           HomeworkNumberStatus?
+  decision         String
+  // Снимок автора без FK: история переживает удаление его аккаунта.
+  actorId          String?
+  actorName        String?
+  actorRole        UserRole?
+  // Идентификаторы проверки, ДЗ и урока сохраняются даже после их удаления.
+  context          Json
+  student          User                  @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  homeworkNumber   TopicHomeworkNumber   @relation(fields: [homeworkNumberId], references: [id], onDelete: Cascade)
+
+  @@index([studentId, homeworkNumberId, createdAt, id])
   @@index([homeworkNumberId])
 }
 

@@ -3,6 +3,7 @@
 import { HomeworkNumberStatus } from "@prisma/client";
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
+import { ProgressStatusHistory } from "@/components/progress-status-history";
 import { Badge } from "@/components/badge";
 import { DeleteButton } from "@/components/delete-button";
 import { HomeworkStatusBadge } from "@/components/homework-status-badge";
@@ -211,6 +212,7 @@ export function TeacherHomeworkReviewList({ studentId, assignments }: TeacherHom
 
   // Оптимистичное локальное состояние статусов: клик подсвечивается сразу,
   // без router.refresh() на каждое нажатие.
+  const [historyVersion, setHistoryVersion] = useState(0);
   const [localStatuses, setLocalStatuses] = useState<Record<string, HomeworkNumberStatus | null>>({});
   // Тост «Вердикты приняты» с 10-секундной отменой.
   const [acceptUndo, setAcceptUndo] = useState<{
@@ -244,6 +246,7 @@ export function TeacherHomeworkReviewList({ studentId, assignments }: TeacherHom
     if (!response.ok) {
       throw new Error(result?.error || "Не удалось сохранить статус.");
     }
+    setHistoryVersion((version) => version + 1);
   };
 
   const setNumberStatus = async (
@@ -436,7 +439,7 @@ export function TeacherHomeworkReviewList({ studentId, assignments }: TeacherHom
         const expanded = expandedIds.has(assignment.id);
 
         return (
-          <article key={assignment.id} className="teacher-topic-card rounded-[16px] border p-5 sm:p-6">
+          <article id={`homework-${assignment.id}`} key={assignment.id} className="teacher-topic-card rounded-[16px] border p-5 sm:p-6">
             {injectionResults.length > 0 && !lessonMode ? (
               // Сигнал безопасности, а не оценка: своя полоса и нейтрально-строгая
               // палитра, чтобы не путался с «ИИ: Ошибка» (цвет INCORRECT запрещён).
@@ -695,6 +698,7 @@ export function TeacherHomeworkReviewList({ studentId, assignments }: TeacherHom
                             </div>
                           </details>
                         ) : null}
+                        <ProgressStatusHistory studentId={studentId} homeworkNumberId={number.homeworkNumberId} refreshKey={`${currentStatus}:${historyVersion}`} />
                         {number.note ? (
                           <div className="ui-card-soft mt-2 rounded-[12px] px-3 py-1.5">
                             <p className="whitespace-pre-line text-sm leading-6 text-[var(--theme-text-default)]">{number.note}</p>

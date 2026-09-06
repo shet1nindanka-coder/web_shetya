@@ -180,11 +180,14 @@ export async function POST(request: Request) {
         const existingStatus = existingStatusMap.get(homeworkNumberId) ?? null;
 
         if (!deadlineAt && !existingStatus?.status && !existingStatus?.note) {
-          return prisma.studentTopicNumberStatus.deleteMany({
+          return prisma.studentTopicNumberStatus.updateMany({
             where: {
               studentId,
               homeworkNumberId
-            }
+            },
+            // Снимаем только срок: сохраняем параллельную отметку и время
+            // ручной очистки статуса, даже если цвет сейчас пустой.
+            data: { deadlineAt: null }
           });
         }
 

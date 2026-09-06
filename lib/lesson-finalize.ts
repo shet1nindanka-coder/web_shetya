@@ -2,7 +2,7 @@ import { AttendanceStatus, AuditCategory, LessonItemResult, LessonKind, LessonSt
 import { decideEndOfLessonAttendance } from "@/lib/attendance";
 import { writeAuditLog } from "@/lib/audit";
 import { publishDashboardRealtimeEvent } from "@/lib/dashboard-realtime";
-import { mirrorLessonResultToStatus } from "@/lib/lesson-item-check";
+import { runProgressTransaction } from "@/lib/progress-write";
 import { decideEndOfLessonResult } from "@/lib/lesson-live";
 import { deriveLessonStatus } from "@/lib/lesson-status";
 import { logInfoEvent, logWarnEvent } from "@/lib/logger";
@@ -33,107 +33,97 @@ function isRecoverableError(error: unknown) {
 
 /** Закрывает итоги одного урока. Идемпотентно: повторный вызов ничего не меняет. */
 export async function finalizeLessonResults(lessonId: string) {
-  const lesson = await prisma.lesson.findFirst({
-    where: { id: lessonId, kind: LessonKind.LESSON },
-    select: {
-      id: true,
-      title: true,
-      teacherId: true,
-      status: true,
-      startsAt: true,
-      finishedAt: true,
-      durationMinutes: true,
-      participants: {
-        select: {
-          id: true,
-          studentId: true,
-          attendance: true,
-          joinedAt: true,
-          items: {
-            select: {
-              id: true,
-              isExtra: true,
-              result: true,
-              homeworkNumberId: true,
-              // Любая сдача, даже неудачная: «не сдавал» — значит, фото не отправлял вовсе.
-              submissions: { take: 1, select: { id: true } }
+  const outcome = await runProgressTransaction(async (tx, writeProgress) => {
+    const lesson = await tx.lesson.findFirst({
+      where: { id: lessonId, kind: LessonKind.LESSON },
+      select: {
+        id: true,
+        title: true,
+        teacherId: true,
+        status: true,
+        startsAt: true,
+        finishedAt: true,
+        durationMinutes: true,
+        participants: {
+          select: {
+            id: true,
+            studentId: true,
+            attendance: true,
+            joinedAt: true,
+            items: {
+              select: {
+                id: true,
+                isExtra: true,
+                result: true,
+                homeworkNumberId: true,
+                // Любая сдача, даже неудачная: «не сдавал» — значит, фото не отправлял вовсе.
+                submissions: { take: 1, select: { id: true } }
+              }
             }
           }
         }
       }
-    }
-  });
+    });
 
-  if (!lesson || lesson.status === LessonStatus.FINISHED) {
-    return { finalized: false, notSolved: 0, skipped: 0 };
-  }
-
-  if (deriveLessonStatus(lesson) !== "FINISHED") {
-    return { finalized: false, notSolved: 0, skipped: 0 };
-  }
-
-  const updates: Array<{ itemId: string; studentId: string; homeworkNumberId: string; result: LessonItemResult }> = [];
-  // Посещаемость: не отмеченные учителем участники получают «был» при любой
-  // активности (вход во вкладку урока, сдача) и «не был» без неё.
-  const attendanceUpdates: Array<{ participantId: string; attendance: AttendanceStatus }> = [];
-
-  for (const participant of lesson.participants) {
-    const hadActivity =
-      participant.joinedAt !== null || participant.items.some((item) => item.submissions.length > 0);
-    const attendance = decideEndOfLessonAttendance({ current: participant.attendance, hadActivity });
-
-    if (attendance) {
-      attendanceUpdates.push({ participantId: participant.id, attendance });
+    if (!lesson || lesson.status === LessonStatus.FINISHED) {
+      return null;
     }
 
-    for (const item of participant.items) {
-      const decision = decideEndOfLessonResult({
-        currentResult: item.result,
-        hasSubmission: item.submissions.length > 0
-      });
+    if (deriveLessonStatus(lesson) !== "FINISHED") {
+      return null;
+    }
 
-      if (decision) {
-        updates.push({
-          itemId: item.id,
-          studentId: participant.studentId,
-          homeworkNumberId: item.homeworkNumberId,
-          result: decision === "SKIPPED" ? LessonItemResult.SKIPPED : LessonItemResult.NOT_SOLVED
+    const updates: Array<{ itemId: string; studentId: string; homeworkNumberId: string; result: LessonItemResult }> = [];
+    // Посещаемость: не отмеченные учителем участники получают «был» при любой
+    // активности (вход во вкладку урока, сдача) и «не был» без неё.
+    const attendanceUpdates: Array<{ participantId: string; attendance: AttendanceStatus }> = [];
+
+    for (const participant of lesson.participants) {
+      const hadActivity =
+        participant.joinedAt !== null || participant.items.some((item) => item.submissions.length > 0);
+      const attendance = decideEndOfLessonAttendance({ current: participant.attendance, hadActivity });
+
+      if (attendance) {
+        attendanceUpdates.push({ participantId: participant.id, attendance });
+      }
+
+      for (const item of participant.items) {
+        const decision = decideEndOfLessonResult({
+          currentResult: item.result,
+          hasSubmission: item.submissions.length > 0
         });
+
+        if (decision) {
+          updates.push({
+            itemId: item.id,
+            studentId: participant.studentId,
+            homeworkNumberId: item.homeworkNumberId,
+            result: decision === "SKIPPED" ? LessonItemResult.SKIPPED : LessonItemResult.NOT_SOLVED
+          });
+        }
       }
     }
-  }
 
-  await prisma.$transaction([
-    // Только поверх пустого итога: учитель мог разметить номер между чтением и записью.
-    ...updates.map((update) =>
-      prisma.lessonAssignmentItem.updateMany({
-        where: { id: update.itemId, result: null },
-        data: { result: update.result }
-      })
-    ),
-    ...attendanceUpdates.map((update) =>
-      prisma.lessonParticipant.updateMany({
-        where: { id: update.participantId, attendance: AttendanceStatus.UNKNOWN },
-        data: { attendance: update.attendance }
-      })
-    ),
-    prisma.lesson.update({ where: { id: lesson.id }, data: { status: LessonStatus.FINISHED } })
-  ]);
-
-  for (const update of updates) {
-    if (update.result === LessonItemResult.NOT_SOLVED) {
-      await mirrorLessonResultToStatus({
-        studentId: update.studentId,
-        homeworkNumberId: update.homeworkNumberId,
-        result: update.result
+    for (const update of updates) {
+      await tx.lessonAssignmentItem.update({ where: { id: update.itemId }, data: { result: update.result } });
+      await writeProgress({
+        studentId: update.studentId, homeworkNumberId: update.homeworkNumberId,
+        source: "lesson_end", result: update.result,
+        references: { lessonId: lesson.id, itemId: update.itemId }
       });
     }
-  }
+    for (const update of attendanceUpdates) {
+      await tx.lessonParticipant.update({ where: { id: update.participantId }, data: { attendance: update.attendance } });
+    }
+    await tx.lesson.update({ where: { id: lesson.id }, data: { status: LessonStatus.FINISHED } });
+    const notSolved = updates.filter((update) => update.result === LessonItemResult.NOT_SOLVED).length;
+    return { lesson, notSolved, skipped: updates.length - notSolved, attendanceCount: attendanceUpdates.length };
+  });
 
-  const notSolved = updates.filter((update) => update.result === LessonItemResult.NOT_SOLVED).length;
-  const skipped = updates.length - notSolved;
+  if (!outcome) return { finalized: false, notSolved: 0, skipped: 0 };
+  const { lesson, notSolved, skipped, attendanceCount } = outcome;
 
-  if (updates.length > 0 || attendanceUpdates.length > 0) {
+  if (notSolved + skipped > 0 || attendanceCount > 0) {
     try {
       revalidateAllPlatformData();
     } catch {
@@ -149,8 +139,8 @@ export async function finalizeLessonResults(lessonId: string) {
     targetType: "Lesson",
     targetId: lesson.id,
     targetLabel: lesson.title,
-    summary: `Итоги закрыты автоматически: не решил — ${notSolved}, не успел — ${skipped}, отметок посещаемости — ${attendanceUpdates.length}`,
-    meta: { notSolved, skipped, attendance: attendanceUpdates.length }
+    summary: `Итоги закрыты автоматически: не решил — ${notSolved}, не успел — ${skipped}, отметок посещаемости — ${attendanceCount}`,
+    meta: { notSolved, skipped, attendance: attendanceCount }
   });
   logInfoEvent("lesson_live.results_finalized", { lessonId: lesson.id, notSolved, skipped });
 

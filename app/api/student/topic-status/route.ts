@@ -212,6 +212,8 @@ export async function POST(request: Request) {
         homeworkNumberId,
         status: null,
         note: null,
+        // Пустая ручная отметка тоже имеет автора/время и защищает от старой проверки.
+        statusChangedAt: null,
         ...(deadlinesEnabled ? { deadlineAt: null } : {})
       }
     });

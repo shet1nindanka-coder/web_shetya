@@ -1,6 +1,5 @@
 import {
   AuditCategory,
-  HomeworkNumberStatus,
   LessonItemResult,
   SolutionCheckStatus,
   SolutionVerdict,
@@ -22,6 +21,7 @@ import {
   parseCheckResponse
 } from "@/lib/solution-check-parse";
 import { decideAutoLessonResult } from "@/lib/lesson-live";
+import { runProgressTransaction } from "@/lib/progress-write";
 
 /*
  * ИИ-проверка сдачи классной работы (вкладка «Урок»).
@@ -42,14 +42,6 @@ const STALE_PENDING_MS = 15 * 60_000;
 const STALE_CHECKING_MS = 45 * 60_000;
 
 const STALE_ERROR_TEXT = "Проверка прервалась (перезапуск сервера). Сдайте номер заново.";
-
-// Итог урока → статус номера ученика: та же таблица, что у ручной разметки
-// (app/api/teacher/lessons/**/result/route.ts).
-const RESULT_TO_STATUS: Partial<Record<LessonItemResult, HomeworkNumberStatus>> = {
-  [LessonItemResult.SOLVED]: HomeworkNumberStatus.GREEN,
-  [LessonItemResult.PARTIAL]: HomeworkNumberStatus.YELLOW,
-  [LessonItemResult.NOT_SOLVED]: HomeworkNumberStatus.RED
-};
 
 /**
  * Помечает FAILED зависшие сдачи ученика на уроке (очередь in-memory и
@@ -115,38 +107,6 @@ function buildLessonUserText(input: {
     "",
     "Всего номеров: 1. Фото решения приложены ниже."
   ].join("\n");
-}
-
-/**
- * Зеркалит автоитог в StudentTopicNumberStatus — той же таблицей и тем же
- * «силовым» upsert, что и ручная разметка учителя: итог урока — самый свежий
- * сигнал о номере. «Не успел» статус не трогает.
- */
-export async function mirrorLessonResultToStatus(input: {
-  studentId: string;
-  homeworkNumberId: string;
-  result: LessonItemResult;
-}) {
-  const status = RESULT_TO_STATUS[input.result];
-
-  if (!status) {
-    return false;
-  }
-
-  await prisma.studentTopicNumberStatus.upsert({
-    where: {
-      studentId_homeworkNumberId: { studentId: input.studentId, homeworkNumberId: input.homeworkNumberId }
-    },
-    update: { status, statusChangedAt: new Date() },
-    create: {
-      studentId: input.studentId,
-      homeworkNumberId: input.homeworkNumberId,
-      status,
-      statusChangedAt: new Date()
-    }
-  });
-
-  return true;
 }
 
 export async function runLessonItemCheck(submissionId: string) {
@@ -334,24 +294,17 @@ export async function runLessonItemCheck(submissionId: string) {
 
     const verdict = result.verdict as SolutionVerdict;
 
-    // Автоитог: «решил» с первой попытки, «с ошибками» — если раньше были
-    // неверные сдачи, «не решил» — при ошибке. Читаем актуальный итог и историю
-    // прямо перед записью: учитель мог разметить номер, пока шла проверка.
-    const [currentItem, incorrectBefore] = await Promise.all([
-      prisma.lessonAssignmentItem.findUnique({ where: { id: item.id }, select: { result: true } }),
-      prisma.lessonItemSubmission.count({
+    // Вердикт, итог урока, общий прогресс и история — один commit.
+    const finalized = await runProgressTransaction(async (transaction, writeProgress) => {
+      const currentItem = await transaction.lessonAssignmentItem.findUniqueOrThrow({
+        where: { id: item.id }, select: { result: true }
+      });
+      const incorrectBefore = await transaction.lessonItemSubmission.count({
         where: { itemId: item.id, id: { not: submissionId }, verdict: SolutionVerdict.INCORRECT }
-      })
-    ]);
-    const autoResult = decideAutoLessonResult({
-      verdict,
-      currentResult: currentItem?.result ?? null,
-      hadIncorrectBefore: incorrectBefore > 0
-    });
-    const prefillResult = autoResult ? (autoResult as LessonItemResult) : null;
-    const resultBefore = currentItem?.result ?? null;
-
-    const finalized = await prisma.$transaction(async (transaction) => {
+      });
+      const prefillResult = decideAutoLessonResult({
+        verdict, currentResult: currentItem.result, hadIncorrectBefore: incorrectBefore > 0
+      }) as LessonItemResult | null;
       const transition = await transaction.lessonItemSubmission.updateMany({
         where: { id: submissionId, status: SolutionCheckStatus.CHECKING, activeSlot: 1 },
         data: {
@@ -374,31 +327,21 @@ export async function runLessonItemCheck(submissionId: string) {
       }
 
       if (prefillResult) {
-        // Гонка с ручной отметкой: пишем только поверх того итога, который видели.
-        const applied = await transaction.lessonAssignmentItem.updateMany({
-          where: { id: item.id, result: resultBefore },
-          data: { result: prefillResult }
+        await transaction.lessonAssignmentItem.update({
+          where: { id: item.id }, data: { result: prefillResult }
         });
-
-        return applied.count === 1 ? "with-result" : "verdict-only";
       }
-
-      return "verdict-only";
-    });
-
-    if (!finalized) {
-      return;
-    }
-
-    let statusApplied = false;
-
-    if (prefillResult && finalized === "with-result") {
-      statusApplied = await mirrorLessonResultToStatus({
+      const decision = await writeProgress({
         studentId: participant.studentId,
         homeworkNumberId: number.id,
-        result: prefillResult
+        source: "lesson_check", result: prefillResult, verdict,
+        references: { lessonId: lesson.id, itemId: item.id, submissionId }
       });
-    }
+      return { statusApplied: decision.write, prefillResult };
+    });
+
+    if (!finalized) return;
+    const { statusApplied, prefillResult } = finalized;
 
     publishDashboardRealtimeEvent({
       kind: "lesson-activity",
