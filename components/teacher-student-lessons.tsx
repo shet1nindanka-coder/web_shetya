@@ -307,7 +307,6 @@ export function TeacherStudentLessons({
       />
 
       {localLessons.map((lesson) => {
-        const marked = lesson.items.filter((item) => item.result !== null).length;
         const expanded = expandedIds.has(lesson.id);
         const pendingSince = pendingSinceRef.current.get(lesson.id);
         const stale = pendingIds.has(lesson.id) && pendingSince !== undefined && now - pendingSince > STALE_PLAN_MS;
@@ -400,14 +399,6 @@ export function TeacherStudentLessons({
                   {statusLabels[lesson.status] ?? lesson.status}
                 </p>
               </div>
-              {/* Чип итогов показывается всегда и одним размером; 0/0 — жёлтым. */}
-              <span
-                className={`shbz-chip ${
-                  lesson.items.length > 0 && marked === lesson.items.length ? "shbz-chip-green" : "shbz-chip-yellow"
-                }`}
-              >
-                итоги {marked} / {lesson.items.length}
-              </span>
             </div>
 
             {!expanded ? null : (

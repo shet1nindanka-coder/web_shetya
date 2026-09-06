@@ -100,17 +100,8 @@ export default async function TeacherLessonsPage() {
                     ошибок: {lesson.failedCount}
                   </span>
                 ) : null}
-                {/* Чип итогов показывается всегда и одним размером; зелёный —
-                    только когда всё отмечено, пустое 0/0 — жёлтым (решение владельца). */}
-                <span
-                  className={`shbz-chip ${
-                    lesson.resultsTotal > 0 && lesson.resultsMarked === lesson.resultsTotal
-                      ? "shbz-chip-green"
-                      : "shbz-chip-yellow"
-                  }`}
-                >
-                  итоги {lesson.resultsMarked} / {lesson.resultsTotal}
-                </span>
+                {/* Чипа «итоги X / Y» больше нет: итоги ставятся автоматически
+                    и к концу урока отмечены все (решение владельца). */}
                 {/* Чип «готово X/Y» показывается только пока подбор не завершён:
                     постоянное «готово 1/1» не несло информации (фидбек владельца). */}
                 {lesson.readyCount < lesson.participantsCount ? (

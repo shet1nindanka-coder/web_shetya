@@ -166,7 +166,7 @@ export default async function GroupDetailPage({ params, searchParams }: GroupDet
                       {lesson.title}
                     </span>
                     <span className="text-xs" style={{ color: "var(--shbz-text-muted)" }}>
-                      {formatDateTime(lesson.createdAt)} · итоги {lesson.resultsMarked} / {lesson.resultsTotal}
+                      {formatDateTime(lesson.startsAt ?? lesson.createdAt)} · {lesson.durationMinutes} мин
                     </span>
                   </div>
                   <Link href={`${prefix}/lessons/${lesson.id}`} className="shbz-btn-outline inline-block no-underline">
